@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Last Updated: 25 June 2025
 
 ### Recent Changes
+- **Added comprehensive unit tests** for business logic with 88.2% code coverage
+- **Implemented dependency injection** with VeriYoneticiInterface for better testability
 - Added markdown support for task descriptions
 - Implemented new MCP tools: `gorev_detay`, `gorev_duzenle`, `gorev_sil`, `proje_listele`, `proje_gorevleri`
 - Enhanced task editing with partial update capability
@@ -20,14 +22,17 @@ Gorev is an MCP (Model Context Protocol) server written in Go that provides task
 The project follows a clean architecture pattern with clear separation of concerns:
 
 ```
-cmd/gorev/main.go          → Entry point, CLI commands (cobra)
-internal/mcp/              → MCP protocol layer
-  ├── handlers.go         → MCP tool implementations
-  └── server.go          → MCP server setup
-internal/gorev/           → Business logic layer
-  ├── modeller.go        → Domain models (Gorev, Proje, Ozet)
-  ├── is_yonetici.go     → Business logic orchestration
-  └── veri_yonetici.go   → Data access layer (SQLite)
+cmd/gorev/main.go                  → Entry point, CLI commands (cobra)
+internal/mcp/                      → MCP protocol layer
+  ├── handlers.go                 → MCP tool implementations
+  └── server.go                  → MCP server setup
+internal/gorev/                   → Business logic layer
+  ├── modeller.go                → Domain models (Gorev, Proje, Ozet)
+  ├── is_yonetici.go             → Business logic orchestration
+  ├── is_yonetici_test.go        → Business logic unit tests
+  ├── veri_yonetici.go           → Data access layer (SQLite)
+  ├── veri_yonetici_test.go      → Data access layer unit tests
+  └── veri_yonetici_interface.go → Interface for dependency injection
 ```
 
 ### Key Design Decisions
@@ -90,10 +95,13 @@ All tools follow the pattern in `internal/mcp/handlers.go` and are registered in
 
 ## Testing Strategy
 
-- **Unit Tests**: Business logic in `internal/gorev/`
+- **Unit Tests**: Business logic in `internal/gorev/` (88.2% coverage)
+  - `veri_yonetici_test.go`: Data layer tests with SQL injection and concurrent access tests
+  - `is_yonetici_test.go`: Business logic tests with mocked dependencies
 - **Integration Tests**: MCP handlers in `test/integration_test.go`
 - **Table-Driven Tests**: Go convention for test cases
 - **Test Database**: Use `:memory:` SQLite for tests
+- **Coverage Goal**: Maintain >80% code coverage
 
 Example test pattern:
 ```go

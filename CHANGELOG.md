@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added - 25 June 2025
+## [1.2.0] - 2025-06-25
+
+### Added
+
+#### Unit Testing Infrastructure
+- **Comprehensive unit tests** for business logic layer with 88.2% code coverage
+- `veri_yonetici_test.go` - Tests for data access layer (VeriYonetici)
+  - CRUD operations testing
+  - SQL injection protection tests
+  - NULL handling tests
+  - Concurrent access tests
+  - Edge case validation
+- `is_yonetici_test.go` - Tests for business logic layer (IsYonetici)
+  - Mock implementation of VeriYoneticiInterface
+  - Business logic validation
+  - Error handling scenarios
+  - Partial update logic tests
+- `veri_yonetici_interface.go` - Interface for dependency injection and mocking
 
 #### New MCP Tools
 - `gorev_detay` - Display detailed task information in markdown format
@@ -27,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Task descriptions now support full markdown formatting
 - Improved error messages to be more user-friendly
 - Updated MCP handler signatures to match mark3labs/mcp-go v0.6.0 API
+- **Refactored IsYonetici to use VeriYoneticiInterface for better testability**
 
 ### Documentation
 - Updated `docs/mcp-araclari.md` with detailed documentation for all new tools
@@ -38,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ProjeGetir`, `GorevSil`, `ProjeGorevleriGetir` methods to data access layer
 - Fixed all integration tests to work with new MCP API
 - Added helper function for extracting text from MCP results in tests
+- **Implemented dependency injection pattern for better testability**
+- **Added table-driven test patterns following Go conventions**
+- **Test coverage includes: edge cases, SQL injection, concurrent access, NULL handling**
 
 ## [1.0.0] - 2024-12-15
 

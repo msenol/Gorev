@@ -99,9 +99,23 @@ gorev/
 
 ## Geliştirme
 
+### Test Altyapısı
+
+- **88.2% kod kapsama** oranı ile kapsamlı birim testleri
+- Dependency injection pattern ile test edilebilir mimari
+- SQL injection koruması testleri
+- Concurrent erişim testleri
+- Edge case validasyonları
+
 ```bash
 # Testleri çalıştır
-go test ./...
+make test
+
+# Test kapsama raporu oluştur
+make test-coverage
+
+# Race condition kontrolü
+go test -race ./...
 
 # Lint kontrolü
 golangci-lint run
