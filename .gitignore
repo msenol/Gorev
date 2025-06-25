@@ -1,0 +1,50 @@
+# Binary dosyalar
+gorev
+gorev.exe
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test dosyaları
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Veritabanı dosyaları
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Geçici dosyalar
+*.tmp
+*.temp
+*.log
+
+# IDE dosyaları
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build çıktıları
+dist/
+build/
+
+# Go build cache
+.cache/
+
+# Vendor dizini (eğer kullanılıyorsa)
+vendor/
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+#Arşivler
+arsiv-kotlin/
