@@ -1,6 +1,6 @@
 # Binary dosyalar
-gorev
-gorev.exe
+/gorev
+/gorev.exe
 *.exe
 *.dll
 *.so
