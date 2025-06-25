@@ -8,10 +8,10 @@ import (
 )
 
 type IsYonetici struct {
-	veriYonetici *VeriYonetici
+	veriYonetici VeriYoneticiInterface
 }
 
-func YeniIsYonetici(veriYonetici *VeriYonetici) *IsYonetici {
+func YeniIsYonetici(veriYonetici VeriYoneticiInterface) *IsYonetici {
 	return &IsYonetici{
 		veriYonetici: veriYonetici,
 	}
@@ -19,12 +19,12 @@ func YeniIsYonetici(veriYonetici *VeriYonetici) *IsYonetici {
 
 func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik string) (*Gorev, error) {
 	gorev := &Gorev{
-		ID:             uuid.New().String(),
-		Baslik:         baslik,
-		Aciklama:       aciklama,
-		Oncelik:        oncelik,
-		Durum:          "beklemede",
-		OlusturmaTarih: time.Now(),
+		ID:              uuid.New().String(),
+		Baslik:          baslik,
+		Aciklama:        aciklama,
+		Oncelik:         oncelik,
+		Durum:           "beklemede",
+		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
 	}
 
@@ -53,10 +53,10 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 
 func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 	proje := &Proje{
-		ID:             uuid.New().String(),
-		Isim:           isim,
-		Tanim:          tanim,
-		OlusturmaTarih: time.Now(),
+		ID:              uuid.New().String(),
+		Isim:            isim,
+		Tanim:           tanim,
+		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
 	}
 
