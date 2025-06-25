@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-06-25
+
+### Added
+
+#### Active Project Management
+- **New feature**: Active project context for task management
+- **New MCP tools**:
+  - `proje_aktif_yap` - Set a project as the active project
+  - `aktif_proje_goster` - Display current active project details
+  - `aktif_proje_kaldir` - Remove active project setting
+- **Database changes**:
+  - Added `aktif_proje` table to store persistent active project setting
+  - Table uses CHECK constraint to ensure only one active project (id=1)
+- **Enhanced existing tools**:
+  - `gorev_olustur` - Now accepts optional `proje_id` parameter; uses active project by default if not specified
+  - `gorev_listele` - Added `tum_projeler` boolean parameter; filters by active project by default
+
+### Changed
+- **Breaking change**: `GorevOlustur` function now takes 4 parameters (added `projeID`)
+- Task creation feedback now includes project name when task is assigned to a project
+- Task listing title shows active project name when filtering by active project
+
+### Technical
+- Added `veri_yonetici_ext.go` for active project database operations
+- Added `AktifProjeAyarla`, `AktifProjeGetir`, `AktifProjeKaldir` methods to VeriYonetici
+- Updated VeriYoneticiInterface with active project methods
+- Updated IsYonetici to support active project operations
+- Enhanced MCP handlers to utilize active project context
+
 ## [1.2.0] - 2025-06-25
 
 ### Added
