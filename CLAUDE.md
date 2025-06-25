@@ -5,13 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Last Updated: 25 June 2025
 
 ### Recent Changes
-- **Added comprehensive unit tests** for business logic with 88.2% code coverage
-- **Implemented dependency injection** with VeriYoneticiInterface for better testability
-- Added markdown support for task descriptions
-- Implemented new MCP tools: `gorev_detay`, `gorev_duzenle`, `gorev_sil`, `proje_listele`, `proje_gorevleri`
-- Enhanced task editing with partial update capability
-- Added comprehensive integration tests for all new tools
-- Updated documentation with examples and usage patterns
+- **Added Active Project Management** - New feature to set and use an active project context
+- **Enhanced gorev_olustur** - Now accepts optional proje_id parameter, uses active project by default
+- **Enhanced gorev_listele** - Added tum_projeler parameter to filter by active project
+- **New MCP tools**: `proje_aktif_yap`, `aktif_proje_goster`, `aktif_proje_kaldir`
+- **Database schema update** - Added aktif_proje table for persistent active project storage
+- **Breaking change**: GorevOlustur now takes 4 parameters (added projeID)
+- Added veri_yonetici_ext.go for active project database operations
 
 ## Project Overview
 
@@ -73,11 +73,13 @@ make run                 # Build and run server
 
 ## MCP Tools
 
-The server implements 10 MCP tools:
+The server implements 13 MCP tools:
 
 ### Task Management
-1. **gorev_olustur**: Create new task (params: baslik, aciklama, oncelik)
-2. **gorev_listele**: List tasks (params: durum filter)
+1. **gorev_olustur**: Create new task (params: baslik, aciklama, oncelik, proje_id?)
+   - proje_id is optional; if not provided, uses active project
+2. **gorev_listele**: List tasks (params: durum?, tum_projeler?)
+   - tum_projeler: if false/omitted, shows only active project tasks
 3. **gorev_detay**: Show detailed task info in markdown (params: id)
 4. **gorev_guncelle**: Update task status (params: id, durum)
 5. **gorev_duzenle**: Edit task properties (params: id, baslik?, aciklama?, oncelik?, proje_id?)
@@ -87,9 +89,12 @@ The server implements 10 MCP tools:
 7. **proje_olustur**: Create project (params: isim, tanim)
 8. **proje_listele**: List all projects with task counts (no params)
 9. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
+10. **proje_aktif_yap**: Set active project (params: proje_id)
+11. **aktif_proje_goster**: Show current active project (no params)
+12. **aktif_proje_kaldir**: Remove active project setting (no params)
 
 ### Reporting
-10. **ozet_goster**: Show summary statistics (no params)
+13. **ozet_goster**: Show summary statistics (no params)
 
 All tools follow the pattern in `internal/mcp/handlers.go` and are registered in `RegisterTools()`. Task descriptions support full markdown formatting.
 
@@ -131,11 +136,12 @@ func TestGorevOlustur(t *testing.T) {
 
 ## Database Schema
 
-SQLite database with three tables:
+SQLite database with four tables:
 
 - **projeler**: id, isim, tanim, olusturma_tarih, guncelleme_tarih
 - **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih
 - **baglantilar**: id, kaynak_id, hedef_id, baglanti_tip (future feature)
+- **aktif_proje**: id (CHECK id=1), proje_id (stores single active project)
 
 Migrations are handled manually in `tablolariOlustur()`.
 

@@ -13,6 +13,7 @@ Güçlü ve esnek görev yönetimi için Model Context Protocol (MCP) sunucusu.
 - 📊 Zengin metadata desteği
 - 🚀 Yüksek performanslı Go implementasyonu
 - 🛠️ MCP protokolü ile AI entegrasyonu
+- 🎪 **Aktif Proje Yönetimi** - Varsayılan proje seçimi ile hızlı görev oluşturma
 
 ## Kurulum
 
@@ -81,6 +82,9 @@ Claude'a şu komutları verebilirsiniz:
 - "Projeleri listele"
 - "Projenin görevlerini göster"
 - "Proje özeti göster"
+- "Projeyi aktif yap" - Varsayılan proje olarak ayarla
+- "Aktif projeyi göster"
+- "Aktif proje ayarını kaldır"
 
 ## Mimari
 

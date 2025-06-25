@@ -16,9 +16,12 @@ Gorev'in sağladığı tüm MCP tool'larının detaylı açıklaması.
 7. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
 8. [proje_listele](#proje_listele) - Tüm projeleri listeleme
 9. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
+10. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
+11. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
+12. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
 
 ### Raporlama
-10. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
+13. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
 
 ---
 
@@ -33,6 +36,7 @@ Yeni bir görev oluşturur.
 | `baslik` | string | ✅ | Görev başlığı | - |
 | `aciklama` | string | ❌ | Detaylı görev açıklaması | "" |
 | `oncelik` | string | ❌ | Öncelik seviyesi: `dusuk`, `orta`, `yuksek` | `orta` |
+| `proje_id` | string | ❌ | Projeye bağlamak için proje ID'si | Aktif proje |
 
 ### Örnek Kullanım
 
@@ -58,13 +62,26 @@ Yeni bir görev oluşturur.
 }
 ```
 
+**Projeye bağlı görev:**
+```json
+{
+  "name": "gorev_olustur",
+  "arguments": {
+    "baslik": "Kullanıcı profil sayfası",
+    "proje_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+  }
+}
+```
+
+**Not:** `proje_id` parametresi verilmezse ve aktif proje ayarlanmışsa, görev otomatik olarak aktif projeye eklenir.
+
 ### Yanıt
 
 ```json
 {
   "content": [{
     "type": "text",
-    "text": "✓ Görev oluşturuldu: API authentication implementasyonu (ID: 550e8400-e29b-41d4-a716-446655440000)"
+    "text": "✓ Görev oluşturuldu: API authentication implementasyonu (ID: 550e8400-e29b-41d4-a716-446655440000)\n  Proje: E-ticaret Sitesi"
   }]
 }
 ```
@@ -80,6 +97,7 @@ Görevleri filtreleyerek listeler.
 | Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
 |-----------|-----|---------|----------|------------|
 | `durum` | string | ❌ | Filtrelenecek durum: `beklemede`, `devam_ediyor`, `tamamlandi` | Tümü |
+| `tum_projeler` | boolean | ❌ | Tüm projelerdeki görevleri göster | `false` |
 
 ### Örnek Kullanım
 
@@ -100,6 +118,18 @@ Görevleri filtreleyerek listeler.
   }
 }
 ```
+
+**Tüm projelerdeki görevler:**
+```json
+{
+  "name": "gorev_listele",
+  "arguments": {
+    "tum_projeler": true
+  }
+}
+```
+
+**Not:** `tum_projeler` parametresi `false` veya verilmezse ve aktif proje varsa, sadece aktif projenin görevleri listelenir.
 
 ### Yanıt
 
@@ -457,6 +487,105 @@ Bu araç parametre almaz.
 - Yüksek: 5
 - Orta: 7
 - Düşük: 3
+```
+
+---
+
+## proje_aktif_yap
+
+Bir projeyi aktif proje olarak ayarlar. Aktif proje ayarlandığında, `gorev_olustur` ve `gorev_listele` komutları varsayılan olarak bu projeyi kullanır.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `proje_id` | string | ✅ | Aktif yapılacak proje ID'si |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "proje_aktif_yap",
+  "arguments": {
+    "proje_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+  }
+}
+```
+
+### Yanıt
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "✓ Aktif proje ayarlandı: E-ticaret Sitesi"
+  }]
+}
+```
+
+---
+
+## aktif_proje_goster
+
+Mevcut aktif projeyi ve detaylarını gösterir.
+
+### Parametreler
+
+Bu araç parametre almaz.
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "aktif_proje_goster",
+  "arguments": {}
+}
+```
+
+### Yanıt
+
+```markdown
+## Aktif Proje
+
+**Proje:** E-ticaret Sitesi
+**ID:** 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+**Açıklama:** Online satış platformu geliştirme projesi
+**Görev Sayısı:** 12
+```
+
+Aktif proje yoksa:
+```
+Henüz aktif proje ayarlanmamış.
+```
+
+---
+
+## aktif_proje_kaldir
+
+Aktif proje ayarını kaldırır. Bu işlemden sonra görev oluşturma ve listeleme işlemleri tüm projeler üzerinde çalışır.
+
+### Parametreler
+
+Bu araç parametre almaz.
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "aktif_proje_kaldir",
+  "arguments": {}
+}
+```
+
+### Yanıt
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "✓ Aktif proje ayarı kaldırıldı."
+  }]
+}
 ```
 
 ---
