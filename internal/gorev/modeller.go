@@ -37,8 +37,8 @@ type Ozet struct {
 
 // Baglanti görevler arası bağlantı
 type Baglanti struct {
-	ID         string `json:"id"`
-	KaynakID   string `json:"kaynak_id"`
-	HedefID    string `json:"hedef_id"`
+	ID          string `json:"id"`
+	KaynakID    string `json:"kaynak_id"`
+	HedefID     string `json:"hedef_id"`
 	BaglantiTip string `json:"baglanti_tip"`
 }

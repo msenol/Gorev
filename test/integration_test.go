@@ -13,13 +13,13 @@ import (
 // Helper function to extract text from MCP result
 func extractText(t *testing.T, result *mcp.CallToolResult) string {
 	require.Len(t, result.Content, 1)
-	
+
 	// Content is []interface{}, and each element should be a TextContent
 	textContent, ok := result.Content[0].(mcp.TextContent)
 	if ok {
 		return textContent.Text
 	}
-	
+
 	// If it's a map (serialized form)
 	contentMap, ok := result.Content[0].(map[string]interface{})
 	require.True(t, ok, "Content should be TextContent or map")
@@ -36,7 +36,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 
 	// İş yöneticisi oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
-	
+
 	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 
@@ -209,7 +209,7 @@ func TestGorevDetay(t *testing.T) {
 
 	gorevObj, err := isYonetici.GorevOlustur("Detaylı Test Görevi", "## Açıklama\n\nBu bir **markdown** açıklamadır.", "yuksek")
 	require.NoError(t, err)
-	
+
 	// Görevi projeye ata
 	err = isYonetici.GorevDuzenle(gorevObj.ID, "", "", "", proje.ID, false, false, false, true)
 	require.NoError(t, err)
@@ -222,7 +222,7 @@ func TestGorevDetay(t *testing.T) {
 	result, err := handlers.GorevDetay(params)
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
-	
+
 	detayText := extractText(t, result)
 	assert.Contains(t, detayText, "# Detaylı Test Görevi")
 	assert.Contains(t, detayText, "**Durum:** beklemede")

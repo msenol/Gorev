@@ -247,21 +247,21 @@ func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
 
 func (vy *VeriYonetici) GorevSil(id string) error {
 	sorgu := `DELETE FROM gorevler WHERE id = ?`
-	
+
 	result, err := vy.db.Exec(sorgu, id)
 	if err != nil {
 		return err
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
-	
+
 	if rowsAffected == 0 {
 		return fmt.Errorf("görev bulunamadı")
 	}
-	
+
 	return nil
 }
 

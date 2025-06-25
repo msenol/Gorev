@@ -44,7 +44,7 @@ func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolRes
 // GorevListele görevleri listeler
 func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	durum, _ := params["durum"].(string)
-	
+
 	gorevler, err := h.isYonetici.GorevListele(durum)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görevler listelenemedi: %v", err)), nil
@@ -165,7 +165,7 @@ func (h *Handlers) GorevDuzenle(params map[string]interface{}) (*mcp.CallToolRes
 
 	// En az bir düzenleme alanı olmalı
 	baslik, baslikVar := params["baslik"].(string)
-	aciklama, aciklamaVar := params["aciklama"].(string) 
+	aciklama, aciklamaVar := params["aciklama"].(string)
 	oncelik, oncelikVar := params["oncelik"].(string)
 	projeID, projeVar := params["proje_id"].(string)
 
@@ -228,7 +228,7 @@ func (h *Handlers) ProjeListele(params map[string]interface{}) (*mcp.CallToolRes
 			metin += fmt.Sprintf("- **Tanım:** %s\n", proje.Tanim)
 		}
 		metin += fmt.Sprintf("- **Oluşturma:** %s\n", proje.OlusturmaTarih.Format("02 Jan 2006, 15:04"))
-		
+
 		// Her proje için görev sayısını göster
 		gorevSayisi, err := h.isYonetici.ProjeGorevSayisi(proje.ID)
 		if err == nil {
@@ -259,7 +259,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	}
 
 	metin := fmt.Sprintf("## %s - Görevler\n\n", proje.Isim)
-	
+
 	if len(gorevler) == 0 {
 		metin += "*Bu projede henüz görev bulunmuyor.*"
 		return mcp.NewToolResultText(metin), nil
