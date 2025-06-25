@@ -31,39 +31,148 @@ func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolRes
 		oncelik = "orta"
 	}
 
-	gorev, err := h.isYonetici.GorevOlustur(baslik, aciklama, oncelik)
+	projeID, _ := params["proje_id"].(string)
+	
+	// Eğer proje_id verilmemişse, aktif projeyi kullan
+	if projeID == "" {
+		aktifProje, err := h.isYonetici.AktifProjeGetir()
+		if err == nil && aktifProje != nil {
+			projeID = aktifProje.ID
+		}
+	}
+
+	gorev, err := h.isYonetici.GorevOlustur(baslik, aciklama, oncelik, projeID)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görev oluşturulamadı: %v", err)), nil
 	}
 
-	return mcp.NewToolResultText(
-		fmt.Sprintf("✓ Görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID),
-	), nil
+	mesaj := fmt.Sprintf("✓ Görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID)
+	if projeID != "" {
+		proje, _ := h.isYonetici.ProjeDetayAl(projeID)
+		if proje != nil {
+			mesaj += fmt.Sprintf("\n  Proje: %s", proje.Isim)
+		}
+	}
+
+	return mcp.NewToolResultText(mesaj), nil
 }
 
 // GorevListele görevleri listeler
 func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	durum, _ := params["durum"].(string)
+	tumProjeler, _ := params["tum_projeler"].(bool)
 
 	gorevler, err := h.isYonetici.GorevListele(durum)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görevler listelenemedi: %v", err)), nil
 	}
 
-	if len(gorevler) == 0 {
-		return mcp.NewToolResultText("Henüz görev bulunmuyor."), nil
+	// Aktif proje varsa ve tum_projeler false ise, sadece aktif projenin görevlerini göster
+	var aktifProje *gorev.Proje
+	if !tumProjeler {
+		aktifProje, _ = h.isYonetici.AktifProjeGetir()
+		if aktifProje != nil {
+			// Görevleri filtrele
+			var filtreliGorevler []*gorev.Gorev
+			for _, g := range gorevler {
+				if g.ProjeID == aktifProje.ID {
+					filtreliGorevler = append(filtreliGorevler, g)
+				}
+			}
+			gorevler = filtreliGorevler
+		}
 	}
 
-	metin := "## Görev Listesi\n\n"
+	if len(gorevler) == 0 {
+		mesaj := "Henüz görev bulunmuyor."
+		if aktifProje != nil {
+			mesaj = fmt.Sprintf("%s projesinde henüz görev bulunmuyor.", aktifProje.Isim)
+		}
+		return mcp.NewToolResultText(mesaj), nil
+	}
+
+	metin := "## Görev Listesi"
+	if aktifProje != nil && !tumProjeler {
+		metin += fmt.Sprintf(" - %s", aktifProje.Isim)
+	}
+	metin += "\n\n"
+
 	for _, gorev := range gorevler {
 		metin += fmt.Sprintf("- [%s] %s (%s öncelik)\n", gorev.Durum, gorev.Baslik, gorev.Oncelik)
 		if gorev.Aciklama != "" {
 			metin += fmt.Sprintf("  %s\n", gorev.Aciklama)
 		}
+		// Eğer tüm projeler gösteriliyorsa, proje adını da ekle
+		if tumProjeler && gorev.ProjeID != "" {
+			proje, _ := h.isYonetici.ProjeDetayAl(gorev.ProjeID)
+			if proje != nil {
+				metin += fmt.Sprintf("  Proje: %s\n", proje.Isim)
+			}
+		}
 		metin += fmt.Sprintf("  ID: %s\n\n", gorev.ID)
 	}
 
 	return mcp.NewToolResultText(metin), nil
+}
+
+// AktifProjeAyarla bir projeyi aktif proje olarak ayarlar
+func (h *Handlers) AktifProjeAyarla(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	projeID, ok := params["proje_id"].(string)
+	if !ok || projeID == "" {
+		return mcp.NewToolResultError("proje_id parametresi gerekli"), nil
+	}
+
+	if err := h.isYonetici.AktifProjeAyarla(projeID); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("aktif proje ayarlanamadı: %v", err)), nil
+	}
+
+	proje, _ := h.isYonetici.ProjeDetayAl(projeID)
+	if proje != nil {
+		return mcp.NewToolResultText(
+			fmt.Sprintf("✓ Aktif proje ayarlandı: %s", proje.Isim),
+		), nil
+	}
+	return mcp.NewToolResultText(
+		fmt.Sprintf("✓ Aktif proje ayarlandı: %s", projeID),
+	), nil
+}
+
+// AktifProjeGoster mevcut aktif projeyi gösterir
+func (h *Handlers) AktifProjeGoster(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	proje, err := h.isYonetici.AktifProjeGetir()
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("aktif proje getirilemedi: %v", err)), nil
+	}
+
+	if proje == nil {
+		return mcp.NewToolResultText("Henüz aktif proje ayarlanmamış."), nil
+	}
+
+	// Görev sayısını al
+	gorevSayisi, _ := h.isYonetici.ProjeGorevSayisi(proje.ID)
+
+	metin := fmt.Sprintf(`## Aktif Proje
+
+**Proje:** %s
+**ID:** %s
+**Açıklama:** %s
+**Görev Sayısı:** %d`,
+		proje.Isim,
+		proje.ID,
+		proje.Tanim,
+		gorevSayisi,
+	)
+
+	return mcp.NewToolResultText(metin), nil
+}
+
+// AktifProjeKaldir aktif proje ayarını kaldırır
+func (h *Handlers) AktifProjeKaldir(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	if err := h.isYonetici.AktifProjeKaldir(); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("aktif proje kaldırılamadı: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText("✓ Aktif proje ayarı kaldırıldı."), nil
 }
 
 // GorevGuncelle görev durumunu günceller
@@ -375,6 +484,10 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 					"description": "Öncelik seviyesi (dusuk, orta, yuksek)",
 					"enum":        []string{"dusuk", "orta", "yuksek"},
 				},
+				"proje_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Proje ID (boş bırakılırsa aktif proje kullanılır)",
+				},
 			},
 			Required: []string{"baslik"},
 		},
@@ -391,6 +504,10 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 					"type":        "string",
 					"description": "Filtrelenecek durum",
 					"enum":        []string{"beklemede", "devam_ediyor", "tamamlandi"},
+				},
+				"tum_projeler": map[string]interface{}{
+					"type":        "boolean",
+					"description": "Tüm projelerdeki görevleri göster (varsayılan: false, sadece aktif proje)",
 				},
 			},
 		},
@@ -541,4 +658,40 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{},
 		},
 	}, h.OzetGoster)
+
+	// Proje aktif yap
+	s.AddTool(mcp.Tool{
+		Name:        "proje_aktif_yap",
+		Description: "Bir projeyi aktif proje olarak ayarla",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"proje_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Aktif yapılacak proje ID",
+				},
+			},
+			Required: []string{"proje_id"},
+		},
+	}, h.AktifProjeAyarla)
+
+	// Aktif proje göster
+	s.AddTool(mcp.Tool{
+		Name:        "aktif_proje_goster",
+		Description: "Mevcut aktif projeyi göster",
+		InputSchema: mcp.ToolInputSchema{
+			Type:       "object",
+			Properties: map[string]interface{}{},
+		},
+	}, h.AktifProjeGoster)
+
+	// Aktif proje kaldır
+	s.AddTool(mcp.Tool{
+		Name:        "aktif_proje_kaldir",
+		Description: "Aktif proje ayarını kaldır",
+		InputSchema: mcp.ToolInputSchema{
+			Type:       "object",
+			Properties: map[string]interface{}{},
+		},
+	}, h.AktifProjeKaldir)
 }

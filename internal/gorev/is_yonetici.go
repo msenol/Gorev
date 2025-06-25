@@ -17,13 +17,14 @@ func YeniIsYonetici(veriYonetici VeriYoneticiInterface) *IsYonetici {
 	}
 }
 
-func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik string) (*Gorev, error) {
+func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID string) (*Gorev, error) {
 	gorev := &Gorev{
 		ID:              uuid.New().String(),
 		Baslik:          baslik,
 		Aciklama:        aciklama,
 		Oncelik:         oncelik,
 		Durum:           "beklemede",
+		ProjeID:         projeID,
 		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
 	}
@@ -133,6 +134,25 @@ func (iy *IsYonetici) ProjeGorevSayisi(projeID string) (int, error) {
 		return 0, err
 	}
 	return len(gorevler), nil
+}
+
+func (iy *IsYonetici) AktifProjeAyarla(projeID string) error {
+	return iy.veriYonetici.AktifProjeAyarla(projeID)
+}
+
+func (iy *IsYonetici) AktifProjeGetir() (*Proje, error) {
+	projeID, err := iy.veriYonetici.AktifProjeGetir()
+	if err != nil {
+		return nil, err
+	}
+	if projeID == "" {
+		return nil, nil // Aktif proje yok
+	}
+	return iy.veriYonetici.ProjeGetir(projeID)
+}
+
+func (iy *IsYonetici) AktifProjeKaldir() error {
+	return iy.veriYonetici.AktifProjeKaldir()
 }
 
 func (iy *IsYonetici) OzetAl() (*Ozet, error) {

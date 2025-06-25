@@ -11,5 +11,8 @@ type VeriYoneticiInterface interface {
 	ProjeGetir(id string) (*Proje, error)
 	ProjeleriGetir() ([]*Proje, error)
 	ProjeGorevleriGetir(projeID string) ([]*Gorev, error)
+	AktifProjeAyarla(projeID string) error
+	AktifProjeGetir() (string, error)
+	AktifProjeKaldir() error
 	Kapat() error
 }

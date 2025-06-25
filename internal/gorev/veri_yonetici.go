@@ -59,6 +59,11 @@ func (vy *VeriYonetici) tablolariOlustur() error {
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_gorev_durum ON gorevler(durum)`,
 		`CREATE INDEX IF NOT EXISTS idx_gorev_proje ON gorevler(proje_id)`,
+		`CREATE TABLE IF NOT EXISTS aktif_proje (
+			id INTEGER PRIMARY KEY CHECK (id = 1),
+			proje_id TEXT NOT NULL,
+			FOREIGN KEY (proje_id) REFERENCES projeler(id)
+		)`,
 	}
 
 	for _, sorgu := range sorgular {
