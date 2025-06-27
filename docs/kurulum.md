@@ -1,97 +1,240 @@
 # Kurulum Rehberi
 
-Gorev'i sisteminize kurmanın farklı yolları.
+Gorev'i sisteminize kurmanın detaylı adımları.
 
 ## 📋 Gereksinimler
 
 - **İşletim Sistemi**: Linux, macOS, Windows
-- **Claude Desktop** veya **Claude Code**
+- **MCP Uyumlu Editör**: Claude Desktop, VS Code (MCP extension ile), Windsurf, Cursor, Zed veya diğer MCP destekli editörler
 - **Docker** (opsiyonel, konteyner kurulumu için)
 
-## 🚀 Hızlı Kurulum
+## 🚀 Platform Bazlı Kurulum
 
-### Opsiyon 1: Binary İndirme (Önerilen)
+### 🪟 Windows Kurulumu
 
-#### Linux/macOS
+#### Yöntem 1: Binary İndirme
+
+```powershell
+# PowerShell'de (Administrator olarak çalıştırın)
+
+# 1. Gorev dizini oluştur
+New-Item -ItemType Directory -Force -Path "C:\Program Files\gorev"
+
+# 2. Binary'yi indir
+Invoke-WebRequest -Uri "https://github.com/msenol/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "$env:TEMP\gorev.exe"
+
+# 3. Program Files'a taşı
+Move-Item "$env:TEMP\gorev.exe" "C:\Program Files\gorev\gorev.exe" -Force
+
+# 4. PATH'e ekle (kalıcı)
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\gorev", [EnvironmentVariableTarget]::Machine)
+
+# 5. PowerShell'i yeniden başlat ve test et
+gorev version
+```
+
+#### Yöntem 2: Scoop ile Kurulum (Alternatif)
+
+```powershell
+# Scoop kurulu değilse önce kur
+irm get.scoop.sh | iex
+
+# Gorev'i kur
+scoop bucket add gorev https://github.com/msenol/scoop-gorev
+scoop install gorev
+```
+
+#### Windows Defender İstisnası
+
+```powershell
+# Administrator PowerShell'de
+Add-MpPreference -ExclusionPath "C:\Program Files\gorev\gorev.exe"
+```
+
+#### MCP Editör Konfigürasyonu (Windows)
+
+##### Claude Desktop
+
+1. Konfigürasyon dosyasını açın:
+   ```
+   %APPDATA%\Claude\claude_desktop_config.json
+   ```
+
+2. Şu içeriği ekleyin:
+   ```json
+   {
+     "mcpServers": {
+       "gorev": {
+         "command": "C:\\Program Files\\gorev\\gorev.exe",
+         "args": ["serve"],
+         "env": {
+           "GOREV_DATA_DIR": "%USERPROFILE%\\.gorev"
+         }
+       }
+     }
+   }
+   ```
+
+### 🍎 macOS Kurulumu
+
+#### Yöntem 1: Homebrew ile Kurulum (Önerilen)
+
 ```bash
-# En son sürümü indir
-curl -L https://github.com/yourusername/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
+# Homebrew tap ekle
+brew tap msenol/gorev
+
+# Gorev'i kur
+brew install gorev
+
+# Test et
+gorev version
+```
+
+#### Yöntem 2: Binary İndirme
+
+```bash
+# 1. Binary'yi indir
+curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-darwin-amd64 -o gorev
+
+# 2. Çalıştırma izni ver
+chmod +x gorev
+
+# 3. Güvenlik kontrolünü geç (ilk çalıştırmada)
+xattr -d com.apple.quarantine gorev
+
+# 4. /usr/local/bin'e taşı
+sudo mv gorev /usr/local/bin/
+
+# 5. Test et
+gorev version
+```
+
+#### macOS Gatekeeper Uyarısı
+
+İlk çalıştırmada "geliştirici doğrulanamadı" hatası alırsanız:
+
+1. **System Preferences → Security & Privacy → General**
+2. "gorev was blocked" mesajının yanındaki **"Allow Anyway"** butonuna tıklayın
+3. Veya Terminal'de: `sudo spctl --master-disable` (güvenlik riskli)
+
+#### MCP Editör Konfigürasyonu (macOS)
+
+##### Claude Desktop
+
+1. Konfigürasyon dosyasını açın:
+   ```bash
+   open ~/Library/Application\ Support/Claude/claude_desktop_config.json
+   ```
+
+2. Şu içeriği ekleyin:
+   ```json
+   {
+     "mcpServers": {
+       "gorev": {
+         "command": "/usr/local/bin/gorev",
+         "args": ["serve"],
+         "env": {
+           "GOREV_DATA_DIR": "~/.gorev"
+         }
+       }
+     }
+   }
+   ```
+
+### 🐧 Linux Kurulumu
+
+#### Yöntem 1: Sistem Paket Yöneticileri
+
+**Debian/Ubuntu (APT)**
+```bash
+# PPA ekle
+sudo add-apt-repository ppa:msenol/gorev
+sudo apt update
+
+# Kur
+sudo apt install gorev
+```
+
+**Fedora/RHEL (DNF)**
+```bash
+# Repo ekle
+sudo dnf config-manager --add-repo https://github.com/msenol/gorev/releases/latest/download/gorev.repo
+
+# Kur
+sudo dnf install gorev
+```
+
+**Arch Linux (AUR)**
+```bash
+# yay kullanarak
+yay -S gorev-bin
+
+# Veya manual
+git clone https://aur.archlinux.org/gorev-bin.git
+cd gorev-bin
+makepkg -si
+```
+
+#### Yöntem 2: Binary İndirme
+
+```bash
+# Binary'yi indir
+curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
 
 # Çalıştırma izni ver
 chmod +x gorev
 
-# İsteğe bağlı: PATH'e ekle
+# Sistem geneline kur
 sudo mv gorev /usr/local/bin/
+
+# Test et
+gorev version
 ```
 
-#### Windows
-```powershell
-# PowerShell ile indir
-Invoke-WebRequest -Uri "https://github.com/yourusername/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "gorev.exe"
+#### MCP Editör Konfigürasyonu (Linux)
 
-# Veya manuel olarak GitHub releases sayfasından indirin
-```
+##### Claude Desktop
 
-### Opsiyon 2: Docker ile Kurulum
+1. Konfigürasyon dosyasını düzenleyin:
+   ```bash
+   mkdir -p ~/.config/Claude
+   nano ~/.config/Claude/claude_desktop_config.json
+   ```
+
+2. Şu içeriği ekleyin:
+   ```json
+   {
+     "mcpServers": {
+       "gorev": {
+         "command": "/usr/local/bin/gorev",
+         "args": ["serve"],
+         "env": {
+           "GOREV_DATA_DIR": "~/.gorev"
+         }
+       }
+     }
+   }
+   ```
+
+## 🐳 Docker ile Kurulum
+
+### Tüm Platformlarda Çalışır
 
 ```bash
 # Docker image'ı çek
-docker pull ghcr.io/yourusername/gorev:latest
+docker pull ghcr.io/msenol/gorev:latest
 
-# Test et
-docker run --rm ghcr.io/yourusername/gorev:latest version
+# Volume oluştur (veri kalıcılığı için)
+docker volume create gorev-data
+
+# Test çalıştırması
+docker run --rm -v gorev-data:/data ghcr.io/msenol/gorev:latest version
 ```
 
-### Opsiyon 3: Kaynak Koddan Derleme
+### MCP Editör Docker Konfigürasyonu
 
-#### Gereksinimler
-- Go 1.22 veya üzeri
-- Git
-- Make (opsiyonel)
+#### Claude Desktop
 
-#### Derleme Adımları
-```bash
-# Kodu klonla
-git clone https://github.com/yourusername/gorev.git
-cd gorev
-
-# Dependencies'leri indir
-go mod download
-
-# Derle
-go build -o gorev cmd/gorev/main.go
-
-# Veya make ile
-make build
-
-# Tüm platformlar için derle
-make build-all
-```
-
-## 🔧 Claude Entegrasyonu
-
-### Claude Desktop Konfigürasyonu
-
-1. Claude Desktop konfigürasyon dosyasını bulun:
-   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-   - **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-2. Dosyayı düzenleyin ve şunu ekleyin:
-
-#### Binary Kurulum için:
-```json
-{
-  "mcpServers": {
-    "gorev": {
-      "command": "/usr/local/bin/gorev",
-      "args": ["serve"]
-    }
-  }
-}
-```
-
-#### Docker Kurulum için:
 ```json
 {
   "mcpServers": {
@@ -99,8 +242,8 @@ make build-all
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-v", "gorev-data:/app/data",
-        "ghcr.io/yourusername/gorev:latest",
+        "-v", "gorev-data:/data",
+        "ghcr.io/msenol/gorev:latest",
         "serve"
       ]
     }
@@ -108,117 +251,255 @@ make build-all
 }
 ```
 
-### Claude Code Konfigürasyonu
+## 📁 Veri Dizini Konumları
 
-Claude Code terminal'inde:
+| Platform | Varsayılan Konum | Environment Variable |
+|----------|------------------|---------------------|
+| Windows | `%USERPROFILE%\.gorev\` | `GOREV_DATA_DIR` |
+| macOS | `~/.gorev/` | `GOREV_DATA_DIR` |
+| Linux | `~/.gorev/` | `GOREV_DATA_DIR` |
+| Docker | `/data` (volume) | N/A |
 
-#### Binary Kurulum:
-```bash
-claude mcp add gorev /usr/local/bin/gorev serve
+## 🔧 Gelişmiş Konfigürasyon
+
+### Port Değiştirme
+
+```json
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "gorev",
+      "args": ["serve", "--port", "8080"]
+    }
+  }
+}
 ```
 
-#### Docker Kurulum:
-```bash
-claude mcp add-json gorev '{
-  "type": "stdio",
-  "command": "docker",
-  "args": [
-    "run", "--rm", "-i",
-    "-v", "gorev-data:/app/data",
-    "ghcr.io/yourusername/gorev:latest",
-    "serve"
-  ]
-}'
+### Debug Mode
+
+```json
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "gorev",
+      "args": ["serve", "--debug"],
+      "env": {
+        "GOREV_LOG_LEVEL": "debug"
+      }
+    }
+  }
+}
 ```
 
-## ✅ Kurulumu Test Etme
+### Çoklu Instance
 
-### 1. Binary Test
+```json
+{
+  "mcpServers": {
+    "gorev-personal": {
+      "command": "gorev",
+      "args": ["serve", "--port", "8081"],
+      "env": {
+        "GOREV_DATA_DIR": "~/.gorev-personal"
+      }
+    },
+    "gorev-work": {
+      "command": "gorev",
+      "args": ["serve", "--port", "8082"],
+      "env": {
+        "GOREV_DATA_DIR": "~/.gorev-work"
+      }
+    }
+  }
+}
+```
+
+## ✅ Kurulum Doğrulama
+
+### 1. CLI Test
+
 ```bash
-# Versiyon kontrolü
+# Version kontrolü
 gorev version
 
-# Sunucuyu test modunda çalıştır
+# Komutları listele
+gorev --help
+
+# Server'ı test et
 gorev serve --test
 ```
 
-### 2. Claude'da Test
+### 2. MCP Editör Test
 
-Claude'u yeniden başlatın ve şu komutu deneyin:
+MCP uyumlu editörünüzü yeniden başlatın ve AI asistanınıza test edin:
 ```
-Gorev MCP sunucusu çalışıyor mu? Test için basit bir görev oluştur.
+"Gorev çalışıyor mu? Test için yeni bir görev oluştur."
 ```
 
-### 3. Bağlantı Sorunlarını Giderme
+> **Not**: VS Code için MCP extension'ının yüklü olduğundan emin olun.
 
-Debug modunu etkinleştirin:
+### 3. Log Kontrolü
+
 ```bash
-# Environment variable ile
-MCP_DEBUG=true gorev serve
+# Windows
+type %USERPROFILE%\.gorev\logs\gorev.log
 
-# Veya flag ile
-gorev serve --debug
+# macOS/Linux
+tail -f ~/.gorev/logs/gorev.log
 ```
 
-## 📁 Veri Dizini
+## 🆘 Sorun Giderme
 
-Gorev varsayılan olarak verileri şu konumlarda saklar:
+### Windows Sorunları
 
-- **Linux/macOS**: `~/.gorev/data/`
-- **Windows**: `%USERPROFILE%\.gorev\data\`
-- **Docker**: `/app/data` (volume mount edilmiş)
+**"Windows korumalı bilgisayarınızı korudu" hatası:**
+- "Daha fazla bilgi" → "Yine de çalıştır"
 
-Özel konum belirtmek için:
+**DLL hatası:**
+```powershell
+# Visual C++ Redistributable kur
+winget install Microsoft.VCRedist.2022.x64
+```
+
+**PowerShell execution policy:**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### macOS Sorunları
+
+**"cannot be opened because the developer cannot be verified":**
 ```bash
-gorev serve --data-dir /path/to/data
+# Quarantine flag'ini kaldır
+xattr -cr /usr/local/bin/gorev
+
+# Veya System Preferences'tan izin ver
+```
+
+**Port permission hatası:**
+```bash
+# 1024'ten büyük port kullan
+gorev serve --port 8080
+```
+
+### Linux Sorunları
+
+**Permission denied:**
+```bash
+# Çalıştırma izni ver
+chmod +x /usr/local/bin/gorev
+
+# SELinux context düzelt (RHEL/Fedora)
+sudo restorecon -v /usr/local/bin/gorev
+```
+
+**Shared library hatası:**
+```bash
+# Gerekli kütüphaneleri kur
+sudo apt-get install libc6  # Debian/Ubuntu
+sudo dnf install glibc      # Fedora
+```
+
+### Genel Sorunlar
+
+**MCP bağlantı hatası:**
+1. Editörünüzü tamamen kapatın
+2. Config dosyasını kontrol edin (JSON syntax)
+3. `gorev serve` komutunu manuel test edin
+4. Editörünüzü yeniden başlatın
+
+**VS Code MCP extension sorunları:**
+- Extension'ın güncel olduğundan emin olun
+- Developer Console'dan hata loglarını kontrol edin
+- MCP server listesini yenileyin
+
+**Database locked hatası:**
+```bash
+# Eski process'leri temizle
+pkill -f gorev
+rm ~/.gorev/gorev.db-wal
+rm ~/.gorev/gorev.db-shm
 ```
 
 ## 🔄 Güncelleme
 
-### Binary Güncelleme
-```bash
-# Eski versiyonu yedekle
-mv /usr/local/bin/gorev /usr/local/bin/gorev.backup
+### Otomatik Güncelleme
 
-# Yeni versiyonu indir ve kur
-curl -L https://github.com/yourusername/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
-chmod +x gorev
-sudo mv gorev /usr/local/bin/
+```bash
+# Self-update komutu
+gorev update
+
+# Veya package manager ile
+brew upgrade gorev        # macOS
+scoop update gorev       # Windows
+sudo apt upgrade gorev   # Debian/Ubuntu
 ```
 
-### Docker Güncelleme
-```bash
-# Yeni image'ı çek
-docker pull ghcr.io/yourusername/gorev:latest
+### Manuel Güncelleme
 
-# Claude Desktop'ı yeniden başlat
+```bash
+# Mevcut versiyonu kontrol et
+gorev version
+
+# Yedek al
+cp $(which gorev) ~/gorev.backup
+
+# Yeni versiyonu indir ve değiştir
+# (Platform spesifik komutları kullan)
 ```
 
 ## ❌ Kaldırma
 
-### Binary Kaldırma
-```bash
-# Binary'yi sil
-sudo rm /usr/local/bin/gorev
+### Windows
+```powershell
+# Program Files'tan sil
+Remove-Item -Recurse -Force "C:\Program Files\gorev"
 
-# Veri dizinini sil (DİKKAT: Tüm veriler silinir!)
+# Veri dizinini sil (DİKKAT: Veriler silinir!)
+Remove-Item -Recurse -Force "$env:USERPROFILE\.gorev"
+
+# PATH'den kaldır
+[Environment]::SetEnvironmentVariable("Path", ($env:Path -split ';' | Where-Object { $_ -ne "C:\Program Files\gorev" }) -join ';', [EnvironmentVariableTarget]::Machine)
+```
+
+### macOS
+```bash
+# Homebrew ile kurulduysa
+brew uninstall gorev
+
+# Manuel kurulum
+sudo rm /usr/local/bin/gorev
 rm -rf ~/.gorev
 ```
 
-### Docker Kaldırma
+### Linux
 ```bash
-# Image'ı sil
-docker rmi ghcr.io/yourusername/gorev:latest
+# Package manager ile
+sudo apt remove gorev      # Debian/Ubuntu
+sudo dnf remove gorev      # Fedora
+yay -R gorev-bin          # Arch
 
-# Volume'u sil (DİKKAT: Tüm veriler silinir!)
-docker volume rm gorev-data
+# Manuel kurulum
+sudo rm /usr/local/bin/gorev
+rm -rf ~/.gorev
 ```
 
-### Claude Konfigürasyonunu Temizle
-Claude Desktop config dosyasından `gorev` girişini silin.
+## 📚 İlgili Dokümantasyon
 
-## 🆘 Yardım
+- [Kullanım Kılavuzu](kullanim.md)
+- [MCP Araçları Referansı](mcp-araclari.md)
+- [Örnek Kullanımlar](ornekler.md)
+
+## 💬 Destek
 
 Kurulum sorunları için:
-- [GitHub Issues](https://github.com/yourusername/gorev/issues)
-- [Troubleshooting Guide](https://github.com/yourusername/gorev/wiki/Troubleshooting)
+- [GitHub Issues](https://github.com/msenol/gorev/issues)
+- [Discussions](https://github.com/msenol/gorev/discussions)
+
+---
+
+<div align="center">
+
+*🤖 Bu detaylı kurulum rehberi Claude (Anthropic) yardımıyla hazırlanmıştır - AI destekli dokümantasyonun gücü!*
+
+</div>

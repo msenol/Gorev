@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- **Enhanced**: Complete documentation overhaul with Claude (Anthropic) assistance
+- **Added**: Platform-specific installation guides for Windows, macOS, and Linux
+- **Added**: MCP editor integration guides for VS Code, Windsurf, Cursor
+- **Added**: Comprehensive examples documentation (ornekler.md)
+- **Added**: API reference documentation (api-referans.md)
+- **Added**: Developer guide (gelistirme.md)
+- **Updated**: Clarified MCP compatibility with multiple AI-enabled editors
+- **Fixed**: All placeholder URLs replaced with actual GitHub repository URLs
+
 ## [0.5.0] - 2025-06-27
 
 ### Added
@@ -81,10 +91,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - ⏳ for pending dependencies
     - Warning message if task cannot be started
 
-#### Database Migration System
-- **Migrated** from manual table creation to `golang-migrate/migrate`
-- **Database schema versioning** with migration files in `internal/veri/migrations/`
-- **Three migrations implemented**:
+#### Database Schema Management
+- **Implemented** database schema versioning with `golang-migrate/migrate`
+- **Schema files** organized in `internal/veri/migrations/`
+- **Schema versions**:
   1. `000001_initial_schema.up.sql` - Base tables
   2. `000002_add_due_date_to_gorevler.up.sql` - Due date support
   3. `000003_add_tags.up.sql` - Tagging system
