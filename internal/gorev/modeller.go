@@ -53,15 +53,15 @@ type Baglanti struct {
 
 // GorevTemplate görev oluşturma şablonu
 type GorevTemplate struct {
-	ID              string            `json:"id"`
-	Isim            string            `json:"isim"`
-	Tanim           string            `json:"tanim"`
-	VarsayilanBaslik string           `json:"varsayilan_baslik"`
-	AciklamaTemplate string           `json:"aciklama_template"`
-	Alanlar         []TemplateAlan   `json:"alanlar"`
-	OrnekDegerler   map[string]string `json:"ornek_degerler"`
-	Kategori        string            `json:"kategori"`
-	Aktif           bool              `json:"aktif"`
+	ID               string            `json:"id"`
+	Isim             string            `json:"isim"`
+	Tanim            string            `json:"tanim"`
+	VarsayilanBaslik string            `json:"varsayilan_baslik"`
+	AciklamaTemplate string            `json:"aciklama_template"`
+	Alanlar          []TemplateAlan    `json:"alanlar"`
+	OrnekDegerler    map[string]string `json:"ornek_degerler"`
+	Kategori         string            `json:"kategori"`
+	Aktif            bool              `json:"aktif"`
 }
 
 // TemplateAlan template'deki özelleştirilebilir alanlar

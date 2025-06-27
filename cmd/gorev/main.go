@@ -171,7 +171,7 @@ func showTemplate(templateID string) error {
 	fmt.Printf("Kategori: %s\n", template.Kategori)
 	fmt.Printf("Açıklama: %s\n", template.Tanim)
 	fmt.Printf("\nBaşlık Şablonu: %s\n", template.VarsayilanBaslik)
-	
+
 	fmt.Println("\nAlanlar:")
 	for _, alan := range template.Alanlar {
 		zorunlu := ""
@@ -190,7 +190,7 @@ func showTemplate(templateID string) error {
 
 	fmt.Println("\nÖrnek Açıklama:")
 	fmt.Println(template.AciklamaTemplate)
-	
+
 	return nil
 }
 

@@ -572,34 +572,34 @@ func (h *Handlers) GorevBagimlilikEkle(params map[string]interface{}) (*mcp.Call
 // TemplateListele kullanılabilir template'leri listeler
 func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	kategori, _ := params["kategori"].(string)
-	
+
 	templates, err := h.isYonetici.TemplateListele(kategori)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("template'ler listelenemedi: %v", err)), nil
 	}
-	
+
 	if len(templates) == 0 {
 		return mcp.NewToolResultText("Henüz template bulunmuyor."), nil
 	}
-	
+
 	metin := "## 📋 Görev Template'leri\n\n"
-	
+
 	// Kategorilere göre grupla
 	kategoriMap := make(map[string][]*gorev.GorevTemplate)
 	for _, tmpl := range templates {
 		kategoriMap[tmpl.Kategori] = append(kategoriMap[tmpl.Kategori], tmpl)
 	}
-	
+
 	// Her kategoriyi göster
 	for kat, tmpls := range kategoriMap {
 		metin += fmt.Sprintf("### %s\n\n", kat)
-		
+
 		for _, tmpl := range tmpls {
 			metin += fmt.Sprintf("#### %s\n", tmpl.Isim)
 			metin += fmt.Sprintf("- **ID:** `%s`\n", tmpl.ID)
 			metin += fmt.Sprintf("- **Açıklama:** %s\n", tmpl.Tanim)
 			metin += fmt.Sprintf("- **Başlık Şablonu:** `%s`\n", tmpl.VarsayilanBaslik)
-			
+
 			// Alanları göster
 			if len(tmpl.Alanlar) > 0 {
 				metin += "- **Alanlar:**\n"
@@ -621,9 +621,9 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 			metin += "\n"
 		}
 	}
-	
+
 	metin += "\n💡 **Kullanım:** `templateden_gorev_olustur` komutunu template ID'si ve alan değerleriyle kullanın."
-	
+
 	return mcp.NewToolResultText(metin), nil
 }
 
@@ -633,23 +633,23 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 	if !ok || templateID == "" {
 		return mcp.NewToolResultError("template_id parametresi gerekli"), nil
 	}
-	
+
 	degerlerRaw, ok := params["degerler"].(map[string]interface{})
 	if !ok {
 		return mcp.NewToolResultError("degerler parametresi gerekli ve obje tipinde olmalı"), nil
 	}
-	
+
 	// Interface{} map'i string map'e çevir
 	degerler := make(map[string]string)
 	for k, v := range degerlerRaw {
 		degerler[k] = fmt.Sprintf("%v", v)
 	}
-	
+
 	gorev, err := h.isYonetici.TemplatedenGorevOlustur(templateID, degerler)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("template'den görev oluşturulamadı: %v", err)), nil
 	}
-	
+
 	return mcp.NewToolResultText(fmt.Sprintf("✓ Template kullanılarak görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID)), nil
 }
 

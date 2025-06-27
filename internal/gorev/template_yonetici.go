@@ -13,31 +13,31 @@ import (
 // TemplateOlustur yeni bir görev template'i oluşturur
 func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 	template.ID = uuid.New().String()
-	
+
 	// Alanları JSON'a çevir
 	alanlarJSON, err := json.Marshal(template.Alanlar)
 	if err != nil {
 		return fmt.Errorf("alanlar JSON'a çevrilemedi: %w", err)
 	}
-	
+
 	// Örnek değerleri JSON'a çevir
 	ornekDegerlerJSON, err := json.Marshal(template.OrnekDegerler)
 	if err != nil {
 		return fmt.Errorf("örnek değerler JSON'a çevrilemedi: %w", err)
 	}
-	
+
 	sorgu := `INSERT INTO gorev_templateleri 
 		(id, isim, tanim, varsayilan_baslik, aciklama_template, alanlar, ornek_degerler, kategori, aktif)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	
-	_, err = vy.db.Exec(sorgu, template.ID, template.Isim, template.Tanim, 
-		template.VarsayilanBaslik, template.AciklamaTemplate, 
+
+	_, err = vy.db.Exec(sorgu, template.ID, template.Isim, template.Tanim,
+		template.VarsayilanBaslik, template.AciklamaTemplate,
 		string(alanlarJSON), string(ornekDegerlerJSON), template.Kategori, template.Aktif)
-		
+
 	if err != nil {
 		return fmt.Errorf("template oluşturulamadı: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -45,7 +45,7 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, error) {
 	var sorgu string
 	var args []interface{}
-	
+
 	if kategori != "" {
 		sorgu = `SELECT id, isim, tanim, varsayilan_baslik, aciklama_template, 
 				alanlar, ornek_degerler, kategori, aktif 
@@ -56,38 +56,38 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 				alanlar, ornek_degerler, kategori, aktif 
 				FROM gorev_templateleri WHERE aktif = 1 ORDER BY kategori, isim`
 	}
-	
+
 	rows, err := vy.db.Query(sorgu, args...)
 	if err != nil {
 		return nil, fmt.Errorf("template'ler getirilemedi: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var templates []*GorevTemplate
 	for rows.Next() {
 		template := &GorevTemplate{}
 		var alanlarJSON, ornekDegerlerJSON string
-		
+
 		err := rows.Scan(&template.ID, &template.Isim, &template.Tanim,
 			&template.VarsayilanBaslik, &template.AciklamaTemplate,
 			&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
 		if err != nil {
 			return nil, fmt.Errorf("template okunamadı: %w", err)
 		}
-		
+
 		// Alanları parse et
 		if err := json.Unmarshal([]byte(alanlarJSON), &template.Alanlar); err != nil {
 			return nil, fmt.Errorf("alanlar parse edilemedi: %w", err)
 		}
-		
+
 		// Örnek değerleri parse et
 		if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
 			return nil, fmt.Errorf("örnek değerler parse edilemedi: %w", err)
 		}
-		
+
 		templates = append(templates, template)
 	}
-	
+
 	return templates, nil
 }
 
@@ -95,33 +95,33 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error) {
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
-	
+
 	sorgu := `SELECT id, isim, tanim, varsayilan_baslik, aciklama_template, 
 			alanlar, ornek_degerler, kategori, aktif 
 			FROM gorev_templateleri WHERE id = ?`
-	
+
 	err := vy.db.QueryRow(sorgu, templateID).Scan(
 		&template.ID, &template.Isim, &template.Tanim,
 		&template.VarsayilanBaslik, &template.AciklamaTemplate,
 		&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
-		
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("template bulunamadı: %s", templateID)
 		}
 		return nil, fmt.Errorf("template getirilemedi: %w", err)
 	}
-	
+
 	// Alanları parse et
 	if err := json.Unmarshal([]byte(alanlarJSON), &template.Alanlar); err != nil {
 		return nil, fmt.Errorf("alanlar parse edilemedi: %w", err)
 	}
-	
+
 	// Örnek değerleri parse et
 	if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
 		return nil, fmt.Errorf("örnek değerler parse edilemedi: %w", err)
 	}
-	
+
 	return template, nil
 }
 
@@ -132,7 +132,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Zorunlu alanları kontrol et
 	for _, alan := range template.Alanlar {
 		if alan.Zorunlu {
@@ -141,32 +141,32 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 			}
 		}
 	}
-	
+
 	// Başlık oluştur
 	baslik := template.VarsayilanBaslik
 	for key, value := range degerler {
 		baslik = strings.ReplaceAll(baslik, "{{"+key+"}}", value)
 	}
-	
+
 	// Açıklama oluştur
 	aciklama := template.AciklamaTemplate
 	for key, value := range degerler {
 		aciklama = strings.ReplaceAll(aciklama, "{{"+key+"}}", value)
 	}
-	
+
 	// Varsayılan değerleri uygula
 	oncelik := "orta"
 	if val, ok := degerler["oncelik"]; ok {
 		oncelik = val
 	}
-	
+
 	var sonTarih *time.Time
 	if val, ok := degerler["son_tarih"]; ok {
 		if t, err := time.Parse("2006-01-02", val); err == nil {
 			sonTarih = &t
 		}
 	}
-	
+
 	// Etiketleri ayır
 	var etiketler []string
 	if val, ok := degerler["etiketler"]; ok {
@@ -175,7 +175,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 			etiketler[i] = strings.TrimSpace(etiketler[i])
 		}
 	}
-	
+
 	// Görev oluştur
 	gorev := &Gorev{
 		Baslik:   baslik,
@@ -183,7 +183,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 		Oncelik:  oncelik,
 		Durum:    "beklemede",
 	}
-	
+
 	// ProjeID'yi ayarla
 	if val, ok := degerler["proje_id"]; ok {
 		gorev.ProjeID = val
@@ -192,34 +192,34 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 		aktifProjeID, _ := vy.AktifProjeGetir()
 		gorev.ProjeID = aktifProjeID
 	}
-	
+
 	// ID ve tarihler ayarla
 	gorev.ID = uuid.New().String()
 	gorev.OlusturmaTarih = time.Now()
 	gorev.GuncellemeTarih = time.Now()
 	gorev.SonTarih = sonTarih
-	
+
 	// Görevi kaydet
 	err = vy.GorevKaydet(gorev)
 	if err != nil {
 		return nil, fmt.Errorf("görev kaydedilemedi: %w", err)
 	}
-	
+
 	// Etiketleri ayarla
 	if len(etiketler) > 0 {
 		etiketNesneleri, err := vy.EtiketleriGetirVeyaOlustur(etiketler)
 		if err != nil {
 			return nil, fmt.Errorf("etiketler oluşturulamadı: %w", err)
 		}
-		
+
 		err = vy.GorevEtiketleriniAyarla(gorev.ID, etiketNesneleri)
 		if err != nil {
 			return nil, fmt.Errorf("görev etiketleri ayarlanamadı: %w", err)
 		}
-		
+
 		gorev.Etiketler = etiketNesneleri
 	}
-	
+
 	return gorev, nil
 }
 
@@ -395,7 +395,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 			Aktif:    true,
 		},
 	}
-	
+
 	for _, template := range templates {
 		if err := vy.TemplateOlustur(template); err != nil {
 			// Template zaten varsa hata verme
@@ -404,6 +404,6 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 			}
 		}
 	}
-	
+
 	return nil
 }

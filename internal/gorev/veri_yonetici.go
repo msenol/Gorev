@@ -68,13 +68,13 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	}
 
 	log.Println("Veritabanı başarıyla migrate edildi.")
-	
+
 	// Varsayılan template'leri oluştur
 	if err := vy.VarsayilanTemplateleriOlustur(); err != nil {
 		log.Printf("Varsayılan template'ler oluşturulurken uyarı: %v", err)
 		// Hata durumunda devam et, kritik değil
 	}
-	
+
 	return nil
 }
 
