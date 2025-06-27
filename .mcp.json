@@ -23,8 +23,16 @@
       "url": "https://mcp.context7.com/sse"
     },
     "gorev": {
-      "command": "/mnt/f/Development/Projects/task-orchestrator/gorev",
+      "command": "docker",
       "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-v",
+        "/mnt/f/Development/Projects/task-orchestrator/internal:/app/internal",
+        "-v", 
+        "/mnt/f/Development/Projects/task-orchestrator/data:/app/data",
+        "gorev:0.5.0",
         "serve"
       ]
     }

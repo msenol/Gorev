@@ -47,7 +47,6 @@ vendor/
 # Windows
 Thumbs.db
 
-#Arşivler
-arsiv-kotlin/
+# Test binary
 gorev-test
 .env

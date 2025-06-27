@@ -1,15 +1,17 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
 ## Last Updated: 27 June 2025
+
+> 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
 ### Recent Changes
 - **Added Task Template System** - Predefined templates for bug reports, feature requests, technical debt, and research tasks
 - **Added Task Dependencies** - Tasks can now have dependencies that must be completed before starting
 - **Added Due Dates** - Tasks can have deadlines with filtering for urgent/overdue tasks
 - **Added Tagging System** - Tasks can be categorized with multiple tags
-- **Database Migration System** - Migrated to golang-migrate for schema versioning
+- **Database Schema Management** - Using golang-migrate for version control
 - **Enhanced gorev_listele** - Added sorting (sirala) and filtering (filtre, etiket) parameters
 - **Enhanced gorev_olustur** - Now accepts son_tarih (due date) and etiketler (tags) parameters
 - **Enhanced gorev_detay** - Shows dependencies with completion status indicators
@@ -28,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Gorev is an MCP (Model Context Protocol) server written in Go that provides task management capabilities to AI assistants. The project was recently converted from Kotlin to Go and uses the community MCP SDK (`mark3labs/mcp-go`).
+Gorev is an MCP (Model Context Protocol) server written in Go that provides task management capabilities to AI assistants across all MCP-compatible editors (Claude Desktop, VS Code, Windsurf, Cursor, Zed, etc.). The project uses the community MCP SDK (`mark3labs/mcp-go`).
 
 ## Architecture
 

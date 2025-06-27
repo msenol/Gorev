@@ -1,8 +1,8 @@
 # Build aşaması
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Build dependencies
-RUN apk add --no-cache gcc musl-dev sqlite-dev
+RUN apk add --no-cache gcc musl-dev sqlite-dev git
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Binary'yi derle
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o gorev cmd/gorev/main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -mod=mod -buildvcs=false -a -installsuffix cgo -ldflags '-extldflags "-static"' -o gorev ./cmd/gorev
 
 # Final aşama
 FROM alpine:latest
@@ -25,6 +25,9 @@ WORKDIR /app
 
 # Binary'yi kopyala
 COPY --from=builder /app/gorev .
+
+# Migration dosyalarını kopyala
+COPY --from=builder /app/internal/veri/migrations ./internal/veri/migrations
 
 # Veri dizini oluştur
 RUN mkdir -p /app/data
