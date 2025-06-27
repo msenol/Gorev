@@ -2,16 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Last Updated: 25 June 2025
+## Last Updated: 27 June 2025
 
 ### Recent Changes
-- **Added Active Project Management** - New feature to set and use an active project context
-- **Enhanced gorev_olustur** - Now accepts optional proje_id parameter, uses active project by default
-- **Enhanced gorev_listele** - Added tum_projeler parameter to filter by active project
-- **New MCP tools**: `proje_aktif_yap`, `aktif_proje_goster`, `aktif_proje_kaldir`
-- **Database schema update** - Added aktif_proje table for persistent active project storage
-- **Breaking change**: GorevOlustur now takes 4 parameters (added projeID)
-- Added veri_yonetici_ext.go for active project database operations
+- **Added Task Dependencies** - Tasks can now have dependencies that must be completed before starting
+- **Added Due Dates** - Tasks can have deadlines with filtering for urgent/overdue tasks
+- **Added Tagging System** - Tasks can be categorized with multiple tags
+- **Database Migration System** - Migrated to golang-migrate for schema versioning
+- **Enhanced gorev_listele** - Added sorting (sirala) and filtering (filtre, etiket) parameters
+- **Enhanced gorev_olustur** - Now accepts son_tarih (due date) and etiketler (tags) parameters
+- **Enhanced gorev_detay** - Shows dependencies with completion status indicators
+- **New MCP tool**: `gorev_bagimlilik_ekle` for creating task dependencies
+- **Breaking changes**: 
+  - GorevOlustur now takes 6 parameters (added sonTarihStr, etiketIsimleri)
+  - GorevListele now takes 3 parameters (added sirala, filtre)
+  - VeriYonetici constructor requires migrations path
 
 ## Project Overview
 
@@ -73,28 +78,36 @@ make run                 # Build and run server
 
 ## MCP Tools
 
-The server implements 13 MCP tools:
+The server implements 14 MCP tools:
 
 ### Task Management
-1. **gorev_olustur**: Create new task (params: baslik, aciklama, oncelik, proje_id?)
+1. **gorev_olustur**: Create new task (params: baslik, aciklama, oncelik, proje_id?, son_tarih?, etiketler?)
    - proje_id is optional; if not provided, uses active project
-2. **gorev_listele**: List tasks (params: durum?, tum_projeler?)
+   - son_tarih: optional due date in YYYY-MM-DD format
+   - etiketler: optional comma-separated tags
+2. **gorev_listele**: List tasks (params: durum?, tum_projeler?, sirala?, filtre?, etiket?)
    - tum_projeler: if false/omitted, shows only active project tasks
+   - sirala: son_tarih_asc, son_tarih_desc
+   - filtre: acil (due in 7 days), gecmis (overdue)
+   - etiket: filter by tag name
 3. **gorev_detay**: Show detailed task info in markdown (params: id)
+   - Shows due dates, tags, and dependencies with status indicators
 4. **gorev_guncelle**: Update task status (params: id, durum)
-5. **gorev_duzenle**: Edit task properties (params: id, baslik?, aciklama?, oncelik?, proje_id?)
+   - Validates dependencies before allowing "devam_ediyor" status
+5. **gorev_duzenle**: Edit task properties (params: id, baslik?, aciklama?, oncelik?, proje_id?, son_tarih?)
 6. **gorev_sil**: Delete task (params: id, onay)
+7. **gorev_bagimlilik_ekle**: Create task dependency (params: kaynak_id, hedef_id, baglanti_tipi)
 
 ### Project Management
-7. **proje_olustur**: Create project (params: isim, tanim)
-8. **proje_listele**: List all projects with task counts (no params)
-9. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
-10. **proje_aktif_yap**: Set active project (params: proje_id)
-11. **aktif_proje_goster**: Show current active project (no params)
-12. **aktif_proje_kaldir**: Remove active project setting (no params)
+8. **proje_olustur**: Create project (params: isim, tanim)
+9. **proje_listele**: List all projects with task counts (no params)
+10. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
+11. **proje_aktif_yap**: Set active project (params: proje_id)
+12. **aktif_proje_goster**: Show current active project (no params)
+13. **aktif_proje_kaldir**: Remove active project setting (no params)
 
 ### Reporting
-13. **ozet_goster**: Show summary statistics (no params)
+14. **ozet_goster**: Show summary statistics (no params)
 
 All tools follow the pattern in `internal/mcp/handlers.go` and are registered in `RegisterTools()`. Task descriptions support full markdown formatting.
 
@@ -136,14 +149,16 @@ func TestGorevOlustur(t *testing.T) {
 
 ## Database Schema
 
-SQLite database with four tables:
+SQLite database with six tables:
 
 - **projeler**: id, isim, tanim, olusturma_tarih, guncelleme_tarih
-- **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih
-- **baglantilar**: id, kaynak_id, hedef_id, baglanti_tip (future feature)
+- **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih
+- **baglantilar**: id, kaynak_id, hedef_id, baglanti_tip (for task dependencies)
 - **aktif_proje**: id (CHECK id=1), proje_id (stores single active project)
+- **etiketler**: id, isim (tags)
+- **gorev_etiketleri**: gorev_id, etiket_id (many-to-many relationship)
 
-Migrations are handled manually in `tablolariOlustur()`.
+Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 
 ## Error Handling
 

@@ -11,17 +11,18 @@ Gorev'in sağladığı tüm MCP tool'larının detaylı açıklaması.
 4. [gorev_guncelle](#gorev_guncelle) - Görev durumu güncelleme
 5. [gorev_duzenle](#gorev_duzenle) - Görev bilgilerini düzenleme
 6. [gorev_sil](#gorev_sil) - Görev silme
+7. [gorev_bagimlilik_ekle](#gorev_bagimlilik_ekle) - Görevler arası bağımlılık oluşturma
 
 ### Proje Yönetimi
-7. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
-8. [proje_listele](#proje_listele) - Tüm projeleri listeleme
-9. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
-10. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
-11. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
-12. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
+8. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
+9. [proje_listele](#proje_listele) - Tüm projeleri listeleme
+10. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
+11. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
+12. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
+13. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
 
 ### Raporlama
-13. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
+14. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
 
 ---
 
@@ -37,6 +38,8 @@ Yeni bir görev oluşturur.
 | `aciklama` | string | ❌ | Detaylı görev açıklaması | "" |
 | `oncelik` | string | ❌ | Öncelik seviyesi: `dusuk`, `orta`, `yuksek` | `orta` |
 | `proje_id` | string | ❌ | Projeye bağlamak için proje ID'si | Aktif proje |
+| `son_tarih` | string | ❌ | Son teslim tarihi (YYYY-AA-GG formatında) | - |
+| `etiketler` | string | ❌ | Virgülle ayrılmış etiketler | - |
 
 ### Örnek Kullanım
 
@@ -73,6 +76,20 @@ Yeni bir görev oluşturur.
 }
 ```
 
+**Son tarihli ve etiketli görev:**
+```json
+{
+  "name": "gorev_olustur",
+  "arguments": {
+    "baslik": "Güvenlik denetimi",
+    "aciklama": "Tüm API endpoint'lerinin güvenlik testlerini yap",
+    "oncelik": "yuksek",
+    "son_tarih": "2025-07-15",
+    "etiketler": "güvenlik, test, acil"
+  }
+}
+```
+
 **Not:** `proje_id` parametresi verilmezse ve aktif proje ayarlanmışsa, görev otomatik olarak aktif projeye eklenir.
 
 ### Yanıt
@@ -98,6 +115,9 @@ Görevleri filtreleyerek listeler.
 |-----------|-----|---------|----------|------------|
 | `durum` | string | ❌ | Filtrelenecek durum: `beklemede`, `devam_ediyor`, `tamamlandi` | Tümü |
 | `tum_projeler` | boolean | ❌ | Tüm projelerdeki görevleri göster | `false` |
+| `sirala` | string | ❌ | Sıralama: `son_tarih_asc`, `son_tarih_desc` | - |
+| `filtre` | string | ❌ | Zaman filtresi: `acil` (7 gün içinde), `gecmis` (gecikmiş) | - |
+| `etiket` | string | ❌ | Etiket adına göre filtreleme | - |
 
 ### Örnek Kullanım
 
@@ -125,6 +145,27 @@ Görevleri filtreleyerek listeler.
   "name": "gorev_listele",
   "arguments": {
     "tum_projeler": true
+  }
+}
+```
+
+**Acil görevler (7 gün içinde son tarih):**
+```json
+{
+  "name": "gorev_listele",
+  "arguments": {
+    "filtre": "acil",
+    "sirala": "son_tarih_asc"
+  }
+}
+```
+
+**Etiketle filtreleme:**
+```json
+{
+  "name": "gorev_listele",
+  "arguments": {
+    "etiket": "güvenlik"
   }
 }
 ```
@@ -590,14 +631,54 @@ Bu araç parametre almaz.
 
 ---
 
+## gorev_bagimlilik_ekle
+
+Görevler arası bağımlılık oluşturur. Bir görevin başka bir göreve bağımlı olmasını sağlar.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `kaynak_id` | string | ✅ | Önce tamamlanması gereken görevin ID'si |
+| `hedef_id` | string | ✅ | Bağımlı görevin ID'si |
+| `baglanti_tipi` | string | ✅ | Bağlantı tipi (genellikle "onceki") |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_bagimlilik_ekle",
+  "arguments": {
+    "kaynak_id": "550e8400-e29b-41d4-a716-446655440000",
+    "hedef_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "baglanti_tipi": "onceki"
+  }
+}
+```
+
+### Yanıt
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "✓ Bağımlılık eklendi: 550e8400-e29b-41d4-a716-446655440000 -> 7c9e6679-7425-40de-944b-e07fc1f90ae7 (onceki)"
+  }]
+}
+```
+
+**Not:** Bağımlılık eklendikten sonra, hedef görev "devam_ediyor" durumuna geçmek için kaynak görevin "tamamlandi" durumunda olması gerekir.
+
+---
+
 ## 🔄 Gelecek Sürümlerde Eklenecek Araçlar
 
 ### Planlanan Araçlar
 
-1. **gorev_bagla** - Görevler arası bağımlılık oluşturma
+1. <s>**gorev_bagla** - Görevler arası bağımlılık oluşturma</s> ✅ Eklendi (gorev_bagimlilik_ekle)
 2. **gorev_ara** - Görevlerde arama yapma
 3. **gorev_filtrele** - Çoklu kriterlere göre filtreleme
-4. **gorev_etiketle** - Görevlere etiket ekleme
+4. <s>**gorev_etiketle** - Görevlere etiket ekleme</s> ✅ Eklendi (gorev_olustur ile)
 5. **gorev_not_ekle** - Göreve not/yorum ekleme
 6. **proje_sil** - Proje silme (görevleriyle birlikte)
 7. **rapor_olustur** - Detaylı proje raporları

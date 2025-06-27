@@ -14,6 +14,9 @@ Güçlü ve esnek görev yönetimi için Model Context Protocol (MCP) sunucusu.
 - 🚀 Yüksek performanslı Go implementasyonu
 - 🛠️ MCP protokolü ile AI entegrasyonu
 - 🎪 **Aktif Proje Yönetimi** - Varsayılan proje seçimi ile hızlı görev oluşturma
+- 📅 **Son Teslim Tarihleri** - Görevler için deadline takibi ve acil/gecikmiş filtreleme
+- 🏷️ **Etiketleme Sistemi** - Görevleri kategorize etmek için çoklu etiket desteği
+- 🔗 **Görev Bağımlılıkları** - Görevler arası bağımlılık yönetimi ve otomatik kontrol
 
 ## Kurulum
 

@@ -7,7 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.3.0] - 2025-06-25
+## [0.4.0] - 2025-06-27
+
+### Added
+
+#### Task Due Dates (Son Tarih)
+- **New feature**: Tasks can now have due dates for deadline tracking
+- **Database changes**: Added `son_tarih` column to `gorevler` table via migration
+- **Enhanced tools**:
+  - `gorev_olustur` - Accepts `son_tarih` parameter in YYYY-MM-DD format
+  - `gorev_duzenle` - Can edit due dates
+  - `gorev_listele` - New sorting options: `son_tarih_asc`, `son_tarih_desc`
+  - `gorev_listele` - New filters: `acil` (due in 7 days), `gecmis` (overdue)
+  - `gorev_detay` - Displays due dates in task details
+
+#### Task Tagging System (Etiketler)
+- **New feature**: Tasks can be categorized with multiple tags
+- **Database changes**:
+  - Added `etiketler` table for storing tags
+  - Added `gorev_etiketleri` table for many-to-many relationships
+- **Enhanced tools**:
+  - `gorev_olustur` - Accepts `etiketler` parameter (comma-separated tags)
+  - `gorev_listele` - Can filter by `etiket` parameter
+  - `gorev_detay` - Displays tags in task details
+- Tags are automatically created if they don't exist
+
+#### Task Dependencies (Görev Bağımlılıkları)
+- **New feature**: Tasks can have dependencies that must be completed before starting
+- **New MCP tool**: `gorev_bagimlilik_ekle` - Create dependencies between tasks
+- **Business logic**:
+  - Tasks cannot be moved to "devam_ediyor" status if dependencies are incomplete
+  - New `GorevBagimliMi` function checks dependency satisfaction
+- **Enhanced tools**:
+  - `gorev_guncelle` - Validates dependencies before status changes
+  - `gorev_detay` - Shows dependencies with completion status indicators:
+    - ✅ for completed dependencies
+    - ⏳ for pending dependencies
+    - Warning message if task cannot be started
+
+#### Database Migration System
+- **Migrated** from manual table creation to `golang-migrate/migrate`
+- **Database schema versioning** with migration files in `internal/veri/migrations/`
+- **Three migrations implemented**:
+  1. `000001_initial_schema.up.sql` - Base tables
+  2. `000002_add_due_date_to_gorevler.up.sql` - Due date support
+  3. `000003_add_tags.up.sql` - Tagging system
+
+### Changed
+
+#### Breaking Changes
+- **`GorevOlustur`** function signature: Now takes 6 parameters (added `sonTarihStr`, `etiketIsimleri`)
+- **`GorevListele`** function signature: Now takes 3 parameters (added `sirala`, `filtre`)
+- **`VeriYonetici`** constructor: Now requires migrations path parameter
+- **Method renames**:
+  - `GorevDetayAl` → `GorevGetir`
+  - `ProjeDetayAl` → `ProjeGetir`
+
+#### Improvements
+- Enhanced task detail view with better dependency visualization
+- Improved error messages for dependency violations
+- Better test coverage with dependency validation tests
+
+### Technical
+- Added `GorevBagimliMi` method to check task dependencies
+- Added `BaglantiEkle` and `BaglantilariGetir` methods for dependency management
+- Added `EtiketleriGetirVeyaOlustur` and `GorevEtiketleriniAyarla` for tag management
+- Updated mock implementations in tests to support new features
+- Integration tests updated for new functionality
+
+## [0.3.0] - 2025-06-25
 
 ### Added
 
@@ -36,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated IsYonetici to support active project operations
 - Enhanced MCP handlers to utilize active project context
 
-## [1.2.0] - 2025-06-25
+## [0.2.0] - 2025-06-25
 
 ### Added
 
@@ -89,7 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Added table-driven test patterns following Go conventions**
 - **Test coverage includes: edge cases, SQL injection, concurrent access, NULL handling**
 
-## [1.0.0] - 2024-12-15
+## [0.1.0] - 2024-12-15
 
 ### Added
 - Initial release with core MCP server functionality
