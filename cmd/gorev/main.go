@@ -41,7 +41,45 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 		},
 	}
 
-	rootCmd.AddCommand(serveCmd, versionCmd)
+	// Template komutları
+	templateCmd := &cobra.Command{
+		Use:   "template",
+		Short: "Görev template'leri yönetimi",
+		Long:  "Görev oluşturmak için kullanılabilecek template'leri listele ve yönet",
+	}
+
+	templateListCmd := &cobra.Command{
+		Use:   "list [kategori]",
+		Short: "Kullanılabilir template'leri listele",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var kategori string
+			if len(args) > 0 {
+				kategori = args[0]
+			}
+			return listTemplates(kategori)
+		},
+	}
+
+	templateShowCmd := &cobra.Command{
+		Use:   "show <template-id>",
+		Short: "Template detaylarını göster",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return showTemplate(args[0])
+		},
+	}
+
+	templateInitCmd := &cobra.Command{
+		Use:   "init",
+		Short: "Varsayılan template'leri yeniden oluştur",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initTemplates()
+		},
+	}
+
+	templateCmd.AddCommand(templateListCmd, templateShowCmd, templateInitCmd)
+	rootCmd.AddCommand(serveCmd, versionCmd, templateCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Hata: %v\n", err)
@@ -72,5 +110,104 @@ func runServer() error {
 		return fmt.Errorf("sunucu başlatılamadı: %w", err)
 	}
 
+	return nil
+}
+
+func listTemplates(kategori string) error {
+	// Veritabanını başlat
+	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
+	if err != nil {
+		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
+	}
+	defer veriYonetici.Kapat()
+
+	// Template'leri listele
+	templates, err := veriYonetici.TemplateListele(kategori)
+	if err != nil {
+		return fmt.Errorf("template'ler listelenemedi: %w", err)
+	}
+
+	if len(templates) == 0 {
+		fmt.Println("Henüz template bulunmuyor.")
+		return nil
+	}
+
+	// Kategorilere göre grupla
+	kategoriMap := make(map[string][]*gorev.GorevTemplate)
+	for _, tmpl := range templates {
+		kategoriMap[tmpl.Kategori] = append(kategoriMap[tmpl.Kategori], tmpl)
+	}
+
+	// Her kategoriyi göster
+	for kat, tmpls := range kategoriMap {
+		fmt.Printf("\n=== %s ===\n", kat)
+		for _, tmpl := range tmpls {
+			fmt.Printf("\n%s (ID: %s)\n", tmpl.Isim, tmpl.ID)
+			fmt.Printf("  %s\n", tmpl.Tanim)
+			fmt.Printf("  Başlık: %s\n", tmpl.VarsayilanBaslik)
+		}
+	}
+
+	fmt.Println("\nDetaylı bilgi için: gorev template show <template-id>")
+	return nil
+}
+
+func showTemplate(templateID string) error {
+	// Veritabanını başlat
+	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
+	if err != nil {
+		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
+	}
+	defer veriYonetici.Kapat()
+
+	// Template'i getir
+	template, err := veriYonetici.TemplateGetir(templateID)
+	if err != nil {
+		return fmt.Errorf("template bulunamadı: %w", err)
+	}
+
+	fmt.Printf("\n=== %s ===\n", template.Isim)
+	fmt.Printf("ID: %s\n", template.ID)
+	fmt.Printf("Kategori: %s\n", template.Kategori)
+	fmt.Printf("Açıklama: %s\n", template.Tanim)
+	fmt.Printf("\nBaşlık Şablonu: %s\n", template.VarsayilanBaslik)
+	
+	fmt.Println("\nAlanlar:")
+	for _, alan := range template.Alanlar {
+		zorunlu := ""
+		if alan.Zorunlu {
+			zorunlu = " (zorunlu)"
+		}
+		fmt.Printf("  - %s (%s)%s", alan.Isim, alan.Tip, zorunlu)
+		if alan.Varsayilan != "" {
+			fmt.Printf(" [varsayılan: %s]", alan.Varsayilan)
+		}
+		if len(alan.Secenekler) > 0 {
+			fmt.Printf("\n    Seçenekler: %v", alan.Secenekler)
+		}
+		fmt.Println()
+	}
+
+	fmt.Println("\nÖrnek Açıklama:")
+	fmt.Println(template.AciklamaTemplate)
+	
+	return nil
+}
+
+func initTemplates() error {
+	// Veritabanını başlat
+	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
+	if err != nil {
+		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
+	}
+	defer veriYonetici.Kapat()
+
+	// Varsayılan template'leri oluştur
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	if err != nil {
+		return fmt.Errorf("template'ler oluşturulamadı: %w", err)
+	}
+
+	fmt.Println("✓ Varsayılan template'ler başarıyla oluşturuldu.")
 	return nil
 }

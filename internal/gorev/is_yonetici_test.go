@@ -188,6 +188,27 @@ func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error
 	return result, nil
 }
 
+// Template mock methods
+func (m *MockVeriYonetici) TemplateOlustur(template *GorevTemplate) error {
+	return nil
+}
+
+func (m *MockVeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, error) {
+	return []*GorevTemplate{}, nil
+}
+
+func (m *MockVeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error) {
+	return &GorevTemplate{}, nil
+}
+
+func (m *MockVeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
+	return &Gorev{}, nil
+}
+
+func (m *MockVeriYonetici) VarsayilanTemplateleriOlustur() error {
+	return nil
+}
+
 // Tests
 
 func TestYeniIsYonetici(t *testing.T) {

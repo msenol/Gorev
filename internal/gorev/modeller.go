@@ -50,3 +50,25 @@ type Baglanti struct {
 	HedefID     string `json:"hedef_id"`
 	BaglantiTip string `json:"baglanti_tip"`
 }
+
+// GorevTemplate görev oluşturma şablonu
+type GorevTemplate struct {
+	ID              string            `json:"id"`
+	Isim            string            `json:"isim"`
+	Tanim           string            `json:"tanim"`
+	VarsayilanBaslik string           `json:"varsayilan_baslik"`
+	AciklamaTemplate string           `json:"aciklama_template"`
+	Alanlar         []TemplateAlan   `json:"alanlar"`
+	OrnekDegerler   map[string]string `json:"ornek_degerler"`
+	Kategori        string            `json:"kategori"`
+	Aktif           bool              `json:"aktif"`
+}
+
+// TemplateAlan template'deki özelleştirilebilir alanlar
+type TemplateAlan struct {
+	Isim       string   `json:"isim"`
+	Tip        string   `json:"tip"` // text, select, date, number
+	Zorunlu    bool     `json:"zorunlu"`
+	Varsayilan string   `json:"varsayilan"`
+	Secenekler []string `json:"secenekler,omitempty"`
+}

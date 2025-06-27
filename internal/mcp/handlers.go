@@ -569,6 +569,90 @@ func (h *Handlers) GorevBagimlilikEkle(params map[string]interface{}) (*mcp.Call
 	return mcp.NewToolResultText(fmt.Sprintf("✓ Bağımlılık eklendi: %s -> %s (%s)", baglanti.KaynakID, baglanti.HedefID, baglanti.BaglantiTip)), nil
 }
 
+// TemplateListele kullanılabilir template'leri listeler
+func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	kategori, _ := params["kategori"].(string)
+	
+	templates, err := h.isYonetici.TemplateListele(kategori)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("template'ler listelenemedi: %v", err)), nil
+	}
+	
+	if len(templates) == 0 {
+		return mcp.NewToolResultText("Henüz template bulunmuyor."), nil
+	}
+	
+	metin := "## 📋 Görev Template'leri\n\n"
+	
+	// Kategorilere göre grupla
+	kategoriMap := make(map[string][]*gorev.GorevTemplate)
+	for _, tmpl := range templates {
+		kategoriMap[tmpl.Kategori] = append(kategoriMap[tmpl.Kategori], tmpl)
+	}
+	
+	// Her kategoriyi göster
+	for kat, tmpls := range kategoriMap {
+		metin += fmt.Sprintf("### %s\n\n", kat)
+		
+		for _, tmpl := range tmpls {
+			metin += fmt.Sprintf("#### %s\n", tmpl.Isim)
+			metin += fmt.Sprintf("- **ID:** `%s`\n", tmpl.ID)
+			metin += fmt.Sprintf("- **Açıklama:** %s\n", tmpl.Tanim)
+			metin += fmt.Sprintf("- **Başlık Şablonu:** `%s`\n", tmpl.VarsayilanBaslik)
+			
+			// Alanları göster
+			if len(tmpl.Alanlar) > 0 {
+				metin += "- **Alanlar:**\n"
+				for _, alan := range tmpl.Alanlar {
+					zorunlu := ""
+					if alan.Zorunlu {
+						zorunlu = " *(zorunlu)*"
+					}
+					metin += fmt.Sprintf("  - `%s` (%s)%s", alan.Isim, alan.Tip, zorunlu)
+					if alan.Varsayilan != "" {
+						metin += fmt.Sprintf(" - varsayılan: %s", alan.Varsayilan)
+					}
+					if len(alan.Secenekler) > 0 {
+						metin += fmt.Sprintf(" - seçenekler: %s", strings.Join(alan.Secenekler, ", "))
+					}
+					metin += "\n"
+				}
+			}
+			metin += "\n"
+		}
+	}
+	
+	metin += "\n💡 **Kullanım:** `templateden_gorev_olustur` komutunu template ID'si ve alan değerleriyle kullanın."
+	
+	return mcp.NewToolResultText(metin), nil
+}
+
+// TemplatedenGorevOlustur template kullanarak görev oluşturur
+func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	templateID, ok := params["template_id"].(string)
+	if !ok || templateID == "" {
+		return mcp.NewToolResultError("template_id parametresi gerekli"), nil
+	}
+	
+	degerlerRaw, ok := params["degerler"].(map[string]interface{})
+	if !ok {
+		return mcp.NewToolResultError("degerler parametresi gerekli ve obje tipinde olmalı"), nil
+	}
+	
+	// Interface{} map'i string map'e çevir
+	degerler := make(map[string]string)
+	for k, v := range degerlerRaw {
+		degerler[k] = fmt.Sprintf("%v", v)
+	}
+	
+	gorev, err := h.isYonetici.TemplatedenGorevOlustur(templateID, degerler)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("template'den görev oluşturulamadı: %v", err)), nil
+	}
+	
+	return mcp.NewToolResultText(fmt.Sprintf("✓ Template kullanılarak görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID)), nil
+}
+
 // RegisterTools tüm araçları MCP sunucusuna kaydeder
 func (h *Handlers) RegisterTools(s *server.MCPServer) {
 	// Görev oluştur
@@ -851,4 +935,39 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 			Required: []string{"kaynak_id", "hedef_id", "baglanti_tipi"},
 		},
 	}, h.GorevBagimlilikEkle)
+
+	// Template listele
+	s.AddTool(mcp.Tool{
+		Name:        "template_listele",
+		Description: "Kullanılabilir görev template'lerini listeler",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"kategori": map[string]interface{}{
+					"type":        "string",
+					"description": "Filtrelenecek template kategorisi (Teknik, Özellik, Araştırma vb.)",
+				},
+			},
+		},
+	}, h.TemplateListele)
+
+	// Template'den görev oluştur
+	s.AddTool(mcp.Tool{
+		Name:        "templateden_gorev_olustur",
+		Description: "Seçilen template'i kullanarak özelleştirilmiş bir görev oluşturur",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"template_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Kullanılacak template'in ID'si",
+				},
+				"degerler": map[string]interface{}{
+					"type":        "object",
+					"description": "Template alanları için değerler (key-value çiftleri)",
+				},
+			},
+			Required: []string{"template_id", "degerler"},
+		},
+	}, h.TemplatedenGorevOlustur)
 }

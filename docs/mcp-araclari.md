@@ -13,16 +13,20 @@ Gorev'in sağladığı tüm MCP tool'larının detaylı açıklaması.
 6. [gorev_sil](#gorev_sil) - Görev silme
 7. [gorev_bagimlilik_ekle](#gorev_bagimlilik_ekle) - Görevler arası bağımlılık oluşturma
 
+### Görev Şablonları
+8. [template_listele](#template_listele) - Görev şablonlarını listeleme
+9. [templateden_gorev_olustur](#templateden_gorev_olustur) - Şablondan görev oluşturma
+
 ### Proje Yönetimi
-8. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
-9. [proje_listele](#proje_listele) - Tüm projeleri listeleme
-10. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
-11. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
-12. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
-13. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
+10. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
+11. [proje_listele](#proje_listele) - Tüm projeleri listeleme
+12. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
+13. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
+14. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
+15. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
 
 ### Raporlama
-14. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
+16. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
 
 ---
 
@@ -625,6 +629,86 @@ Bu araç parametre almaz.
   "content": [{
     "type": "text",
     "text": "✓ Aktif proje ayarı kaldırıldı."
+  }]
+}
+```
+
+---
+
+## template_listele
+
+Kullanılabilir görev şablonlarını listeler. Şablonlar görev oluşturmayı hızlandırır ve standartlaştırır.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `kategori` | string | ❌ | Filtrelenecek kategori (Teknik, Özellik, Araştırma) |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "template_listele",
+  "arguments": {
+    "kategori": "Teknik"
+  }
+}
+```
+
+### Yanıt
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "## 📋 Görev Template'leri\n\n### Teknik\n\n#### Bug Raporu\n- **ID:** `39f28dbd-10f3-454c-8b35-52ae6b7ea391`\n- **Açıklama:** Yazılım hatası bildirimi için detaylı template\n- **Başlık Şablonu:** `🐛 [{{modul}}] {{baslik}}`\n- **Alanlar:**\n  - `baslik` (text) *(zorunlu)*\n  - `aciklama` (text) *(zorunlu)*\n  - `modul` (text) *(zorunlu)*\n  - `ortam` (select) *(zorunlu)* - seçenekler: development, staging, production\n  - `adimlar` (text) *(zorunlu)*\n  - `beklenen` (text) *(zorunlu)*\n  - `mevcut` (text) *(zorunlu)*\n  - `ekler` (text)\n  - `cozum` (text)\n  - `oncelik` (select) *(zorunlu)* - varsayılan: orta - seçenekler: dusuk, orta, yuksek\n  - `etiketler` (text) - varsayılan: bug\n\n💡 **Kullanım:** `templateden_gorev_olustur` komutunu template ID'si ve alan değerleriyle kullanın."
+  }]
+}
+```
+
+---
+
+## templateden_gorev_olustur
+
+Seçilen şablonu kullanarak özelleştirilmiş bir görev oluşturur.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `template_id` | string | ✅ | Kullanılacak template'in ID'si |
+| `degerler` | object | ✅ | Template alanları için değerler (key-value çiftleri) |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "templateden_gorev_olustur",
+  "arguments": {
+    "template_id": "39f28dbd-10f3-454c-8b35-52ae6b7ea391",
+    "degerler": {
+      "baslik": "Login butonu çalışmıyor",
+      "aciklama": "Kullanıcı giriş sayfasında login butonu tıklamaya yanıt vermiyor",
+      "modul": "auth",
+      "ortam": "production",
+      "adimlar": "1. Login sayfasına git\n2. Email ve şifre gir\n3. Login butonuna tıkla",
+      "beklenen": "Kullanıcı ana sayfaya yönlendirilmeli",
+      "mevcut": "Hiçbir şey olmuyor, buton tepki vermiyor",
+      "oncelik": "yuksek",
+      "etiketler": "bug,acil,auth"
+    }
+  }
+}
+```
+
+### Yanıt
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "✓ Template kullanılarak görev oluşturuldu: 🐛 [auth] Login butonu çalışmıyor (ID: d7f4e8b9-2a1c-4f5e-9d3b-8c1a2e3f4d5b)"
   }]
 }
 ```

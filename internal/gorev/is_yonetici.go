@@ -294,3 +294,13 @@ func (iy *IsYonetici) GorevBagimliMi(gorevID string) (bool, []string, error) {
 
 	return len(tamamlanmamisBagimliliklar) == 0, tamamlanmamisBagimliliklar, nil
 }
+
+// TemplateListele kullanılabilir template'leri listeler
+func (iy *IsYonetici) TemplateListele(kategori string) ([]*GorevTemplate, error) {
+	return iy.veriYonetici.TemplateListele(kategori)
+}
+
+// TemplatedenGorevOlustur template kullanarak görev oluşturur
+func (iy *IsYonetici) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
+	return iy.veriYonetici.TemplatedenGorevOlustur(templateID, degerler)
+}

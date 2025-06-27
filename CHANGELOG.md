@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-06-27
+
+### Added
+
+#### Task Template System (Görev Şablonları)
+- **New feature**: Predefined templates for consistent task creation
+- **Database changes**: 
+  - Added `gorev_templateleri` table via migration 000004
+  - Stores template definitions with dynamic fields
+- **Four default templates**:
+  - **Bug Raporu** - Detailed bug reporting template with environment, steps, expected/actual behavior
+  - **Özellik İsteği** - Feature request template with user stories and acceptance criteria
+  - **Teknik Borç** - Technical debt template for refactoring tasks
+  - **Araştırma Görevi** - Research task template with objectives and evaluation criteria
+- **Template features**:
+  - Dynamic field types: text, select, date, number
+  - Field validation (required/optional)
+  - Default values and select options
+  - Template placeholders using `{{field_name}}` syntax
+  - Automatic tag and priority assignment
+- **New MCP tools**:
+  - `template_listele` - List available templates with optional category filter
+  - `templateden_gorev_olustur` - Create tasks from templates with custom field values
+- **CLI commands**:
+  - `gorev template list [kategori]` - List templates by category
+  - `gorev template show <template-id>` - Show detailed template information
+  - `gorev template init` - Initialize default templates
+- **Integration**: Templates are automatically created on database initialization
+
+### Technical
+- Added `template_yonetici.go` for template management logic
+- Added `GorevTemplate` and `TemplateAlan` structs to domain model
+- Extended `VeriYoneticiInterface` with 5 new template methods
+- Modified `veri_yonetici.go` to auto-initialize templates after migration
+- Added template handlers to MCP server with full schema definitions
+
 ## [0.4.0] - 2025-06-27
 
 ### Added

@@ -17,6 +17,7 @@ Güçlü ve esnek görev yönetimi için Model Context Protocol (MCP) sunucusu.
 - 📅 **Son Teslim Tarihleri** - Görevler için deadline takibi ve acil/gecikmiş filtreleme
 - 🏷️ **Etiketleme Sistemi** - Görevleri kategorize etmek için çoklu etiket desteği
 - 🔗 **Görev Bağımlılıkları** - Görevler arası bağımlılık yönetimi ve otomatik kontrol
+- 📋 **Görev Şablonları** - Bug raporu, özellik isteği, teknik borç ve araştırma için hazır şablonlar
 
 ## Kurulum
 

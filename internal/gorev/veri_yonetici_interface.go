@@ -18,5 +18,10 @@ type VeriYoneticiInterface interface {
 	BaglantilariGetir(gorevID string) ([]*Baglanti, error)
 	EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error)
 	GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error
+	TemplateOlustur(template *GorevTemplate) error
+	TemplateListele(kategori string) ([]*GorevTemplate, error)
+	TemplateGetir(templateID string) (*GorevTemplate, error)
+	TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error)
+	VarsayilanTemplateleriOlustur() error
 	Kapat() error
 }

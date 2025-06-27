@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Last Updated: 27 June 2025
 
 ### Recent Changes
+- **Added Task Template System** - Predefined templates for bug reports, feature requests, technical debt, and research tasks
 - **Added Task Dependencies** - Tasks can now have dependencies that must be completed before starting
 - **Added Due Dates** - Tasks can have deadlines with filtering for urgent/overdue tasks
 - **Added Tagging System** - Tasks can be categorized with multiple tags
@@ -12,7 +13,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Enhanced gorev_listele** - Added sorting (sirala) and filtering (filtre, etiket) parameters
 - **Enhanced gorev_olustur** - Now accepts son_tarih (due date) and etiketler (tags) parameters
 - **Enhanced gorev_detay** - Shows dependencies with completion status indicators
-- **New MCP tool**: `gorev_bagimlilik_ekle` for creating task dependencies
+- **New MCP tools**: 
+  - `gorev_bagimlilik_ekle` for creating task dependencies
+  - `template_listele` for listing available task templates
+  - `templateden_gorev_olustur` for creating tasks from templates
+- **New CLI commands**:
+  - `gorev template list [kategori]` - List templates by category
+  - `gorev template show <template-id>` - Show template details
+  - `gorev template init` - Initialize default templates
 - **Breaking changes**: 
   - GorevOlustur now takes 6 parameters (added sonTarihStr, etiketIsimleri)
   - GorevListele now takes 3 parameters (added sirala, filtre)
@@ -78,7 +86,7 @@ make run                 # Build and run server
 
 ## MCP Tools
 
-The server implements 14 MCP tools:
+The server implements 16 MCP tools:
 
 ### Task Management
 1. **gorev_olustur**: Create new task (params: baslik, aciklama, oncelik, proje_id?, son_tarih?, etiketler?)
@@ -98,16 +106,22 @@ The server implements 14 MCP tools:
 6. **gorev_sil**: Delete task (params: id, onay)
 7. **gorev_bagimlilik_ekle**: Create task dependency (params: kaynak_id, hedef_id, baglanti_tipi)
 
+### Task Templates
+8. **template_listele**: List available templates (params: kategori?)
+   - Shows predefined templates for consistent task creation
+9. **templateden_gorev_olustur**: Create task from template (params: template_id, degerler)
+   - degerler is an object with field values for the template
+
 ### Project Management
-8. **proje_olustur**: Create project (params: isim, tanim)
-9. **proje_listele**: List all projects with task counts (no params)
-10. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
-11. **proje_aktif_yap**: Set active project (params: proje_id)
-12. **aktif_proje_goster**: Show current active project (no params)
-13. **aktif_proje_kaldir**: Remove active project setting (no params)
+10. **proje_olustur**: Create project (params: isim, tanim)
+11. **proje_listele**: List all projects with task counts (no params)
+12. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
+13. **proje_aktif_yap**: Set active project (params: proje_id)
+14. **aktif_proje_goster**: Show current active project (no params)
+15. **aktif_proje_kaldir**: Remove active project setting (no params)
 
 ### Reporting
-14. **ozet_goster**: Show summary statistics (no params)
+16. **ozet_goster**: Show summary statistics (no params)
 
 All tools follow the pattern in `internal/mcp/handlers.go` and are registered in `RegisterTools()`. Task descriptions support full markdown formatting.
 
@@ -149,7 +163,7 @@ func TestGorevOlustur(t *testing.T) {
 
 ## Database Schema
 
-SQLite database with six tables:
+SQLite database with seven tables:
 
 - **projeler**: id, isim, tanim, olusturma_tarih, guncelleme_tarih
 - **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih
@@ -157,6 +171,7 @@ SQLite database with six tables:
 - **aktif_proje**: id (CHECK id=1), proje_id (stores single active project)
 - **etiketler**: id, isim (tags)
 - **gorev_etiketleri**: gorev_id, etiket_id (many-to-many relationship)
+- **gorev_templateleri**: id, isim, tanim, varsayilan_baslik, aciklama_template, alanlar, ornek_degerler, kategori, aktif (task templates)
 
 Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 
@@ -177,10 +192,11 @@ Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 
 ## Important Files
 
-- `internal/gorev/modeller.go`: Domain model definitions
-- `internal/mcp/handlers.go`: MCP tool implementations
+- `internal/gorev/modeller.go`: Domain model definitions (includes GorevTemplate, TemplateAlan)
+- `internal/mcp/handlers.go`: MCP tool implementations (includes template handlers)
 - `internal/gorev/veri_yonetici.go`: Database operations
-- `cmd/gorev/main.go`: CLI and server initialization
+- `internal/gorev/template_yonetici.go`: Template management operations
+- `cmd/gorev/main.go`: CLI and server initialization (includes template commands)
 
 ## Version Management
 
