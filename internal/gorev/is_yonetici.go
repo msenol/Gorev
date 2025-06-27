@@ -17,7 +17,16 @@ func YeniIsYonetici(veriYonetici VeriYoneticiInterface) *IsYonetici {
 	}
 }
 
-func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID string) (*Gorev, error) {
+func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+	var sonTarih *time.Time
+	if sonTarihStr != "" {
+		t, err := time.Parse("2006-01-02", sonTarihStr)
+		if err != nil {
+			return nil, fmt.Errorf("geçersiz son tarih formatı (YYYY-AA-GG olmalı): %w", err)
+		}
+		sonTarih = &t
+	}
+
 	gorev := &Gorev{
 		ID:              uuid.New().String(),
 		Baslik:          baslik,
@@ -27,23 +36,47 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID string) (*
 		ProjeID:         projeID,
 		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
+		SonTarih:        sonTarih,
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
 		return nil, fmt.Errorf("görev kaydedilemedi: %w", err)
 	}
 
+	if len(etiketIsimleri) > 0 {
+		etiketler, err := iy.veriYonetici.EtiketleriGetirVeyaOlustur(etiketIsimleri)
+		if err != nil {
+			return nil, fmt.Errorf("etiketler işlenemedi: %w", err)
+		}
+		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
+			return nil, fmt.Errorf("görev etiketleri ayarlanamadı: %w", err)
+		}
+		gorev.Etiketler = etiketler
+	}
+
 	return gorev, nil
 }
 
-func (iy *IsYonetici) GorevListele(durum string) ([]*Gorev, error) {
-	return iy.veriYonetici.GorevleriGetir(durum)
+func (iy *IsYonetici) GorevListele(durum, sirala, filtre string) ([]*Gorev, error) {
+	return iy.veriYonetici.GorevleriGetir(durum, sirala, filtre)
 }
 
 func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
 		return fmt.Errorf("görev bulunamadı: %w", err)
+	}
+
+	// Eğer görev "devam_ediyor" durumuna geçiyorsa, bağımlılıkları kontrol et
+	if durum == "devam_ediyor" && gorev.Durum == "beklemede" {
+		bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(id)
+		if err != nil {
+			return fmt.Errorf("bağımlılık kontrolü başarısız: %w", err)
+		}
+
+		if !bagimli {
+			return fmt.Errorf("bu görev başlatılamaz, önce şu görevler tamamlanmalı: %v", tamamlanmamislar)
+		}
 	}
 
 	gorev.Durum = durum
@@ -68,7 +101,7 @@ func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 	return proje, nil
 }
 
-func (iy *IsYonetici) GorevDetayAl(id string) (*Gorev, error) {
+func (iy *IsYonetici) GorevGetir(id string) (*Gorev, error) {
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
 		return nil, fmt.Errorf("görev bulunamadı: %w", err)
@@ -76,7 +109,7 @@ func (iy *IsYonetici) GorevDetayAl(id string) (*Gorev, error) {
 	return gorev, nil
 }
 
-func (iy *IsYonetici) ProjeDetayAl(id string) (*Proje, error) {
+func (iy *IsYonetici) ProjeGetir(id string) (*Proje, error) {
 	proje, err := iy.veriYonetici.ProjeGetir(id)
 	if err != nil {
 		return nil, fmt.Errorf("proje bulunamadı: %w", err)
@@ -84,7 +117,7 @@ func (iy *IsYonetici) ProjeDetayAl(id string) (*Proje, error) {
 	return proje, nil
 }
 
-func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID string, baslikVar, aciklamaVar, oncelikVar, projeVar bool) error {
+func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTarihStr string, baslikVar, aciklamaVar, oncelikVar, projeVar, sonTarihVar bool) error {
 	// Önce mevcut görevi al
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
@@ -103,6 +136,17 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID string
 	}
 	if projeVar {
 		gorev.ProjeID = projeID
+	}
+	if sonTarihVar {
+		if sonTarihStr == "" {
+			gorev.SonTarih = nil
+		} else {
+			t, err := time.Parse("2006-01-02", sonTarihStr)
+			if err != nil {
+				return fmt.Errorf("geçersiz son tarih formatı (YYYY-AA-GG olmalı): %w", err)
+			}
+			gorev.SonTarih = &t
+		}
 	}
 
 	gorev.GuncellemeTarih = time.Now()
@@ -156,7 +200,7 @@ func (iy *IsYonetici) AktifProjeKaldir() error {
 }
 
 func (iy *IsYonetici) OzetAl() (*Ozet, error) {
-	gorevler, err := iy.veriYonetici.GorevleriGetir("")
+	gorevler, err := iy.veriYonetici.GorevleriGetir("", "", "")
 	if err != nil {
 		return nil, fmt.Errorf("görevler alınamadı: %w", err)
 	}
@@ -192,4 +236,61 @@ func (iy *IsYonetici) OzetAl() (*Ozet, error) {
 	}
 
 	return ozet, nil
+}
+
+func (iy *IsYonetici) GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi string) (*Baglanti, error) {
+	// Görevlerin var olup olmadığını kontrol et
+	_, err := iy.veriYonetici.GorevGetir(kaynakID)
+	if err != nil {
+		return nil, fmt.Errorf("kaynak görev bulunamadı: %w", err)
+	}
+	_, err = iy.veriYonetici.GorevGetir(hedefID)
+	if err != nil {
+		return nil, fmt.Errorf("hedef görev bulunamadı: %w", err)
+	}
+
+	baglanti := &Baglanti{
+		ID:          uuid.New().String(),
+		KaynakID:    kaynakID,
+		HedefID:     hedefID,
+		BaglantiTip: baglantiTipi,
+	}
+
+	if err := iy.veriYonetici.BaglantiEkle(baglanti); err != nil {
+		return nil, fmt.Errorf("bağlantı eklenemedi: %w", err)
+	}
+
+	return baglanti, nil
+}
+
+func (iy *IsYonetici) GorevBaglantilariGetir(gorevID string) ([]*Baglanti, error) {
+	return iy.veriYonetici.BaglantilariGetir(gorevID)
+}
+
+// GorevBagimliMi görevi başlatmak için tüm bağımlılıkların tamamlanıp tamamlanmadığını kontrol eder
+func (iy *IsYonetici) GorevBagimliMi(gorevID string) (bool, []string, error) {
+	baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorevID)
+	if err != nil {
+		return false, nil, fmt.Errorf("bağlantılar alınamadı: %w", err)
+	}
+
+	var tamamlanmamisBagimliliklar []string
+
+	for _, baglanti := range baglantilar {
+		// Bu görev hedef konumundaysa ve bağlantı tipi "onceki" ise
+		if baglanti.HedefID == gorevID && baglanti.BaglantiTip == "onceki" {
+			// Kaynak görevin durumunu kontrol et
+			kaynakGorev, err := iy.veriYonetici.GorevGetir(baglanti.KaynakID)
+			if err != nil {
+				return false, nil, fmt.Errorf("bağımlı görev bulunamadı: %w", err)
+			}
+
+			// Eğer bağımlı görev tamamlanmamışsa
+			if kaynakGorev.Durum != "tamamlandi" {
+				tamamlanmamisBagimliliklar = append(tamamlanmamisBagimliliklar, kaynakGorev.Baslik)
+			}
+		}
+	}
+
+	return len(tamamlanmamisBagimliliklar) == 0, tamamlanmamisBagimliliklar, nil
 }

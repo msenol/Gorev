@@ -30,7 +30,7 @@ func extractText(t *testing.T, result *mcp.CallToolResult) string {
 
 func TestGorevOlusturVeListele(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -42,9 +42,10 @@ func TestGorevOlusturVeListele(t *testing.T) {
 
 	// Test: Görev oluştur
 	params := map[string]interface{}{
-		"baslik":   "Test görevi",
-		"aciklama": "Bu bir test görevidir",
-		"oncelik":  "yuksek",
+		"baslik":    "Test görevi",
+		"aciklama":  "Bu bir test görevidir",
+		"oncelik":   "yuksek",
+		"son_tarih": "2025-07-15",
 	}
 
 	result, err := handlers.GorevOlustur(params)
@@ -54,8 +55,10 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	assert.Contains(t, text, "✓ Görev oluşturuldu")
 	assert.Contains(t, text, "Test görevi")
 
-	// Test: Görevleri listele
-	listParams := map[string]interface{}{}
+	// Test: Görevleri listele (sıralama ve filtreleme ile)
+	listParams := map[string]interface{}{
+		"sirala": "son_tarih_asc",
+	}
 	listResult, err := handlers.GorevListele(listParams)
 	require.NoError(t, err)
 	assert.False(t, listResult.IsError)
@@ -66,7 +69,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 
 func TestGorevDurumGuncelle(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -75,7 +78,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 
 	// Önce bir görev oluştur
-	gorevObj, err := isYonetici.GorevOlustur("Durum test görevi", "", "orta")
+	gorevObj, err := isYonetici.GorevOlustur("Durum test görevi", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
 	// Durumu güncelle
@@ -92,7 +95,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	assert.Contains(t, text, "devam_ediyor")
 
 	// Güncellemeyi doğrula
-	gorevler, err := isYonetici.GorevListele("devam_ediyor")
+	gorevler, err := isYonetici.GorevListele("devam_ediyor", "", "")
 	require.NoError(t, err)
 	assert.Len(t, gorevler, 1)
 	assert.Equal(t, "devam_ediyor", gorevler[0].Durum)
@@ -100,7 +103,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 
 func TestProjeOlustur(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -124,7 +127,7 @@ func TestProjeOlustur(t *testing.T) {
 
 func TestOzetGoster(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -136,10 +139,10 @@ func TestOzetGoster(t *testing.T) {
 	_, err = isYonetici.ProjeOlustur("Proje 1", "")
 	require.NoError(t, err)
 
-	_, err = isYonetici.GorevOlustur("Görev 1", "", "yuksek")
+	_, err = isYonetici.GorevOlustur("Görev 1", "", "yuksek", "", "", nil)
 	require.NoError(t, err)
 
-	gorev2, err := isYonetici.GorevOlustur("Görev 2", "", "orta")
+	gorev2, err := isYonetici.GorevOlustur("Görev 2", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
 	err = isYonetici.GorevDurumGuncelle(gorev2.ID, "tamamlandi")
@@ -161,7 +164,7 @@ func TestOzetGoster(t *testing.T) {
 
 func TestHataYonetimi(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -195,7 +198,7 @@ func TestHataYonetimi(t *testing.T) {
 
 func TestGorevDetay(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -207,16 +210,19 @@ func TestGorevDetay(t *testing.T) {
 	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Proje açıklaması")
 	require.NoError(t, err)
 
-	gorevObj, err := isYonetici.GorevOlustur("Detaylı Test Görevi", "## Açıklama\n\nBu bir **markdown** açıklamadır.", "yuksek")
+	gorev1, err := isYonetici.GorevOlustur("Detaylı Test Görevi", "## Açıklama\n\nBu bir **markdown** açıklamadır.", "yuksek", proje.ID, "2025-12-31", []string{"bug", "acil"})
 	require.NoError(t, err)
 
-	// Görevi projeye ata
-	err = isYonetici.GorevDuzenle(gorevObj.ID, "", "", "", proje.ID, false, false, false, true)
+	gorev2, err := isYonetici.GorevOlustur("Bağlı Görev", "", "orta", proje.ID, "", nil)
+	require.NoError(t, err)
+
+	// Bağımlılık ekle (gorev1 önce tamamlanmalı, sonra gorev2 başlayabilir)
+	_, err = isYonetici.GorevBagimlilikEkle(gorev1.ID, gorev2.ID, "onceki")
 	require.NoError(t, err)
 
 	// Detay al
 	params := map[string]interface{}{
-		"id": gorevObj.ID,
+		"id": gorev1.ID,
 	}
 
 	result, err := handlers.GorevDetay(params)
@@ -225,16 +231,20 @@ func TestGorevDetay(t *testing.T) {
 
 	detayText := extractText(t, result)
 	assert.Contains(t, detayText, "# Detaylı Test Görevi")
-	assert.Contains(t, detayText, "**Durum:** beklemede")
-	assert.Contains(t, detayText, "**Öncelik:** yuksek")
 	assert.Contains(t, detayText, "**Proje:** Test Projesi")
-	assert.Contains(t, detayText, "## Açıklama")
-	assert.Contains(t, detayText, "Bu bir **markdown** açıklamadır.")
+	assert.Contains(t, detayText, "**Son Teslim Tarihi:** 2025-12-31")
+	// Etiketler farklı sırada olabilir
+	assert.Contains(t, detayText, "**Etiketler:**")
+	assert.Contains(t, detayText, "bug")
+	assert.Contains(t, detayText, "acil")
+	assert.Contains(t, detayText, "## 🔗 Bağımlılıklar")
+	assert.Contains(t, detayText, "### 🎯 Bu göreve bağımlı görevler:")
+	assert.Contains(t, detayText, "- Bağlı Görev")
 }
 
 func TestGorevDuzenle(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -243,7 +253,7 @@ func TestGorevDuzenle(t *testing.T) {
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 
 	// Test görevi oluştur
-	gorevObj, err := isYonetici.GorevOlustur("Eski Başlık", "Eski açıklama", "orta")
+	gorevObj, err := isYonetici.GorevOlustur("Eski Başlık", "Eski açıklama", "orta", "", "", nil)
 	require.NoError(t, err)
 
 	// Başlık ve açıklama güncelle
@@ -261,7 +271,7 @@ func TestGorevDuzenle(t *testing.T) {
 	assert.Contains(t, text, "✓ Görev düzenlendi")
 
 	// Değişiklikleri doğrula
-	guncelGorev, err := isYonetici.GorevDetayAl(gorevObj.ID)
+	guncelGorev, err := isYonetici.GorevGetir(gorevObj.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "Yeni Başlık", guncelGorev.Baslik)
 	assert.Equal(t, "## Yeni Açıklama\n\nMarkdown destekli", guncelGorev.Aciklama)
@@ -270,7 +280,7 @@ func TestGorevDuzenle(t *testing.T) {
 
 func TestGorevSil(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -279,7 +289,7 @@ func TestGorevSil(t *testing.T) {
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 
 	// Test görevi oluştur
-	gorevObj, err := isYonetici.GorevOlustur("Silinecek Görev", "", "orta")
+	gorevObj, err := isYonetici.GorevOlustur("Silinecek Görev", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
 	// Onaysız silme denemesi
@@ -303,13 +313,13 @@ func TestGorevSil(t *testing.T) {
 	assert.Contains(t, text, "✓ Görev silindi: Silinecek Görev")
 
 	// Silinen görevi arama
-	_, err = isYonetici.GorevDetayAl(gorevObj.ID)
+	_, err = isYonetici.GorevGetir(gorevObj.ID)
 	assert.Error(t, err)
 }
 
 func TestProjeListele(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -325,14 +335,14 @@ func TestProjeListele(t *testing.T) {
 	require.NoError(t, err)
 
 	// Proje 1'e görevler ekle
-	gorev1, err := isYonetici.GorevOlustur("Görev 1", "", "yuksek")
+	gorev1, err := isYonetici.GorevOlustur("Görev 1", "", "yuksek", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev1.ID, "", "", "", proje1.ID, false, false, false, true)
+	err = isYonetici.GorevDuzenle(gorev1.ID, "", "", "", proje1.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
 
-	gorev2, err := isYonetici.GorevOlustur("Görev 2", "", "orta")
+	gorev2, err := isYonetici.GorevOlustur("Görev 2", "", "orta", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev2.ID, "", "", "", proje1.ID, false, false, false, true)
+	err = isYonetici.GorevDuzenle(gorev2.ID, "", "", "", proje1.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
 
 	// Projeleri listele
@@ -351,7 +361,7 @@ func TestProjeListele(t *testing.T) {
 
 func TestProjeGorevleri(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:")
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -364,21 +374,21 @@ func TestProjeGorevleri(t *testing.T) {
 	require.NoError(t, err)
 
 	// Farklı durumlarda görevler oluştur
-	gorev1, err := isYonetici.GorevOlustur("Devam Eden Görev", "Açıklama 1", "yuksek")
+	gorev1, err := isYonetici.GorevOlustur("Devam Eden Görev", "Açıklama 1", "yuksek", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev1.ID, "", "", "", proje.ID, false, false, false, true)
+	err = isYonetici.GorevDuzenle(gorev1.ID, "", "", "", proje.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
 	err = isYonetici.GorevDurumGuncelle(gorev1.ID, "devam_ediyor")
 	require.NoError(t, err)
 
-	gorev2, err := isYonetici.GorevOlustur("Bekleyen Görev", "Açıklama 2", "orta")
+	gorev2, err := isYonetici.GorevOlustur("Bekleyen Görev", "Açıklama 2", "orta", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev2.ID, "", "", "", proje.ID, false, false, false, true)
+	err = isYonetici.GorevDuzenle(gorev2.ID, "", "", "", proje.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
 
-	gorev3, err := isYonetici.GorevOlustur("Tamamlanan Görev", "", "dusuk")
+	gorev3, err := isYonetici.GorevOlustur("Tamamlanan Görev", "", "dusuk", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev3.ID, "", "", "", proje.ID, false, false, false, true)
+	err = isYonetici.GorevDuzenle(gorev3.ID, "", "", "", proje.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
 	err = isYonetici.GorevDurumGuncelle(gorev3.ID, "tamamlandi")
 	require.NoError(t, err)
@@ -400,4 +410,42 @@ func TestProjeGorevleri(t *testing.T) {
 	assert.Contains(t, gorevlerText, "**Bekleyen Görev** (orta öncelik)")
 	assert.Contains(t, gorevlerText, "### ✅ Tamamlandı")
 	assert.Contains(t, gorevlerText, "~~Tamamlanan Görev~~ (dusuk öncelik)")
+}
+
+func TestGorevBagimlilikEkle(t *testing.T) {
+	// Test veritabanı oluştur
+	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	require.NoError(t, err)
+	defer veriYonetici.Kapat()
+
+	// İş yöneticisi ve handler'ları oluştur
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := mcphandlers.YeniHandlers(isYonetici)
+
+	// İki test görevi oluştur
+	gorev1, err := isYonetici.GorevOlustur("Kaynak Görev", "", "orta", "", "", nil)
+	require.NoError(t, err)
+	gorev2, err := isYonetici.GorevOlustur("Hedef Görev", "", "yuksek", "", "", nil)
+	require.NoError(t, err)
+
+	// Bağımlılık ekle
+	params := map[string]interface{}{
+		"kaynak_id":     gorev1.ID,
+		"hedef_id":      gorev2.ID,
+		"baglanti_tipi": "engelliyor",
+	}
+
+	result, err := handlers.GorevBagimlilikEkle(params)
+	require.NoError(t, err)
+	assert.False(t, result.IsError)
+	text := extractText(t, result)
+	assert.Contains(t, text, "✓ Bağımlılık eklendi")
+
+	// Bağımlılığı doğrula
+	baglantilar, err := isYonetici.GorevBaglantilariGetir(gorev1.ID)
+	require.NoError(t, err)
+	assert.Len(t, baglantilar, 1)
+	assert.Equal(t, gorev1.ID, baglantilar[0].KaynakID)
+	assert.Equal(t, gorev2.ID, baglantilar[0].HedefID)
+	assert.Equal(t, "engelliyor", baglantilar[0].BaglantiTip)
 }

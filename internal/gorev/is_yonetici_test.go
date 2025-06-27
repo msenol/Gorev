@@ -8,8 +8,11 @@ import (
 
 // MockVeriYonetici is a mock implementation of VeriYonetici for testing
 type MockVeriYonetici struct {
-	gorevler map[string]*Gorev
-	projeler map[string]*Proje
+	gorevler      map[string]*Gorev
+	projeler      map[string]*Proje
+	baglantilar   []*Baglanti
+	aktifProjeID  string
+	aktifProjeSet bool
 
 	// Control behavior
 	shouldFailGorevKaydet    bool
@@ -20,13 +23,43 @@ type MockVeriYonetici struct {
 	shouldFailProjeGetir     bool
 	shouldFailGorevleriGetir bool
 	shouldFailProjeleriGetir bool
+	shouldFailAktifProje     bool
+	shouldFailBaglantiEkle   bool
 }
 
 func NewMockVeriYonetici() *MockVeriYonetici {
 	return &MockVeriYonetici{
-		gorevler: make(map[string]*Gorev),
-		projeler: make(map[string]*Proje),
+		gorevler:    make(map[string]*Gorev),
+		projeler:    make(map[string]*Proje),
+		baglantilar: make([]*Baglanti, 0),
 	}
+}
+func (m *MockVeriYonetici) AktifProjeAyarla(projeID string) error {
+	if m.shouldFailAktifProje {
+		return errors.New("mock error")
+	}
+	m.aktifProjeID = projeID
+	m.aktifProjeSet = true
+	return nil
+}
+
+func (m *MockVeriYonetici) AktifProjeGetir() (string, error) {
+	if m.shouldFailAktifProje {
+		return "", errors.New("mock error")
+	}
+	if !m.aktifProjeSet {
+		return "", errors.New("aktif proje bulunamadı")
+	}
+	return m.aktifProjeID, nil
+}
+
+func (m *MockVeriYonetici) AktifProjeKaldir() error {
+	if m.shouldFailAktifProje {
+		return errors.New("mock error")
+	}
+	m.aktifProjeID = ""
+	m.aktifProjeSet = false
+	return nil
 }
 
 func (m *MockVeriYonetici) GorevKaydet(gorev *Gorev) error {
@@ -48,7 +81,7 @@ func (m *MockVeriYonetici) GorevGetir(id string) (*Gorev, error) {
 	return gorev, nil
 }
 
-func (m *MockVeriYonetici) GorevleriGetir(durum string) ([]*Gorev, error) {
+func (m *MockVeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, error) {
 	if m.shouldFailGorevleriGetir {
 		return nil, errors.New("mock error: gorevleri getir failed")
 	}
@@ -127,6 +160,34 @@ func (m *MockVeriYonetici) Kapat() error {
 	return nil
 }
 
+func (m *MockVeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error) {
+	// Mock implementation
+	return []*Etiket{}, nil
+}
+
+func (m *MockVeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
+	// Mock implementation
+	return nil
+}
+
+func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
+	if m.shouldFailBaglantiEkle {
+		return errors.New("mock error: baglanti ekle failed")
+	}
+	m.baglantilar = append(m.baglantilar, baglanti)
+	return nil
+}
+
+func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
+	var result []*Baglanti
+	for _, b := range m.baglantilar {
+		if b.KaynakID == gorevID || b.HedefID == gorevID {
+			result = append(result, b)
+		}
+	}
+	return result, nil
+}
+
 // Tests
 
 func TestYeniIsYonetici(t *testing.T) {
@@ -147,6 +208,7 @@ func TestIsYonetici_GorevOlustur(t *testing.T) {
 		baslik           string
 		aciklama         string
 		oncelik          string
+		projeID          string
 		shouldFailKaydet bool
 		wantErr          bool
 	}{
@@ -155,6 +217,7 @@ func TestIsYonetici_GorevOlustur(t *testing.T) {
 			baslik:   "Test Görevi",
 			aciklama: "Test açıklaması",
 			oncelik:  "orta",
+			projeID:  "proje-1",
 			wantErr:  false,
 		},
 		{
@@ -162,6 +225,7 @@ func TestIsYonetici_GorevOlustur(t *testing.T) {
 			baslik:   "",
 			aciklama: "Açıklama",
 			oncelik:  "yuksek",
+			projeID:  "",
 			wantErr:  false, // Business logic doesn't validate empty titles
 		},
 		{
@@ -169,6 +233,7 @@ func TestIsYonetici_GorevOlustur(t *testing.T) {
 			baslik:           "Test",
 			aciklama:         "Test",
 			oncelik:          "orta",
+			projeID:          "",
 			shouldFailKaydet: true,
 			wantErr:          true,
 		},
@@ -180,7 +245,7 @@ func TestIsYonetici_GorevOlustur(t *testing.T) {
 			mockVY.shouldFailGorevKaydet = tc.shouldFailKaydet
 			iy := YeniIsYonetici(mockVY)
 
-			gorev, err := iy.GorevOlustur(tc.baslik, tc.aciklama, tc.oncelik)
+			gorev, err := iy.GorevOlustur(tc.baslik, tc.aciklama, tc.oncelik, tc.projeID, "", nil)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -266,7 +331,7 @@ func TestIsYonetici_GorevListele(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockVY.shouldFailGorevleriGetir = tc.shouldFail
 
-			gorevler, err := iy.GorevListele(tc.durum)
+			gorevler, err := iy.GorevListele(tc.durum, "", "")
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -518,8 +583,8 @@ func TestIsYonetici_GorevDuzenle(t *testing.T) {
 			mockVY.shouldFailGorevGetir = tc.shouldFailGetir
 			mockVY.shouldFailGorevGuncelle = tc.shouldFailUpdate
 
-			err := iy.GorevDuzenle(tc.gorevID, tc.baslik, tc.aciklama, tc.oncelik, tc.projeID,
-				tc.baslikVar, tc.aciklamaVar, tc.oncelikVar, tc.projeVar)
+			err := iy.GorevDuzenle(tc.gorevID, tc.baslik, tc.aciklama, tc.oncelik, tc.projeID, "",
+				tc.baslikVar, tc.aciklamaVar, tc.oncelikVar, tc.projeVar, false)
 
 			if tc.wantErr {
 				if err == nil {
@@ -728,6 +793,108 @@ func TestIsYonetici_OzetAl(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestIsYonetici_GorevBagimliMi(t *testing.T) {
+	mockVY := NewMockVeriYonetici()
+	iy := YeniIsYonetici(mockVY)
+
+	// Test görevleri ekle
+	mockVY.gorevler["gorev1"] = &Gorev{ID: "gorev1", Baslik: "Görev 1", Durum: "tamamlandi"}
+	mockVY.gorevler["gorev2"] = &Gorev{ID: "gorev2", Baslik: "Görev 2", Durum: "beklemede"}
+	mockVY.gorevler["gorev3"] = &Gorev{ID: "gorev3", Baslik: "Görev 3", Durum: "devam_ediyor"}
+	mockVY.gorevler["gorev4"] = &Gorev{ID: "gorev4", Baslik: "Görev 4", Durum: "beklemede"}
+
+	// Bağımlılıklar: gorev4, gorev1 ve gorev2'ye bağımlı
+	mockVY.baglantilar = []*Baglanti{
+		{ID: "b1", KaynakID: "gorev1", HedefID: "gorev4", BaglantiTip: "onceki"},
+		{ID: "b2", KaynakID: "gorev2", HedefID: "gorev4", BaglantiTip: "onceki"},
+	}
+
+	testCases := []struct {
+		name                  string
+		gorevID               string
+		expectedBagimli       bool
+		expectedTamamlanmamis []string
+	}{
+		{
+			name:                  "no dependencies",
+			gorevID:               "gorev1",
+			expectedBagimli:       true,
+			expectedTamamlanmamis: nil,
+		},
+		{
+			name:                  "all dependencies completed",
+			gorevID:               "gorev3",
+			expectedBagimli:       true,
+			expectedTamamlanmamis: nil,
+		},
+		{
+			name:                  "some dependencies not completed",
+			gorevID:               "gorev4",
+			expectedBagimli:       false,
+			expectedTamamlanmamis: []string{"Görev 2"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(tc.gorevID)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if bagimli != tc.expectedBagimli {
+				t.Errorf("expected bagimli=%v, got %v", tc.expectedBagimli, bagimli)
+			}
+
+			if len(tamamlanmamislar) != len(tc.expectedTamamlanmamis) {
+				t.Errorf("expected %d tamamlanmamis, got %d", len(tc.expectedTamamlanmamis), len(tamamlanmamislar))
+			}
+
+			for i, expected := range tc.expectedTamamlanmamis {
+				if i < len(tamamlanmamislar) && tamamlanmamislar[i] != expected {
+					t.Errorf("expected tamamlanmamis[%d]=%s, got %s", i, expected, tamamlanmamislar[i])
+				}
+			}
+		})
+	}
+}
+
+func TestIsYonetici_GorevDurumGuncelle_WithDependencies(t *testing.T) {
+	mockVY := NewMockVeriYonetici()
+	iy := YeniIsYonetici(mockVY)
+
+	// Test görevleri ekle
+	mockVY.gorevler["gorev1"] = &Gorev{ID: "gorev1", Baslik: "Görev 1", Durum: "beklemede"}
+	mockVY.gorevler["gorev2"] = &Gorev{ID: "gorev2", Baslik: "Görev 2", Durum: "beklemede"}
+
+	// gorev2, gorev1'e bağımlı
+	mockVY.baglantilar = []*Baglanti{
+		{ID: "b1", KaynakID: "gorev1", HedefID: "gorev2", BaglantiTip: "onceki"},
+	}
+
+	// gorev2'yi devam_ediyor yapmaya çalış (gorev1 henüz tamamlanmadı)
+	err := iy.GorevDurumGuncelle("gorev2", "devam_ediyor")
+	if err == nil {
+		t.Error("expected error when trying to start task with incomplete dependencies")
+	}
+	if !strings.Contains(err.Error(), "önce şu görevler tamamlanmalı") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+
+	// gorev1'i tamamla
+	err = iy.GorevDurumGuncelle("gorev1", "tamamlandi")
+	if err != nil {
+		t.Errorf("unexpected error completing gorev1: %v", err)
+	}
+
+	// Şimdi gorev2'yi başlatabilmeli
+	err = iy.GorevDurumGuncelle("gorev2", "devam_ediyor")
+	if err != nil {
+		t.Errorf("unexpected error starting gorev2 after dependencies completed: %v", err)
 	}
 }
 

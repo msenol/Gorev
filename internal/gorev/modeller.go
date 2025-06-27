@@ -4,14 +4,22 @@ import "time"
 
 // Gorev temel görev yapısı
 type Gorev struct {
-	ID              string    `json:"id"`
-	Baslik          string    `json:"baslik"`
-	Aciklama        string    `json:"aciklama"`
-	Durum           string    `json:"durum"`
-	Oncelik         string    `json:"oncelik"`
-	ProjeID         string    `json:"proje_id,omitempty"`
-	OlusturmaTarih  time.Time `json:"olusturma_tarih"`
-	GuncellemeTarih time.Time `json:"guncelleme_tarih"`
+	ID              string     `json:"id"`
+	Baslik          string     `json:"baslik"`
+	Aciklama        string     `json:"aciklama"`
+	Durum           string     `json:"durum"`
+	Oncelik         string     `json:"oncelik"`
+	ProjeID         string     `json:"proje_id,omitempty"`
+	OlusturmaTarih  time.Time  `json:"olusturma_tarih"`
+	GuncellemeTarih time.Time  `json:"guncelleme_tarih"`
+	SonTarih        *time.Time `json:"son_tarih,omitempty"`
+	Etiketler       []*Etiket  `json:"etiketler,omitempty"`
+}
+
+// Etiket görevleri kategorize etmek için kullanılır
+type Etiket struct {
+	ID   string `json:"id"`
+	Isim string `json:"isim"`
 }
 
 // Proje görevleri gruplamak için kullanılır

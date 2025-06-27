@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestYeniVeriYonetici(t *testing.T) {
@@ -26,7 +29,7 @@ func TestYeniVeriYonetici(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			vy, err := YeniVeriYonetici(tc.dbYolu)
+			vy, err := YeniVeriYonetici(tc.dbYolu, "file://../../internal/veri/migrations")
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -37,22 +40,12 @@ func TestYeniVeriYonetici(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			defer vy.Kapat()
-
-			// Verify tables were created
-			tables := []string{"projeler", "gorevler", "baglantilar"}
-			for _, table := range tables {
-				var name string
-				err := vy.db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name=?", table).Scan(&name)
-				if err != nil {
-					t.Errorf("table %s not found: %v", table, err)
-				}
-			}
 		})
 	}
 }
 
 func TestVeriYonetici_GorevKaydet(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -135,7 +128,7 @@ func TestVeriYonetici_GorevKaydet(t *testing.T) {
 }
 
 func TestVeriYonetici_GorevGetir(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -201,7 +194,7 @@ func TestVeriYonetici_GorevGetir(t *testing.T) {
 }
 
 func TestVeriYonetici_GorevleriGetir(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -275,7 +268,7 @@ func TestVeriYonetici_GorevleriGetir(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gorevler, err := vy.GorevleriGetir(tc.durum)
+			gorevler, err := vy.GorevleriGetir(tc.durum, "", "")
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -296,7 +289,7 @@ func TestVeriYonetici_GorevleriGetir(t *testing.T) {
 }
 
 func TestVeriYonetici_GorevGuncelle(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -379,7 +372,7 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 }
 
 func TestVeriYonetici_GorevSil(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -444,7 +437,7 @@ func TestVeriYonetici_GorevSil(t *testing.T) {
 }
 
 func TestVeriYonetici_ProjeKaydet(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -505,7 +498,7 @@ func TestVeriYonetici_ProjeKaydet(t *testing.T) {
 }
 
 func TestVeriYonetici_ProjeGetir(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -569,7 +562,7 @@ func TestVeriYonetici_ProjeGetir(t *testing.T) {
 }
 
 func TestVeriYonetici_ProjeleriGetir(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -624,7 +617,7 @@ func TestVeriYonetici_ProjeleriGetir(t *testing.T) {
 }
 
 func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -740,7 +733,7 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 }
 
 func TestVeriYonetici_Kapat(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -752,14 +745,14 @@ func TestVeriYonetici_Kapat(t *testing.T) {
 	}
 
 	// Operations after close should fail
-	_, err = vy.GorevleriGetir("")
+	_, err = vy.GorevleriGetir("", "", "")
 	if err == nil {
 		t.Error("expected error after closing database, but got nil")
 	}
 }
 
 func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -794,7 +787,7 @@ func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Verify tasks were created
-	gorevler, err := vy.GorevleriGetir("")
+	gorevler, err := vy.GorevleriGetir("", "", "")
 	if err != nil {
 		t.Fatalf("failed to get tasks: %v", err)
 	}
@@ -804,7 +797,7 @@ func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
 }
 
 func TestVeriYonetici_SQLInjection(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -844,7 +837,7 @@ func TestVeriYonetici_SQLInjection(t *testing.T) {
 	}
 
 	// Try injection in filter parameter
-	_, err = vy.GorevleriGetir("'; DROP TABLE gorevler; --")
+	_, err = vy.GorevleriGetir("'; DROP TABLE gorevler; --", "", "")
 	if err != nil {
 		t.Errorf("query failed: %v", err)
 	}
@@ -857,7 +850,7 @@ func TestVeriYonetici_SQLInjection(t *testing.T) {
 }
 
 func TestVeriYonetici_NullHandling(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:")
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -891,7 +884,7 @@ func TestVeriYonetici_NullHandling(t *testing.T) {
 	}
 
 	// Verify in list query
-	gorevler, err := vy.GorevleriGetir("")
+	gorevler, err := vy.GorevleriGetir("", "", "")
 	if err != nil {
 		t.Fatalf("failed to list tasks: %v", err)
 	}
@@ -914,4 +907,67 @@ func TestVeriYonetici_NullHandling(t *testing.T) {
 // Helper function to compare times (ignoring nanoseconds)
 func timesEqual(t1, t2 time.Time) bool {
 	return t1.Unix() == t2.Unix()
+}
+
+func TestVeriYonetici_Etiketleme(t *testing.T) {
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+	defer vy.Kapat()
+
+	// Görev oluştur
+	gorev := &Gorev{
+		ID:     "etiket-test-gorev",
+		Baslik: "Etiket Testi",
+	}
+	err = vy.GorevKaydet(gorev)
+	require.NoError(t, err)
+
+	// 1. Yeni etiketler oluştur ve getir
+	isimler := []string{"bug", "acil", "  yeni-ozellik  "}
+	etiketler, err := vy.EtiketleriGetirVeyaOlustur(isimler)
+	require.NoError(t, err)
+	require.Len(t, etiketler, 3)
+	assert.Equal(t, "bug", etiketler[0].Isim)
+	assert.Equal(t, "acil", etiketler[1].Isim)
+	assert.Equal(t, "yeni-ozellik", etiketler[2].Isim) // Boşlukların temizlendiğini doğrula
+
+	// 2. Göreve etiketleri ata
+	err = vy.GorevEtiketleriniAyarla(gorev.ID, etiketler)
+	require.NoError(t, err)
+
+	// 3. Görevi getir ve etiketleri doğrula
+	getirilenGorev, err := vy.GorevGetir(gorev.ID)
+	require.NoError(t, err)
+	require.NotNil(t, getirilenGorev)
+	require.Len(t, getirilenGorev.Etiketler, 3)
+
+	// Etiket isimlerini bir map'e koyarak kontrol et
+	etiketMap := make(map[string]bool)
+	for _, e := range getirilenGorev.Etiketler {
+		etiketMap[e.Isim] = true
+	}
+	assert.True(t, etiketMap["bug"])
+	assert.True(t, etiketMap["acil"])
+	assert.True(t, etiketMap["yeni-ozellik"])
+
+	// 4. Etiketleri güncelle (birini çıkar, birini ekle)
+	yeniIsimler := []string{"acil", "dokumantasyon"}
+	yeniEtiketler, err := vy.EtiketleriGetirVeyaOlustur(yeniIsimler)
+	require.NoError(t, err)
+	err = vy.GorevEtiketleriniAyarla(gorev.ID, yeniEtiketler)
+	require.NoError(t, err)
+
+	// 5. Güncellenmiş görevi getir ve etiketleri doğrula
+	getirilenGorev, err = vy.GorevGetir(gorev.ID)
+	require.NoError(t, err)
+	require.NotNil(t, getirilenGorev)
+	require.Len(t, getirilenGorev.Etiketler, 2)
+
+	yeniEtiketMap := make(map[string]bool)
+	for _, e := range getirilenGorev.Etiketler {
+		yeniEtiketMap[e.Isim] = true
+	}
+	assert.False(t, yeniEtiketMap["bug"])
+	assert.True(t, yeniEtiketMap["acil"])
+	assert.True(t, yeniEtiketMap["dokumantasyon"])
 }

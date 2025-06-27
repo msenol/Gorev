@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -32,7 +33,10 @@ func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolRes
 	}
 
 	projeID, _ := params["proje_id"].(string)
-	
+	sonTarih, _ := params["son_tarih"].(string)
+	etiketlerStr, _ := params["etiketler"].(string)
+	etiketler := strings.Split(etiketlerStr, ",")
+
 	// Eğer proje_id verilmemişse, aktif projeyi kullan
 	if projeID == "" {
 		aktifProje, err := h.isYonetici.AktifProjeGetir()
@@ -41,14 +45,14 @@ func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolRes
 		}
 	}
 
-	gorev, err := h.isYonetici.GorevOlustur(baslik, aciklama, oncelik, projeID)
+	gorev, err := h.isYonetici.GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarih, etiketler)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görev oluşturulamadı: %v", err)), nil
 	}
 
 	mesaj := fmt.Sprintf("✓ Görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID)
 	if projeID != "" {
-		proje, _ := h.isYonetici.ProjeDetayAl(projeID)
+		proje, _ := h.isYonetici.ProjeGetir(projeID)
 		if proje != nil {
 			mesaj += fmt.Sprintf("\n  Proje: %s", proje.Isim)
 		}
@@ -60,11 +64,28 @@ func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolRes
 // GorevListele görevleri listeler
 func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	durum, _ := params["durum"].(string)
+	sirala, _ := params["sirala"].(string)
+	filtre, _ := params["filtre"].(string)
+	etiket, _ := params["etiket"].(string)
 	tumProjeler, _ := params["tum_projeler"].(bool)
 
-	gorevler, err := h.isYonetici.GorevListele(durum)
+	gorevler, err := h.isYonetici.GorevListele(durum, sirala, filtre)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görevler listelenemedi: %v", err)), nil
+	}
+
+	// Etikete göre filtrele
+	if etiket != "" {
+		var filtreliGorevler []*gorev.Gorev
+		for _, g := range gorevler {
+			for _, e := range g.Etiketler {
+				if e.Isim == etiket {
+					filtreliGorevler = append(filtreliGorevler, g)
+					break
+				}
+			}
+		}
+		gorevler = filtreliGorevler
 	}
 
 	// Aktif proje varsa ve tum_projeler false ise, sadece aktif projenin görevlerini göster
@@ -104,7 +125,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		}
 		// Eğer tüm projeler gösteriliyorsa, proje adını da ekle
 		if tumProjeler && gorev.ProjeID != "" {
-			proje, _ := h.isYonetici.ProjeDetayAl(gorev.ProjeID)
+			proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
 			if proje != nil {
 				metin += fmt.Sprintf("  Proje: %s\n", proje.Isim)
 			}
@@ -126,7 +147,7 @@ func (h *Handlers) AktifProjeAyarla(params map[string]interface{}) (*mcp.CallToo
 		return mcp.NewToolResultError(fmt.Sprintf("aktif proje ayarlanamadı: %v", err)), nil
 	}
 
-	proje, _ := h.isYonetici.ProjeDetayAl(projeID)
+	proje, _ := h.isYonetici.ProjeGetir(projeID)
 	if proje != nil {
 		return mcp.NewToolResultText(
 			fmt.Sprintf("✓ Aktif proje ayarlandı: %s", proje.Isim),
@@ -222,7 +243,7 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		return mcp.NewToolResultError("id parametresi gerekli"), nil
 	}
 
-	gorev, err := h.isYonetici.GorevDetayAl(id)
+	gorev, err := h.isYonetici.GorevGetir(id)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görev bulunamadı: %v", err)), nil
 	}
@@ -245,10 +266,20 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 	)
 
 	if gorev.ProjeID != "" {
-		proje, err := h.isYonetici.ProjeDetayAl(gorev.ProjeID)
+		proje, err := h.isYonetici.ProjeGetir(gorev.ProjeID)
 		if err == nil {
 			metin += fmt.Sprintf("\n- **Proje:** %s", proje.Isim)
 		}
+	}
+	if gorev.SonTarih != nil {
+		metin += fmt.Sprintf("\n- **Son Teslim Tarihi:** %s", gorev.SonTarih.Format("2006-01-02"))
+	}
+	if len(gorev.Etiketler) > 0 {
+		var etiketIsimleri []string
+		for _, e := range gorev.Etiketler {
+			etiketIsimleri = append(etiketIsimleri, e.Isim)
+		}
+		metin += fmt.Sprintf("\n- **Etiketler:** %s", strings.Join(etiketIsimleri, ", "))
 	}
 
 	metin += "\n\n## 📝 Açıklama\n"
@@ -257,6 +288,57 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		metin += gorev.Aciklama
 	} else {
 		metin += "*Açıklama girilmemiş*"
+	}
+
+	// Bağımlılıkları ekle
+	baglantilar, err := h.isYonetici.GorevBaglantilariGetir(id)
+	if err == nil && len(baglantilar) > 0 {
+		metin += "\n\n## 🔗 Bağımlılıklar\n"
+
+		var oncekiler []string
+		var sonrakiler []string
+
+		for _, b := range baglantilar {
+			if b.BaglantiTip == "onceki" {
+				if b.HedefID == id {
+					// Bu görev hedefse, kaynak önceki görevdir
+					kaynakGorev, err := h.isYonetici.GorevGetir(b.KaynakID)
+					if err == nil {
+						durum := "✅"
+						if kaynakGorev.Durum != "tamamlandi" {
+							durum = "⏳"
+						}
+						oncekiler = append(oncekiler, fmt.Sprintf("%s %s (`%s`)", durum, kaynakGorev.Baslik, kaynakGorev.Durum))
+					}
+				} else if b.KaynakID == id {
+					// Bu görev kaynaksa, hedef sonraki görevdir
+					hedefGorev, err := h.isYonetici.GorevGetir(b.HedefID)
+					if err == nil {
+						sonrakiler = append(sonrakiler, fmt.Sprintf("- %s (`%s`)", hedefGorev.Baslik, hedefGorev.Durum))
+					}
+				}
+			}
+		}
+
+		if len(oncekiler) > 0 {
+			metin += "\n### 📋 Bu görev için beklenen görevler:\n"
+			for _, onceki := range oncekiler {
+				metin += fmt.Sprintf("- %s\n", onceki)
+			}
+		}
+
+		if len(sonrakiler) > 0 {
+			metin += "\n### 🎯 Bu göreve bağımlı görevler:\n"
+			for _, sonraki := range sonrakiler {
+				metin += sonraki + "\n"
+			}
+		}
+
+		// Bağımlılık durumu kontrolü
+		bagimli, tamamlanmamislar, err := h.isYonetici.GorevBagimliMi(id)
+		if err == nil && !bagimli && gorev.Durum == "beklemede" {
+			metin += fmt.Sprintf("\n> ⚠️ **Uyarı:** Bu görev başlatılamaz! Önce şu görevler tamamlanmalı: %v\n", tamamlanmamislar)
+		}
 	}
 
 	metin += "\n\n---\n"
@@ -277,12 +359,13 @@ func (h *Handlers) GorevDuzenle(params map[string]interface{}) (*mcp.CallToolRes
 	aciklama, aciklamaVar := params["aciklama"].(string)
 	oncelik, oncelikVar := params["oncelik"].(string)
 	projeID, projeVar := params["proje_id"].(string)
+	sonTarih, sonTarihVar := params["son_tarih"].(string)
 
-	if !baslikVar && !aciklamaVar && !oncelikVar && !projeVar {
-		return mcp.NewToolResultError("en az bir düzenleme alanı belirtilmeli (baslik, aciklama, oncelik veya proje_id)"), nil
+	if !baslikVar && !aciklamaVar && !oncelikVar && !projeVar && !sonTarihVar {
+		return mcp.NewToolResultError("en az bir düzenleme alanı belirtilmeli (baslik, aciklama, oncelik, proje_id veya son_tarih)"), nil
 	}
 
-	err := h.isYonetici.GorevDuzenle(id, baslik, aciklama, oncelik, projeID, baslikVar, aciklamaVar, oncelikVar, projeVar)
+	err := h.isYonetici.GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTarih, baslikVar, aciklamaVar, oncelikVar, projeVar, sonTarihVar)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görev düzenlenemedi: %v", err)), nil
 	}
@@ -303,7 +386,7 @@ func (h *Handlers) GorevSil(params map[string]interface{}) (*mcp.CallToolResult,
 		return mcp.NewToolResultError("görevi silmek için 'onay' parametresi true olmalıdır"), nil
 	}
 
-	gorev, err := h.isYonetici.GorevDetayAl(id)
+	gorev, err := h.isYonetici.GorevGetir(id)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görev bulunamadı: %v", err)), nil
 	}
@@ -357,7 +440,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	}
 
 	// Önce projenin var olduğunu kontrol et
-	proje, err := h.isYonetici.ProjeDetayAl(projeID)
+	proje, err := h.isYonetici.ProjeGetir(projeID)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("proje bulunamadı: %v", err)), nil
 	}
@@ -462,31 +545,63 @@ func (h *Handlers) OzetGoster(params map[string]interface{}) (*mcp.CallToolResul
 	return mcp.NewToolResultText(metin), nil
 }
 
+func (h *Handlers) GorevBagimlilikEkle(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	kaynakID, ok := params["kaynak_id"].(string)
+	if !ok || kaynakID == "" {
+		return mcp.NewToolResultError("kaynak_id parametresi gerekli"), nil
+	}
+
+	hedefID, ok := params["hedef_id"].(string)
+	if !ok || hedefID == "" {
+		return mcp.NewToolResultError("hedef_id parametresi gerekli"), nil
+	}
+
+	baglantiTipi, ok := params["baglanti_tipi"].(string)
+	if !ok || baglantiTipi == "" {
+		return mcp.NewToolResultError("baglanti_tipi parametresi gerekli"), nil
+	}
+
+	baglanti, err := h.isYonetici.GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("bağımlılık eklenemedi: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("✓ Bağımlılık eklendi: %s -> %s (%s)", baglanti.KaynakID, baglanti.HedefID, baglanti.BaglantiTip)), nil
+}
+
 // RegisterTools tüm araçları MCP sunucusuna kaydeder
 func (h *Handlers) RegisterTools(s *server.MCPServer) {
 	// Görev oluştur
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_olustur",
-		Description: "Yeni bir görev oluştur",
+		Description: "Kullanıcının doğal dil isteğinden bir görev oluşturur. Başlık, açıklama ve öncelik gibi bilgileri akıllıca çıkarır. Örneğin, kullanıcı 'çok acil olarak sunucu çökmesini düzeltmem lazım' derse, başlığı 'Sunucu çökmesini düzelt' ve önceliği 'yuksek' olarak ayarla. Eğer bir proje aktif ise görevi o projeye ata.",
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
 				"baslik": map[string]interface{}{
 					"type":        "string",
-					"description": "Görev başlığı",
+					"description": "Görevin başlığı. Kullanıcının isteğindeki ana eylemden çıkarılmalıdır.",
 				},
 				"aciklama": map[string]interface{}{
 					"type":        "string",
-					"description": "Görev açıklaması",
+					"description": "Görevin detaylı açıklaması. Kullanıcının isteğindeki ek bağlam veya detayları içerir.",
 				},
 				"oncelik": map[string]interface{}{
 					"type":        "string",
-					"description": "Öncelik seviyesi (dusuk, orta, yuksek)",
+					"description": "Öncelik seviyesi. 'acil', 'önemli' gibi kelimelerden 'yuksek', 'düşük öncelikli' gibi ifadelerden 'dusuk' olarak çıkarım yapılmalıdır. Varsayılan 'orta'dır.",
 					"enum":        []string{"dusuk", "orta", "yuksek"},
 				},
 				"proje_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Proje ID (boş bırakılırsa aktif proje kullanılır)",
+					"description": "Görevin atanacağı projenin ID'si. Kullanıcı belirtmezse ve aktif bir proje varsa, o kullanılır.",
+				},
+				"son_tarih": map[string]interface{}{
+					"type":        "string",
+					"description": "Görevin son teslim tarihi (YYYY-AA-GG formatında).",
+				},
+				"etiketler": map[string]interface{}{
+					"type":        "string",
+					"description": "Virgülle ayrılmış etiket listesi (örn: 'bug,acil,onemli').",
 				},
 			},
 			Required: []string{"baslik"},
@@ -496,18 +611,32 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 	// Görev listele
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_listele",
-		Description: "Görevleri listele",
+		Description: "Görevleri durum, proje, son teslim tarihi gibi kriterlere göre filtreleyerek ve sıralayarak listeler.",
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
 				"durum": map[string]interface{}{
 					"type":        "string",
-					"description": "Filtrelenecek durum",
+					"description": "Filtrelenecek görev durumu (beklemede, devam_ediyor, tamamlandi).",
 					"enum":        []string{"beklemede", "devam_ediyor", "tamamlandi"},
+				},
+				"sirala": map[string]interface{}{
+					"type":        "string",
+					"description": "Sıralama ölçütü ('son_tarih_asc', 'son_tarih_desc'). Varsayılan oluşturma tarihine göredir.",
+					"enum":        []string{"son_tarih_asc", "son_tarih_desc"},
+				},
+				"filtre": map[string]interface{}{
+					"type":        "string",
+					"description": "Özel filtreler ('acil' - son 7 gün, 'gecmis' - tarihi geçmiş).",
+					"enum":        []string{"acil", "gecmis"},
+				},
+				"etiket": map[string]interface{}{
+					"type":        "string",
+					"description": "Belirtilen etikete sahip görevleri filtreler.",
 				},
 				"tum_projeler": map[string]interface{}{
 					"type":        "boolean",
-					"description": "Tüm projelerdeki görevleri göster (varsayılan: false, sadece aktif proje)",
+					"description": "Tüm projelerdeki görevleri gösterir. Varsayılan olarak sadece aktif projenin görevleri listelenir.",
 				},
 			},
 		},
@@ -553,30 +682,34 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 	// Görev düzenle
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_duzenle",
-		Description: "Bir görevin başlık, açıklama, öncelik veya proje bilgilerini düzenle",
+		Description: "Mevcut bir görevin başlık, açıklama, öncelik veya proje bilgilerini günceller. Kullanıcının isteğinden hangi alanların güncelleneceğini anlar. Örneğin, '123 ID'li görevin başlığını 'Yeni Başlık' yap' komutunu işler.",
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
 					"type":        "string",
-					"description": "Görev ID",
+					"description": "Düzenlenecek görevin ID'si.",
 				},
 				"baslik": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni başlık (opsiyonel)",
+					"description": "Görev için yeni başlık (opsiyonel).",
 				},
 				"aciklama": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni açıklama - markdown destekler (opsiyonel)",
+					"description": "Görev için yeni açıklama (opsiyonel).",
 				},
 				"oncelik": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni öncelik seviyesi (opsiyonel)",
+					"description": "Görev için yeni öncelik seviyesi (opsiyonel).",
 					"enum":        []string{"dusuk", "orta", "yuksek"},
 				},
 				"proje_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni proje ID (opsiyonel)",
+					"description": "Görevin atanacağı yeni projenin ID'si (opsiyonel).",
+				},
+				"son_tarih": map[string]interface{}{
+					"type":        "string",
+					"description": "Görevin yeni son teslim tarihi (YYYY-AA-GG formatında, boş string tarihi kaldırır).",
 				},
 			},
 			Required: []string{"id"},
@@ -694,4 +827,28 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{},
 		},
 	}, h.AktifProjeKaldir)
+
+	// Görev bağımlılık ekle
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_bagimlilik_ekle",
+		Description: "İki görev arasına bir bağımlılık ekler",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"kaynak_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Bağımlılığın kaynağı olan görev ID",
+				},
+				"hedef_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Bağımlılığın hedefi olan görev ID",
+				},
+				"baglanti_tipi": map[string]interface{}{
+					"type":        "string",
+					"description": "Bağımlılık tipi (örn: 'engelliyor', 'ilişkili')",
+				},
+			},
+			Required: []string{"kaynak_id", "hedef_id", "baglanti_tipi"},
+		},
+	}, h.GorevBagimlilikEkle)
 }

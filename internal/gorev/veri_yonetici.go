@@ -2,8 +2,15 @@ package gorev
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
+	"strings"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -11,73 +18,66 @@ type VeriYonetici struct {
 	db *sql.DB
 }
 
-func YeniVeriYonetici(dbYolu string) (*VeriYonetici, error) {
+func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, error) {
 	db, err := sql.Open("sqlite3", dbYolu)
 	if err != nil {
 		return nil, fmt.Errorf("veritabanı açılamadı: %w", err)
 	}
 
 	vy := &VeriYonetici{db: db}
-	if err := vy.tablolariOlustur(); err != nil {
-		return nil, fmt.Errorf("tablolar oluşturulamadı: %w", err)
+	if err := vy.migrateDB(migrationsYolu); err != nil {
+		return nil, fmt.Errorf("veritabanı migrate edilemedi: %w", err)
 	}
 
 	return vy, nil
+}
+
+func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
+	driver, err := sqlite3.WithInstance(vy.db, &sqlite3.Config{})
+	if err != nil {
+		return fmt.Errorf("migration driver oluşturulamadı: %w", err)
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		migrationsYolu,
+		"sqlite3",
+		driver,
+	)
+	if err != nil {
+		return fmt.Errorf("migration instance oluşturulamadı: %w", err)
+	}
+
+	// Hata ayıklama için versiyonları logla
+	version, dirty, err := m.Version()
+	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
+		log.Printf("Migration öncesi versiyon alınamadı: %v", err)
+	} else {
+		log.Printf("Migration öncesi veritabanı versiyonu: %d, dirty: %v", version, dirty)
+	}
+
+	err = m.Up()
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("migration işlemi başarısız: %w", err)
+	}
+
+	version, dirty, err = m.Version()
+	if err != nil {
+		log.Printf("Migration sonrası versiyon alınamadı: %v", err)
+	} else {
+		log.Printf("Migration sonrası veritabanı versiyonu: %d, dirty: %v", version, dirty)
+	}
+
+	log.Println("Veritabanı başarıyla migrate edildi.")
+	return nil
 }
 
 func (vy *VeriYonetici) Kapat() error {
 	return vy.db.Close()
 }
 
-func (vy *VeriYonetici) tablolariOlustur() error {
-	sorgular := []string{
-		`CREATE TABLE IF NOT EXISTS projeler (
-			id TEXT PRIMARY KEY,
-			isim TEXT NOT NULL,
-			tanim TEXT,
-			olusturma_tarih DATETIME NOT NULL,
-			guncelleme_tarih DATETIME NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS gorevler (
-			id TEXT PRIMARY KEY,
-			baslik TEXT NOT NULL,
-			aciklama TEXT,
-			durum TEXT NOT NULL DEFAULT 'beklemede',
-			oncelik TEXT NOT NULL DEFAULT 'orta',
-			proje_id TEXT,
-			olusturma_tarih DATETIME NOT NULL,
-			guncelleme_tarih DATETIME NOT NULL,
-			FOREIGN KEY (proje_id) REFERENCES projeler(id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS baglantilar (
-			id TEXT PRIMARY KEY,
-			kaynak_id TEXT NOT NULL,
-			hedef_id TEXT NOT NULL,
-			baglanti_tip TEXT NOT NULL,
-			FOREIGN KEY (kaynak_id) REFERENCES gorevler(id),
-			FOREIGN KEY (hedef_id) REFERENCES gorevler(id)
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_gorev_durum ON gorevler(durum)`,
-		`CREATE INDEX IF NOT EXISTS idx_gorev_proje ON gorevler(proje_id)`,
-		`CREATE TABLE IF NOT EXISTS aktif_proje (
-			id INTEGER PRIMARY KEY CHECK (id = 1),
-			proje_id TEXT NOT NULL,
-			FOREIGN KEY (proje_id) REFERENCES projeler(id)
-		)`,
-	}
-
-	for _, sorgu := range sorgular {
-		if _, err := vy.db.Exec(sorgu); err != nil {
-			return fmt.Errorf("sorgu çalıştırılamadı: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
-	sorgu := `INSERT INTO gorevler (id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih)
-	          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	sorgu := `INSERT INTO gorevler (id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih)
+	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := vy.db.Exec(sorgu,
 		gorev.ID,
@@ -88,13 +88,14 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 		gorev.ProjeID,
 		gorev.OlusturmaTarih,
 		gorev.GuncellemeTarih,
+		gorev.SonTarih,
 	)
 
 	return err
 }
 
 func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih
+	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih
 	          FROM gorevler WHERE id = ?`
 
 	gorev := &Gorev{}
@@ -109,6 +110,7 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 		&projeID,
 		&gorev.OlusturmaTarih,
 		&gorev.GuncellemeTarih,
+		&gorev.SonTarih,
 	)
 
 	if err != nil {
@@ -119,20 +121,48 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 		gorev.ProjeID = projeID.String
 	}
 
+	// Etiketleri getir
+	etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
+	if err != nil {
+		log.Printf("görev etiketleri getirilemedi: %v", err)
+		// Etiket getirme başarısız olsa bile görevi döndür
+		gorev.Etiketler = []*Etiket{}
+	} else {
+		gorev.Etiketler = etiketler
+	}
+
 	return gorev, nil
 }
 
-func (vy *VeriYonetici) GorevleriGetir(durum string) ([]*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih
+func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, error) {
+	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih
 	          FROM gorevler`
 	args := []interface{}{}
+	whereClauses := []string{}
 
 	if durum != "" {
-		sorgu += " WHERE durum = ?"
+		whereClauses = append(whereClauses, "durum = ?")
 		args = append(args, durum)
 	}
 
-	sorgu += " ORDER BY olusturma_tarih DESC"
+	if filtre == "acil" {
+		whereClauses = append(whereClauses, "son_tarih IS NOT NULL AND son_tarih >= date('now') AND son_tarih < date('now', '+7 days')")
+	} else if filtre == "gecmis" {
+		whereClauses = append(whereClauses, "son_tarih IS NOT NULL AND son_tarih < date('now')")
+	}
+
+	if len(whereClauses) > 0 {
+		sorgu += " WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	switch sirala {
+	case "son_tarih_asc":
+		sorgu += " ORDER BY son_tarih ASC"
+	case "son_tarih_desc":
+		sorgu += " ORDER BY son_tarih DESC"
+	default:
+		sorgu += " ORDER BY olusturma_tarih DESC"
+	}
 
 	rows, err := vy.db.Query(sorgu, args...)
 	if err != nil {
@@ -154,6 +184,7 @@ func (vy *VeriYonetici) GorevleriGetir(durum string) ([]*Gorev, error) {
 			&projeID,
 			&gorev.OlusturmaTarih,
 			&gorev.GuncellemeTarih,
+			&gorev.SonTarih,
 		)
 		if err != nil {
 			return nil, err
@@ -163,15 +194,113 @@ func (vy *VeriYonetici) GorevleriGetir(durum string) ([]*Gorev, error) {
 			gorev.ProjeID = projeID.String
 		}
 
+		// Etiketleri getir
+		etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
+		if err != nil {
+			// Hata durumunda logla ve devam et, görevi etiketsiz döndür
+			log.Printf("görev etiketleri getirilemedi: %v", err)
+		}
+		gorev.Etiketler = etiketler
+
 		gorevler = append(gorevler, gorev)
 	}
 
 	return gorevler, nil
 }
 
+func (vy *VeriYonetici) gorevEtiketleriniGetir(gorevID string) ([]*Etiket, error) {
+	sorgu := `SELECT e.id, e.isim FROM etiketler e
+	          JOIN gorev_etiketleri ge ON e.id = ge.etiket_id
+	          WHERE ge.gorev_id = ?`
+	rows, err := vy.db.Query(sorgu, gorevID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var etiketler []*Etiket
+	for rows.Next() {
+		e := &Etiket{}
+		if err := rows.Scan(&e.ID, &e.Isim); err != nil {
+			return nil, err
+		}
+		etiketler = append(etiketler, e)
+	}
+	return etiketler, nil
+}
+
+func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error) {
+	etiketler := make([]*Etiket, 0, len(isimler))
+	tx, err := vy.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("transaction başlatılamadı: %w", err)
+	}
+	defer tx.Rollback() // Hata durumunda geri al
+
+	stmtSelect, err := tx.Prepare("SELECT id, isim FROM etiketler WHERE isim = ?")
+	if err != nil {
+		return nil, fmt.Errorf("select statement hazırlanamadı: %w", err)
+	}
+	defer stmtSelect.Close()
+
+	stmtInsert, err := tx.Prepare("INSERT INTO etiketler (id, isim) VALUES (?, ?)")
+	if err != nil {
+		return nil, fmt.Errorf("insert statement hazırlanamadı: %w", err)
+	}
+	defer stmtInsert.Close()
+
+	for _, isim := range isimler {
+		if strings.TrimSpace(isim) == "" {
+			continue
+		}
+		etiket := &Etiket{Isim: strings.TrimSpace(isim)}
+		err := stmtSelect.QueryRow(etiket.Isim).Scan(&etiket.ID, &etiket.Isim)
+		if err == sql.ErrNoRows {
+			// Etiket yok, oluştur
+			etiket.ID = uuid.New().String()
+			if _, err := stmtInsert.Exec(etiket.ID, etiket.Isim); err != nil {
+				return nil, fmt.Errorf("yeni etiket oluşturulamadı '%s': %w", etiket.Isim, err)
+			}
+		} else if err != nil {
+			return nil, fmt.Errorf("etiket sorgulanamadı '%s': %w", etiket.Isim, err)
+		}
+		etiketler = append(etiketler, etiket)
+	}
+
+	return etiketler, tx.Commit()
+}
+
+func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
+	tx, err := vy.db.Begin()
+	if err != nil {
+		return fmt.Errorf("transaction başlatılamadı: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Mevcut bağlantıları sil
+	if _, err := tx.Exec("DELETE FROM gorev_etiketleri WHERE gorev_id = ?", gorevID); err != nil {
+		return fmt.Errorf("mevcut etiketler silinemedi: %w", err)
+	}
+
+	// Yeni bağlantıları ekle
+	stmt, err := tx.Prepare("INSERT INTO gorev_etiketleri (gorev_id, etiket_id) VALUES (?, ?)")
+	if err != nil {
+		return fmt.Errorf("insert statement hazırlanamadı: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, etiket := range etiketler {
+		if _, err := stmt.Exec(gorevID, etiket.ID); err != nil {
+			return fmt.Errorf("görev etiketi eklenemedi '%s': %w", etiket.Isim, err)
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (vy *VeriYonetici) GorevGuncelle(gorev *Gorev) error {
 	sorgu := `UPDATE gorevler SET baslik = ?, aciklama = ?, durum = ?, oncelik = ?, 
-	          proje_id = ?, guncelleme_tarih = ? WHERE id = ?`
+	          proje_id = ?, guncelleme_tarih = ?, son_tarih = ? WHERE id = ?`
 
 	_, err := vy.db.Exec(sorgu,
 		gorev.Baslik,
@@ -180,6 +309,7 @@ func (vy *VeriYonetici) GorevGuncelle(gorev *Gorev) error {
 		gorev.Oncelik,
 		gorev.ProjeID,
 		gorev.GuncellemeTarih,
+		gorev.SonTarih,
 		gorev.ID,
 	)
 
@@ -307,4 +437,29 @@ func (vy *VeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
 	}
 
 	return gorevler, nil
+}
+
+func (vy *VeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
+	sorgu := `INSERT INTO baglantilar (id, kaynak_id, hedef_id, baglanti_tip) VALUES (?, ?, ?, ?)`
+	_, err := vy.db.Exec(sorgu, baglanti.ID, baglanti.KaynakID, baglanti.HedefID, baglanti.BaglantiTip)
+	return err
+}
+
+func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
+	sorgu := `SELECT id, kaynak_id, hedef_id, baglanti_tip FROM baglantilar WHERE kaynak_id = ? OR hedef_id = ?`
+	rows, err := vy.db.Query(sorgu, gorevID, gorevID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var baglantilar []*Baglanti
+	for rows.Next() {
+		b := &Baglanti{}
+		if err := rows.Scan(&b.ID, &b.KaynakID, &b.HedefID, &b.BaglantiTip); err != nil {
+			return nil, err
+		}
+		baglantilar = append(baglantilar, b)
+	}
+	return baglantilar, nil
 }
