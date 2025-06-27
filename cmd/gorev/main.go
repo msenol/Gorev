@@ -51,7 +51,7 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 
 func runServer() error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db")
+	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}

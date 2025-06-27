@@ -1,6 +1,13 @@
 {
   "mcpServers": {
-    "Ref": {
+    "gorev": {
+      "command": "/mnt/f/Development/Projects/task-orchestrator/gorev",
+      "args": [
+        "serve"
+      ]
+    }
+  },
+  "Ref": {
       "command": "npx",
       "args": [
         "mcp-remote@0.1.0-0",
@@ -22,11 +29,5 @@
       "type": "sse",
       "url": "https://mcp.context7.com/sse"
     },
-    "gorev": {
-      "command": "/mnt/f/Development/Projects/task-orchestrator/gorev",
-      "args": [
-        "serve"
-      ]
-    }
-  }
+    "preferredEditor": "cursor"
 }
