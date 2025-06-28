@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Package structure**: Updated module path from `github.com/yourusername/gorev` to `github.com/msenol/gorev`
+- **Configuration**: Removed docker-based gorev server configuration from `.mcp.json`
+
+### Fixed
+- **Import paths**: Fixed all internal import paths to use the correct module name
+
 ### Documentation
 - **Enhanced**: Complete documentation overhaul with Claude (Anthropic) assistance
 - **Added**: Platform-specific installation guides for Windows, macOS, and Linux
