@@ -1,0 +1,273 @@
+{
+  "name": "gorev-vscode",
+  "displayName": "Gorev Task Orchestrator",
+  "description": "Powerful task management for VS Code powered by MCP protocol",
+  "version": "0.1.0",
+  "publisher": "gorev-team",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "task",
+    "todo",
+    "project management",
+    "mcp",
+    "gorev"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Gorev",
+      "properties": {
+        "gorev.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Full path to the Gorev MCP server executable (e.g., /path/to/gorev or C:\\path\\to\\gorev.exe)"
+        },
+        "gorev.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect to Gorev server on startup"
+        },
+        "gorev.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Gorev status in the status bar"
+        },
+        "gorev.refreshInterval": {
+          "type": "number",
+          "default": 30,
+          "description": "Refresh interval in seconds (0 to disable auto-refresh)"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "gorev.createTask",
+        "title": "Create Task",
+        "category": "Gorev",
+        "icon": "$(add)"
+      },
+      {
+        "command": "gorev.refreshTasks",
+        "title": "Refresh Tasks",
+        "category": "Gorev",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gorev.createProject",
+        "title": "Create Project",
+        "category": "Gorev",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "gorev.setActiveProject",
+        "title": "Set Active Project",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.showTaskDetail",
+        "title": "Show Task Details",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.updateTaskStatus",
+        "title": "Update Task Status",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.deleteTask",
+        "title": "Delete Task",
+        "category": "Gorev",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "gorev.quickCreateTask",
+        "title": "Quick Create Task",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.showSummary",
+        "title": "Show Summary",
+        "category": "Gorev",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "gorev.connect",
+        "title": "Connect to Server",
+        "category": "Gorev",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "gorev.disconnect",
+        "title": "Disconnect from Server",
+        "category": "Gorev",
+        "icon": "$(debug-disconnect)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gorev",
+          "title": "Gorev",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "gorev": [
+        {
+          "id": "gorevTasks",
+          "name": "Tasks",
+          "icon": "$(checklist)",
+          "contextualTitle": "Gorev Tasks"
+        },
+        {
+          "id": "gorevProjects",
+          "name": "Projects",
+          "icon": "$(folder-library)",
+          "contextualTitle": "Gorev Projects"
+        },
+        {
+          "id": "gorevTemplates",
+          "name": "Templates",
+          "icon": "$(file-code)",
+          "contextualTitle": "Task Templates"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "gorevTasks",
+        "contents": "No tasks found.\n[Create Task](command:gorev.createTask)\n[Create Project First](command:gorev.createProject)"
+      },
+      {
+        "view": "gorevProjects",
+        "contents": "No projects found.\n[Create Project](command:gorev.createProject)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "gorev.createTask",
+          "when": "view == gorevTasks",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gorev.refreshTasks",
+          "when": "view == gorevTasks",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gorev.showSummary",
+          "when": "view == gorevTasks",
+          "group": "navigation@3"
+        },
+        {
+          "command": "gorev.createProject",
+          "when": "view == gorevProjects",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gorev.showTaskDetail",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "1_view"
+        },
+        {
+          "command": "gorev.updateTaskStatus",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "2_modify"
+        },
+        {
+          "command": "gorev.deleteTask",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "3_delete"
+        },
+        {
+          "command": "gorev.setActiveProject",
+          "when": "view == gorevProjects && viewItem == project",
+          "group": "1_action"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "gorev.quickCreateTask",
+          "when": "gorev.connected"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "gorev.quickCreateTask",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      },
+      {
+        "command": "gorev.refreshTasks",
+        "key": "ctrl+r",
+        "mac": "cmd+r",
+        "when": "focusedView == gorevTasks"
+      }
+    ],
+    "colors": [
+      {
+        "id": "gorev.highPriorityForeground",
+        "description": "Color for high priority tasks",
+        "defaults": {
+          "dark": "#ff6b6b",
+          "light": "#d32f2f"
+        }
+      },
+      {
+        "id": "gorev.mediumPriorityForeground",
+        "description": "Color for medium priority tasks",
+        "defaults": {
+          "dark": "#ffa726",
+          "light": "#f57c00"
+        }
+      },
+      {
+        "id": "gorev.lowPriorityForeground",
+        "description": "Color for low priority tasks",
+        "defaults": {
+          "dark": "#42a5f5",
+          "light": "#1976d2"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node ./node_modules/typescript/lib/tsc.js -p ./",
+    "watch": "node ./node_modules/typescript/lib/tsc.js -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

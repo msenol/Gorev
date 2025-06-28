@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/yourusername/gorev/internal/gorev"
-	"github.com/yourusername/gorev/internal/mcp"
+	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/mcp"
 )
 
 var (

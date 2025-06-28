@@ -6,7 +6,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/yourusername/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/gorev"
 )
 
 type Handlers struct {
