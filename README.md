@@ -63,7 +63,17 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 
 ## 📦 Kurulum
 
-### Hızlı Kurulum (30 saniye)
+### 🚀 Otomatik Kurulum (Önerilen)
+
+```bash
+# Linux/macOS
+curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
+
+# Specific version
+curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.7.0-dev bash
+```
+
+### Manuel Kurulum
 
 <details>
 <summary><b>🪟 Windows</b></summary>
@@ -84,11 +94,7 @@ gorev version
 <summary><b>🍎 macOS</b></summary>
 
 ```bash
-# Homebrew ile (önerilen)
-brew tap msenol/gorev
-brew install gorev
-
-# Veya binary indirme
+# Binary indirme (Homebrew desteği yakında)
 curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-darwin-amd64 -o gorev
 chmod +x gorev
 sudo mv gorev /usr/local/bin/
@@ -115,8 +121,9 @@ gorev version
 <summary><b>🐳 Docker</b></summary>
 
 ```bash
-docker pull ghcr.io/msenol/gorev:latest
-docker run -v ~/.gorev:/data ghcr.io/msenol/gorev serve
+# Docker image yakında gelecek
+# docker pull ghcr.io/msenol/gorev:latest
+# docker run -v ~/.gorev:/data ghcr.io/msenol/gorev serve
 ```
 
 </details>
