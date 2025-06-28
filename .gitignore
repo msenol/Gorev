@@ -62,3 +62,4 @@ gorev-test
 
 # Local Claude configuration
 .claude/
+temp/
