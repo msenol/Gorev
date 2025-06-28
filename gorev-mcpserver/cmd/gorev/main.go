@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
-	"github.com/spf13/cobra"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/mcp"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -14,6 +15,51 @@ var (
 	buildTime = "unknown"
 	gitCommit = "unknown"
 )
+
+// getMigrationsPath returns the correct path to migrations folder
+func getMigrationsPath() string {
+	// Get the executable path
+	exePath, err := os.Executable()
+	if err != nil {
+		// Fallback to relative path
+		return "file://internal/veri/migrations"
+	}
+
+	// Get the directory of the executable
+	exeDir := filepath.Dir(exePath)
+
+	// Check if we're in the build directory
+	if filepath.Base(exeDir) == "build" {
+		// Go up one level to project root
+		exeDir = filepath.Dir(exeDir)
+	}
+
+	// Construct the migrations path
+	migrationsPath := filepath.Join(exeDir, "internal", "veri", "migrations")
+	return "file://" + migrationsPath
+}
+
+// getDatabasePath returns the correct path to database file
+func getDatabasePath() string {
+	// Get the executable path
+	exePath, err := os.Executable()
+	if err != nil {
+		// Fallback to current directory
+		return "gorev.db"
+	}
+
+	// Get the directory of the executable
+	exeDir := filepath.Dir(exePath)
+
+	// Check if we're in the build directory
+	if filepath.Base(exeDir) == "build" {
+		// Go up one level to project root
+		exeDir = filepath.Dir(exeDir)
+	}
+
+	// Construct the database path
+	return filepath.Join(exeDir, "gorev.db")
+}
 
 func main() {
 	rootCmd := &cobra.Command{
@@ -89,7 +135,7 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 
 func runServer() error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
@@ -115,7 +161,7 @@ func runServer() error {
 
 func listTemplates(kategori string) error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
@@ -154,7 +200,7 @@ func listTemplates(kategori string) error {
 
 func showTemplate(templateID string) error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
@@ -196,7 +242,7 @@ func showTemplate(templateID string) error {
 
 func initTemplates() error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici("gorev.db", "file://internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
