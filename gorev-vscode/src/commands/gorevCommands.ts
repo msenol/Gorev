@@ -3,7 +3,8 @@ import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { GorevDurum, GorevOncelik } from '../models/common';
-import { GorevTreeItem } from '../providers/gorevTreeProvider';
+import { TaskDetailPanel } from '../ui/taskDetailPanel';
+// import { GorevTreeItem } from '../providers/gorevTreeProvider';
 
 export function registerGorevCommands(
   context: vscode.ExtensionContext,
@@ -117,22 +118,14 @@ export function registerGorevCommands(
 
   // Show Task Detail
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.SHOW_TASK_DETAIL, async (item: GorevTreeItem) => {
+    vscode.commands.registerCommand(COMMANDS.SHOW_TASK_DETAIL, async (item: any) => {
       try {
-        const result = await mcpClient.callTool('gorev_detay', {
-          id: item.task.id,
-        });
-
-        const panel = vscode.window.createWebviewPanel(
-          'gorevDetail',
-          `Task: ${item.task.baslik}`,
-          vscode.ViewColumn.Two,
-          {
-            enableScripts: true,
-          }
+        // Use the new TaskDetailPanel
+        await TaskDetailPanel.createOrShow(
+          mcpClient,
+          item.task,
+          context.extensionUri
         );
-
-        panel.webview.html = getTaskDetailHtml(result.content[0].text);
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to show task details: ${error}`);
       }
@@ -141,7 +134,7 @@ export function registerGorevCommands(
 
   // Update Task Status
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.UPDATE_TASK_STATUS, async (item: GorevTreeItem) => {
+    vscode.commands.registerCommand(COMMANDS.UPDATE_TASK_STATUS, async (item: any) => {
       try {
         const newStatus = await vscode.window.showQuickPick(
           [
@@ -171,7 +164,7 @@ export function registerGorevCommands(
 
   // Delete Task
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.DELETE_TASK, async (item: GorevTreeItem) => {
+    vscode.commands.registerCommand(COMMANDS.DELETE_TASK, async (item: any) => {
       try {
         const confirm = await vscode.window.showWarningMessage(
           `Are you sure you want to delete "${item.task.baslik}"?`,

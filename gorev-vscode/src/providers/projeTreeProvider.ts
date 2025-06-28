@@ -3,6 +3,7 @@ import { MCPClient } from '../mcp/client';
 import { Proje } from '../models/proje';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
+import { MarkdownParser } from '../utils/markdownParser';
 
 export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<ProjeTreeItem | undefined | null | void>();
@@ -18,20 +19,27 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
   }
 
   async getChildren(element?: ProjeTreeItem): Promise<ProjeTreeItem[]> {
+    console.log('[ProjeTreeProvider] getChildren called with element:', element);
+    
     if (!this.mcpClient.isConnected()) {
+      console.log('[ProjeTreeProvider] MCP client not connected');
       return [];
     }
 
     if (!element) {
       // Root level - return all projects
+      console.log('[ProjeTreeProvider] Loading root projects...');
       try {
         await this.loadProjects();
         await this.loadActiveProject();
-        return this.projects.map((project) => 
+        const items = this.projects.map((project) => 
           new ProjeTreeItem(project, project.id === this.activeProjectId)
         );
+        console.log('[ProjeTreeProvider] Returning', items.length, 'project items');
+        return items;
       } catch (error) {
         Logger.error('Failed to load projects:', error);
+        console.error('[ProjeTreeProvider] Error loading projects:', error);
         return [];
       }
     }
@@ -49,8 +57,16 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
     try {
       const result = await this.mcpClient.callTool('proje_listele');
       
+      // Debug: Log raw response
+      console.log('[ProjeTreeProvider] Raw MCP response:', result);
+      console.log('[ProjeTreeProvider] Content text:', result.content[0].text);
+      
       // Parse the markdown content to extract projects
-      this.projects = this.parseProjectsFromContent(result.content[0].text);
+      this.projects = MarkdownParser.parseProjeListesi(result.content[0].text);
+      
+      // Debug: Log parsed projects
+      console.log('[ProjeTreeProvider] Parsed projects count:', this.projects.length);
+      console.log('[ProjeTreeProvider] Parsed projects:', this.projects);
     } catch (error) {
       Logger.error('Failed to load projects:', error);
       throw error;
@@ -83,62 +99,6 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
     }
   }
 
-  private parseProjectsFromContent(content: string): Proje[] {
-    const projects: Proje[] = [];
-    
-    // Check for empty project list
-    if (content.includes('Henüz proje bulunmuyor')) {
-      return projects;
-    }
-    
-    // Split content by project headers (###)
-    const projectSections = content.split(/^###\s+/m).filter(section => section.trim());
-    
-    for (const section of projectSections) {
-      const lines = section.trim().split('\n');
-      if (lines.length === 0) continue;
-      
-      // First line is the project name
-      const projectName = lines[0].trim();
-      const project: Partial<Proje> = {
-        isim: projectName,
-      };
-      
-      // Parse the rest of the lines for properties
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line || !line.startsWith('- **')) continue;
-        
-        // Extract property name and value
-        const match = line.match(/- \*\*([^:]+):\*\*\s*(.+)/);
-        if (!match) continue;
-        
-        const [, property, value] = match;
-        
-        switch (property) {
-          case 'ID':
-            project.id = value.trim();
-            break;
-          case 'Tanım':
-            project.tanim = value.trim();
-            break;
-          case 'Oluşturma':
-            project.olusturma_tarih = value.trim();
-            break;
-          case 'Görev Sayısı':
-            project.gorev_sayisi = parseInt(value.trim()) || 0;
-            break;
-        }
-      }
-      
-      // Only add project if it has an ID
-      if (project.id) {
-        projects.push(project as Proje);
-      }
-    }
-    
-    return projects;
-  }
 }
 
 export class ProjeTreeItem extends vscode.TreeItem {

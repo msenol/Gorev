@@ -3,6 +3,7 @@ import { MCPClient } from '../mcp/client';
 import { GorevTemplate, TemplateKategori } from '../models/template';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
+import { MarkdownParser } from '../utils/markdownParser';
 
 export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTreeItem | TemplateCategoryItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<TemplateTreeItem | TemplateCategoryItem | undefined | null | void>();
@@ -17,24 +18,34 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   }
 
   async getChildren(element?: TemplateTreeItem | TemplateCategoryItem): Promise<(TemplateTreeItem | TemplateCategoryItem)[]> {
+    console.log('[TemplateTreeProvider] getChildren called with element:', element);
+    
     if (!this.mcpClient.isConnected()) {
+      console.log('[TemplateTreeProvider] MCP client not connected');
       return [];
     }
 
     if (!element) {
       // Root level - return categories
+      console.log('[TemplateTreeProvider] Loading root categories...');
       try {
         await this.loadTemplates();
-        return this.getCategories();
+        const categories = this.getCategories();
+        console.log('[TemplateTreeProvider] Returning', categories.length, 'categories');
+        return categories;
       } catch (error) {
         Logger.error('Failed to load templates:', error);
+        console.error('[TemplateTreeProvider] Error loading templates:', error);
         return [];
       }
     } else if (element instanceof TemplateCategoryItem) {
       // Return templates for this category
-      return this.templates
+      console.log('[TemplateTreeProvider] Loading templates for category:', element.category);
+      const templates = this.templates
         .filter((template) => template.kategori === element.category)
         .map((template) => new TemplateTreeItem(template));
+      console.log('[TemplateTreeProvider] Returning', templates.length, 'templates');
+      return templates;
     }
 
     return [];
@@ -49,8 +60,16 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
     try {
       const result = await this.mcpClient.callTool('template_listele');
       
+      // Debug: Log raw response
+      console.log('[TemplateTreeProvider] Raw MCP response:', result);
+      console.log('[TemplateTreeProvider] Content text:', result.content[0].text);
+      
       // Parse the markdown content to extract templates
-      this.templates = this.parseTemplatesFromContent(result.content[0].text);
+      this.templates = MarkdownParser.parseTemplateListesi(result.content[0].text);
+      
+      // Debug: Log parsed templates
+      console.log('[TemplateTreeProvider] Parsed templates count:', this.templates.length);
+      console.log('[TemplateTreeProvider] Parsed templates:', this.templates);
     } catch (error) {
       Logger.error('Failed to load templates:', error);
       throw error;
@@ -60,135 +79,15 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   private getCategories(): TemplateCategoryItem[] {
     const categories = new Set<TemplateKategori>();
     this.templates.forEach((template) => {
-      if (template.aktif) {
-        categories.add(template.kategori);
-      }
+      categories.add(template.kategori);
     });
 
     return Array.from(categories).map((category) => {
-      const count = this.templates.filter((t) => t.kategori === category && t.aktif).length;
+      const count = this.templates.filter((t) => t.kategori === category).length;
       return new TemplateCategoryItem(category, count);
     });
   }
 
-  private parseTemplatesFromContent(content: string): GorevTemplate[] {
-    const templates: GorevTemplate[] = [];
-    
-    // Check for empty template list
-    if (content.includes('Henüz template bulunmuyor')) {
-      return templates;
-    }
-    
-    const lines = content.split('\n');
-    let currentCategory: TemplateKategori | null = null;
-    let currentTemplate: Partial<GorevTemplate> | null = null;
-    let inFieldsSection = false;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Check for category (### header)
-      if (line.startsWith('### ')) {
-        // Save previous template if exists
-        if (currentTemplate && currentTemplate.id) {
-          templates.push(currentTemplate as GorevTemplate);
-        }
-        
-        currentCategory = line.substring(4).trim() as TemplateKategori;
-        currentTemplate = null;
-        inFieldsSection = false;
-        continue;
-      }
-      
-      // Check for template name (#### header)
-      if (line.startsWith('#### ')) {
-        // Save previous template if exists
-        if (currentTemplate && currentTemplate.id) {
-          templates.push(currentTemplate as GorevTemplate);
-        }
-        
-        currentTemplate = {
-          isim: line.substring(5).trim(),
-          kategori: currentCategory || TemplateKategori.Genel,
-          alanlar: [],
-          aktif: true,
-        };
-        inFieldsSection = false;
-        continue;
-      }
-      
-      // Parse template details
-      if (currentTemplate && line.trim().startsWith('- **')) {
-        const idMatch = line.match(/- \*\*ID:\*\* `([^`]+)`/);
-        if (idMatch) {
-          currentTemplate.id = idMatch[1];
-          continue;
-        }
-        
-        const descMatch = line.match(/- \*\*Açıklama:\*\* (.+)/);
-        if (descMatch) {
-          currentTemplate.tanim = descMatch[1].trim();
-          continue;
-        }
-        
-        const titleMatch = line.match(/- \*\*Başlık Şablonu:\*\* `([^`]+)`/);
-        if (titleMatch) {
-          currentTemplate.varsayilan_baslik = titleMatch[1];
-          continue;
-        }
-        
-        if (line.includes('- **Alanlar:**')) {
-          inFieldsSection = true;
-          continue;
-        }
-      }
-      
-      // Parse fields
-      if (inFieldsSection && currentTemplate && line.trim().startsWith('- `')) {
-        const fieldMatch = line.match(/- `([^`]+)` \(([^)]+)\)(.+)?/);
-        if (fieldMatch) {
-          const [, fieldName, fieldType, extra] = fieldMatch;
-          const field: any = {
-            isim: fieldName,
-            tur: fieldType,
-            zorunlu: false,
-            varsayilan: '',
-          };
-          
-          if (extra) {
-            // Check if required
-            if (extra.includes('*(zorunlu)*')) {
-              field.zorunlu = true;
-            }
-            
-            // Extract default value
-            const defaultMatch = extra.match(/varsayılan: ([^-]+)/);
-            if (defaultMatch) {
-              field.varsayilan = defaultMatch[1].trim();
-            }
-            
-            // Extract options
-            const optionsMatch = extra.match(/seçenekler: (.+)/);
-            if (optionsMatch) {
-              field.secenekler = optionsMatch[1].split(',').map(opt => opt.trim());
-            }
-          }
-          
-          if (!currentTemplate.alanlar) {
-            currentTemplate.alanlar = [];
-          }
-          currentTemplate.alanlar.push(field);
-        }
-      }
-    }
-    
-    // Don't forget the last template
-    if (currentTemplate && currentTemplate.id) {
-      templates.push(currentTemplate as GorevTemplate);
-    }
-    
-    return templates;
-  }
 }
 
 export class TemplateCategoryItem extends vscode.TreeItem {

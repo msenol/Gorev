@@ -46,8 +46,16 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
         tum_projeler: false,
       });
       
+      // Debug: Log raw response
+      console.log('[GorevTreeProvider] Raw MCP response:', result);
+      console.log('[GorevTreeProvider] Content text:', result.content[0].text);
+      
       // Parse the markdown content to extract tasks
       this.tasks = this.parseTasksFromContent(result.content[0].text);
+      
+      // Debug: Log parsed tasks
+      console.log('[GorevTreeProvider] Parsed tasks count:', this.tasks.length);
+      console.log('[GorevTreeProvider] Parsed tasks:', this.tasks);
     } catch (error) {
       Logger.error('Failed to load tasks:', error);
       throw error;
