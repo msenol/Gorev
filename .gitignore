@@ -1,6 +1,8 @@
 # Binary dosyalar
 /gorev
 /gorev.exe
+gorev-mcpserver/gorev
+gorev-mcpserver/gorev.exe
 *.exe
 *.dll
 *.so
