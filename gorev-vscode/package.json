@@ -638,7 +638,7 @@
       {
         "command": "gorev.editTaskTitle",
         "key": "f2",
-        "when": "focusedView == gorevTasks && viewItem == task"
+        "when": "viewItem == task"
       }
     ],
     "colors": [
