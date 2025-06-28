@@ -1,5 +1,8 @@
 # Kullanım Kılavuzu
 
+> **Versiyon**: Bu dokümantasyon v0.7.0-dev için geçerlidir.  
+> **Son Güncelleme**: 28 June 2025
+
 Gorev ile görev yönetiminin temelleri.
 
 ## 🎯 Temel Kavramlar

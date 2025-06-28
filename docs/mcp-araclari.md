@@ -235,7 +235,7 @@ JWT tabanlı authentication sistemi kur. Refresh token desteği olmalı.
 
 ---
 
-*Son güncelleme: 16 Jan 2024, 10:45*
+*Son güncelleme: 28 June 2025*
 ```
 
 ---

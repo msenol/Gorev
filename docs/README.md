@@ -1,5 +1,8 @@
 # 📋 Gorev Dokümantasyonu
 
+> **Versiyon**: Bu dokümantasyon v0.7.0-dev için geçerlidir.  
+> **Son Güncelleme**: 28 June 2025
+
 <div align="center">
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go)
