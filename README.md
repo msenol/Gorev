@@ -61,6 +61,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **Renk Kodlaması** - Öncelik bazlı görsel ayırt etme
 - **Context Menüler** - Sağ tık işlemleri
 - **[Marketplace'den İndir](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** 🚀
+- **[Diğer IDE'lere Kurulum](docs/vscode-extension-kurulum.md)** (Cursor, Windsurf, VSCodium vb.)
 
 ## 📦 Kurulum
 
