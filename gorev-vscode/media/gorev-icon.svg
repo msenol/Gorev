@@ -1,0 +1,68 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for depth -->
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#003D7A;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="2" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="256" height="256" fill="#F0F0F0" rx="32"/>
+  
+  <!-- Main Container with gradient -->
+  <rect x="32" y="32" width="192" height="192" fill="url(#blueGradient)" rx="24" filter="url(#shadow)"/>
+  
+  <!-- Task List Container -->
+  <g transform="translate(128, 128)">
+    <!-- Clipboard Base -->
+    <rect x="-60" y="-70" width="120" height="140" fill="white" rx="8" opacity="0.95"/>
+    
+    <!-- Clipboard Top -->
+    <rect x="-30" y="-80" width="60" height="20" fill="#E0E0E0" rx="4"/>
+    <rect x="-20" y="-75" width="40" height="10" fill="white" rx="2"/>
+    
+    <!-- Task Items -->
+    <!-- Task 1 - Completed -->
+    <g transform="translate(-45, -40)">
+      <rect width="16" height="16" fill="#4CAF50" rx="3"/>
+      <path d="M 3 8 L 6 11 L 13 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <rect x="24" y="4" width="56" height="8" fill="#333333" rx="2" opacity="0.8"/>
+    </g>
+    
+    <!-- Task 2 - In Progress -->
+    <g transform="translate(-45, -10)">
+      <rect width="16" height="16" fill="#FF9800" rx="3"/>
+      <circle cx="8" cy="8" r="6" fill="none" stroke="white" stroke-width="2">
+        <animate attributeName="stroke-dasharray" values="0 38;38 38" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <rect x="24" y="4" width="56" height="8" fill="#333333" rx="2" opacity="0.8"/>
+    </g>
+    
+    <!-- Task 3 - Pending -->
+    <g transform="translate(-45, 20)">
+      <rect width="16" height="16" fill="#2196F3" rx="3"/>
+      <rect x="24" y="4" width="56" height="8" fill="#333333" rx="2" opacity="0.8"/>
+    </g>
+    
+    <!-- Priority Indicators -->
+    <circle cx="45" cy="-40" r="4" fill="#F44336"/> <!-- High Priority -->
+    <circle cx="45" cy="-10" r="4" fill="#FFC107"/> <!-- Medium Priority -->
+    <circle cx="45" cy="20" r="4" fill="#03A9F4"/> <!-- Low Priority -->
+  </g>
+  
+  <!-- Gorev Text (Optional) -->
+  <text x="128" y="220" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#003D7A">GOREV</text>
+</svg>
