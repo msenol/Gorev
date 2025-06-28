@@ -55,3 +55,7 @@ Thumbs.db
 # Test binary
 gorev-test
 .env
+
+# MCP configuration (contains API keys)
+.mcp.json
+.gemini/
