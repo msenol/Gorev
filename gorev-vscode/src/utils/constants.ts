@@ -51,6 +51,34 @@ export const COMMANDS = {
   SHOW_SUMMARY: 'gorev.showSummary',
   CONNECT: 'gorev.connect',
   DISCONNECT: 'gorev.disconnect',
+  
+  // Enhanced TreeView commands
+  SELECT_TASK: 'gorev.selectTask',
+  SET_GROUPING: 'gorev.setGrouping',
+  SET_SORTING: 'gorev.setSorting',
+  FILTER_TASKS: 'gorev.filterTasks',
+  CLEAR_FILTER: 'gorev.clearFilter',
+  TOGGLE_SHOW_COMPLETED: 'gorev.toggleShowCompleted',
+  SELECT_ALL: 'gorev.selectAll',
+  DESELECT_ALL: 'gorev.deselectAll',
+  BULK_UPDATE_STATUS: 'gorev.bulkUpdateStatus',
+  BULK_DELETE: 'gorev.bulkDelete',
+  
+  // Inline edit commands
+  EDIT_TASK_TITLE: 'gorev.editTaskTitle',
+  QUICK_STATUS_CHANGE: 'gorev.quickStatusChange',
+  QUICK_PRIORITY_CHANGE: 'gorev.quickPriorityChange',
+  QUICK_DATE_CHANGE: 'gorev.quickDateChange',
+  DETAILED_EDIT: 'gorev.detailedEdit',
+  
+  // Template commands
+  OPEN_TEMPLATE_WIZARD: 'gorev.openTemplateWizard',
+  CREATE_FROM_TEMPLATE: 'gorev.createFromTemplate',
+  QUICK_CREATE_FROM_TEMPLATE: 'gorev.quickCreateFromTemplate',
+  REFRESH_TEMPLATES: 'gorev.refreshTemplates',
+  INIT_DEFAULT_TEMPLATES: 'gorev.initDefaultTemplates',
+  SHOW_TEMPLATE_DETAILS: 'gorev.showTemplateDetails',
+  EXPORT_TEMPLATE: 'gorev.exportTemplate',
 } as const;
 
 export const VIEWS = {

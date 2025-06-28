@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "Gorev Task Orchestrator",
   "description": "Powerful task management for VS Code powered by MCP protocol",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "gorev-team",
   "icon": "media/icon.png",
   "engines": {
@@ -46,6 +46,105 @@
           "type": "number",
           "default": 30,
           "description": "Refresh interval in seconds (0 to disable auto-refresh)"
+        },
+        "gorev.treeView.grouping": {
+          "type": "string",
+          "default": "status",
+          "enum": ["none", "status", "priority", "project", "tag", "dueDate"],
+          "enumDescriptions": [
+            "No grouping - show all tasks in a flat list",
+            "Group by status (Pending, In Progress, Completed)",
+            "Group by priority (High, Medium, Low)",
+            "Group by project",
+            "Group by tags",
+            "Group by due date (Overdue, Today, This Week, Later)"
+          ],
+          "description": "How to group tasks in the tree view"
+        },
+        "gorev.treeView.sorting": {
+          "type": "string",
+          "default": "priority",
+          "enum": ["title", "priority", "dueDate", "createdDate", "status"],
+          "enumDescriptions": [
+            "Sort by task title",
+            "Sort by priority",
+            "Sort by due date",
+            "Sort by creation date",
+            "Sort by status"
+          ],
+          "description": "How to sort tasks within groups"
+        },
+        "gorev.treeView.sortAscending": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sort tasks in ascending order"
+        },
+        "gorev.treeView.showCompleted": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show completed tasks in the tree view"
+        },
+        "gorev.treeView.showEmptyGroups": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show empty groups in the tree view"
+        },
+        "gorev.dragDrop.allowTaskMove": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow moving tasks via drag and drop"
+        },
+        "gorev.dragDrop.allowStatusChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow changing task status via drag and drop"
+        },
+        "gorev.dragDrop.allowPriorityChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow changing task priority via drag and drop"
+        },
+        "gorev.dragDrop.allowProjectMove": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow moving tasks between projects via drag and drop"
+        },
+        "gorev.dragDrop.allowDependencyCreate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow creating task dependencies via drag and drop"
+        },
+        "gorev.dragDrop.showDropIndicator": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show visual indicators when dragging over drop zones"
+        },
+        "gorev.dragDrop.animateOnDrop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show success animation after dropping"
+        },
+        "gorev.filterProfiles": {
+          "type": "object",
+          "default": {},
+          "description": "Saved filter profiles",
+          "patternProperties": {
+            ".*": {
+              "type": "object",
+              "properties": {
+                "searchQuery": { "type": "string" },
+                "durum": { "type": "string" },
+                "oncelik": { "type": "string" },
+                "projeId": { "type": "string" },
+                "tags": { "type": "array", "items": { "type": "string" } },
+                "overdue": { "type": "boolean" },
+                "dueToday": { "type": "boolean" },
+                "dueThisWeek": { "type": "boolean" },
+                "hasTag": { "type": "boolean" },
+                "hasDependency": { "type": "boolean" }
+              }
+            }
+          }
         }
       }
     },
@@ -111,6 +210,193 @@
         "title": "Disconnect from Server",
         "category": "Gorev",
         "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "gorev.selectTask",
+        "title": "Select Task",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.setGrouping",
+        "title": "Change Grouping",
+        "category": "Gorev",
+        "icon": "$(group-by-ref-type)"
+      },
+      {
+        "command": "gorev.setSorting",
+        "title": "Change Sorting",
+        "category": "Gorev",
+        "icon": "$(sort-precedence)"
+      },
+      {
+        "command": "gorev.filterTasks",
+        "title": "Filter Tasks",
+        "category": "Gorev",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "gorev.clearFilter",
+        "title": "Clear Filter",
+        "category": "Gorev",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "gorev.toggleShowCompleted",
+        "title": "Toggle Show Completed",
+        "category": "Gorev",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "gorev.selectAll",
+        "title": "Select All Tasks",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.deselectAll",
+        "title": "Deselect All Tasks",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.bulkUpdateStatus",
+        "title": "Bulk Update Status",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.bulkDelete",
+        "title": "Bulk Delete Tasks",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.editTaskTitle",
+        "title": "Edit Task Title",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.quickStatusChange",
+        "title": "Quick Status Change",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.quickPriorityChange",
+        "title": "Quick Priority Change",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.quickDateChange",
+        "title": "Quick Date Change",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.detailedEdit",
+        "title": "Edit Task Details",
+        "category": "Gorev",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "gorev.debug.seedTestData",
+        "title": "Seed Test Data",
+        "category": "Gorev Debug",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "gorev.debug.clearTestData",
+        "title": "Clear Test Data",
+        "category": "Gorev Debug",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "gorev.showSearchInput",
+        "title": "Search Tasks",
+        "category": "Gorev",
+        "icon": "$(search)"
+      },
+      {
+        "command": "gorev.showFilterMenu",
+        "title": "Show Filter Menu",
+        "category": "Gorev",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "gorev.showFilterProfiles",
+        "title": "Show Filter Profiles",
+        "category": "Gorev",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "gorev.clearAllFilters",
+        "title": "Clear All Filters",
+        "category": "Gorev",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "gorev.filterOverdue",
+        "title": "Show Overdue Tasks",
+        "category": "Gorev Filter"
+      },
+      {
+        "command": "gorev.filterDueToday",
+        "title": "Show Tasks Due Today",
+        "category": "Gorev Filter"
+      },
+      {
+        "command": "gorev.filterDueThisWeek",
+        "title": "Show Tasks Due This Week",
+        "category": "Gorev Filter"
+      },
+      {
+        "command": "gorev.filterHighPriority",
+        "title": "Show High Priority Tasks",
+        "category": "Gorev Filter"
+      },
+      {
+        "command": "gorev.filterActiveProject",
+        "title": "Show Active Project Tasks",
+        "category": "Gorev Filter"
+      },
+      {
+        "command": "gorev.filterByTag",
+        "title": "Filter by Tag",
+        "category": "Gorev Filter"
+      },
+      {
+        "command": "gorev.openTemplateWizard",
+        "title": "Open Template Wizard",
+        "category": "Gorev",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "gorev.createFromTemplate",
+        "title": "Create Task from Template",
+        "category": "Gorev",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "gorev.quickCreateFromTemplate",
+        "title": "Quick Create from Template",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.refreshTemplates",
+        "title": "Refresh Templates",
+        "category": "Gorev",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gorev.initDefaultTemplates",
+        "title": "Initialize Default Templates",
+        "category": "Gorev",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "gorev.showTemplateDetails",
+        "title": "Show Template Details",
+        "category": "Gorev"
+      },
+      {
+        "command": "gorev.exportTemplate",
+        "title": "Export Template",
+        "category": "Gorev",
+        "icon": "$(export)"
       }
     ],
     "viewsContainers": {
@@ -172,9 +458,39 @@
           "group": "navigation@3"
         },
         {
+          "command": "gorev.setGrouping",
+          "when": "view == gorevTasks",
+          "group": "navigation@4"
+        },
+        {
+          "command": "gorev.setSorting",
+          "when": "view == gorevTasks",
+          "group": "navigation@5"
+        },
+        {
+          "command": "gorev.filterTasks",
+          "when": "view == gorevTasks",
+          "group": "navigation@6"
+        },
+        {
           "command": "gorev.createProject",
           "when": "view == gorevProjects",
           "group": "navigation"
+        },
+        {
+          "command": "gorev.openTemplateWizard",
+          "when": "view == gorevTemplates",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gorev.refreshTemplates",
+          "when": "view == gorevTemplates",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gorev.initDefaultTemplates",
+          "when": "view == gorevTemplates",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -184,9 +500,34 @@
           "group": "1_view"
         },
         {
+          "command": "gorev.editTaskTitle",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "2_modify@1"
+        },
+        {
+          "command": "gorev.quickStatusChange",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "2_modify@2"
+        },
+        {
+          "command": "gorev.quickPriorityChange",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "2_modify@3"
+        },
+        {
+          "command": "gorev.quickDateChange",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "2_modify@4"
+        },
+        {
+          "command": "gorev.detailedEdit",
+          "when": "view == gorevTasks && viewItem == task",
+          "group": "2_modify@5"
+        },
+        {
           "command": "gorev.updateTaskStatus",
           "when": "view == gorevTasks && viewItem == task",
-          "group": "2_modify"
+          "group": "2_modify@6"
         },
         {
           "command": "gorev.deleteTask",
@@ -197,12 +538,75 @@
           "command": "gorev.setActiveProject",
           "when": "view == gorevProjects && viewItem == project",
           "group": "1_action"
+        },
+        {
+          "command": "gorev.showTaskDetail",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "1_view"
+        },
+        {
+          "command": "gorev.bulkUpdateStatus",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "2_bulk@1"
+        },
+        {
+          "command": "gorev.bulkDelete",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "2_bulk@2"
+        },
+        {
+          "command": "gorev.editTaskTitle",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "3_modify@1"
+        },
+        {
+          "command": "gorev.quickStatusChange",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "3_modify@2"
+        },
+        {
+          "command": "gorev.quickPriorityChange",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "3_modify@3"
+        },
+        {
+          "command": "gorev.quickDateChange",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "3_modify@4"
+        },
+        {
+          "command": "gorev.deleteTask",
+          "when": "view == gorevTasks && viewItem == task:selected",
+          "group": "4_delete"
+        },
+        {
+          "command": "gorev.createFromTemplate",
+          "when": "view == gorevTemplates && viewItem == template",
+          "group": "1_use"
+        },
+        {
+          "command": "gorev.showTemplateDetails",
+          "when": "view == gorevTemplates && viewItem == template",
+          "group": "2_view"
+        },
+        {
+          "command": "gorev.exportTemplate",
+          "when": "view == gorevTemplates && viewItem == template",
+          "group": "3_export"
         }
       ],
       "commandPalette": [
         {
           "command": "gorev.quickCreateTask",
           "when": "gorev.connected"
+        },
+        {
+          "command": "gorev.debug.seedTestData",
+          "when": "gorev.connected && debugMode"
+        },
+        {
+          "command": "gorev.debug.clearTestData",
+          "when": "gorev.connected && debugMode"
         }
       ]
     },
@@ -217,6 +621,11 @@
         "key": "ctrl+r",
         "mac": "cmd+r",
         "when": "focusedView == gorevTasks"
+      },
+      {
+        "command": "gorev.editTaskTitle",
+        "key": "f2",
+        "when": "focusedView == gorevTasks && viewItem == task"
       }
     ],
     "colors": [
@@ -252,7 +661,9 @@
     "watch": "node ./node_modules/typescript/lib/tsc.js -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test",
+    "test": "node ./test/runTest.js",
+    "test-watch": "npm run compile && node ./test/runTest.js --watch",
+    "test-coverage": "c8 --reporter=html --reporter=text npm test",
     "package": "vsce package",
     "publish": "vsce publish"
   },
@@ -265,7 +676,13 @@
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
     "eslint": "^9.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "mocha": "^10.2.0",
+    "sinon": "^17.0.1",
+    "@types/mocha": "^10.0.6",
+    "@types/sinon": "^17.0.2",
+    "glob": "^10.3.10",
+    "c8": "^9.0.0"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

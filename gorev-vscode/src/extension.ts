@@ -1,17 +1,19 @@
 import * as vscode from 'vscode';
 import { MCPClient } from './mcp/client';
-import { GorevTreeProvider } from './providers/gorevTreeProvider';
+import { EnhancedGorevTreeProvider } from './providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from './providers/projeTreeProvider';
 import { TemplateTreeProvider } from './providers/templateTreeProvider';
 import { registerCommands } from './commands';
 import { StatusBarManager } from './ui/statusBar';
+import { FilterToolbar } from './ui/filterToolbar';
 import { Logger, LogLevel } from './utils/logger';
 import { Config } from './utils/config';
 import { COMMANDS } from './utils/constants';
 
 let mcpClient: MCPClient;
 let statusBarManager: StatusBarManager;
-let gorevTreeProvider: GorevTreeProvider;
+let filterToolbar: FilterToolbar;
+let gorevTreeProvider: EnhancedGorevTreeProvider;
 let projeTreeProvider: ProjeTreeProvider;
 let templateTreeProvider: TemplateTreeProvider;
 
@@ -23,6 +25,9 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   
   // Set debug logging
   Logger.setLogLevel(LogLevel.Debug);
+  
+  // Check if we're in development mode
+  const isDevelopment = extensionContext.extensionMode === vscode.ExtensionMode.Development;
 
   // Initialize configuration
   Config.initialize(context);
@@ -32,14 +37,21 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   
   // Initialize UI components
   statusBarManager = new StatusBarManager();
-  gorevTreeProvider = new GorevTreeProvider(mcpClient);
+  gorevTreeProvider = new EnhancedGorevTreeProvider(mcpClient);
   projeTreeProvider = new ProjeTreeProvider(mcpClient);
   templateTreeProvider = new TemplateTreeProvider(mcpClient);
+  
+  // Initialize filter toolbar
+  filterToolbar = new FilterToolbar(mcpClient, (filter) => {
+    gorevTreeProvider.updateFilter(filter);
+  });
 
   // Register tree data providers
   const tasksView = vscode.window.createTreeView('gorevTasks', {
     treeDataProvider: gorevTreeProvider,
     showCollapseAll: true,
+    canSelectMany: true,
+    dragAndDropController: gorevTreeProvider
   });
 
   const projectsView = vscode.window.createTreeView('gorevProjects', {
@@ -60,11 +72,49 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     projeTreeProvider,
     templateTreeProvider,
     statusBarManager,
+    filterToolbar,
   });
+
+  // Register debug commands if in development mode
+  if (isDevelopment) {
+    const { registerDebugCommands } = await import('./commands/debugCommands');
+    registerDebugCommands(context, mcpClient, {
+      gorevTreeProvider,
+      projeTreeProvider,
+      templateTreeProvider,
+      statusBarManager,
+      filterToolbar,
+    });
+  }
 
   // Auto-connect if configured
   if (Config.get('autoConnect')) {
-    vscode.commands.executeCommand(COMMANDS.CONNECT);
+    await vscode.commands.executeCommand(COMMANDS.CONNECT);
+    
+    // Development modda otomatik test verisi önerisi
+    if (isDevelopment) {
+      setTimeout(async () => {
+        try {
+          // Görev sayısını kontrol et
+          const result = await mcpClient.callTool('gorev_listele', { tum_projeler: true });
+          const hasNoTasks = result.content[0].text.includes('Henüz görev bulunmuyor');
+          
+          if (hasNoTasks) {
+            const answer = await vscode.window.showInformationMessage(
+              '🧪 Debug Mode: Görev bulunamadı. Test verileri oluşturmak ister misiniz?',
+              'Evet, Oluştur',
+              'Hayır'
+            );
+            
+            if (answer === 'Evet, Oluştur') {
+              await vscode.commands.executeCommand('gorev.debug.seedTestData');
+            }
+          }
+        } catch (error) {
+          // Sessizce devam et
+        }
+      }, 2000); // 2 saniye bekle
+    }
   }
 
   // Set up refresh interval
@@ -90,6 +140,10 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     statusBarManager.show();
     context.subscriptions.push(statusBarManager);
   }
+  
+  // Show filter toolbar
+  filterToolbar.show();
+  context.subscriptions.push(filterToolbar);
 
   // Listen for configuration changes
   context.subscriptions.push(

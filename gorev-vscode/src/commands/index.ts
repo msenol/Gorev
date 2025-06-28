@@ -1,20 +1,25 @@
 import * as vscode from 'vscode';
 import { MCPClient } from '../mcp/client';
-import { GorevTreeProvider } from '../providers/gorevTreeProvider';
+import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from '../providers/projeTreeProvider';
 import { TemplateTreeProvider } from '../providers/templateTreeProvider';
 import { StatusBarManager } from '../ui/statusBar';
+import { FilterToolbar } from '../ui/filterToolbar';
 import { COMMANDS } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { registerGorevCommands } from './gorevCommands';
 import { registerProjeCommands } from './projeCommands';
 import { registerTemplateCommands } from './templateCommands';
+import { registerEnhancedGorevCommands } from './enhancedGorevCommands';
+import { registerInlineEditCommands } from './inlineEditCommands';
+import { registerFilterCommands } from './filterCommands';
 
 export interface CommandContext {
-  gorevTreeProvider: GorevTreeProvider;
+  gorevTreeProvider: EnhancedGorevTreeProvider;
   projeTreeProvider: ProjeTreeProvider;
   templateTreeProvider: TemplateTreeProvider;
   statusBarManager: StatusBarManager;
+  filterToolbar?: FilterToolbar;
 }
 
 export function registerCommands(
@@ -26,6 +31,12 @@ export function registerCommands(
   registerGorevCommands(context, mcpClient, providers);
   registerProjeCommands(context, mcpClient, providers);
   registerTemplateCommands(context, mcpClient, providers);
+  registerEnhancedGorevCommands(context, mcpClient, providers);
+  registerInlineEditCommands(context, mcpClient, providers);
+  
+  if (providers.filterToolbar) {
+    registerFilterCommands(context, mcpClient, providers);
+  }
 
   // Register general commands
   context.subscriptions.push(
