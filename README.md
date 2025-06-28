@@ -5,7 +5,7 @@
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Test Coverage](https://img.shields.io/badge/Coverage-53.8%25-yellow?style=flat-square)
+![Test Coverage](https://img.shields.io/badge/Coverage-88.2%25-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20|%20macOS%20|%20Windows-blue?style=flat-square)
 
 **MCP uyumlu AI editörlerle (Claude, VS Code, Windsurf, Cursor) entegre çalışan, Türkçe destekli modern görev yönetim sistemi**
@@ -71,7 +71,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 ```powershell
 # PowerShell (Admin olarak çalıştırın)
 New-Item -ItemType Directory -Force -Path "C:\Program Files\gorev"
-Invoke-WebRequest -Uri "https://github.com/yourusername/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "C:\Program Files\gorev\gorev.exe"
+Invoke-WebRequest -Uri "https://github.com/msenol/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "C:\Program Files\gorev\gorev.exe"
 [Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\gorev", [EnvironmentVariableTarget]::Machine)
 
 # Test
@@ -85,11 +85,11 @@ gorev version
 
 ```bash
 # Homebrew ile (önerilen)
-brew tap yourusername/gorev
+brew tap msenol/gorev
 brew install gorev
 
 # Veya binary indirme
-curl -L https://github.com/yourusername/gorev/releases/latest/download/gorev-darwin-amd64 -o gorev
+curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-darwin-amd64 -o gorev
 chmod +x gorev
 sudo mv gorev /usr/local/bin/
 ```
@@ -101,7 +101,7 @@ sudo mv gorev /usr/local/bin/
 
 ```bash
 # Binary indirme
-curl -L https://github.com/yourusername/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
+curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
 chmod +x gorev
 sudo mv gorev /usr/local/bin/
 
@@ -115,7 +115,7 @@ gorev version
 <summary><b>🐳 Docker</b></summary>
 
 ```bash
-docker pull ghcr.io/yourusername/gorev:latest
+docker pull ghcr.io/msenol/gorev:latest
 docker run -v ~/.gorev:/data ghcr.io/msenol/gorev serve
 ```
 
@@ -360,7 +360,7 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/gelistirme.md)'ne bakın.
 
 ## 📊 Proje Durumu
 
-- **Versiyon**: v0.5.0
+- **Versiyon**: v0.7.0-dev
 - **Test Coverage**: %88.2
 - **Go Version**: 1.22+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
@@ -381,7 +381,7 @@ Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
 
 <div align="center">
 
-Made with ❤️ by [Gorev Contributors](https://github.com/msenol/gorev/graphs/contributors)
+Made with ❤️ by [msenol](https://github.com/msenol/gorev/graphs/contributors)
 
 📚 *Documentation enhanced by Claude (Anthropic) - Your AI pair programming assistant*
 
