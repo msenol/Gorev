@@ -363,6 +363,33 @@ Extension yayınlama hazırlığı.
 - [ ] Contribution guidelines
 - [ ] Video tutorials
 
+## 📝 Dokümantasyon Güncelleme Listesi (28 June 2025)
+
+### Kritik Düzeltmeler (Öncelik 1 - Hemen)
+- [x] README.md satır 363: Version `v0.5.0` → `v0.7.0-dev`
+- [x] README.md satır 364: Test coverage tutarsızlığı çözümü (badge %53.8 vs metin %88.2)
+- [ ] README.md placeholder düzeltmeleri:
+  - [x] Satır 74: `yourusername` placeholder
+  - [x] Satır 88: `yourusername` placeholder
+  - [x] Satır 92: `yourusername` placeholder
+  - [x] Satır 104: `yourusername` placeholder
+  - [x] Satır 118: `yourusername` placeholder
+  - [x] Satır 119: `msenol` → `yourusername`
+- [x] LICENSE dosyası oluşturma (MIT lisansı)
+
+### Önemli İyileştirmeler (Öncelik 2 - Bu Hafta)
+- [x] docs/mcp-araclari.md: Güncelleme tarihi düzeltme (16 Jan 2024 → 28 June 2025)
+- [x] Tüm dokümanlara versiyon bilgisi ekleme (v0.7.0-dev için geçerlidir notu)
+- [x] Tüm dokümanlara "Son Güncelleme: tarih" başlığı ekleme
+- [x] GitHub repository URL'lerinin gerçek değerlerle güncellenmesi (gorev/gorev olarak güncellendi)
+
+### Uzun Vadeli İyileştirmeler (Öncelik 3)
+- [ ] Otomatik dokümantasyon versiyonlama sistemi kurma
+- [ ] CI/CD pipeline'da dokümantasyon tutarlılık kontrolü ekleme
+- [ ] Dokümantasyon şablonları oluşturma
+- [ ] Markdownlint entegrasyonu
+- [ ] Link checker (broken link kontrolü) ekleme
+
 ## 🎯 Uzun Vadeli Hedefler (v1.0.0)
 
 ### MCP Server
