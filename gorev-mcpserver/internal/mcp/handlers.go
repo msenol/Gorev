@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/msenol/gorev/internal/gorev"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/msenol/gorev/internal/gorev"
 )
 
 type Handlers struct {

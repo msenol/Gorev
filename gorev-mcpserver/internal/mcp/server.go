@@ -1,8 +1,8 @@
 package mcp
 
 import (
-	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/mark3labs/mcp-go/server"
 )
 
 // YeniMCPSunucu yeni bir MCP sunucusu oluşturur
