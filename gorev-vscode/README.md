@@ -1,188 +1,193 @@
-# 🎨 Gorev VS Code Extension
+# Gorev VS Code Extension
 
-Gorev MCP server için zengin görsel arayüz sunan VS Code extension'ı. TreeView panelleri, komut paleti entegrasyonu ve status bar desteği ile görev yönetimini kolaylaştırır.
+<p align="center">
+  <img src="media/gorev-icon.svg" alt="Gorev Logo" width="128" height="128">
+</p>
 
-![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/gorev.gorev-vscode?style=flat-square)
-![VS Code Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/gorev.gorev-vscode?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+Gorev için güçlü ve kullanıcı dostu VS Code extension'ı. MCP protokolü üzerinden Gorev sunucusuyla iletişim kurarak gelişmiş görev yönetimi özellikleri sunar.
 
-## ✨ Özellikler
+## 🚀 Özellikler
 
-### 📊 TreeView Panelleri
-- **Görevler**: Durum bazlı gruplandırma, öncelik renklendirmesi
-- **Projeler**: Aktif proje vurgulama, görev sayıları
-- **Şablonlar**: Kategori bazlı listeleme, hızlı görev oluşturma
+### Enhanced TreeView
+- **Gruplama**: Durum, öncelik, proje, etiket veya son tarihe göre görevleri gruplayın
+- **Çoklu Seçim**: Ctrl/Cmd+Click ile birden fazla görevi seçin
+- **Sıralama**: Başlık, öncelik, son tarih ve daha fazlasına göre sıralayın
+- **Renk Kodlaması**: Öncelik bazlı görsel ayırt edicilik
+- **Hızlı Tamamlama**: Checkbox ile tek tıkla tamamlama
+- **Badges**: Görev sayıları ve son tarih uyarıları
 
-### ⌨️ Komut Paleti
-- `Gorev: Create Task` - Yeni görev oluştur
-- `Gorev: Quick Create Task` (`Ctrl+Shift+G`) - Hızlı görev oluşturma
-- `Gorev: Create Project` - Yeni proje oluştur
-- `Gorev: Show Summary` - Özet istatistikleri göster
-- `Gorev: Connect` - MCP server'a bağlan
-- `Gorev: Disconnect` - Bağlantıyı kes
+### Drag & Drop Desteği
+- 🔄 Görevleri projeler arası taşıma
+- 📊 Sürükleyerek durum değiştirme
+- 🎯 Öncelik sıralaması değiştirme
+- 🔗 Bağımlılık oluşturma (görev üzerine bırakarak)
+- ✨ Görsel geri bildirim ve animasyonlar
 
-### 🎯 Context Menu İşlemleri
-- Görev durumu güncelleme
-- Görev silme (onaylı)
-- Proje aktif yapma
-- Detay görüntüleme
+### Inline Düzenleme
+- ✏️ F2 veya double-click ile hızlı düzenleme
+- 📝 Context menu ile durum/öncelik değiştirme
+- 📅 Inline tarih seçici
+- ❌ Escape ile iptal, ✅ Enter ile kaydet
 
-### 📈 Status Bar
-- Bağlantı durumu göstergesi
-- Toplam/tamamlanan görev sayısı
-- Aktif proje bilgisi
+### Gelişmiş Filtreleme
+- 🔍 Gerçek zamanlı arama
+- 🎛️ Gelişmiş filtreler (durum, öncelik, etiket, tarih)
+- 💾 Kayıtlı filtre profilleri
+- 📊 Status bar entegrasyonu
+- ⚡ Hızlı filtre kısayolları
 
-### 🎨 Tema Desteği
-- Öncelik bazlı renklendirme
-- Dark/Light tema uyumu
-- Özelleştirilebilir renkler
+### Zengin Görev Detayı
+- 📝 Split-view markdown editörü
+- 👁️ Canlı önizleme
+- 🔗 Bağımlılık görselleştirme grafiği
+- 📊 Aktivite zaman çizelgesi
+- 🏷️ Template alan göstergeleri
+
+### Template Wizard
+- 🧙 Çok adımlı arayüz
+- 🔍 Template arama ve filtreleme
+- 📋 Dinamik form oluşturma
+- ✅ Alan doğrulama
+- 👁️ Oluşturma öncesi önizleme
+
+### Görev Yönetimi
+- ✅ Hızlı görev oluşturma (Ctrl+Shift+G)
+- 📝 Görev detaylarını görüntüleme
+- 🔄 Durum güncelleme
+- 🗑️ Toplu silme işlemleri
+- 🏷️ Etiket yönetimi
+- 📅 Son tarih takibi
+- 🔗 Bağımlılık yönetimi
+
+### Proje Yönetimi
+- 📁 Proje oluşturma ve yönetimi
+- 🎯 Aktif proje seçimi
+- 📊 Proje bazlı görev görüntüleme
+- 📈 Görev istatistikleri
+
+### Template Sistemi
+- 📋 Hazır görev şablonları (Bug, Feature, Technical Debt, Research)
+- ⚡ Template wizard ile hızlı görev oluşturma
+- 🔧 Özelleştirilebilir alanlar
+- 🎨 Kategori bazlı organizasyon
 
 ## 📦 Kurulum
 
-### Marketplace'den (Yakında)
-```
-VS Code Extensions → "Gorev Task Orchestrator" ara → Install
-```
-
-### Local Kurulum
-```bash
-# Repository'yi klonla
-git clone https://github.com/yourusername/gorev.git
-cd gorev/gorev-vscode
-
-# Bağımlılıkları yükle
-npm install
-
-# Extension'ı derle
-npm run compile
-
-# VS Code'da test et
-# F5 tuşuna bas veya Run → Start Debugging
-```
+1. VS Code'da extension'ı yükleyin
+2. Gorev MCP sunucusunun yolunu ayarlayın:
+   ```json
+   "gorev.serverPath": "/path/to/gorev"
+   ```
 
 ## ⚙️ Konfigürasyon
 
-VS Code ayarlarında (`settings.json`):
+### Temel Ayarlar
+| Ayar | Açıklama | Varsayılan |
+|------|----------|------------|
+| `gorev.serverPath` | Gorev sunucu yolu | - |
+| `gorev.autoConnect` | Başlangıçta otomatik bağlan | `true` |
+| `gorev.showStatusBar` | Status bar'ı göster | `true` |
+| `gorev.refreshInterval` | Otomatik yenileme aralığı (saniye) | `30` |
 
-```json
-{
-  // MCP server binary yolu
-  "gorev.serverPath": "/path/to/gorev-mcpserver/gorev",
-  
-  // Otomatik bağlanma (varsayılan: true)
-  "gorev.autoConnect": true,
-  
-  // Status bar gösterimi (varsayılan: true)
-  "gorev.showStatusBar": true,
-  
-  // Otomatik yenileme süresi (saniye, 0 = devre dışı)
-  "gorev.refreshInterval": 30,
-  
-  // Debug loglama (varsayılan: false)
-  "gorev.debug": false
-}
-```
+### TreeView Ayarları
+| Ayar | Açıklama | Varsayılan |
+|------|----------|------------|
+| `gorev.treeView.grouping` | Gruplama stratejisi | `status` |
+| `gorev.treeView.sorting` | Sıralama kriteri | `priority` |
+| `gorev.treeView.sortAscending` | Artan sıralama | `false` |
+| `gorev.treeView.showCompleted` | Tamamlanan görevleri göster | `true` |
+| `gorev.treeView.showEmptyGroups` | Boş grupları göster | `false` |
 
-## 🚀 Kullanım
+### Drag & Drop Ayarları
+| Ayar | Açıklama | Varsayılan |
+|------|----------|------------|
+| `gorev.dragDrop.allowTaskMove` | Görev taşımaya izin ver | `true` |
+| `gorev.dragDrop.allowStatusChange` | Durum değiştirmeye izin ver | `true` |
+| `gorev.dragDrop.allowPriorityChange` | Öncelik değiştirmeye izin ver | `true` |
+| `gorev.dragDrop.allowProjectMove` | Projeler arası taşıma | `true` |
+| `gorev.dragDrop.allowDependencyCreate` | Bağımlılık oluşturma | `true` |
+| `gorev.dragDrop.showDropIndicator` | Drop göstergelerini göster | `true` |
+| `gorev.dragDrop.animateOnDrop` | Drop animasyonları | `true` |
 
-### İlk Kurulum
-1. Gorev MCP server'ı yükleyin ([kurulum rehberi](../docs/kurulum.md))
-2. Extension'ı yükleyin
-3. `gorev.serverPath` ayarını yapın
-4. VS Code'u yeniden başlatın
+## 🎮 Klavye Kısayolları
 
-### Temel Kullanım
-1. Activity Bar'da Gorev ikonuna tıklayın
-2. TreeView'lardan görev/proje yönetin
-3. `Ctrl+Shift+G` ile hızlı görev oluşturun
-4. Sağ tık menüleri ile işlem yapın
+- `Ctrl+Shift+G`: Hızlı görev oluştur
+- `Ctrl+Shift+P`: Proje oluştur
+- `Ctrl+Shift+T`: Template wizard'ı aç
+- `Ctrl+R`: Görevleri yenile (TreeView odaktayken)
+- `F2`: Görev başlığını düzenle
+- `Delete`: Seçili görevi sil
+- `Enter`: Görev detaylarını göster
 
-### İpuçları
-- 🔄 TreeView'ları yenilemek için başlıktaki refresh ikonuna tıklayın
-- 📌 Aktif projeyi belirleyerek yeni görevlerin otomatik atanmasını sağlayın
-- 🏷️ Şablonları kullanarak tutarlı görevler oluşturun
-- 📊 Status bar'a tıklayarak özet istatistikleri görün
+## 📋 Komutlar
+
+### Görev Komutları
+- `Gorev: Create Task` - Yeni görev oluştur
+- `Gorev: Edit Task` - Görevi düzenle
+- `Gorev: Delete Task` - Görevi sil
+- `Gorev: Complete Task` - Görevi tamamla
+- `Gorev: Start Task` - Göreve başla
+- `Gorev: Show Task Detail` - Görev detayını göster
+- `Gorev: Add Dependency` - Bağımlılık ekle
+
+### Proje Komutları
+- `Gorev: Create Project` - Yeni proje oluştur
+- `Gorev: Set Active Project` - Aktif proje seç
+- `Gorev: Clear Active Project` - Aktif projeyi kaldır
+
+### Template Komutları
+- `Gorev: Create Task from Template` - Template'den görev oluştur
+- `Gorev: Show Template Wizard` - Template wizard'ı göster
+- `Gorev: Refresh Templates` - Template'leri yenile
+
+### Genel Komutlar
+- `Gorev: Connect to Server` - Sunucuya bağlan
+- `Gorev: Disconnect` - Bağlantıyı kes
+- `Gorev: Refresh` - Tüm verileri yenile
+- `Gorev: Show Summary` - Özet bilgileri göster
+- `Gorev: Show Search Input` - Arama kutusunu göster
+- `Gorev: Show Advanced Filter` - Gelişmiş filtreleri göster
+- `Gorev: Toggle Grouping` - Gruplama modunu değiştir
+- `Gorev: Clear Filters` - Tüm filtreleri temizle
 
 ## 🛠️ Geliştirme
 
-### Gereksinimler
-- Node.js 16+
-- npm veya yarn
-- VS Code 1.95.0+
-
-### Proje Yapısı
-```
-gorev-vscode/
-├── src/
-│   ├── extension.ts          # Ana giriş noktası
-│   ├── mcp/                  # MCP client
-│   ├── commands/             # Komut implementasyonları
-│   ├── providers/            # TreeView provider'ları
-│   ├── models/               # Data modelleri
-│   └── ui/                   # UI bileşenleri
-├── media/                    # İkonlar ve görseller
-├── package.json              # Extension manifest
-└── tsconfig.json            # TypeScript konfigürasyonu
-```
-
-### Komutlar
 ```bash
-# Geliştirme
-npm run watch            # Watch mode
-npm run compile         # TypeScript derleme
+# Bağımlılıkları yükle
+npm install
 
-# Test
-npm test                # Unit testler
-npm run test:e2e       # E2E testler
+# TypeScript'i derle
+npm run compile
 
-# Paketleme
-npm run package        # VSIX paketi oluştur
-npm run publish       # Marketplace'e yayınla
+# Watch modunda çalıştır
+npm run watch
+
+# Extension'ı paketle
+npm run package
 ```
 
-### Debug
-1. VS Code'da projeyi aç
-2. `F5` tuşuna bas veya Debug panelinden "Run Extension" seç
-3. Yeni VS Code penceresi açılacak (Extension Development Host)
-4. Output panelinde "Gorev" kanalını kontrol et
+### 🧪 Test
 
-## 🐛 Bilinen Sorunlar
+```bash
+# Tüm testleri çalıştır
+npm test
 
-### Markdown Parser
-TreeView'ların düzgün çalışması için MCP response'larının parse edilmesi gerekiyor. Geçici çözüm:
-- Server response'ları düz metin olarak işleniyor
-- Markdown formatı tam desteklenmiyor
+# Test coverage raporu
+npm run test-coverage
 
-### Icon Eksiklikleri
-Extension ve TreeView ikonları henüz eklenmedi. Varsayılan VS Code ikonları kullanılıyor.
+# Watch modunda test
+npm run test-watch
+```
 
-## 🤝 Katkıda Bulunma
-
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'feat: add amazing feature'`)
-4. Branch'i push edin (`git push origin feature/amazing-feature`)
-5. Pull Request açın
-
-### Kod Standartları
-- TypeScript strict mode
-- ESLint kurallarına uyum
-- Prettier formatlaması
-- Conventional commits
+Test suite şunları içerir:
+- **Unit Tests**: Markdown parser, MCP client, tree providers
+- **Integration Tests**: Extension activation, command registration
+- **E2E Tests**: Tam kullanıcı iş akışları
 
 ## 📝 Lisans
 
-MIT License - detaylar için [LICENSE](../LICENSE) dosyasına bakın.
+MIT
 
-## 🔗 Linkler
+## 🤝 Katkıda Bulunma
 
-- [Ana Proje](https://github.com/yourusername/gorev)
-- [MCP Server Dokümantasyonu](../gorev-mcpserver/README.md)
-- [API Referansı](docs/api/README.md)
-- [Sorun Bildirme](https://github.com/yourusername/gorev/issues)
-
----
-
-<div align="center">
-💡 Bu extension, Gorev MCP server'ın görsel arayüzüdür. MCP protokolü sayesinde server'a diğer editörlerden de bağlanabilirsiniz.
-</div>
+Pull request'ler kabul edilir. Büyük değişiklikler için lütfen önce bir issue açın.
