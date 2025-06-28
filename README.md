@@ -85,11 +85,24 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERS
 <details>
 <summary><b>🪟 Windows</b></summary>
 
+**Otomatik Kurulum (PowerShell):**
+```powershell
+# PowerShell'de çalıştırın (Admin yetkisi gerekmez)
+irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+
+# Veya belirli versiyon için:
+$env:VERSION="v0.7.2-dev"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+```
+
+**Manuel Kurulum:**
 ```powershell
 # PowerShell (Admin olarak çalıştırın)
 New-Item -ItemType Directory -Force -Path "C:\Program Files\gorev"
 Invoke-WebRequest -Uri "https://github.com/msenol/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "C:\Program Files\gorev\gorev.exe"
 [Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\gorev", [EnvironmentVariableTarget]::Machine)
+
+# GOREV_ROOT ayarla
+[Environment]::SetEnvironmentVariable("GOREV_ROOT", "$env:APPDATA\gorev", [EnvironmentVariableTarget]::User)
 
 # Test
 gorev version
