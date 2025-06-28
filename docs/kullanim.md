@@ -223,7 +223,7 @@ Hazır şablonlar kullanarak tutarlı görevler oluşturabilirsiniz:
 Görevlerinize son tarih ekleyip, acil görevleri filtreleyebilirsiniz:
 
 ```
-"15 Temmuz 2025 tarihine kadar bitirilmesi gereken yeni görev oluştur"
+"25 Temmuz 2025 tarihine kadar bitirilmesi gereken yeni görev oluştur"
 "Acil görevleri listele" (7 gün içinde bitenler)
 "Gecikmiş görevleri göster"
 "Görevleri son tarihe göre sırala"

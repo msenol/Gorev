@@ -60,6 +60,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **Komut Paleti** - Hızlı erişim (Ctrl+Shift+G)
 - **Renk Kodlaması** - Öncelik bazlı görsel ayırt etme
 - **Context Menüler** - Sağ tık işlemleri
+- **[Marketplace'den İndir](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** 🚀
 
 ## 📦 Kurulum
 
@@ -160,13 +161,12 @@ Konfigürasyon dosyası konumları:
 #### Seçenek 1: Gorev VS Code Extension (Tavsiye Edilen)
 
 1. **Extension'ı Yükleyin**:
+   - **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** üzerinden
+   - Veya komut satırından:
    ```bash
-   # Şu an local kurulum (marketplace yayını bekliyor)
-   cd gorev-vscode
-   npm install
-   npm run compile
-   # VS Code'da F5 ile çalıştırın
+   code --install-extension mehmetsenol.gorev-vscode
    ```
+   - Veya VS Code içinde: Extensions → "gorev" ara → Install
 
 2. **Extension Ayarları** (`settings.json`):
    ```json
@@ -284,6 +284,7 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 - 🏗 [Sistem Mimarisi](docs/mimari.md) - Teknik detaylar
 - 💻 [Geliştirici Rehberi](docs/gelistirme.md) - Katkıda bulunma kılavuzu
 - 🎨 [VS Code Extension](docs/vscode-extension.md) - Extension dokümantasyonu
+- 🚀 **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** - Extension'ı indir
 
 ## 🏗 Mimari
 

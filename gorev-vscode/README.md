@@ -1,7 +1,7 @@
 # Gorev VS Code Extension
 
 <p align="center">
-  <img src="media/gorev-icon.svg" alt="Gorev Logo" width="128" height="128">
+  <img src="media/icon.png" alt="Gorev Logo" width="128" height="128">
 </p>
 
 Gorev için güçlü ve kullanıcı dostu VS Code extension'ı. MCP protokolü üzerinden Gorev sunucusuyla iletişim kurarak gelişmiş görev yönetimi özellikleri sunar.
