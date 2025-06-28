@@ -28,7 +28,7 @@ Bu dokümanda Gorev projesine katkıda bulunmak isteyenler için geliştirme ort
 ```bash
 # Projeyi klonla
 git clone https://github.com/msenol/gorev.git
-cd gorev
+cd gorev/gorev-mcpserver
 
 # Bağımlılıkları indir
 make deps
@@ -70,22 +70,24 @@ go test ./...
 
 ```
 gorev/
-├── cmd/
-│   └── gorev/
-│       └── main.go              # Ana uygulama giriş noktası
-├── internal/
-│   ├── gorev/                   # Domain logic
-│   │   ├── modeller.go          # Veri modelleri
-│   │   ├── is_yonetici.go       # Business logic
-│   │   ├── veri_yonetici.go     # Data access layer
-│   │   ├── template_yonetici.go # Template yönetimi
-│   │   └── *_test.go            # Unit testler
-│   └── mcp/                     # MCP protokol katmanı
-│       ├── server.go            # MCP server
-│       └── handlers.go          # Tool handler'ları
-├── migrations/                  # Veritabanı migration'ları
+├── gorev-mcpserver/             # MCP server projesi
+│   ├── cmd/
+│   │   └── gorev/
+│   │       └── main.go          # Ana uygulama giriş noktası
+│   ├── internal/
+│   │   ├── gorev/               # Domain logic
+│   │   │   ├── modeller.go      # Veri modelleri
+│   │   │   ├── is_yonetici.go   # Business logic
+│   │   │   ├── veri_yonetici.go # Data access layer
+│   │   │   ├── template_yonetici.go # Template yönetimi
+│   │   │   └── *_test.go        # Unit testler
+│   │   └── mcp/                 # MCP protokol katmanı
+│   │       ├── server.go        # MCP server
+│   │       └── handlers.go      # Tool handler'ları
+│   ├── migrations/              # Veritabanı migration'ları
+│   └── test/                    # Integration testler
+├── gorev-vscode/                # VS Code extension
 ├── docs/                        # Dokümantasyon
-├── test/                        # Integration testler
 └── scripts/                     # Yardımcı scriptler
 ```
 
@@ -405,6 +407,89 @@ go func() {
 }()
 ```
 
+## VS Code Extension Geliştirme
+
+### Extension Kurulumu
+
+```bash
+cd gorev-vscode
+
+# Bağımlılıkları yükle
+npm install
+
+# TypeScript derle
+npm run compile
+
+# Watch mode (geliştirme için)
+npm run watch
+```
+
+### Extension Test Etme
+
+1. VS Code'da `gorev-vscode` klasörünü aç
+2. F5 tuşuna bas (veya Run > Start Debugging)
+3. Yeni VS Code penceresi açılacak (Extension Development Host)
+4. Extension'ı test et
+
+### Extension Yapısı
+
+```
+gorev-vscode/
+├── src/
+│   ├── extension.ts          # Ana giriş noktası
+│   ├── mcp/
+│   │   ├── client.ts        # MCP client implementasyonu
+│   │   └── types.ts         # TypeScript tipleri
+│   ├── commands/            # Komut handler'ları
+│   ├── providers/           # TreeView provider'ları
+│   └── models/              # Data modelleri
+├── package.json             # Extension manifest
+└── tsconfig.json           # TypeScript config
+```
+
+### Yeni Komut Ekleme
+
+1. **package.json'a komut ekle**:
+```json
+{
+  "contributes": {
+    "commands": [
+      {
+        "command": "gorev.newCommand",
+        "title": "Gorev: New Command"
+      }
+    ]
+  }
+}
+```
+
+2. **Command handler ekle**:
+```typescript
+// src/commands/newCommand.ts
+export async function newCommand() {
+    // Komut implementasyonu
+}
+```
+
+3. **Extension.ts'de kaydet**:
+```typescript
+context.subscriptions.push(
+    vscode.commands.registerCommand('gorev.newCommand', newCommand)
+);
+```
+
+### Extension Debugging
+
+1. **Output Channel kullan**:
+```typescript
+const outputChannel = vscode.window.createOutputChannel('Gorev');
+outputChannel.appendLine('Debug mesajı');
+```
+
+2. **Breakpoint koy**: VS Code'da TypeScript dosyalarına breakpoint ekle
+
+3. **Debug Console**: Extension Development Host'ta Debug Console'u kontrol et
+
 ## Katkıda Bulunma
 
 ### Pull Request Süreci
@@ -492,6 +577,7 @@ func TestXXX(t *testing.T) {
 - [Sistem Mimarisi](mimari.md)
 - [API Referansı](api-referans.md)
 - [MCP Araçları](mcp-araclari.md)
+- [VS Code Extension](vscode-extension.md)
 
 ---
 

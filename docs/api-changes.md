@@ -1,86 +1,93 @@
-# API Changes - Version 1.1.0
+# API Değişiklikleri
 
-## Date: 25 June 2025
+Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri açıklanmaktadır.
 
-### New MCP Tools Added
+## [0.6.0-dev] - Geliştirme Aşamasında
 
-#### 1. gorev_detay
-- **Purpose**: Display detailed task information in markdown format
-- **Parameters**: 
-  - `id` (string, required): Task ID
-- **Returns**: Markdown formatted task details including status, priority, dates, project, and description
+### Planlanan Özellikler
+- GitHub Actions entegrasyonu
+- Binary release otomasyonu
+- Docker registry kurulumu
 
-#### 2. gorev_duzenle
-- **Purpose**: Edit task properties (title, description, priority, or project)
-- **Parameters**:
-  - `id` (string, required): Task ID
-  - `baslik` (string, optional): New title
-  - `aciklama` (string, optional): New description (supports markdown)
-  - `oncelik` (string, optional): New priority (dusuk, orta, yuksek)
-  - `proje_id` (string, optional): New project ID
-- **Returns**: Success confirmation with task ID
-- **Note**: At least one optional field must be provided
+## [0.5.0] - 2025-06-27
 
-#### 3. gorev_sil
-- **Purpose**: Delete a task permanently
-- **Parameters**:
-  - `id` (string, required): Task ID
-  - `onay` (boolean, required): Must be true to confirm deletion
-- **Returns**: Success confirmation with deleted task name and ID
+### Eklenen Özellikler
 
-#### 4. proje_listele
-- **Purpose**: List all projects with their task counts
-- **Parameters**: None
-- **Returns**: Markdown formatted list of projects with metadata and task counts
+#### Görev Şablon Sistemi
+- **Yeni tablo**: `gorev_templateleri` - Görev şablonlarını saklar
+- **Yeni MCP araçları**:
+  - `template_listele` - Mevcut şablonları listele
+  - `templateden_gorev_olustur` - Şablondan görev oluştur
+- **4 varsayılan şablon**:
+  - Bug Raporu
+  - Özellik İsteği
+  - Teknik Borç
+  - Araştırma Görevi
+- **Dinamik alan desteği**: text, select, date, number
+- **Alan doğrulama**: Zorunlu/opsiyonel alanlar
 
-#### 5. proje_gorevleri
-- **Purpose**: List all tasks for a specific project, grouped by status
-- **Parameters**:
-  - `proje_id` (string, required): Project ID
-- **Returns**: Markdown formatted task list grouped by status (Devam Ediyor, Beklemede, Tamamlandı)
+### Teknik Değişiklikler
+- `GorevTemplate` ve `TemplateAlan` domain modelleri eklendi
+- `template_yonetici.go` dosyası eklendi
+- `VeriYoneticiInterface`'e 5 yeni template metodu eklendi
 
-### Enhanced Features
+## [0.4.0] - 2025-06-27
 
-1. **Markdown Support**
-   - Task descriptions now support full markdown formatting
-   - Markdown is preserved in `gorev_detay` output
-   - `gorev_duzenle` accepts markdown in description field
+### Eklenen Özellikler
 
-2. **Partial Updates**
-   - `gorev_duzenle` only updates specified fields
-   - Unspecified fields remain unchanged
-   - Validation ensures at least one field is provided
+#### Son Tarih Desteği
+- **Veritabanı değişikliği**: `gorevler` tablosuna `son_tarih` kolonu eklendi
+- **Güncellenmiş araçlar**:
+  - `gorev_olustur` - `son_tarih` parametresi (YYYY-MM-DD formatında)
+  - `gorev_duzenle` - Son tarih düzenleme desteği
+  - `gorev_listele` - Yeni sıralama: `son_tarih_asc`, `son_tarih_desc`
+  - `gorev_listele` - Yeni filtreler: `acil` (7 gün içinde), `gecmis` (geçmiş)
 
-3. **Safety Features**
-   - `gorev_sil` requires explicit confirmation parameter
-   - Task name is shown before deletion for verification
-   - Error messages are more descriptive and user-friendly
+#### Etiketleme Sistemi
+- **Yeni tablolar**:
+  - `etiketler` - Etiket tanımları
+  - `gorev_etiketleri` - Many-to-many ilişki tablosu
+- **Güncellenmiş araçlar**:
+  - `gorev_olustur` - `etiketler` parametresi (virgülle ayrılmış)
+  - `gorev_listele` - `etiket` ile filtreleme
+  - `gorev_detay` - Etiketleri gösterir
 
-### Technical Changes
-
-1. **Business Logic Layer**
-   - Added: `GorevDetayAl(id string) (*Gorev, error)`
-   - Added: `ProjeDetayAl(id string) (*Proje, error)`
-   - Added: `GorevDuzenle(id, baslik, aciklama, oncelik, projeID string, flags...bool) error`
-   - Added: `GorevSil(id string) error`
-   - Added: `ProjeListele() ([]*Proje, error)`
-   - Added: `ProjeGorevleri(projeID string) ([]*Gorev, error)`
-   - Added: `ProjeGorevSayisi(projeID string) (int, error)`
-
-2. **Data Access Layer**
-   - Added: `ProjeGetir(id string) (*Proje, error)`
-   - Added: `GorevSil(id string) error`
-   - Added: `ProjeGorevleriGetir(projeID string) ([]*Gorev, error)`
-
-3. **MCP Handlers**
-   - All handlers updated to match mark3labs/mcp-go v0.6.0 API
-   - Removed context parameter from handler functions
-   - Updated tool registration to use new API
+#### Görev Bağımlılıkları
+- **Yeni MCP aracı**: `gorev_bagimlilik_ekle` - Görevler arası bağımlılık oluştur
+- **İş mantığı**:
+  - Bağımlı görevler tamamlanmadan "devam_ediyor" durumuna geçilemez
+  - `GorevBagimliMi` fonksiyonu bağımlılık kontrolü yapar
+- **Güncellenmiş araçlar**:
+  - `gorev_guncelle` - Durum değişiminde bağımlılık kontrolü
+  - `gorev_detay` - Bağımlılıkları durum göstergeleriyle gösterir (✅/⏳)
 
 ### Breaking Changes
-None - All existing tools maintain backward compatibility
+- `GorevOlustur` fonksiyonu artık 6 parametre alıyor (son_tarih, etiketler eklendi)
+- `GorevListele` fonksiyonu artık 3 parametre alıyor (sirala, filtre eklendi)
+- `VeriYonetici` constructor artık migrations path gerektiriyor
 
-### Migration Notes
-- Existing tasks will work with new tools without modification
-- Task descriptions can be gradually updated to use markdown
-- No database schema changes required
+## [0.3.0] - 2025-06-25
+
+### Değişiklikler
+- MCP SDK entegrasyonu tamamlandı (`mark3labs/mcp-go` v0.6.0)
+- Go 1.22 minimum gereksinimi belirlendi
+- Modül yolu `github.com/yourusername/gorev` olarak güncellendi
+
+## [0.2.0] - 2025-06-24
+
+### Eklenen Özellikler
+- Aktif proje sistemi
+- Proje bazlı görev filtreleme
+- Özet istatistikleri
+
+## [0.1.0] - 2025-06-23
+
+### İlk Sürüm
+- Temel görev yönetimi (CRUD)
+- Proje yönetimi
+- SQLite veritabanı desteği
+- 10 temel MCP aracı
+
+---
+
+> Not: Semantic Versioning kullanılmaktadır. 1.0.0 sürümü public release için planlanmaktadır.

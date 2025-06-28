@@ -314,6 +314,83 @@ docker run --rm -v gorev-data:/data ghcr.io/msenol/gorev:latest version
 }
 ```
 
+## 🎨 VS Code Extension Kurulumu
+
+### Seçenek 1: Gorev VS Code Extension (Opsiyonel)
+
+Gorev VS Code Extension, MCP server'a zengin görsel arayüz sağlar. TreeView panelleri, komut paleti ve status bar desteği sunar.
+
+#### Marketplace'den Kurulum (Yakında)
+```
+1. VS Code Extensions panelini aç (Ctrl+Shift+X)
+2. "Gorev Task Orchestrator" ara
+3. Install butonuna tıkla
+```
+
+#### Local Development Kurulumu
+```bash
+# Repository'yi klonla
+git clone https://github.com/yourusername/gorev.git
+cd gorev/gorev-vscode
+
+# Bağımlılıkları yükle
+npm install
+
+# Extension'ı derle
+npm run compile
+
+# VS Code'da test et
+# F5 tuşuna bas veya Run > Start Debugging
+```
+
+#### Extension Konfigürasyonu
+
+VS Code ayarlarında (`settings.json`):
+
+```json
+{
+  // MCP server binary yolu
+  "gorev.serverPath": "/usr/local/bin/gorev",
+  
+  // Windows için örnek:
+  // "gorev.serverPath": "C:\\Program Files\\gorev\\gorev.exe",
+  
+  // Otomatik bağlanma
+  "gorev.autoConnect": true,
+  
+  // Status bar gösterimi
+  "gorev.showStatusBar": true
+}
+```
+
+#### Extension Kullanımı
+
+1. **Activity Bar**: Gorev ikonuna tıklayarak paneli aç
+2. **TreeView Panelleri**: 
+   - Görevler (durum bazında gruplandırılmış)
+   - Projeler (aktif proje vurgulanmış)
+   - Şablonlar (kategori bazında listelenmiş)
+3. **Komut Paleti**: `Ctrl+Shift+P` > "Gorev" yaz
+4. **Hızlı Görev**: `Ctrl+Shift+G` kısayolu
+5. **Status Bar**: Bağlantı durumu ve özet bilgiler
+
+### Seçenek 2: MCP Extension ile Kullanım
+
+Eğer Gorev Extension kullanmak istemiyorsanız, standart MCP extension ile de kullanabilirsiniz:
+
+```json
+{
+  "mcp.servers": {
+    "gorev": {
+      "command": "/usr/local/bin/gorev",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+> **Not**: Her iki extension'ı aynı anda kullanmayın. Ya Gorev Extension ya da MCP Extension tercih edin.
+
 ## ✅ Kurulum Doğrulama
 
 ### 1. CLI Test
@@ -336,7 +413,7 @@ MCP uyumlu editörünüzü yeniden başlatın ve AI asistanınıza test edin:
 "Gorev çalışıyor mu? Test için yeni bir görev oluştur."
 ```
 
-> **Not**: VS Code için MCP extension'ının yüklü olduğundan emin olun.
+> **Not**: VS Code için ya Gorev Extension ya da MCP extension'ının yüklü olduğundan emin olun.
 
 ### 3. Log Kontrolü
 

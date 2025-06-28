@@ -203,6 +203,47 @@ Gorev otomatik olarak SQLite veritabanını kullanır. Yedekleme için:
 cp ~/.gorev/data/gorev.db ~/.gorev/data/gorev.db.backup
 ```
 
+## 🆕 Gelişmiş Özellikler
+
+### Görev Şablonları
+
+Hazır şablonlar kullanarak tutarlı görevler oluşturabilirsiniz:
+
+```
+"Bug raporu şablonundan yeni görev oluştur"
+"Feature request şablonunu kullanarak yeni özellik isteği oluştur"
+"Mevcut görev şablonlarını listele"
+```
+
+### Son Tarih ve Filtreleme
+
+Görevlerinize son tarih ekleyip, acil görevleri filtreleyebilirsiniz:
+
+```
+"15 Temmuz 2025 tarihine kadar bitirilmesi gereken yeni görev oluştur"
+"Acil görevleri listele" (7 gün içinde bitenler)
+"Gecikmiş görevleri göster"
+"Görevleri son tarihe göre sırala"
+```
+
+### Etiketleme
+
+Görevleri etiketlerle kategorize edebilirsiniz:
+
+```
+"Frontend ve kritik etiketleriyle yeni görev oluştur"
+"Frontend etiketli görevleri listele"
+```
+
+### Görev Bağımlılıkları
+
+Görevler arası bağımlılıklar tanımlayabilirsiniz:
+
+```
+"3 numaralı görev 1 ve 2 numaralı görevlere bağımlı olsun"
+"5 numaralı görevin bağımlılıklarını göster"
+```
+
 ## 🚀 Sonraki Adımlar
 
 - [MCP Araçları Referansı](mcp-araclari.md) - Tüm komutların detaylı açıklaması

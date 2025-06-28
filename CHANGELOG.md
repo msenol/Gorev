@@ -5,23 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0-dev] - Unreleased
+
+### Added
+
+#### VS Code Extension (gorev-vscode)
+- **New module**: Optional VS Code extension for visual task management
+- **TreeView panels**: Tasks, Projects, and Templates with visual hierarchy
+- **Command palette**: 11 commands including quick task creation (Ctrl+Shift+G)
+- **Status bar**: Real-time connection status and task statistics
+- **Context menus**: Right-click operations for tasks and projects
+- **Theme support**: Priority-based color coding
+- **MCP client**: TypeScript implementation connecting to Gorev server
+- **Configuration**: Extension settings for server path, auto-connect, and refresh interval
 
 ### Changed
+- **Project structure**: Reorganized into two modules: `gorev-mcpserver` and `gorev-vscode`
 - **Package structure**: Updated module path from `github.com/yourusername/gorev` to `github.com/msenol/gorev`
+- **Go version**: Updated from 1.21 to 1.22 in go.mod
+- **Version**: Aligned version numbers (0.6.0-dev) across VERSION file and Makefile
 - **Configuration**: Removed docker-based gorev server configuration from `.mcp.json`
 
 ### Fixed
 - **Import paths**: Fixed all internal import paths to use the correct module name
+- **Test coverage**: Updated badge to reflect actual coverage (53.8%)
 
 ### Documentation
 - **Enhanced**: Complete documentation overhaul with Claude (Anthropic) assistance
+- **Added**: VS Code extension documentation (vscode-extension.md)
+- **Added**: Extension README (gorev-vscode/README.md)
 - **Added**: Platform-specific installation guides for Windows, macOS, and Linux
 - **Added**: MCP editor integration guides for VS Code, Windsurf, Cursor
 - **Added**: Comprehensive examples documentation (ornekler.md)
 - **Added**: API reference documentation (api-referans.md)
-- **Added**: Developer guide (gelistirme.md)
-- **Updated**: Clarified MCP compatibility with multiple AI-enabled editors
+- **Added**: Developer guide (gelistirme.md) with extension development section
+- **Updated**: Main README to reflect two-module architecture
+- **Updated**: CLAUDE.md to document both modules
+- **Updated**: Installation guide with VS Code extension setup
 - **Fixed**: All placeholder URLs replaced with actual GitHub repository URLs
 
 ## [0.5.0] - 2025-06-27

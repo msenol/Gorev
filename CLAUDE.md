@@ -30,12 +30,17 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 ## Project Overview
 
-Gorev is an MCP (Model Context Protocol) server written in Go that provides task management capabilities to AI assistants across all MCP-compatible editors (Claude Desktop, VS Code, Windsurf, Cursor, Zed, etc.). The project uses the community MCP SDK (`mark3labs/mcp-go`).
+Gorev is a two-module project that provides task management capabilities to AI assistants:
+
+1. **gorev-mcpserver**: An MCP (Model Context Protocol) server written in Go that provides task management capabilities to AI assistants across all MCP-compatible editors (Claude Desktop, VS Code, Windsurf, Cursor, Zed, etc.). Uses the community MCP SDK (`mark3labs/mcp-go`).
+
+2. **gorev-vscode**: A VS Code extension (optional) that provides a rich visual interface for task management. It connects to the MCP server and offers TreeView panels, status bar integration, and command palette commands.
 
 ## Architecture
 
 The project follows a clean architecture pattern with clear separation of concerns:
 
+### gorev-mcpserver (Go)
 ```
 cmd/gorev/main.go                  → Entry point, CLI commands (cobra)
 internal/mcp/                      → MCP protocol layer
@@ -50,6 +55,22 @@ internal/gorev/                   → Business logic layer
   └── veri_yonetici_interface.go → Interface for dependency injection
 ```
 
+### gorev-vscode (TypeScript)
+```
+src/extension.ts                   → VS Code extension entry point
+src/mcp/                          → MCP client implementation
+  ├── client.ts                  → MCP protocol client
+  └── types.ts                   → TypeScript type definitions
+src/commands/                     → VS Code commands
+  ├── gorevCommands.ts           → Task-related commands
+  ├── projeCommands.ts           → Project-related commands
+  └── templateCommands.ts        → Template-related commands
+src/providers/                    → TreeView providers
+  ├── gorevTreeProvider.ts       → Task tree view
+  ├── projeTreeProvider.ts       → Project tree view
+  └── templateTreeProvider.ts    → Template tree view
+```
+
 ### Key Design Decisions
 
 1. **Turkish Domain Language**: Core domain concepts use Turkish terms (gorev=task, proje=project, durum=status, oncelik=priority)
@@ -59,7 +80,10 @@ internal/gorev/                   → Business logic layer
 
 ## Development Commands
 
+### MCP Server (gorev-mcpserver)
 ```bash
+cd gorev-mcpserver
+
 # Build
 make build                 # Build for current platform
 make build-all            # Build for all platforms (linux, darwin, windows)
@@ -84,6 +108,27 @@ make docker-run          # Run Docker container
 # Development
 make run                 # Build and run server
 ./gorev serve --debug    # Run with debug logging
+```
+
+### VS Code Extension (gorev-vscode)
+```bash
+cd gorev-vscode
+
+# Install dependencies
+npm install
+
+# Build
+npm run compile          # Compile TypeScript
+npm run watch           # Watch mode for development
+
+# Test
+npm test                # Run tests
+
+# Package
+npm run package         # Create .vsix package
+
+# Development
+# Press F5 in VS Code to launch extension development host
 ```
 
 ## MCP Tools
@@ -194,11 +239,19 @@ Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 
 ## Important Files
 
+### gorev-mcpserver
 - `internal/gorev/modeller.go`: Domain model definitions (includes GorevTemplate, TemplateAlan)
 - `internal/mcp/handlers.go`: MCP tool implementations (includes template handlers)
 - `internal/gorev/veri_yonetici.go`: Database operations
 - `internal/gorev/template_yonetici.go`: Template management operations
 - `cmd/gorev/main.go`: CLI and server initialization (includes template commands)
+
+### gorev-vscode
+- `src/extension.ts`: Extension entry point and activation
+- `src/mcp/client.ts`: MCP client for server communication
+- `src/providers/*.ts`: TreeView providers for UI
+- `src/commands/*.ts`: Command implementations
+- `package.json`: Extension manifest with commands, views, and configuration
 
 ## Version Management
 

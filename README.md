@@ -5,7 +5,7 @@
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Test Coverage](https://img.shields.io/badge/Coverage-88.2%25-brightgreen?style=flat-square)
+![Test Coverage](https://img.shields.io/badge/Coverage-53.8%25-yellow?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20|%20macOS%20|%20Windows-blue?style=flat-square)
 
 **MCP uyumlu AI editörlerle (Claude, VS Code, Windsurf, Cursor) entegre çalışan, Türkçe destekli modern görev yönetim sistemi**
@@ -17,6 +17,13 @@
 ## 🎯 Gorev Nedir?
 
 Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm AI editörler (Claude Desktop, VS Code, Windsurf, Cursor, Zed vb.) ile doğal dilde iletişim kurabilen, Go dilinde yazılmış güçlü bir görev yönetim sunucusudur. Proje yönetimi, görev takibi ve organizasyon ihtiyaçlarınızı AI asistanlarının yetenekleriyle birleştirerek verimliliğinizi artırır.
+
+### 🏗️ İki Modüllü Yapı
+
+1. **gorev-mcpserver** - Go dilinde yazılmış MCP server (ana bileşen)
+2. **gorev-vscode** - VS Code extension'ı (opsiyonel görsel arayüz)
+
+MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. VS Code extension'ı ise zengin görsel deneyim sunar.
 
 ## ✨ Özellikler
 
@@ -46,6 +53,14 @@ Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm
 - **Bağlamsal anlama** - Akıllı komut yorumlama
 - **MCP standardı** - Tüm MCP uyumlu araçlarla uyumluluk
 
+### 🎨 VS Code Extension Özellikleri (Opsiyonel)
+- **TreeView Panelleri** - Görev, proje ve şablon listeleri
+- **Görsel Arayüz** - Tıkla ve kullan deneyimi
+- **Status Bar** - Anlık durum bilgisi
+- **Komut Paleti** - Hızlı erişim (Ctrl+Shift+G)
+- **Renk Kodlaması** - Öncelik bazlı görsel ayırt etme
+- **Context Menüler** - Sağ tık işlemleri
+
 ## 📦 Kurulum
 
 ### Hızlı Kurulum (30 saniye)
@@ -56,7 +71,7 @@ Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm
 ```powershell
 # PowerShell (Admin olarak çalıştırın)
 New-Item -ItemType Directory -Force -Path "C:\Program Files\gorev"
-Invoke-WebRequest -Uri "https://github.com/msenol/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "C:\Program Files\gorev\gorev.exe"
+Invoke-WebRequest -Uri "https://github.com/yourusername/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "C:\Program Files\gorev\gorev.exe"
 [Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\gorev", [EnvironmentVariableTarget]::Machine)
 
 # Test
@@ -70,11 +85,11 @@ gorev version
 
 ```bash
 # Homebrew ile (önerilen)
-brew tap msenol/gorev
+brew tap yourusername/gorev
 brew install gorev
 
 # Veya binary indirme
-curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-darwin-amd64 -o gorev
+curl -L https://github.com/yourusername/gorev/releases/latest/download/gorev-darwin-amd64 -o gorev
 chmod +x gorev
 sudo mv gorev /usr/local/bin/
 ```
@@ -86,7 +101,7 @@ sudo mv gorev /usr/local/bin/
 
 ```bash
 # Binary indirme
-curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
+curl -L https://github.com/yourusername/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
 chmod +x gorev
 sudo mv gorev /usr/local/bin/
 
@@ -100,7 +115,7 @@ gorev version
 <summary><b>🐳 Docker</b></summary>
 
 ```bash
-docker pull ghcr.io/msenol/gorev:latest
+docker pull ghcr.io/yourusername/gorev:latest
 docker run -v ~/.gorev:/data ghcr.io/msenol/gorev serve
 ```
 
@@ -120,7 +135,7 @@ Konfigürasyon dosyası konumları:
 {
   "mcpServers": {
     "gorev": {
-      "command": "gorev",
+      "command": "/path/to/gorev-mcpserver/gorev",
       "args": ["serve"],
       "env": {
         "GOREV_DATA_DIR": "~/.gorev"
@@ -135,13 +150,40 @@ Konfigürasyon dosyası konumları:
 <details>
 <summary><b>💻 VS Code</b></summary>
 
+#### Seçenek 1: Gorev VS Code Extension (Tavsiye Edilen)
+
+1. **Extension'ı Yükleyin**:
+   ```bash
+   # Şu an local kurulum (marketplace yayını bekliyor)
+   cd gorev-vscode
+   npm install
+   npm run compile
+   # VS Code'da F5 ile çalıştırın
+   ```
+
+2. **Extension Ayarları** (`settings.json`):
+   ```json
+   {
+     "gorev.serverPath": "/path/to/gorev-mcpserver/gorev",
+     "gorev.autoConnect": true,
+     "gorev.showStatusBar": true
+   }
+   ```
+
+3. **Kullanım**:
+   - Activity Bar'da Gorev ikonuna tıklayın
+   - `Ctrl+Shift+G` ile hızlı görev oluşturun
+   - TreeView'lardan görev/proje yönetin
+
+#### Seçenek 2: MCP Extension ile
+
 MCP extension kurduktan sonra `settings.json`:
 
 ```json
 {
   "mcp.servers": {
     "gorev": {
-      "command": "gorev",
+      "command": "/path/to/gorev-mcpserver/gorev",
       "args": ["serve"]
     }
   }
@@ -234,23 +276,47 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 - 🛠 [MCP Araçları](docs/mcp-araclari.md) - 16 MCP tool referansı
 - 🏗 [Sistem Mimarisi](docs/mimari.md) - Teknik detaylar
 - 💻 [Geliştirici Rehberi](docs/gelistirme.md) - Katkıda bulunma kılavuzu
+- 🎨 [VS Code Extension](docs/vscode-extension.md) - Extension dokümantasyonu
 
 ## 🏗 Mimari
 
+### Proje Yapısı
+
 ```
 gorev/
-├── cmd/gorev/              # CLI ve server entry point
-├── internal/
-│   ├── mcp/               # MCP protokol katmanı
-│   │   ├── server.go      # MCP server implementasyonu
-│   │   └── handlers.go    # Tool handler'ları
-│   └── gorev/             # Core business logic
-│       ├── modeller.go    # Domain modelleri
-│       ├── is_yonetici.go # Business logic
-│       └── veri_yonetici.go # Data access layer
-├── migrations/            # Database migrations
-├── docs/                  # Dokümantasyon
-└── test/                  # Integration testler
+├── gorev-mcpserver/        # MCP Server (Go)
+│   ├── cmd/gorev/         # CLI ve server entry point
+│   ├── internal/
+│   │   ├── mcp/           # MCP protokol katmanı
+│   │   └── gorev/        # Business logic
+│   └── test/              # Integration testler
+├── gorev-vscode/           # VS Code Extension (TypeScript)
+│   ├── src/
+│   │   ├── commands/      # VS Code komutları
+│   │   ├── providers/     # TreeView sağlayıcıları
+│   │   └── mcp/           # MCP client
+│   └── package.json       # Extension manifest
+└── docs/                   # Proje dokümantasyonu
+```
+
+### Bileşen Etkileşimi
+
+```
+┌───────────────┐     ┌───────────────┐     ┌────────────────┐
+│ Claude/Cursor │     │   VS Code     │     │ VS Code + Gorev│
+│               │     │ + MCP Plugin  │     │   Extension    │
+└──────┬───────┘     └──────┬───────┘     └───────┬────────┘
+       │                      │                      │
+       └──────────────────────┴──────────────────────┘
+                              │ MCP Protocol
+                        ┌─────┴─────┐
+                        │ Gorev MCP  │
+                        │   Server   │
+                        └─────┬─────┘
+                              │
+                        ┌─────┴─────┐
+                        │   SQLite   │
+                        └───────────┘
 ```
 
 ## 🧪 Geliştirme
@@ -266,7 +332,7 @@ gorev/
 # Bağımlılıkları indir
 make deps
 
-# Test çalıştır (88.2% coverage)
+# Test çalıştır (53.8% coverage)
 make test
 
 # Coverage raporu
