@@ -78,6 +78,36 @@ sudo mv "$TEMP_DIR/gorev" "$INSTALL_DIR/gorev" || {
     exit 1
 }
 
+# Create wrapper script
+echo -e "${YELLOW}Creating wrapper script...${NC}"
+WRAPPER_CONTENT="#!/bin/bash
+# Gorev wrapper script
+# Automatically sets GOREV_ROOT to find migrations and database
+
+# Try to find gorev installation directory
+if [ -d \"/opt/gorev\" ]; then
+    export GOREV_ROOT=\"/opt/gorev\"
+elif [ -d \"\$HOME/.gorev\" ]; then
+    export GOREV_ROOT=\"\$HOME/.gorev\"
+else
+    # If not found, user must set GOREV_ROOT manually
+    if [ -z \"\$GOREV_ROOT\" ]; then
+        echo \"Error: GOREV_ROOT not set. Please set it to your gorev installation directory.\" >&2
+        echo \"Example: export GOREV_ROOT=/path/to/gorev-mcpserver\" >&2
+        exit 1
+    fi
+fi
+
+exec \"$INSTALL_DIR/gorev.bin\" \"\$@\"
+"
+
+# Move original binary to .bin
+sudo mv "$INSTALL_DIR/gorev" "$INSTALL_DIR/gorev.bin"
+
+# Create wrapper script
+echo "$WRAPPER_CONTENT" | sudo tee "$INSTALL_DIR/gorev" > /dev/null
+sudo chmod +x "$INSTALL_DIR/gorev"
+
 echo -e "${GREEN}✓ Gorev installed successfully!${NC}"
 echo ""
 echo "Run 'gorev version' to verify installation"

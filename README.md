@@ -74,6 +74,12 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.7.0-dev bash
 ```
 
+> **Not**: Kurulum sonrası eğer "unable to open database file" hatası alırsanız, GOREV_ROOT environment variable'ını ayarlayın:
+> ```bash
+> export GOREV_ROOT=/path/to/gorev-mcpserver  # Projenin bulunduğu dizin
+> echo 'export GOREV_ROOT=/path/to/gorev-mcpserver' >> ~/.bashrc  # Kalıcı yapmak için
+> ```
+
 ### Manuel Kurulum
 
 <details>

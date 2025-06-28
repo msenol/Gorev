@@ -28,15 +28,50 @@ func getMigrationsPath() string {
 	// Get the directory of the executable
 	exeDir := filepath.Dir(exePath)
 
-	// Check if we're in the build directory
-	if filepath.Base(exeDir) == "build" {
-		// Go up one level to project root
-		exeDir = filepath.Dir(exeDir)
+	// First, check if we can find the migrations in the standard project structure
+	// This handles the case where the executable is in a temporary directory (go run)
+	// or installed in a different location
+	possiblePaths := []string{
+		// Direct path from executable location
+		filepath.Join(exeDir, "internal", "veri", "migrations"),
+		// If in build directory
+		filepath.Join(filepath.Dir(exeDir), "internal", "veri", "migrations"),
+		// If in gorev-mcpserver directory
+		filepath.Join(exeDir, "..", "internal", "veri", "migrations"),
+		// Try to find gorev-mcpserver in parent directories
+		filepath.Join(exeDir, "..", "..", "gorev-mcpserver", "internal", "veri", "migrations"),
+		filepath.Join(exeDir, "..", "..", "..", "gorev-mcpserver", "internal", "veri", "migrations"),
 	}
 
-	// Construct the migrations path
-	migrationsPath := filepath.Join(exeDir, "internal", "veri", "migrations")
-	return "file://" + migrationsPath
+	// Also check GOREV_ROOT environment variable if set
+	if gorevRoot := os.Getenv("GOREV_ROOT"); gorevRoot != "" {
+		possiblePaths = append([]string{
+			filepath.Join(gorevRoot, "internal", "veri", "migrations"),
+		}, possiblePaths...)
+	}
+
+	// Try each possible path
+	for _, path := range possiblePaths {
+		// Clean the path to resolve .. and .
+		cleanPath := filepath.Clean(path)
+		// Check if the migrations directory exists
+		if _, err := os.Stat(cleanPath); err == nil {
+			// Found the migrations directory
+			return "file://" + cleanPath
+		}
+	}
+
+	// Fallback: assume migrations are relative to current working directory
+	cwd, err := os.Getwd()
+	if err == nil {
+		migrationsPath := filepath.Join(cwd, "internal", "veri", "migrations")
+		if _, err := os.Stat(migrationsPath); err == nil {
+			return "file://" + migrationsPath
+		}
+	}
+
+	// Last resort: return relative path and hope for the best
+	return "file://internal/veri/migrations"
 }
 
 // getDatabasePath returns the correct path to database file
@@ -51,14 +86,67 @@ func getDatabasePath() string {
 	// Get the directory of the executable
 	exeDir := filepath.Dir(exePath)
 
-	// Check if we're in the build directory
-	if filepath.Base(exeDir) == "build" {
-		// Go up one level to project root
-		exeDir = filepath.Dir(exeDir)
+	// First, check if we can find an existing database in the standard locations
+	possiblePaths := []string{
+		// Direct path from executable location
+		filepath.Join(exeDir, "gorev.db"),
+		// If in build directory
+		filepath.Join(filepath.Dir(exeDir), "gorev.db"),
+		// If in gorev-mcpserver directory
+		filepath.Join(exeDir, "..", "gorev.db"),
+		// Try to find gorev-mcpserver in parent directories
+		filepath.Join(exeDir, "..", "..", "gorev-mcpserver", "gorev.db"),
+		filepath.Join(exeDir, "..", "..", "..", "gorev-mcpserver", "gorev.db"),
 	}
 
-	// Construct the database path
-	return filepath.Join(exeDir, "gorev.db")
+	// Also check GOREV_ROOT environment variable if set
+	if gorevRoot := os.Getenv("GOREV_ROOT"); gorevRoot != "" {
+		possiblePaths = append([]string{
+			filepath.Join(gorevRoot, "gorev.db"),
+		}, possiblePaths...)
+	}
+
+	// Try each possible path for existing database
+	for _, path := range possiblePaths {
+		// Clean the path to resolve .. and .
+		cleanPath := filepath.Clean(path)
+		// Check if the database file exists
+		if _, err := os.Stat(cleanPath); err == nil {
+			// Found existing database
+			return cleanPath
+		}
+	}
+
+	// If no existing database found, determine where to create a new one
+	// Priority: GOREV_ROOT > project root > current directory
+	
+	// 1. Try GOREV_ROOT if set
+	if gorevRoot := os.Getenv("GOREV_ROOT"); gorevRoot != "" {
+		return filepath.Join(gorevRoot, "gorev.db")
+	}
+
+	// 2. Try to find project root by looking for internal/veri/migrations
+	for _, path := range possiblePaths {
+		dir := filepath.Dir(path)
+		migrationsPath := filepath.Join(dir, "internal", "veri", "migrations")
+		if _, err := os.Stat(migrationsPath); err == nil {
+			// Found project root
+			return filepath.Join(dir, "gorev.db")
+		}
+	}
+
+	// 3. Fallback to current working directory
+	cwd, err := os.Getwd()
+	if err == nil {
+		// Check if we're in the project root
+		migrationsPath := filepath.Join(cwd, "internal", "veri", "migrations")
+		if _, err := os.Stat(migrationsPath); err == nil {
+			return filepath.Join(cwd, "gorev.db")
+		}
+	}
+
+	// Last resort: use current directory
+	return "gorev.db"
 }
 
 func main() {
