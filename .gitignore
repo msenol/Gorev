@@ -25,6 +25,9 @@ coverage.html
 *.tmp
 *.temp
 *.log
+tmp/
+test-*.js
+test-*.sh
 
 # IDE dosyaları
 .vscode/

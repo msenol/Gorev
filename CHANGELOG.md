@@ -5,7 +5,80 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0-dev] - Unreleased
+## [0.7.0-dev] - Unreleased
+
+### Added
+
+#### VS Code Extension - Enhanced UI Features
+- **Enhanced TreeView**: Professional task management with grouping, multi-select, color coding
+  - Grouping by status/priority/tag/project/due date
+  - Multi-select support (Ctrl/Cmd+Click)
+  - Expandable/collapsible categories
+  - Priority-based color coding
+  - Quick completion checkboxes
+  - Badges (task counts, due date warnings)
+- **Drag & Drop Support**: Intuitive task management with visual feedback
+  - Move tasks between projects
+  - Change status by dragging
+  - Reorder priorities
+  - Create dependencies by dropping tasks on each other
+  - Visual indicators and animations
+- **Inline Editing**: Quick task editing directly in TreeView
+  - F2 or double-click to edit
+  - Context menu for status/priority changes
+  - Inline date picker
+  - Escape to cancel, Enter to save
+- **Advanced Filtering Toolbar**: Powerful search and filter system
+  - Search bar with real-time filtering
+  - Advanced filters (status, priority, tags, dates)
+  - Saved filter profiles
+  - Status bar integration
+  - Quick filter shortcuts
+- **Rich Task Detail Panel**: Comprehensive task view with markdown editor
+  - Split-view markdown editor
+  - Live preview
+  - Dependency visualization graph
+  - Activity timeline
+  - Template field indicators
+- **Template Wizard UI**: Multi-step interface for template-based task creation
+  - Template search and filter
+  - Dynamic form generation
+  - Field validation
+  - Preview before creation
+  - Template categories with icons
+- **Comprehensive Test Suite**: Unit, integration, and E2E tests
+  - Unit tests for all major components
+  - Integration tests for extension features
+  - End-to-end workflow tests
+  - Test fixtures and helpers
+  - Coverage reporting with c8
+
+#### MCP Server Improvements
+- **Path Resolution**: Fixed database and migration paths to work from any directory
+  - `getDatabasePath()` function for executable-relative paths
+  - `getMigrationsPath()` function for migration discovery
+  - Works correctly when running from different directories
+
+### Changed
+- **Enhanced Commands**: Additional 10+ commands for new UI features
+- **Configuration**: Extended settings for grouping, sorting, drag-drop behavior
+- **Tree Providers**: Complete rewrite with enhanced functionality
+- **Template Parser**: Updated to handle new MCP server response format
+
+### Fixed
+- **Template Display**: Fixed markdown parser to correctly parse template list responses
+- **TreeView Classes**: Exported tree item classes to allow VS Code instantiation
+- **TypeScript Errors**: Fixed filter interface property names (Turkish equivalents)
+- **Path Issues**: Fixed gorev command execution from different directories
+
+### Technical
+- **New Files**: 20+ new TypeScript files for enhanced UI
+- **Test Infrastructure**: Complete test setup with mocha, sinon, and VS Code test APIs
+- **Markdown Parser**: Comprehensive parser for all MCP response types
+- **Debug Support**: Test data seeder and debug commands
+- **Icons**: Custom SVG icons for tasks, priorities, and templates
+
+## [0.6.0] - 2025-06-27
 
 ### Added
 
@@ -23,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Project structure**: Reorganized into two modules: `gorev-mcpserver` and `gorev-vscode`
 - **Package structure**: Updated module path from `github.com/yourusername/gorev` to `github.com/msenol/gorev`
 - **Go version**: Updated from 1.21 to 1.22 in go.mod
-- **Version**: Aligned version numbers (0.6.0-dev) across VERSION file and Makefile
+- **Version**: Aligned version numbers (0.6.0) across VERSION file and Makefile
 - **Configuration**: Removed docker-based gorev server configuration from `.mcp.json`
 
 ### Fixed

@@ -2,11 +2,29 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 27 June 2025
+## Last Updated: 28 June 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
-### Recent Changes
+### Recent Changes (v0.7.0-dev)
+- **VS Code Extension - Enhanced UI Features**:
+  - Enhanced TreeView with grouping, multi-select, and priority-based color coding
+  - Drag & Drop support for moving tasks, changing status, and creating dependencies
+  - Inline editing with F2/double-click, context menus, and date pickers
+  - Advanced filtering toolbar with search, filters, and saved profiles
+  - Rich task detail panel with markdown editor and dependency visualization
+  - Template wizard UI with multi-step interface and dynamic forms
+  - Comprehensive test suite (unit, integration, E2E) with coverage reporting
+- **MCP Server Improvements**:
+  - Fixed path resolution for database and migrations to work from any directory
+  - Added `getDatabasePath()` and `getMigrationsPath()` functions
+- **Bug Fixes**:
+  - Fixed template display by updating markdown parser
+  - Fixed TreeView classes export for VS Code instantiation
+  - Fixed TypeScript compilation errors with Turkish property names
+  - Fixed gorev command execution from different directories
+
+### Previous Changes (v0.5.0 - v0.6.0)
 - **Added Task Template System** - Predefined templates for bug reports, feature requests, technical debt, and research tasks
 - **Added Task Dependencies** - Tasks can now have dependencies that must be completed before starting
 - **Added Due Dates** - Tasks can have deadlines with filtering for urgent/overdue tasks
@@ -244,14 +262,20 @@ Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 - `internal/mcp/handlers.go`: MCP tool implementations (includes template handlers)
 - `internal/gorev/veri_yonetici.go`: Database operations
 - `internal/gorev/template_yonetici.go`: Template management operations
-- `cmd/gorev/main.go`: CLI and server initialization (includes template commands)
+- `cmd/gorev/main.go`: CLI and server initialization (includes template commands, path resolution)
 
 ### gorev-vscode
 - `src/extension.ts`: Extension entry point and activation
 - `src/mcp/client.ts`: MCP client for server communication
-- `src/providers/*.ts`: TreeView providers for UI
-- `src/commands/*.ts`: Command implementations
+- `src/providers/enhancedGorevTreeProvider.ts`: Advanced TreeView with grouping and multi-select
+- `src/providers/dragDropController.ts`: Drag & drop functionality
+- `src/ui/filterToolbar.ts`: Advanced filtering and search
+- `src/ui/taskDetailPanel.ts`: Rich task detail view with markdown editor
+- `src/ui/templateWizard.ts`: Multi-step template wizard
+- `src/utils/markdownParser.ts`: Comprehensive MCP response parser
+- `src/commands/*.ts`: Command implementations (21 commands total)
 - `package.json`: Extension manifest with commands, views, and configuration
+- `test/`: Comprehensive test suite (unit, integration, E2E)
 
 ## Version Management
 
