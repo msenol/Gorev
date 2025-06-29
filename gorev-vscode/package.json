@@ -1,6 +1,6 @@
 {
   "name": "gorev-vscode",
-  "displayName": "Gorev Task Orchestrator",
+  "displayName": "Gorev",
   "description": "Powerful task management for VS Code powered by MCP protocol",
   "version": "0.3.0",
   "publisher": "mehmetsenol",

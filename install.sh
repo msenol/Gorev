@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Variables
 REPO="msenol/Gorev"
-VERSION="${VERSION:-v0.7.1-dev}"
+VERSION="${VERSION:-v0.7.0-beta.1}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 DATA_DIR="${DATA_DIR:-$HOME/.gorev}"
 
