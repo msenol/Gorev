@@ -234,4 +234,45 @@ Aktif proje: Yok`;
       assert(html.includes('<a href="http://example.com">link</a>'));
     });
   });
+
+  suite('extractTextFromHtml', () => {
+    test('should extract text from HTML', () => {
+      const html = '<p>Hello <strong>world</strong></p>';
+      const text = MarkdownParser.extractTextFromHtml(html);
+      
+      assert.strictEqual(text, 'Hello world');
+    });
+
+    test('should handle empty HTML', () => {
+      const text = MarkdownParser.extractTextFromHtml('');
+      assert.strictEqual(text, '');
+    });
+  });
+
+  suite('Edge Cases', () => {
+    test('should handle empty markdown input', () => {
+      assert.strictEqual(MarkdownParser.parseGorevListesi('').length, 0);
+      assert.strictEqual(MarkdownParser.parseProjeListesi('').length, 0);
+      assert.strictEqual(MarkdownParser.parseTemplateListesi('').length, 0);
+    });
+
+    test('should handle malformed task data', () => {
+      const markdown = `- [invalid_status] Malformed task (invalid_priority)
+  ID: invalid-id
+  Invalid data`;
+
+      const tasks = MarkdownParser.parseGorevListesi(markdown);
+      assert.strictEqual(tasks.length, 1);
+      assert.strictEqual(tasks[0].durum, 'beklemede'); // fallback
+      assert.strictEqual(tasks[0].oncelik, 'orta'); // fallback
+    });
+
+    test('should handle missing required fields', () => {
+      const task = MarkdownParser.parseGorevDetay('# Test\nNo other data');
+      
+      assert.strictEqual(task.baslik, 'Test');
+      assert.strictEqual(task.id, undefined);
+      assert.strictEqual(task.durum, undefined);
+    });
+  });
 });
