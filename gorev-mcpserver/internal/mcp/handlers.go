@@ -123,12 +123,14 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		if gorev.Aciklama != "" {
 			metin += fmt.Sprintf("  %s\n", gorev.Aciklama)
 		}
-		// Eğer tüm projeler gösteriliyorsa, proje adını da ekle
-		if tumProjeler && gorev.ProjeID != "" {
+		// Proje bilgisini her zaman ekle
+		if gorev.ProjeID != "" {
 			proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
 			if proje != nil {
 				metin += fmt.Sprintf("  Proje: %s\n", proje.Isim)
 			}
+			// Proje ID'sini de ekle (parse için gerekli)
+			metin += fmt.Sprintf("  ProjeID: %s\n", gorev.ProjeID)
 		}
 		// Son tarih varsa göster
 		if gorev.SonTarih != nil {
@@ -493,6 +495,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 			if g.Aciklama != "" {
 				metin += fmt.Sprintf("  %s\n", g.Aciklama)
 			}
+			metin += fmt.Sprintf("  ProjeID: %s\n", g.ProjeID)
 			if g.SonTarih != nil {
 				metin += fmt.Sprintf("  Son tarih: %s\n", g.SonTarih.Format("2006-01-02"))
 			}
@@ -516,6 +519,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 			if g.Aciklama != "" {
 				metin += fmt.Sprintf("  %s\n", g.Aciklama)
 			}
+			metin += fmt.Sprintf("  ProjeID: %s\n", g.ProjeID)
 			if g.SonTarih != nil {
 				metin += fmt.Sprintf("  Son tarih: %s\n", g.SonTarih.Format("2006-01-02"))
 			}
@@ -536,6 +540,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 		metin += "### ✅ Tamamlandı\n"
 		for _, g := range tamamlandi {
 			metin += fmt.Sprintf("- ~~%s~~ (%s öncelik)\n", g.Baslik, g.Oncelik)
+			metin += fmt.Sprintf("  ProjeID: %s\n", g.ProjeID)
 			if len(g.Etiketler) > 0 {
 				etiketIsimleri := make([]string, len(g.Etiketler))
 				for i, etiket := range g.Etiketler {

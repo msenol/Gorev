@@ -31,7 +31,7 @@ Bu rehber, Gorev VS Code Extension'ı kullanmaya başlamanız için gereken tüm
 #### 2. VSIX Dosyasından
 ```bash
 # VSIX dosyasını indirin
-curl -L https://github.com/yourusername/gorev/releases/latest/download/gorev-vscode-0.1.0.vsix -o gorev.vsix
+curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-vscode-0.1.0.vsix -o gorev.vsix
 
 # VS Code'da yükleyin
 code --install-extension gorev.vsix
@@ -40,7 +40,7 @@ code --install-extension gorev.vsix
 #### 3. Kaynak Koddan
 ```bash
 # Repository'yi klonlayın
-git clone https://github.com/yourusername/gorev.git
+git clone https://github.com/msenol/gorev.git
 cd gorev/gorev-vscode
 
 # Bağımlılıkları yükleyin
@@ -253,8 +253,8 @@ Detaylı hata ayıklama için:
 
 ## Yardım ve Destek
 
-- **GitHub Issues**: https://github.com/yourusername/gorev/issues
-- **Discussions**: https://github.com/yourusername/gorev/discussions
+- **GitHub Issues**: https://github.com/msenol/gorev/issues
+- **Discussions**: https://github.com/msenol/gorev/discussions
 - **Discord**: (Yakında)
 
 ---

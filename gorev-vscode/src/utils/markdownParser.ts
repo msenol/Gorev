@@ -157,8 +157,17 @@ export class MarkdownParser {
             if (currentGorev && line.includes('Proje:')) {
                 const projeMatch = line.match(/Proje:\s*(.+)/);
                 if (projeMatch) {
-                    // Proje ID'si yok, sadece isim var
-                    // TODO: Proje ID'sini almak için proje listesinden eşleştirme yapılabilir
+                    // Proje ismi var, sadece görsel için sakla
+                    currentGorev.proje_ismi = projeMatch[1];
+                }
+                continue;
+            }
+            
+            // ProjeID satırı
+            if (currentGorev && line.includes('ProjeID:')) {
+                const projeIDMatch = line.match(/ProjeID:\s*([a-f0-9-]+)/);
+                if (projeIDMatch) {
+                    currentGorev.proje_id = projeIDMatch[1];
                 }
                 continue;
             }
