@@ -158,7 +158,7 @@ export class MarkdownParser {
                 const projeMatch = line.match(/Proje:\s*(.+)/);
                 if (projeMatch) {
                     // Proje ismi var, sadece görsel için sakla
-                    currentGorev.proje_ismi = projeMatch[1];
+                    (currentGorev as any).proje_isim = projeMatch[1];
                 }
                 continue;
             }

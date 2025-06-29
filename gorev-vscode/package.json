@@ -676,7 +676,8 @@
     "lint": "eslint src --ext ts",
     "test": "node ./test/runTest.js",
     "test-watch": "npm run compile && node ./test/runTest.js --watch",
-    "test-coverage": "c8 --reporter=html --reporter=text npm test",
+    "test-coverage": "node test-coverage.js",
+    "coverage": "node test-coverage.js",
     "package": "vsce package",
     "publish": "vsce publish"
   },
