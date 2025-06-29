@@ -6,7 +6,7 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
-### Recent Changes (v0.7.0-dev)
+### Recent Changes (v0.7.0-beta.1)
 - **VS Code Extension - Enhanced UI Features**:
   - Enhanced TreeView with grouping, multi-select, and priority-based color coding
   - Drag & Drop support for moving tasks, changing status, and creating dependencies
@@ -29,6 +29,10 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
     - Edit/Delete functionality restored
   - Fixed single-click task selection in TreeView
   - Removed non-functional dependency graph feature
+- **Documentation Updates**:
+  - Added comprehensive TASKS.md with 11 active development tasks
+  - Documented AI-Powered task enrichment system plans
+  - Updated version to 0.7.0-beta.1 for beta release
 
 ### Previous Changes (v0.5.0 - v0.6.0)
 - **Added Task Template System** - Predefined templates for bug reports, feature requests, technical debt, and research tasks

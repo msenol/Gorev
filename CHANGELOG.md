@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.0-dev] - Unreleased
+## [0.7.0-beta.1] - 2025-06-29
 
 ### Added
 
@@ -100,6 +100,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Debug Support**: Test data seeder and debug commands
 - **Icons**: Custom SVG icons for tasks, priorities, and templates
 
+### Documentation
+- **TASKS.md**: Added comprehensive roadmap with 11 active development tasks
+  - DevOps Pipeline and CI/CD automation
+  - Test coverage improvements (target 95%)
+  - UI/UX and accessibility enhancements
+  - Multi-user system and authorization
+  - Performance optimizations
+  - External service integrations (GitHub, Jira, Slack)
+  - Analytics dashboard
+  - Advanced search and filtering
+  - Dependency visualization in TreeView
+  - Subtask system with unlimited hierarchy
+  - AI-Powered task enrichment system (NEW)
+
 ## [0.6.0] - 2025-06-27
 
 ### Added
@@ -116,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Project structure**: Reorganized into two modules: `gorev-mcpserver` and `gorev-vscode`
-- **Package structure**: Updated module path from `github.com/yourusername/gorev` to `github.com/msenol/gorev`
+- **Package structure**: Updated module path from `github.com/msenol/gorev` to `github.com/msenol/gorev`
 - **Go version**: Updated from 1.21 to 1.22 in go.mod
 - **Version**: Aligned version numbers (0.6.0) across VERSION file and Makefile
 - **Configuration**: Removed docker-based gorev server configuration from `.mcp.json`

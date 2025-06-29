@@ -298,12 +298,13 @@ gorev help                 # Yardım
 
 Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 
-- 📦 [Kurulum Rehberi](docs/kurulum.md) - Platform spesifik kurulum talimatları
-- 📖 [Kullanım Kılavuzu](docs/kullanim.md) - Detaylı kullanım örnekleri
-- 🛠 [MCP Araçları](docs/mcp-araclari.md) - 16 MCP tool referansı
-- 🏗 [Sistem Mimarisi](docs/mimari.md) - Teknik detaylar
-- 💻 [Geliştirici Rehberi](docs/gelistirme.md) - Katkıda bulunma kılavuzu
-- 🎨 [VS Code Extension](docs/vscode-extension.md) - Extension dokümantasyonu
+- 📦 [Installation Guide](docs/getting-started/installation.md) - Platform-specific installation instructions
+- 📖 [Usage Guide](docs/user-guide/usage.md) - Detailed usage examples
+- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 16 MCP tools
+- 🏗 [System Architecture](docs/development/architecture.md) - Technical details
+- 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
+- 💻 [Contributing Guide](docs/development/contributing.md) - How to contribute
+- 🎨 [VS Code Extension](docs/user-guide/vscode-extension.md) - Extension documentation
 - 🚀 **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** - Extension'ı indir
 
 ## 🏗 Mimari
@@ -360,7 +361,7 @@ gorev/
 # Bağımlılıkları indir
 make deps
 
-# Test çalıştır (53.8% coverage)
+# Test çalıştır (88.2% coverage)
 make test
 
 # Coverage raporu
@@ -388,7 +389,7 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/gelistirme.md)'ne bakın.
 
 ## 📊 Proje Durumu
 
-- **Versiyon**: v0.7.0-dev
+- **Versiyon**: v0.7.0-beta.1
 - **Test Coverage**: %88.2
 - **Go Version**: 1.22+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0

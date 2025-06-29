@@ -390,6 +390,11 @@ Extension yayınlama hazırlığı.
 - [ ] Markdownlint entegrasyonu
 - [ ] Link checker (broken link kontrolü) ekleme
 
+## 🔨 Active Development Tasks
+
+> **Note**: This section has been moved to [ROADMAP.md](ROADMAP.md) for better organization. 
+> Please refer to the roadmap for detailed development plans and priorities.
+
 ## 🎯 Uzun Vadeli Hedefler (v1.0.0)
 
 ### MCP Server
