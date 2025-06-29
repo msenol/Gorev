@@ -1,7 +1,7 @@
 # 📋 Gorev Dokümantasyonu
 
-> **Versiyon**: Bu dokümantasyon v0.7.0-dev için geçerlidir.  
-> **Son Güncelleme**: 28 June 2025
+> **Versiyon**: Bu dokümantasyon v0.7.0-beta.1 için geçerlidir.  
+> **Son Güncelleme**: 29 June 2025
 
 <div align="center">
 
@@ -36,41 +36,47 @@ Gorev, **Model Context Protocol (MCP)** standardını kullanarak tüm MCP uyumlu
 <tr>
 <td width="33%" valign="top">
 
-### 🚀 Başlangıç
-- **[📦 Kurulum Rehberi](kurulum.md)**  
-  Adım adım kurulum talimatları
+### 🚀 Getting Started
+- **[📦 Installation Guide](getting-started/installation.md)**  
+  Step-by-step installation instructions
   
-- **[📖 Kullanım Kılavuzu](kullanim.md)**  
-  Temel kullanım ve iş akışları
+- **[📖 Usage Guide](user-guide/usage.md)**  
+  Basic usage and workflows
   
-- **[💡 Örnekler](ornekler.md)**  
-  Gerçek dünya senaryoları
+- **[💡 Examples](ornekler.md)**  
+  Real-world scenarios
 
 </td>
 <td width="33%" valign="top">
 
-### 🔍 Referans
-- **[🛠 MCP Araçları](mcp-araclari.md)**  
-  16 MCP tool'unun detaylı referansı
+### 🔍 Reference
+- **[🛠 MCP Tools](user-guide/mcp-tools.md)**  
+  Complete reference for 16 MCP tools
   
-- **[📡 API Dokümantasyonu](api-referans.md)**  
-  Go API ve veri modelleri
+- **[📡 API Documentation](api/reference.md)**  
+  Go API and data models
   
-- **[🏗 Sistem Mimarisi](mimari.md)**  
-  Teknik tasarım ve yapı
+- **[🏗 System Architecture](development/architecture.md)**  
+  Technical design and structure
 
 </td>
 <td width="33%" valign="top">
 
-### 👩‍💻 Geliştirme
-- **[💻 Geliştirici Rehberi](gelistirme.md)**  
-  Katkıda bulunma kılavuzu
+### 👩‍💻 Development
+- **[💻 Contributing Guide](development/contributing.md)**  
+  How to contribute to the project
   
-- **[📝 API Değişiklikleri](api-changes.md)**  
+- **[🧪 Testing Guide](development/testing-guide.md)**  
+  Testing procedures and best practices
+  
+- **[🐛 Debugging Guide](development/debugging-guide.md)**  
+  Troubleshooting and debugging
+  
+- **[📝 API Changes](api-changes.md)**  
   Versiyon geçiş notları
   
-- **[🐛 Sorun Giderme](kurulum.md#sorun-giderme)**  
-  Yaygın sorunlar ve çözümleri
+- **[📦 Marketplace Publishing](development/marketplace-publishing.md)**  
+  VS Code extension publishing guide
 
 </td>
 </tr>

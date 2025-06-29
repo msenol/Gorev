@@ -772,7 +772,7 @@ Görevler arası bağımlılık oluşturur. Bir görevin başka bir göreve bağ
 
 ### Özellik Önerileri
 
-Yeni araç önerileri için [GitHub Issues](https://github.com/yourusername/gorev/issues) üzerinden talepte bulunabilirsiniz.
+Yeni araç önerileri için [GitHub Issues](https://github.com/msenol/gorev/issues) üzerinden talepte bulunabilirsiniz.
 
 ---
 

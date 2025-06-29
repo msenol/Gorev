@@ -1,4 +1,4 @@
-# Gorev v0.7.0-dev Release Notes
+# Gorev v0.7.0-beta.1 Release Notes
 
 ## 📊 Değişiklik Özeti
 

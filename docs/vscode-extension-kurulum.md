@@ -7,7 +7,7 @@ Bu rehber, Gorev VS Code extension'ını VS Code dışındaki VS Code tabanlı e
 İlk olarak VSIX dosyasını indirin:
 
 ### Yöntem 1: GitHub Release'den İndirme
-1. [Gorev Releases](https://github.com/msenol/Gorev/releases) sayfasına gidin
+1. [Gorev Releases](https://github.com/msenol/gorev/releases) sayfasına gidin
 2. En son release'i bulun
 3. Assets bölümünden `gorev-vscode-x.x.x.vsix` dosyasını indirin
 
@@ -132,6 +132,6 @@ Kurulumdan sonra, MCP server yolunu ayarlayın:
 
 ## 🔗 Faydalı Linkler
 
-- [Gorev GitHub](https://github.com/msenol/Gorev)
+- [Gorev GitHub](https://github.com/msenol/gorev)
 - [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 - [MCP Protokolü](https://github.com/modelcontextprotocol)

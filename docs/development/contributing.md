@@ -1,7 +1,7 @@
 # Gorev Geliştirici Rehberi
 
-> **Versiyon**: Bu dokümantasyon v0.7.0-dev için geçerlidir.  
-> **Son Güncelleme**: 28 June 2025
+> **Versiyon**: Bu dokümantasyon v0.7.0-beta.1 için geçerlidir.  
+> **Son Güncelleme**: 29 June 2025
 
 Bu dokümanda Gorev projesine katkıda bulunmak isteyenler için geliştirme ortamı kurulumu, kod standartları ve katkı süreçleri açıklanmaktadır.
 
