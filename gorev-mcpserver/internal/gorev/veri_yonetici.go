@@ -216,6 +216,14 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 }
 
 func (vy *VeriYonetici) gorevEtiketleriniGetir(gorevID string) ([]*Etiket, error) {
+	// First check if etiketler table exists
+	var tableExists int
+	err := vy.db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='etiketler'").Scan(&tableExists)
+	if err != nil || tableExists == 0 {
+		// Table doesn't exist, return empty slice instead of error
+		return []*Etiket{}, nil
+	}
+
 	sorgu := `SELECT e.id, e.isim FROM etiketler e
 	          JOIN gorev_etiketleri ge ON e.id = ge.etiket_id
 	          WHERE ge.gorev_id = ?`

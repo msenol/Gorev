@@ -2,6 +2,7 @@ package gorev
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -752,7 +753,15 @@ func TestVeriYonetici_Kapat(t *testing.T) {
 }
 
 func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
-	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	// Use a temporary file database for concurrent access testing
+	// as :memory: databases don't support true concurrency in SQLite
+	tempDB := fmt.Sprintf("/tmp/test_concurrent_%d.db", time.Now().UnixNano())
+	defer func() {
+		// Clean up temp file
+		os.Remove(tempDB)
+	}()
+
+	vy, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
 	if err != nil {
 		t.Fatalf("failed to create VeriYonetici: %v", err)
 	}
@@ -776,14 +785,18 @@ func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
 
 	// Wait for all goroutines and check errors
 	var errors []error
+	successCount := 0
 	for i := 0; i < 10; i++ {
 		if err := <-done; err != nil {
 			errors = append(errors, err)
+		} else {
+			successCount++
 		}
 	}
 
-	if len(errors) > 0 {
-		t.Skipf("SQLite concurrent access issues: %v", errors)
+	// Allow some concurrent access failures, but at least 50% should succeed
+	if successCount < 5 {
+		t.Errorf("Too many concurrent access failures. Success: %d/10, Errors: %v", successCount, errors)
 	}
 
 	// Verify tasks were created
