@@ -118,7 +118,24 @@ This roadmap outlines the planned development path for the Gorev task management
 - Cross-platform builds under 15 minutes
 - Rollback capability under 5 minutes
 
-#### 7. 🔧 VS Code Extension UI/UX Improvements and Accessibility
+#### 7. 🐛 Fix Filter State Persistence Issue
+**Status:** Pending  
+**Description:** Users cannot clear filters once applied - requires VS Code restart to reset.
+
+**Problem:**
+- When filters are applied to task list, there's no reliable way to clear them
+- "Clear Filters" button or command may be missing or non-functional
+- Filter state persists across sessions inappropriately
+- Workaround: VS Code restart required (`Developer: Reload Window`)
+
+**Solution Requirements:**
+- Add visible "Clear All Filters" button to filter toolbar
+- Implement `Gorev: Clear Filters` command in Command Palette
+- Ensure filter state is properly reset in TreeView provider
+- Add keyboard shortcut (e.g., `Ctrl+Alt+R`) for quick filter reset
+- Fix filter persistence logic in workspace settings
+
+#### 8. 🔧 VS Code Extension UI/UX Improvements and Accessibility
 **Status:** Pending  
 **Description:** Improve user experience and make extension accessible to all users.
 
@@ -130,7 +147,7 @@ This roadmap outlines the planned development path for the Gorev task management
 - Loading states and error handling
 - Touch gesture support
 
-#### 8. 🔧 Performance Optimizations and Scalability
+#### 9. 🔧 Performance Optimizations and Scalability
 **Status:** Pending  
 **Description:** Performance optimization for large datasets (10K+ tasks scenarios).
 
@@ -141,7 +158,7 @@ This roadmap outlines the planned development path for the Gorev task management
 - Virtual scrolling TreeView
 - Query optimization (prepared statements)
 
-#### 9. ✨ External Service Integrations
+#### 10. ✨ External Service Integrations
 **Status:** Pending  
 **Description:** GitHub, Jira, Slack integrations.
 
@@ -149,7 +166,7 @@ This roadmap outlines the planned development path for the Gorev task management
 **Jira:** Issue import/export, status sync  
 **Slack:** Notifications, slash commands, interactive messages
 
-#### 10. ✨ Task Statistics and Reporting Dashboard
+#### 11. ✨ Task Statistics and Reporting Dashboard
 **Status:** Pending  
 **Description:** Analytics and visualization features.
 
@@ -162,7 +179,7 @@ This roadmap outlines the planned development path for the Gorev task management
 
 ### Low Priority
 
-#### 11. ✨ Multi-user System and Authorization Infrastructure
+#### 12. ✨ Multi-user System and Authorization Infrastructure
 **Status:** Pending  
 **Description:** Transform Gorev into a multi-user system with authentication and authorization.
 

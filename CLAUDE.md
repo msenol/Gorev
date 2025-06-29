@@ -2,12 +2,34 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 29 June 2025
+## Last Updated: 30 June 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
 ### Recent Changes (v0.7.0-beta.1)
-- **VS Code Extension - Enhanced UI Features**:
+
+#### Test Infrastructure Improvements (30 June 2025)
+- **MCP Server Test Coverage**:
+  - Added comprehensive integration tests for all 16 MCP tools (75.1% coverage)
+  - Created `handlers_test.go` with 561 lines covering complete protocol compliance
+  - Fixed database migration issues with `etiketler` table in tests
+  - Fixed concurrent access test using file-based database instead of in-memory
+- **VS Code Extension Test Coverage**:
+  - Achieved 50.9% file coverage (up from 0%) with 19 files tested
+  - Added 7 new unit test files totaling 2,700 LOC
+  - Created custom test coverage analysis tool (`test-coverage.js`)
+  - Key test files added:
+    - `enhancedGorevTreeProvider.test.js` (389 LOC) - TreeView functionality
+    - `taskDetailPanel.test.js` (396 LOC) - WebView panel testing
+    - `logger.test.js` (237 LOC) - Logging utility tests
+    - `models.test.js` (273 LOC) - TypeScript model validation
+    - `utils.test.js` (307 LOC) - Utility function tests
+- **Bug Fixes in Tests**:
+  - Fixed TypeScript compilation error in `markdownParser.ts`
+  - Added table existence check in `gorevEtiketleriniGetir` to handle missing tables
+  - Added `npm run coverage` script for test coverage reporting
+
+#### VS Code Extension - Enhanced UI Features:
   - Enhanced TreeView with grouping, multi-select, and priority-based color coding
   - Drag & Drop support for moving tasks, changing status, and creating dependencies
   - Inline editing with F2/double-click, context menus, and date pickers
@@ -29,6 +51,7 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
     - Edit/Delete functionality restored
   - Fixed single-click task selection in TreeView
   - Removed non-functional dependency graph feature
+  - Added Filter State Persistence Issue to ROADMAP.md as Task #7
 - **Documentation Updates**:
   - Added comprehensive TASKS.md with 11 active development tasks
   - Documented AI-Powered task enrichment system plans

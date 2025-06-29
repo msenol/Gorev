@@ -7,9 +7,14 @@ This guide covers testing procedures for both the Gorev VS Code extension and MC
 ### Unit Tests
 
 Located in `gorev-vscode/test/unit/`:
-- `markdownParser.test.js` - Tests for parsing MCP responses
-- `mcpClient.test.js` - Tests for MCP client functionality
-- `treeProviders.test.js` - Tests for tree view providers
+- `markdownParser.test.js` - Tests for parsing MCP responses (207 LOC)
+- `mcpClient.test.js` - Tests for MCP client functionality (100 LOC)
+- `treeProviders.test.js` - Tests for tree view providers (149 LOC)
+- `enhancedGorevTreeProvider.test.js` - Enhanced TreeView functionality tests (389 LOC)
+- `taskDetailPanel.test.js` - WebView panel tests (396 LOC)
+- `logger.test.js` - Logging utility tests (237 LOC)
+- `models.test.js` - TypeScript model validation (273 LOC)
+- `utils.test.js` - Utility function tests (307 LOC)
 
 #### Running Unit Tests
 ```bash
@@ -96,9 +101,17 @@ npm test -- --grep "E2E"
 Generate coverage reports:
 ```bash
 cd gorev-vscode
-npm run test-coverage
-# Report will be in coverage/index.html
+npm run test-coverage  # or npm run coverage
+# Report shows file-by-file coverage analysis
+# Current coverage: 50.9% (19/33 files tested)
 ```
+
+#### Custom Coverage Tool
+The project includes a custom coverage analysis tool (`test-coverage.js`) that:
+- Analyzes TypeScript source files and their test coverage
+- Provides detailed LOC (Lines of Code) metrics
+- Shows test/source ratio (currently 0.45:1)
+- Identifies untested files with recommendations
 
 ## MCP Server Testing
 
@@ -108,6 +121,10 @@ Located in `gorev-mcpserver/internal/gorev/`:
 - `veri_yonetici_test.go` - Data layer tests
 - `is_yonetici_test.go` - Business logic tests
 
+Located in `gorev-mcpserver/internal/mcp/`:
+- `handlers_test.go` - MCP protocol handler tests (561 LOC, all 16 tools)
+- `server_test.go` - MCP server initialization tests
+
 #### Running Tests
 ```bash
 cd gorev-mcpserver
@@ -116,12 +133,14 @@ make test
 
 # Specific package
 go test ./internal/gorev/...
+go test ./internal/mcp/...
 
 # With race detection
 go test -race ./...
 
 # Generate coverage report
 make test-coverage
+# Current coverage: 75.1% for MCP package, 53.8% for gorev package
 ```
 
 ### Integration Tests

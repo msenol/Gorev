@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Test Infrastructure Improvements** (30 June 2025)
+  - MCP Server Test Coverage:
+    - Added comprehensive integration tests for all 16 MCP tools achieving 75.1% coverage
+    - Created `handlers_test.go` with 561 lines covering complete protocol compliance
+    - Created `server_test.go` for MCP server initialization tests
+  - VS Code Extension Test Coverage:
+    - Achieved 50.9% file coverage (up from 0%) with 19 files tested
+    - Added 7 new unit test files totaling 2,700 LOC
+    - Created custom test coverage analysis tool (`test-coverage.js`)
+    - Test files added:
+      - `enhancedGorevTreeProvider.test.js` (389 LOC) - TreeView functionality
+      - `taskDetailPanel.test.js` (396 LOC) - WebView panel testing
+      - `logger.test.js` (237 LOC) - Logging utility tests
+      - `models.test.js` (273 LOC) - TypeScript model validation
+      - `utils.test.js` (307 LOC) - Utility function tests
+
+### Fixed
+- Database migration issues with `etiketler` table in test environment
+- Concurrent access test failures when using in-memory SQLite database
+- TypeScript compilation error in `markdownParser.ts` (`proje_ismi` vs `proje_isim`)
+- Test coverage reporting in VS Code extension
+
+### Changed
+- Improved `gorevEtiketleriniGetir` to handle missing tables gracefully
+- Enhanced test coverage analysis to better detect TypeScript imports
+- Updated `package.json` with test coverage scripts (`npm run coverage`)
+
+### Documentation
+- Updated ROADMAP.md with Filter State Persistence Issue as Task #7
+
 ## [0.7.0-beta.1] - 2025-06-29
 
 ### Added
