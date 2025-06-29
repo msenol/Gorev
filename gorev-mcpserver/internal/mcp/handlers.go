@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/msenol/gorev/internal/gorev"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/gorev"
 )
 
 type Handlers struct {
@@ -129,6 +129,18 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 			if proje != nil {
 				metin += fmt.Sprintf("  Proje: %s\n", proje.Isim)
 			}
+		}
+		// Son tarih varsa göster
+		if gorev.SonTarih != nil {
+			metin += fmt.Sprintf("  Son tarih: %s\n", gorev.SonTarih.Format("2006-01-02"))
+		}
+		// Etiketler varsa göster
+		if len(gorev.Etiketler) > 0 {
+			etiketIsimleri := make([]string, len(gorev.Etiketler))
+			for i, etiket := range gorev.Etiketler {
+				etiketIsimleri[i] = etiket.Isim
+			}
+			metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
 		}
 		metin += fmt.Sprintf("  ID: %s\n\n", gorev.ID)
 	}
@@ -481,6 +493,16 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 			if g.Aciklama != "" {
 				metin += fmt.Sprintf("  %s\n", g.Aciklama)
 			}
+			if g.SonTarih != nil {
+				metin += fmt.Sprintf("  Son tarih: %s\n", g.SonTarih.Format("2006-01-02"))
+			}
+			if len(g.Etiketler) > 0 {
+				etiketIsimleri := make([]string, len(g.Etiketler))
+				for i, etiket := range g.Etiketler {
+					etiketIsimleri[i] = etiket.Isim
+				}
+				metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
+			}
 			metin += fmt.Sprintf("  `ID: %s`\n", g.ID)
 		}
 		metin += "\n"
@@ -494,6 +516,16 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 			if g.Aciklama != "" {
 				metin += fmt.Sprintf("  %s\n", g.Aciklama)
 			}
+			if g.SonTarih != nil {
+				metin += fmt.Sprintf("  Son tarih: %s\n", g.SonTarih.Format("2006-01-02"))
+			}
+			if len(g.Etiketler) > 0 {
+				etiketIsimleri := make([]string, len(g.Etiketler))
+				for i, etiket := range g.Etiketler {
+					etiketIsimleri[i] = etiket.Isim
+				}
+				metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
+			}
 			metin += fmt.Sprintf("  `ID: %s`\n", g.ID)
 		}
 		metin += "\n"
@@ -504,6 +536,13 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 		metin += "### ✅ Tamamlandı\n"
 		for _, g := range tamamlandi {
 			metin += fmt.Sprintf("- ~~%s~~ (%s öncelik)\n", g.Baslik, g.Oncelik)
+			if len(g.Etiketler) > 0 {
+				etiketIsimleri := make([]string, len(g.Etiketler))
+				for i, etiket := range g.Etiketler {
+					etiketIsimleri[i] = etiket.Isim
+				}
+				metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
+			}
 			metin += fmt.Sprintf("  `ID: %s`\n", g.ID)
 		}
 	}

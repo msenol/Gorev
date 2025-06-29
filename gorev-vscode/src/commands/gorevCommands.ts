@@ -186,6 +186,7 @@ export function registerGorevCommands(
       }
     })
   );
+
 }
 
 function getTaskDetailHtml(content: string): string {

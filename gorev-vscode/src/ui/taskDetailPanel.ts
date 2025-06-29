@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { MCPClient } from '../mcp/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { Logger } from '../utils/logger';
+import { MarkdownParser } from '../utils/markdownParser';
 import * as path from 'path';
 
 /**
@@ -109,14 +110,25 @@ export class TaskDetailPanel {
     private parseTaskDetails(content: string) {
         // Parse additional details from markdown content
         // This includes dependencies, tags, dates, etc.
-        const lines = content.split('\n');
+        const parsedTask = MarkdownParser.parseGorevDetay(content);
         
-        for (const line of lines) {
-            if (line.includes('Bağımlılıklar:')) {
-                // Parse dependencies
-                this.task.bagimliliklar = this.parseDependencies(content);
-            }
+        // Update task with parsed details
+        if (parsedTask.etiketler) {
+            this.task.etiketler = parsedTask.etiketler;
         }
+        if (parsedTask.bagimliliklar) {
+            this.task.bagimliliklar = parsedTask.bagimliliklar;
+        }
+        if (parsedTask.son_tarih) {
+            this.task.son_tarih = parsedTask.son_tarih;
+        }
+        
+        // Add debug logging
+        Logger.debug('Parsed task details:', {
+            id: this.task.id,
+            etiketler: this.task.etiketler,
+            bagimliliklar: this.task.bagimliliklar
+        });
     }
     
     private parseDependencies(content: string): any[] {
@@ -141,9 +153,6 @@ export class TaskDetailPanel {
     }
     
     private getHtmlContent(): string {
-        const scriptUri = this.panel.webview.asWebviewUri(
-            vscode.Uri.joinPath(this.extensionUri, 'media', 'taskDetail.js')
-        );
         const styleUri = this.panel.webview.asWebviewUri(
             vscode.Uri.joinPath(this.extensionUri, 'media', 'taskDetail.css')
         );
@@ -191,46 +200,57 @@ export class TaskDetailPanel {
                 </div>
             </div>
             <div class="header-actions">
-                <button class="action-button" onclick="updateStatus()" title="Durum Güncelle">
-                    <i class="codicon codicon-check"></i>
+                <button class="action-button" id="updateStatusBtn" title="Durum Güncelle">
+                    <i class="codicon codicon-check"></i> Durum
                 </button>
-                <button class="action-button" onclick="editTask()" title="Düzenle">
-                    <i class="codicon codicon-edit"></i>
+                <button class="action-button" id="editTaskBtn" title="Düzenle">
+                    <i class="codicon codicon-edit"></i> Düzenle
                 </button>
-                <button class="action-button danger" onclick="deleteTask()" title="Sil">
-                    <i class="codicon codicon-trash"></i>
+                <button class="action-button danger" id="deleteTaskBtn" title="Sil">
+                    <i class="codicon codicon-trash"></i> Sil
                 </button>
             </div>
         </div>
         
         <!-- Tags Section -->
-        ${this.task.etiketler && this.task.etiketler.length > 0 ? `
-            <div class="tags-section">
-                <h3><i class="codicon codicon-tag"></i> Etiketler</h3>
-                <div class="tags">
-                    ${this.task.etiketler.map((tag: string) => `
+        <div class="tags-section">
+            <h3><i class="codicon codicon-tag"></i> Etiketler</h3>
+            <div class="tags">
+                ${this.task.etiketler && this.task.etiketler.length > 0 ? 
+                    this.task.etiketler.map((tag: string) => `
                         <span class="tag">${this.escapeHtml(tag)}</span>
-                    `).join('')}
-                    <button class="tag add-tag" onclick="addTag()">
-                        <i class="codicon codicon-add"></i> Ekle
-                    </button>
-                </div>
+                    `).join('') : 
+                    '<span class="empty-state">Henüz etiket yok</span>'
+                }
+                <button class="tag add-tag" id="addTagBtn">
+                    <i class="codicon codicon-add"></i> Ekle
+                </button>
             </div>
-        ` : ''}
+        </div>
         
         <!-- Description Section -->
         <div class="description-section">
             <h3><i class="codicon codicon-note"></i> Açıklama</h3>
             <div class="markdown-editor">
                 <div class="editor-toolbar">
-                    <button onclick="toggleBold()" title="Kalın"><i class="codicon codicon-bold"></i></button>
-                    <button onclick="toggleItalic()" title="İtalik"><i class="codicon codicon-italic"></i></button>
-                    <button onclick="insertLink()" title="Link"><i class="codicon codicon-link"></i></button>
-                    <button onclick="insertCode()" title="Kod"><i class="codicon codicon-code"></i></button>
-                    <button onclick="insertList()" title="Liste"><i class="codicon codicon-list-unordered"></i></button>
+                    <button id="boldBtn" title="Kalın" aria-label="Kalın">
+                        <strong>B</strong>
+                    </button>
+                    <button id="italicBtn" title="İtalik" aria-label="İtalik">
+                        <em>I</em>
+                    </button>
+                    <button id="linkBtn" title="Link" aria-label="Link Ekle">
+                        🔗
+                    </button>
+                    <button id="codeBtn" title="Kod" aria-label="Kod">
+                        &lt;/&gt;
+                    </button>
+                    <button id="listBtn" title="Liste" aria-label="Liste">
+                        ☰
+                    </button>
                     <span class="separator"></span>
-                    <button onclick="togglePreview()" title="Önizleme">
-                        <i class="codicon codicon-preview"></i> Önizleme
+                    <button id="previewBtn" title="Önizleme" aria-label="Önizleme">
+                        👁 Önizleme
                     </button>
                 </div>
                 <textarea id="descriptionEditor" class="editor-content">${this.escapeHtml(this.task.aciklama || '')}</textarea>
@@ -252,13 +272,13 @@ export class TaskDetailPanel {
                                 <i class="codicon ${this.getDepStatusIcon(dep.durum)}"></i>
                             </span>
                             <span class="dep-title">${this.escapeHtml(dep.baslik)}</span>
-                            <button class="link-button" onclick="openTask('${dep.id}')">
+                            <button class="link-button" data-task-id="${dep.id}">
                                 <i class="codicon codicon-arrow-right"></i>
                             </button>
                         </div>
                     `).join('')}
                 </div>
-                <button class="add-dependency" onclick="addDependency()">
+                <button class="add-dependency" id="addDependencyBtn">
                     <i class="codicon codicon-add"></i> Bağımlılık Ekle
                 </button>
             </div>
@@ -315,35 +335,49 @@ export class TaskDetailPanel {
             }, 1000); // Auto-save after 1 second of inactivity
         });
         
-        // Command handlers
-        function updateStatus() {
+        // Add event listeners for buttons
+        document.getElementById('updateStatusBtn').addEventListener('click', function() {
             vscode.postMessage({ command: 'updateStatus' });
-        }
+        });
         
-        function editTask() {
+        document.getElementById('editTaskBtn').addEventListener('click', function() {
             vscode.postMessage({ command: 'editTask' });
-        }
+        });
         
-        function deleteTask() {
-            if (confirm('Bu görevi silmek istediğinizden emin misiniz?')) {
-                vscode.postMessage({ command: 'deleteTask' });
-            }
-        }
+        document.getElementById('deleteTaskBtn').addEventListener('click', function() {
+            vscode.postMessage({ command: 'deleteTask' });
+        });
         
-        function addTag() {
+        document.getElementById('addTagBtn').addEventListener('click', function() {
             const tag = prompt('Yeni etiket:');
             if (tag) {
                 vscode.postMessage({ command: 'addTag', tag: tag });
             }
+        });
+        
+        // Markdown editor buttons
+        document.getElementById('boldBtn').addEventListener('click', function() { toggleBold(); });
+        document.getElementById('italicBtn').addEventListener('click', function() { toggleItalic(); });
+        document.getElementById('linkBtn').addEventListener('click', function() { insertLink(); });
+        document.getElementById('codeBtn').addEventListener('click', function() { insertCode(); });
+        document.getElementById('listBtn').addEventListener('click', function() { insertList(); });
+        document.getElementById('previewBtn').addEventListener('click', function() { togglePreview(); });
+        
+        // Add dependency button
+        const addDepBtn = document.getElementById('addDependencyBtn');
+        if (addDepBtn) {
+            addDepBtn.addEventListener('click', function() {
+                vscode.postMessage({ command: 'addDependency' });
+            });
         }
         
-        function addDependency() {
-            vscode.postMessage({ command: 'addDependency' });
-        }
-        
-        function openTask(taskId) {
-            vscode.postMessage({ command: 'openTask', taskId: taskId });
-        }
+        // Link buttons for dependencies
+        document.querySelectorAll('.link-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-task-id');
+                vscode.postMessage({ command: 'openTask', taskId: taskId });
+            });
+        });
         
         // Markdown editor functions
         function toggleBold() {
@@ -531,18 +565,32 @@ export class TaskDetailPanel {
     }
     
     private async showEditDialog() {
-        // Open multi-step input dialog for editing all fields
-        vscode.commands.executeCommand('gorev.detailedEdit', this.task);
+        // Create a tree item to pass to the command
+        const treeItem = {
+            task: this.task
+        };
+        await vscode.commands.executeCommand('gorev.detailedEdit', treeItem);
     }
     
     private async deleteTask() {
-        await this.mcpClient.callTool('gorev_sil', {
-            id: this.task.id,
-            onay: true
-        });
+        const confirm = await vscode.window.showWarningMessage(
+            `"${this.task.baslik}" görevini silmek istediğinizden emin misiniz?`,
+            'Evet, Sil',
+            'İptal'
+        );
         
-        this.panel.dispose();
-        vscode.window.showInformationMessage('Görev silindi');
+        if (confirm === 'Evet, Sil') {
+            await this.mcpClient.callTool('gorev_sil', {
+                id: this.task.id,
+                onay: true
+            });
+            
+            this.panel.dispose();
+            vscode.window.showInformationMessage('Görev silindi');
+            
+            // Refresh the tree view
+            await vscode.commands.executeCommand('gorev.refreshTasks');
+        }
     }
     
     private async addTag(tag: string) {

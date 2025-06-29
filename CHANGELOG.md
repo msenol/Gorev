@@ -64,12 +64,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configuration**: Extended settings for grouping, sorting, drag-drop behavior
 - **Tree Providers**: Complete rewrite with enhanced functionality
 - **Template Parser**: Updated to handle new MCP server response format
+- **VS Code Extension Version**: Bumped to 0.3.0 for bug fixes and improvements
 
 ### Fixed
 - **Template Display**: Fixed markdown parser to correctly parse template list responses
 - **TreeView Classes**: Exported tree item classes to allow VS Code instantiation
 - **TypeScript Errors**: Fixed filter interface property names (Turkish equivalents)
 - **Path Issues**: Fixed gorev command execution from different directories
+- **Tag Display in VS Code UI** (29 June 2025)
+  - Fixed tags not showing in TreeView when tasks created via CLI
+  - Updated `GorevListele` handler to include tags and due dates in response
+  - Updated `ProjeGorevleri` handler to include tags for all task statuses
+- **Project Task Count Display** (29 June 2025)
+  - Fixed "0 tasks" showing for all projects in TreeView
+  - Updated MarkdownParser to correctly parse "Görev Sayısı" field
+- **Task Detail Panel UI Issues** (29 June 2025)
+  - Fixed action buttons (Status, Edit, Delete) not visible in dark theme
+  - Fixed markdown editor toolbar completely missing
+  - Replaced inline event handlers to comply with CSP
+  - Fixed edit button to properly pass task data to edit dialog
+  - Fixed delete button to use VS Code's native confirmation dialog
+  - Added fallback text/emoji for markdown editor buttons
+  - Improved dark theme compatibility with explicit color values
+- **TreeView Task Selection** (29 June 2025)
+  - Tasks now open detail panel on single click
+  - Updated TaskTreeViewItem command from selectTask to showTaskDetail
+- **Dependency Graph Feature Removed** (29 June 2025)
+  - Removed non-functional dependency graph visualization
+  - Cleaned up related files and command registrations
 
 ### Technical
 - **New Files**: 20+ new TypeScript files for enhanced UI

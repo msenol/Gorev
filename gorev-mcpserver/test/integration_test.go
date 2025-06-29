@@ -3,9 +3,9 @@ package test
 import (
 	"testing"
 
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/msenol/gorev/internal/gorev"
 	mcphandlers "github.com/msenol/gorev/internal/mcp"
-	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

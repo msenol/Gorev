@@ -206,6 +206,8 @@ export class MarkdownParser {
         const projeler: Proje[] = [];
         let currentProje: Partial<Proje> | null = null;
         
+        console.log('[MarkdownParser] Parsing project list, first few lines:', lines.slice(0, 10));
+        
         for (const line of lines) {
             // Proje başlığı: ### 🔒 Proje İsmi
             if (line.startsWith('###')) {
@@ -235,6 +237,15 @@ export class MarkdownParser {
                 const tanimMatch = line.match(/\*\*Tanım:\*\*\s*(.+)/);
                 if (tanimMatch) {
                     currentProje.tanim = tanimMatch[1].trim();
+                }
+            }
+            
+            // Görev Sayısı satırı
+            if (line.includes('**Görev Sayısı:**')) {
+                const sayiMatch = line.match(/\*\*Görev Sayısı:\*\*\s*(\d+)/);
+                if (sayiMatch) {
+                    currentProje.gorev_sayisi = parseInt(sayiMatch[1]);
+                    console.log('[MarkdownParser] Found task count for project:', currentProje.isim, '=', currentProje.gorev_sayisi);
                 }
             }
         }

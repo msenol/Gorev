@@ -119,7 +119,7 @@ func getDatabasePath() string {
 
 	// If no existing database found, determine where to create a new one
 	// Priority: GOREV_ROOT > project root > current directory
-	
+
 	// 1. Try GOREV_ROOT if set
 	if gorevRoot := os.Getenv("GOREV_ROOT"); gorevRoot != "" {
 		return filepath.Join(gorevRoot, "gorev.db")

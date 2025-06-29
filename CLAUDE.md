@@ -2,7 +2,7 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 28 June 2025
+## Last Updated: 29 June 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
@@ -18,11 +18,17 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 - **MCP Server Improvements**:
   - Fixed path resolution for database and migrations to work from any directory
   - Added `getDatabasePath()` and `getMigrationsPath()` functions
-- **Bug Fixes**:
-  - Fixed template display by updating markdown parser
-  - Fixed TreeView classes export for VS Code instantiation
-  - Fixed TypeScript compilation errors with Turkish property names
-  - Fixed gorev command execution from different directories
+  - Enhanced `GorevListele` and `ProjeGorevleri` handlers to include tags and due dates
+- **Bug Fixes** (29 June 2025):
+  - Fixed tag display in VS Code UI when tasks created via CLI
+  - Fixed project task count showing as 0 in TreeView
+  - Fixed task detail panel UI issues in dark theme:
+    - Action buttons now visible with proper styling
+    - Markdown editor toolbar displays correctly
+    - CSP-compliant event handlers
+    - Edit/Delete functionality restored
+  - Fixed single-click task selection in TreeView
+  - Removed non-functional dependency graph feature
 
 ### Previous Changes (v0.5.0 - v0.6.0)
 - **Added Task Template System** - Predefined templates for bug reports, feature requests, technical debt, and research tasks

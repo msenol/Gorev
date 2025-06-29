@@ -95,31 +95,30 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      * Alt elemanları döndürür
      */
     async getChildren(element?: EnhancedTreeViewItem): Promise<EnhancedTreeViewItem[]> {
-        console.log('[EnhancedGorevTreeProvider] getChildren called with element:', element);
+        Logger.debug('[EnhancedGorevTreeProvider] getChildren called with element:', element);
         
         if (!this.mcpClient.isConnected()) {
-            console.log('[EnhancedGorevTreeProvider] MCP client not connected');
+            Logger.warn('[EnhancedGorevTreeProvider] MCP client not connected');
             return [new EmptyTreeViewItem('MCP sunucusuna bağlı değil')];
         }
 
         // Root level
         if (!element) {
-            console.log('[EnhancedGorevTreeProvider] Loading root items...');
+            Logger.debug('[EnhancedGorevTreeProvider] Loading root items...');
             try {
                 await this.loadTasks();
                 const items = this.createRootItems();
-                console.log('[EnhancedGorevTreeProvider] Returning', items.length, 'root items');
+                Logger.debug('[EnhancedGorevTreeProvider] Returning', items.length, 'root items');
                 return items;
             } catch (error) {
                 Logger.error('Failed to load tasks:', error);
-                console.error('[EnhancedGorevTreeProvider] Error loading tasks:', error);
                 return [new EmptyTreeViewItem('Görevler yüklenemedi')];
             }
         }
 
         // Grup altındaki görevler
         if (element instanceof GroupTreeViewItem) {
-            console.log('[EnhancedGorevTreeProvider] Loading children for group:', element.groupKey);
+            Logger.debug('[EnhancedGorevTreeProvider] Loading children for group:', element.groupKey);
             return this.createTaskItems(element);
         }
 
@@ -132,23 +131,23 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     private createRootItems(): EnhancedTreeViewItem[] {
         // Filtreleme uygula
         this.filteredTasks = TreeViewUtils.filterTasks(this.tasks, this.config.filters);
-        console.log('[EnhancedGorevTreeProvider] After filtering:', this.filteredTasks.length, 'tasks');
+        Logger.debug('[EnhancedGorevTreeProvider] After filtering:', this.filteredTasks.length, 'tasks');
 
         // Tamamlanmış görevleri gizle
         if (!this.config.showCompleted) {
             this.filteredTasks = this.filteredTasks.filter(
                 task => task.durum !== GorevDurum.Tamamlandi
             );
-            console.log('[EnhancedGorevTreeProvider] After hiding completed:', this.filteredTasks.length, 'tasks');
+            Logger.debug('[EnhancedGorevTreeProvider] After hiding completed:', this.filteredTasks.length, 'tasks');
         }
 
         if (this.filteredTasks.length === 0) {
-            console.log('[EnhancedGorevTreeProvider] No tasks to show, returning empty message');
+            Logger.debug('[EnhancedGorevTreeProvider] No tasks to show, returning empty message');
             return [new EmptyTreeViewItem(this.getEmptyMessage())];
         }
 
         // Gruplama yoksa direkt görevleri göster
-        console.log('[EnhancedGorevTreeProvider] Grouping strategy:', this.config.grouping);
+        Logger.debug('[EnhancedGorevTreeProvider] Grouping strategy:', this.config.grouping);
         if (this.config.grouping === GroupingStrategy.None) {
             const sortedTasks = TreeViewUtils.sortTasks(
                 this.filteredTasks, 
@@ -160,8 +159,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
         // Görevleri grupla
         const groups = TreeViewUtils.groupTasks(this.filteredTasks, this.config.grouping);
-        console.log('[EnhancedGorevTreeProvider] Created groups:', groups.size, 'groups');
-        console.log('[EnhancedGorevTreeProvider] Group keys:', Array.from(groups.keys()));
+        Logger.debug('[EnhancedGorevTreeProvider] Created groups:', groups.size, 'groups');
+        Logger.debug('[EnhancedGorevTreeProvider] Group keys:', Array.from(groups.keys()));
         
         const groupItems: EnhancedTreeViewItem[] = [];
 
@@ -169,16 +168,16 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         const sortedGroupKeys = Array.from(groups.keys()).sort((a, b) => 
             GroupingStrategyProvider.compareGroups(a, b, this.config.grouping)
         );
-        console.log('[EnhancedGorevTreeProvider] Sorted group keys:', sortedGroupKeys);
+        Logger.debug('[EnhancedGorevTreeProvider] Sorted group keys:', sortedGroupKeys);
 
         // Grup item'larını oluştur
         for (const groupKey of sortedGroupKeys) {
             const tasksInGroup = groups.get(groupKey)!;
-            console.log(`[EnhancedGorevTreeProvider] Group ${groupKey} has ${tasksInGroup.length} tasks`);
+            Logger.debug(`[EnhancedGorevTreeProvider] Group ${groupKey} has ${tasksInGroup.length} tasks`);
             
             // Boş grupları gizle
             if (!this.config.showEmptyGroups && tasksInGroup.length === 0) {
-                console.log(`[EnhancedGorevTreeProvider] Skipping empty group: ${groupKey}`);
+                Logger.debug(`[EnhancedGorevTreeProvider] Skipping empty group: ${groupKey}`);
                 continue;
             }
 
@@ -192,7 +191,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             groupItems.push(groupItem);
         }
 
-        console.log('[EnhancedGorevTreeProvider] Total group items created:', groupItems.length);
+        Logger.debug('[EnhancedGorevTreeProvider] Total group items created:', groupItems.length);
         return groupItems;
     }
 
@@ -228,20 +227,37 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      */
     private async loadTasks(): Promise<void> {
         try {
+            Logger.debug('[EnhancedGorevTreeProvider] Calling gorev_listele...');
             const result = await this.mcpClient.callTool('gorev_listele', {
                 tum_projeler: true,
             });
             
             // Debug: Log raw response
-            console.log('[EnhancedGorevTreeProvider] Raw MCP response:', result);
-            console.log('[EnhancedGorevTreeProvider] Content text:', result.content[0].text);
+            Logger.debug('[EnhancedGorevTreeProvider] Raw MCP response:', JSON.stringify(result, null, 2));
             
-            // Parse the markdown content to extract tasks
-            this.tasks = MarkdownParser.parseGorevListesi(result.content[0].text);
-            
-            // Debug: Log parsed tasks
-            console.log('[EnhancedGorevTreeProvider] Parsed tasks count:', this.tasks.length);
-            console.log('[EnhancedGorevTreeProvider] Parsed tasks:', this.tasks);
+            if (result && result.content && result.content[0]) {
+                const responseText = result.content[0].text;
+                Logger.debug('[EnhancedGorevTreeProvider] Content text length:', responseText.length);
+                Logger.debug('[EnhancedGorevTreeProvider] Content text (first 500 chars):', responseText.substring(0, 500));
+                
+                // Parse the markdown content to extract tasks
+                this.tasks = MarkdownParser.parseGorevListesi(responseText);
+                
+                // Debug: Log parsed tasks
+                Logger.info('[EnhancedGorevTreeProvider] Parsed tasks count:', this.tasks.length);
+                
+                if (this.tasks.length > 0) {
+                    Logger.debug('[EnhancedGorevTreeProvider] First task:', JSON.stringify(this.tasks[0], null, 2));
+                } else {
+                    Logger.warn('[EnhancedGorevTreeProvider] No tasks parsed from response');
+                    // Log a few lines to debug
+                    const lines = responseText.split('\n').slice(0, 10);
+                    Logger.debug('[EnhancedGorevTreeProvider] First 10 lines of response:', lines);
+                }
+            } else {
+                Logger.error('[EnhancedGorevTreeProvider] Invalid MCP response structure:', JSON.stringify(result, null, 2));
+                this.tasks = [];
+            }
         } catch (error) {
             Logger.error('Failed to load tasks:', error);
             throw error;
@@ -252,8 +268,15 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      * TreeView'ı yeniler
      */
     async refresh(): Promise<void> {
-        await this.loadTasks();
-        this._onDidChangeTreeData.fire();
+        Logger.info('[EnhancedGorevTreeProvider] Refreshing tree view...');
+        try {
+            await this.loadTasks();
+            this._onDidChangeTreeData.fire();
+            Logger.info('[EnhancedGorevTreeProvider] Tree view refreshed successfully');
+        } catch (error) {
+            Logger.error('[EnhancedGorevTreeProvider] Failed to refresh tree view:', error);
+            throw error;
+        }
     }
 
     /**
@@ -371,122 +394,6 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         this.events = events;
     }
 
-    /**
-     * Markdown içeriğinden görevleri parse eder
-     */
-    private parseTasksFromContent(content: string): Gorev[] {
-        const tasks: Gorev[] = [];
-        
-        // Check for empty task list
-        if (content.includes('Henüz görev bulunmuyor')) {
-            return tasks;
-        }
-        
-        // Split content into lines for processing
-        const lines = content.split('\n');
-        let currentTask: Partial<Gorev> | null = null;
-        let descriptionLines: string[] = [];
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            
-            // Skip empty lines and headers
-            if (!line || line.startsWith('##')) {
-                continue;
-            }
-            
-            // Check if this is a task line (starts with "- [")
-            const taskMatch = line.match(/^- \[([^\]]+)\] (.+) \(([^)]+) öncelik\)$/);
-            if (taskMatch) {
-                // Save previous task if exists
-                if (currentTask && currentTask.id) {
-                    if (descriptionLines.length > 0) {
-                        currentTask.aciklama = descriptionLines.join('\n').trim();
-                    }
-                    tasks.push(currentTask as Gorev);
-                }
-                
-                // Start new task
-                const [, durum, baslik, oncelik] = taskMatch;
-                currentTask = {
-                    baslik,
-                    durum: this.mapDurum(durum),
-                    oncelik: this.mapOncelik(oncelik),
-                    etiketler: [],
-                };
-                descriptionLines = [];
-                continue;
-            }
-            
-            // Check for ID line
-            if (line.startsWith('ID:') && currentTask) {
-                currentTask.id = line.substring(3).trim();
-                continue;
-            }
-            
-            // Check for project line
-            if (line.startsWith('Proje:') && currentTask) {
-                const projeMatch = line.match(/Proje: (.+) \(ID: ([^)]+)\)/);
-                if (projeMatch) {
-                    currentTask.proje_id = projeMatch[2];
-                }
-                continue;
-            }
-            
-            // Check for due date in description
-            if (line.includes('Son tarih:') && currentTask) {
-                const dateMatch = line.match(/Son tarih: (\d{4}-\d{2}-\d{2})/);
-                if (dateMatch) {
-                    currentTask.son_tarih = dateMatch[1];
-                }
-                continue;
-            }
-            
-            // Check for tags in description
-            if (line.includes('Etiketler:') && currentTask) {
-                const tagsMatch = line.match(/Etiketler: (.+)/);
-                if (tagsMatch) {
-                    currentTask.etiketler = tagsMatch[1].split(',').map(tag => tag.trim());
-                }
-                continue;
-            }
-            
-            // If we're in a task and the line is indented or part of description
-            if (currentTask && line && !line.startsWith('-')) {
-                descriptionLines.push(line);
-            }
-        }
-        
-        // Don't forget the last task
-        if (currentTask && currentTask.id) {
-            if (descriptionLines.length > 0) {
-                currentTask.aciklama = descriptionLines.join('\n').trim();
-            }
-            tasks.push(currentTask as Gorev);
-        }
-        
-        return tasks;
-    }
-    
-    private mapDurum(durum: string): GorevDurum {
-        const durumMap: { [key: string]: GorevDurum } = {
-            'beklemede': GorevDurum.Beklemede,
-            'devam_ediyor': GorevDurum.DevamEdiyor,
-            'tamamlandi': GorevDurum.Tamamlandi,
-        };
-        
-        return durumMap[durum.toLowerCase()] || GorevDurum.Beklemede;
-    }
-    
-    private mapOncelik(oncelik: string): GorevOncelik {
-        const oncelikMap: { [key: string]: GorevOncelik } = {
-            'dusuk': GorevOncelik.Dusuk,
-            'orta': GorevOncelik.Orta,
-            'yuksek': GorevOncelik.Yuksek,
-        };
-        
-        return oncelikMap[oncelik.toLowerCase()] || GorevOncelik.Orta;
-    }
 
     /**
      * Drag & Drop: Drag başladığında
@@ -615,17 +522,10 @@ export class TaskTreeViewItem extends vscode.TreeItem {
         // Tooltip
         this.tooltip = this.getTaskTooltip();
 
-        // Command (tıklama işlemi)
+        // Command (tıklama işlemi) - task detayını açar
         this.command = {
-            command: 'gorev.selectTask',
-            title: 'Select Task',
-            arguments: [task.id]
-        };
-        
-        // Double-click command için özel property
-        (this as any).doubleClickCommand = {
-            command: 'gorev.onTreeItemDoubleClick',
-            title: 'Edit Task',
+            command: 'gorev.showTaskDetail',
+            title: 'Show Task Detail',
             arguments: [this]
         };
     }
@@ -688,7 +588,12 @@ export class TaskTreeViewItem extends vscode.TreeItem {
 
         // Bağımlılık göstergesi
         if (this.task.bagimliliklar && this.task.bagimliliklar.length > 0) {
-            parts.push('🔗');
+            const blockedCount = this.task.bagimliliklar.filter(b => b.hedef_durum !== GorevDurum.Tamamlandi).length;
+            if (blockedCount > 0) {
+                parts.push(`🔒${blockedCount}`); // Bloklanmış bağımlılık sayısı
+            } else {
+                parts.push('✅🔗'); // Tüm bağımlılıklar tamamlanmış
+            }
         }
 
         return parts.join(' • ');
