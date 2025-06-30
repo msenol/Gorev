@@ -10,10 +10,13 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 #### Test Infrastructure Improvements (30 June 2025)
 - **MCP Server Test Coverage**:
-  - Added comprehensive integration tests for all 16 MCP tools (75.1% coverage)
-  - Created `handlers_test.go` with 561 lines covering complete protocol compliance
+  - Improved overall MCP package coverage from 75.1% to 81.5% (+6.4%)
+  - Created `handlers_edge_cases_test.go` (600+ LOC) with comprehensive edge case testing
+  - Created `template_yonetici_test.go` (400+ LOC) for template unit tests
+  - Enhanced `handlers_test.go` with complete template handler coverage
   - Fixed database migration issues with `etiketler` table in tests
   - Fixed concurrent access test using file-based database instead of in-memory
+  - Discovered and documented validation gaps for future improvements
 - **VS Code Extension Test Coverage**:
   - Achieved 50.9% file coverage (up from 0%) with 19 files tested
   - Added 7 new unit test files totaling 2,700 LOC
@@ -28,6 +31,10 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
   - Fixed TypeScript compilation error in `markdownParser.ts`
   - Added table existence check in `gorevEtiketleriniGetir` to handle missing tables
   - Added `npm run coverage` script for test coverage reporting
+- **Testing Framework Decision**:
+  - Evaluated testify vs ginkgo for Go testing
+  - Decided to continue with testify (152x faster, already integrated)
+  - Created `docs/testing-framework-decision.md` documenting the rationale
 
 #### VS Code Extension - Enhanced UI Features:
   - Enhanced TreeView with grouping, multi-select, and priority-based color coding

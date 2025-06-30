@@ -578,3 +578,474 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		assert.Less(t, listDuration, 1*time.Second, "Task listing took too long")
 	})
 }
+
+// TestTemplateHandlers tests all template-related MCP handlers
+func TestTemplateHandlers(t *testing.T) {
+	t.Run("List Templates Empty", func(t *testing.T) {
+		// Create fresh database without templates
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_empty.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_empty.db")
+
+		// Don't initialize default templates
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// List templates when none exist
+		result := callTool(t, handlers, "template_listele", map[string]interface{}{})
+		assert.False(t, result.IsError)
+
+		text := getResultText(result)
+		// The test environment might have default templates from migration
+		// So we check if we get a valid response structure
+		if !strings.Contains(text, "Henüz template bulunmuyor") {
+			assert.Contains(t, text, "## 📋 Görev Template'leri")
+		}
+	})
+
+	t.Run("Initialize Default Templates", func(t *testing.T) {
+		// Initialize default templates through veri_yonetici
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_init.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_init.db")
+
+		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		// Create handlers with initialized database
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// List all templates
+		result := callTool(t, handlers, "template_listele", map[string]interface{}{})
+		assert.False(t, result.IsError)
+
+		text := getResultText(result)
+		assert.Contains(t, text, "## 📋 Görev Template'leri")
+		assert.Contains(t, text, "Bug Raporu")
+		assert.Contains(t, text, "Özellik İsteği")
+		assert.Contains(t, text, "Teknik Borç")
+		assert.Contains(t, text, "Araştırma Görevi")
+		assert.Contains(t, text, "### Teknik")
+		assert.Contains(t, text, "### Özellik")
+		assert.Contains(t, text, "### Araştırma")
+	})
+
+	t.Run("List Templates By Category", func(t *testing.T) {
+		// Setup with default templates
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_category.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_category.db")
+
+		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// List only "Teknik" category templates
+		result := callTool(t, handlers, "template_listele", map[string]interface{}{
+			"kategori": "Teknik",
+		})
+		assert.False(t, result.IsError)
+
+		text := getResultText(result)
+		assert.Contains(t, text, "Bug Raporu")
+		assert.Contains(t, text, "Teknik Borç")
+		assert.NotContains(t, text, "Özellik İsteği")
+		assert.NotContains(t, text, "Araştırma Görevi")
+	})
+
+	t.Run("Create Task From Template - Bug Report", func(t *testing.T) {
+		// Setup with default templates
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_bug.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_bug.db")
+
+		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		// Get bug report template ID
+		templates, err := veriYonetici.TemplateListele("Teknik")
+		require.NoError(t, err)
+
+		var bugTemplateID string
+		for _, tmpl := range templates {
+			if tmpl.Isim == "Bug Raporu" {
+				bugTemplateID = tmpl.ID
+				break
+			}
+		}
+		require.NotEmpty(t, bugTemplateID)
+
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// Create task from bug report template
+		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": bugTemplateID,
+			"degerler": map[string]interface{}{
+				"baslik":    "Login button not working",
+				"aciklama":  "Users can't log in when clicking the login button",
+				"modul":     "Authentication",
+				"ortam":     "production",
+				"adimlar":   "1. Go to login page\n2. Enter credentials\n3. Click login button",
+				"beklenen":  "User should be logged in and redirected to dashboard",
+				"mevcut":    "Nothing happens when clicking the button",
+				"ekler":     "console-error.png",
+				"cozum":     "Check event handler binding",
+				"oncelik":   "yuksek",
+				"etiketler": "bug,urgent,auth",
+			},
+		})
+		assert.False(t, result.IsError)
+
+		text := getResultText(result)
+		assert.Contains(t, text, "✓ Template kullanılarak görev oluşturuldu")
+		assert.Contains(t, text, "🐛 [Authentication] Login button not working")
+
+		// Extract task ID and verify details
+		taskID := extractTaskIDFromText(text)
+		require.NotEmpty(t, taskID)
+
+		// Get task details
+		detailResult := callTool(t, handlers, "gorev_detay", map[string]interface{}{
+			"id": taskID,
+		})
+		assert.False(t, detailResult.IsError)
+
+		detailText := getResultText(detailResult)
+		assert.Contains(t, detailText, "## 🐛 Hata Açıklaması")
+		assert.Contains(t, detailText, "Users can't log in when clicking the login button")
+		assert.Contains(t, detailText, "**Modül/Bileşen:** Authentication")
+		assert.Contains(t, detailText, "**Ortam:** production")
+		assert.Contains(t, detailText, "## 🔄 Tekrar Üretme Adımları")
+		assert.Contains(t, detailText, "1. Go to login page")
+		assert.Contains(t, detailText, "## ✅ Beklenen Davranış")
+		assert.Contains(t, detailText, "User should be logged in and redirected to dashboard")
+		assert.Contains(t, detailText, "## ❌ Mevcut Davranış")
+		assert.Contains(t, detailText, "Nothing happens when clicking the button")
+		assert.Contains(t, detailText, "## 📸 Ekran Görüntüleri/Loglar")
+		assert.Contains(t, detailText, "console-error.png")
+		assert.Contains(t, detailText, "## 🔧 Olası Çözüm")
+		assert.Contains(t, detailText, "Check event handler binding")
+		assert.Contains(t, detailText, "## 📊 Öncelik: yuksek")
+		assert.Contains(t, detailText, "## 🏷️ Etiketler: bug,urgent,auth")
+		assert.Contains(t, detailText, "bug")
+		assert.Contains(t, detailText, "urgent")
+		assert.Contains(t, detailText, "auth")
+	})
+
+	t.Run("Create Task From Template - Missing Required Fields", func(t *testing.T) {
+		// Setup with default templates
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_missing.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_missing.db")
+
+		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		// Get bug report template ID
+		templates, err := veriYonetici.TemplateListele("Teknik")
+		require.NoError(t, err)
+
+		var bugTemplateID string
+		for _, tmpl := range templates {
+			if tmpl.Isim == "Bug Raporu" {
+				bugTemplateID = tmpl.ID
+				break
+			}
+		}
+		require.NotEmpty(t, bugTemplateID)
+
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// Try to create task without required fields
+		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": bugTemplateID,
+			"degerler": map[string]interface{}{
+				"baslik": "Test bug",
+				// Missing required fields: aciklama, modul, ortam, adimlar, beklenen, mevcut, oncelik
+			},
+		})
+		assert.True(t, result.IsError)
+
+		text := getResultText(result)
+		assert.Contains(t, text, "zorunlu alan eksik")
+	})
+
+	t.Run("Create Task From Template - Invalid Template ID", func(t *testing.T) {
+		// Setup fresh handlers
+		_, handlers, cleanup := setupTestEnvironment(t)
+		defer cleanup()
+
+		// Try to create task with non-existent template
+		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": "non-existent-template-id",
+			"degerler": map[string]interface{}{
+				"baslik": "Test task",
+			},
+		})
+		assert.True(t, result.IsError)
+
+		text := getResultText(result)
+		assert.Contains(t, text, "template bulunamadı")
+	})
+
+	t.Run("Create Task From Template - Feature Request", func(t *testing.T) {
+		// Setup with default templates
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_feature.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_feature.db")
+
+		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		// Get feature request template ID
+		templates, err := veriYonetici.TemplateListele("Özellik")
+		require.NoError(t, err)
+
+		var featureTemplateID string
+		for _, tmpl := range templates {
+			if tmpl.Isim == "Özellik İsteği" {
+				featureTemplateID = tmpl.ID
+				break
+			}
+		}
+		require.NotEmpty(t, featureTemplateID)
+
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// Create a project for the feature
+		projectResult := callTool(t, handlers, "proje_olustur", map[string]interface{}{
+			"isim":  "Mobile App",
+			"tanim": "Mobile application project",
+		})
+		assert.False(t, projectResult.IsError)
+		projectID := extractProjectIDFromText(getResultText(projectResult))
+
+		// Create task from feature request template
+		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": featureTemplateID,
+			"degerler": map[string]interface{}{
+				"baslik":       "Dark mode support",
+				"aciklama":     "Add dark mode theme to the mobile app",
+				"amac":         "Improve user experience in low-light conditions and save battery",
+				"kullanicilar": "All mobile app users",
+				"kriterler":    "- Theme toggle in settings\n- Persistent preference\n- Smooth transition",
+				"ui_ux":        "Material Design 3 dark theme guidelines",
+				"ilgili":       "Settings module, Theme manager",
+				"efor":         "orta",
+				"oncelik":      "orta",
+				"etiketler":    "özellik,ui,mobile",
+				"proje_id":     projectID,
+				"son_tarih":    "2025-08-15",
+			},
+		})
+		assert.False(t, result.IsError)
+
+		text := getResultText(result)
+		assert.Contains(t, text, "✓ Template kullanılarak görev oluşturuldu")
+		assert.Contains(t, text, "✨ Dark mode support")
+
+		// Verify task was created with correct project
+		taskID := extractTaskIDFromText(text)
+		detailResult := callTool(t, handlers, "gorev_detay", map[string]interface{}{
+			"id": taskID,
+		})
+
+		detailText := getResultText(detailResult)
+		assert.Contains(t, detailText, "Mobile App")
+		assert.Contains(t, detailText, "2025-08-15")
+	})
+
+	t.Run("Create Task From Template - Technical Debt", func(t *testing.T) {
+		// Setup with default templates
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_tech_debt.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_tech_debt.db")
+
+		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		// Get technical debt template ID
+		templates, err := veriYonetici.TemplateListele("Teknik")
+		require.NoError(t, err)
+
+		var techDebtTemplateID string
+		for _, tmpl := range templates {
+			if tmpl.Isim == "Teknik Borç" {
+				techDebtTemplateID = tmpl.ID
+				break
+			}
+		}
+		require.NotEmpty(t, techDebtTemplateID)
+
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// Create task from technical debt template
+		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": techDebtTemplateID,
+			"degerler": map[string]interface{}{
+				"baslik":         "Database query optimization",
+				"aciklama":       "Optimize slow database queries in user listing",
+				"alan":           "Backend/Database",
+				"dosyalar":       "user_repository.go, user_queries.sql",
+				"neden":          "Page load time exceeds 5 seconds for user list",
+				"analiz":         "N+1 query problem, missing indexes",
+				"cozum":          "Add composite indexes, use JOIN instead of multiple queries",
+				"riskler":        "Potential data inconsistency during migration",
+				"iyilestirmeler": "50% reduction in page load time",
+				"sure":           "2-3 gün",
+				"oncelik":        "yuksek",
+				"etiketler":      "teknik-borç,performance,database",
+			},
+		})
+		assert.False(t, result.IsError)
+
+		text := getResultText(result)
+		assert.Contains(t, text, "✓ Template kullanılarak görev oluşturuldu")
+		assert.Contains(t, text, "🔧 [Backend/Database] Database query optimization")
+
+		// Verify task details
+		taskID := extractTaskIDFromText(text)
+		detailResult := callTool(t, handlers, "gorev_detay", map[string]interface{}{
+			"id": taskID,
+		})
+
+		detailText := getResultText(detailResult)
+		assert.Contains(t, detailText, "## 🔧 Teknik Borç Açıklaması")
+		assert.Contains(t, detailText, "Optimize slow database queries")
+		assert.Contains(t, detailText, "**Alan/Modül:** Backend/Database")
+		assert.Contains(t, detailText, "**Dosyalar:** user_repository.go, user_queries.sql")
+		assert.Contains(t, detailText, "## ⏱️ Tahmini Süre: 2-3 gün")
+		assert.Contains(t, detailText, "performance")
+		assert.Contains(t, detailText, "database")
+	})
+
+	t.Run("Template Field Validation", func(t *testing.T) {
+		// Setup with default templates
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_validation.db", "file://../../internal/veri/migrations")
+		require.NoError(t, err)
+		defer os.Remove("test_template_validation.db")
+
+		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
+
+		// List templates to verify field information
+		result := callTool(t, handlers, "template_listele", map[string]interface{}{})
+		assert.False(t, result.IsError)
+
+		text := getResultText(result)
+
+		// Verify field types and requirements are shown
+		assert.Contains(t, text, "(text) *(zorunlu)*")
+		assert.Contains(t, text, "(select) *(zorunlu)*")
+		assert.Contains(t, text, "(date)")
+		assert.Contains(t, text, "varsayılan: orta")
+		assert.Contains(t, text, "seçenekler: development, staging, production")
+		assert.Contains(t, text, "seçenekler: dusuk, orta, yuksek")
+	})
+
+	t.Run("Template Parameters Validation", func(t *testing.T) {
+		// Setup fresh handlers
+		_, handlers, cleanup := setupTestEnvironment(t)
+		defer cleanup()
+
+		// Test missing template_id
+		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"degerler": map[string]interface{}{
+				"baslik": "Test",
+			},
+		})
+		assert.True(t, result.IsError)
+		assert.Contains(t, getResultText(result), "template_id parametresi gerekli")
+
+		// Test missing degerler
+		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": "some-id",
+		})
+		assert.True(t, result.IsError)
+		assert.Contains(t, getResultText(result), "degerler parametresi gerekli")
+
+		// Test wrong type for degerler
+		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": "some-id",
+			"degerler":    "not-an-object",
+		})
+		assert.True(t, result.IsError)
+		assert.Contains(t, getResultText(result), "degerler parametresi gerekli ve obje tipinde olmalı")
+	})
+}
+
+// TestTemplateConcurrency tests template operations under concurrent access
+func TestTemplateConcurrency(t *testing.T) {
+	// Setup with default templates
+	veriYonetici, err := gorev.YeniVeriYonetici("test_template_concurrent.db", "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+	defer os.Remove("test_template_concurrent.db")
+
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	// Get bug report template ID
+	templates, err := veriYonetici.TemplateListele("Teknik")
+	require.NoError(t, err)
+
+	var bugTemplateID string
+	for _, tmpl := range templates {
+		if tmpl.Isim == "Bug Raporu" {
+			bugTemplateID = tmpl.ID
+			break
+		}
+	}
+	require.NotEmpty(t, bugTemplateID)
+
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := YeniHandlers(isYonetici)
+
+	// Test concurrent task creation from template
+	numGoroutines := 10
+	done := make(chan bool, numGoroutines)
+
+	for i := 0; i < numGoroutines; i++ {
+		go func(index int) {
+			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+				"template_id": bugTemplateID,
+				"degerler": map[string]interface{}{
+					"baslik":    fmt.Sprintf("Concurrent Bug %d", index),
+					"aciklama":  fmt.Sprintf("Bug description %d", index),
+					"modul":     "TestModule",
+					"ortam":     "development",
+					"adimlar":   "Test steps",
+					"beklenen":  "Expected behavior",
+					"mevcut":    "Current behavior",
+					"oncelik":   "orta",
+					"etiketler": "test,concurrent",
+				},
+			})
+			assert.False(t, result.IsError)
+			done <- true
+		}(i)
+	}
+
+	// Wait for all goroutines to complete
+	for i := 0; i < numGoroutines; i++ {
+		<-done
+	}
+
+	// Verify all tasks were created
+	result := callTool(t, handlers, "gorev_listele", map[string]interface{}{})
+	assert.False(t, result.IsError)
+
+	text := getResultText(result)
+	for i := 0; i < numGoroutines; i++ {
+		assert.Contains(t, text, fmt.Sprintf("Concurrent Bug %d", i))
+	}
+}

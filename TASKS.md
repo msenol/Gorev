@@ -5,7 +5,7 @@ Gorev, MCP protokolü üzerinden AI asistanlarına görev yönetimi yetenekleri 
 - **gorev-mcpserver**: Go ile yazılmış MCP sunucusu
 - **gorev-vscode**: VS Code extension (isteğe bağlı görsel arayüz)
 
-## ✅ Tamamlanan Özellikler (v0.7.0-dev)
+## ✅ Tamamlanan Özellikler (v0.7.0-beta.1)
 
 ### MCP Server (gorev-mcpserver)
 - **Path Resolution**: Database ve migration path'lerinin otomatik çözümlenmesi
@@ -302,7 +302,7 @@ Extension yayınlama hazırlığı.
 
 ## 📊 Geliştirme Özeti
 
-### ✅ v0.7.0 Tamamlanan Özellikler
+### ✅ v0.7.0-beta.1 Tamamlanan Özellikler
 
 #### MCP Server
 - Template System (Bug, Feature, Technical Debt, Research)
@@ -343,7 +343,7 @@ Extension yayınlama hazırlığı.
 
 ## 🚀 Deployment Checklist
 
-### Immediate Tasks (v0.7.0 Release)
+### Immediate Tasks (v0.7.0-beta.1 Release)
 - [ ] Docker image version tag güncelleme
 - [ ] GitHub release oluşturma
 - [ ] Release notes finalize etme
@@ -363,11 +363,11 @@ Extension yayınlama hazırlığı.
 - [ ] Contribution guidelines
 - [ ] Video tutorials
 
-## 📝 Dokümantasyon Güncelleme Listesi (28 June 2025)
+## 📝 Dokümantasyon Güncelleme Listesi (30 June 2025 - Updated)
 
 ### Kritik Düzeltmeler (Öncelik 1 - Hemen)
-- [x] README.md satır 363: Version `v0.5.0` → `v0.7.0-dev`
-- [x] README.md satır 364: Test coverage tutarsızlığı çözümü (badge %53.8 vs metin %88.2)
+- [x] README.md satır 363: Version `v0.5.0` → `v0.7.0-beta.1`
+- [x] README.md satır 364: Test coverage tutarsızlığı çözümü (updated to 75.8%)
 - [ ] README.md placeholder düzeltmeleri:
   - [x] Satır 74: `yourusername` placeholder
   - [x] Satır 88: `yourusername` placeholder
@@ -379,7 +379,7 @@ Extension yayınlama hazırlığı.
 
 ### Önemli İyileştirmeler (Öncelik 2 - Bu Hafta)
 - [x] docs/mcp-araclari.md: Güncelleme tarihi düzeltme (16 Jan 2024 → 28 June 2025)
-- [x] Tüm dokümanlara versiyon bilgisi ekleme (v0.7.0-dev için geçerlidir notu)
+- [x] Tüm dokümanlara versiyon bilgisi ekleme (v0.7.0-beta.1 için geçerlidir notu)
 - [x] Tüm dokümanlara "Son Güncelleme: tarih" başlığı ekleme
 - [x] GitHub repository URL'lerinin gerçek değerlerle güncellenmesi (gorev/gorev olarak güncellendi)
 

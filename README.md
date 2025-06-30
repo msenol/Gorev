@@ -2,10 +2,12 @@
 
 <div align="center">
 
+**Last Updated:** June 30, 2025 | **Version:** v0.7.0-beta.1
+
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Test Coverage](https://img.shields.io/badge/Coverage-88.2%25-brightgreen?style=flat-square)
+![Test Coverage](https://img.shields.io/badge/Coverage-75.8%25-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20|%20macOS%20|%20Windows-blue?style=flat-square)
 
 **MCP uyumlu AI editörlerle (Claude, VS Code, Windsurf, Cursor) entegre çalışan, Türkçe destekli modern görev yönetim sistemi**
@@ -361,7 +363,7 @@ gorev/
 # Bağımlılıkları indir
 make deps
 
-# Test çalıştır (88.2% coverage)
+# Test çalıştır (75.8% overall coverage)
 make test
 
 # Coverage raporu
