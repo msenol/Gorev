@@ -9,14 +9,31 @@ export interface Gorev extends Timestamp {
   durum: GorevDurum;
   oncelik: GorevOncelik;
   proje_id: string;
+  parent_id?: string;
   son_tarih?: string;
   etiketler?: string[];
   bagimliliklar?: Bagimlilik[];
+  alt_gorevler?: Gorev[];
+  seviye?: number;
+  // Dependency count fields for TreeView display
+  bagimli_gorev_sayisi?: number; // Number of dependencies this task has
+  tamamlanmamis_bagimlilik_sayisi?: number; // Number of incomplete dependencies
+  bu_goreve_bagimli_sayisi?: number; // Number of tasks that depend on this task
 }
 
 export interface GorevDetay extends Gorev {
   proje_isim: string;
   bagimliliklar?: Bagimlilik[];
+}
+
+export interface GorevHiyerarsi {
+  gorev: Gorev;
+  ust_gorevler: Gorev[];
+  toplam_alt_gorev: number;
+  tamamlanan_alt: number;
+  devam_eden_alt: number;
+  beklemede_alt: number;
+  ilerleme_yuzdesi: number;
 }
 
 export interface Bagimlilik {
@@ -27,13 +44,35 @@ export interface Bagimlilik {
   hedef_durum?: GorevDurum;
 }
 
+export interface BagimlilikOzet {
+  toplam_bagimlilik: number;
+  tamamlanan_bagimlilik: number;
+  bekleyen_bagimlilik: number;
+  bu_goreve_bagimli: number;
+}
+
 export interface GorevOlusturParams {
   baslik: string;
   aciklama?: string;
   oncelik?: GorevOncelik;
   proje_id?: string;
+  parent_id?: string;
   son_tarih?: string;
   etiketler?: string;
+}
+
+export interface AltGorevOlusturParams {
+  parent_id: string;
+  baslik: string;
+  aciklama?: string;
+  oncelik?: GorevOncelik;
+  son_tarih?: string;
+  etiketler?: string;
+}
+
+export interface GorevUstDegistirParams {
+  id: string;
+  yeni_parent_id?: string;
 }
 
 export interface GorevGuncelleParams {
@@ -61,4 +100,10 @@ export interface GorevListeleParams {
 export interface GorevSilParams {
   id: string;
   onay: boolean;
+}
+
+export interface BagimlilikEkleParams {
+  kaynak_id: string;
+  hedef_id: string;
+  baglanti_tipi: string;
 }

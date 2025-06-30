@@ -96,6 +96,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      */
     async getChildren(element?: EnhancedTreeViewItem): Promise<EnhancedTreeViewItem[]> {
         Logger.debug('[EnhancedGorevTreeProvider] getChildren called with element:', element);
+        Logger.debug('[EnhancedGorevTreeProvider] Current tasks count:', this.tasks.length);
+        Logger.debug('[EnhancedGorevTreeProvider] Current filtered tasks count:', this.filteredTasks.length);
         
         if (!this.mcpClient.isConnected()) {
             Logger.warn('[EnhancedGorevTreeProvider] MCP client not connected');
@@ -120,6 +122,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         if (element instanceof GroupTreeViewItem) {
             Logger.debug('[EnhancedGorevTreeProvider] Loading children for group:', element.groupKey);
             return this.createTaskItems(element);
+        }
+
+        // Task altındaki alt görevler
+        if (element instanceof TaskTreeViewItem && element.task.alt_gorevler && element.task.alt_gorevler.length > 0) {
+            Logger.debug('[EnhancedGorevTreeProvider] Loading subtasks for task:', element.task.id);
+            return this.createSubtaskItems(element.task);
         }
 
         return [];
@@ -154,7 +162,9 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 this.config.sorting, 
                 this.config.sortAscending
             );
-            return sortedTasks.map(task => new TaskTreeViewItem(task, this.selection));
+            // Sadece root level görevleri göster (parent_id olmayan)
+            const rootTasks = sortedTasks.filter(task => !task.parent_id);
+            return rootTasks.map(task => new TaskTreeViewItem(task, this.selection));
         }
 
         // Görevleri grupla
@@ -206,7 +216,27 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             this.config.sortAscending
         );
 
-        return sortedTasks.map(task => new TaskTreeViewItem(task, this.selection, group));
+        // Sadece root level görevleri göster (parent_id olmayan)
+        const rootTasks = sortedTasks.filter(task => !task.parent_id);
+        return rootTasks.map(task => new TaskTreeViewItem(task, this.selection, group));
+    }
+
+    /**
+     * Alt görev item'larını oluşturur
+     */
+    private createSubtaskItems(parentTask: Gorev): TaskTreeViewItem[] {
+        if (!parentTask.alt_gorevler || parentTask.alt_gorevler.length === 0) {
+            return [];
+        }
+
+        // Alt görevleri sırala
+        const sortedSubtasks = TreeViewUtils.sortTasks(
+            parentTask.alt_gorevler,
+            this.config.sorting,
+            this.config.sortAscending
+        );
+
+        return sortedSubtasks.map(task => new TaskTreeViewItem(task, this.selection));
     }
 
     /**
@@ -254,9 +284,14 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                     const lines = responseText.split('\n').slice(0, 10);
                     Logger.debug('[EnhancedGorevTreeProvider] First 10 lines of response:', lines);
                 }
+                
+                // IMPORTANT: Set filtered tasks after loading
+                this.filteredTasks = [...this.tasks];
+                Logger.debug('[EnhancedGorevTreeProvider] After filtering:', this.filteredTasks.length, 'tasks');
             } else {
                 Logger.error('[EnhancedGorevTreeProvider] Invalid MCP response structure:', JSON.stringify(result, null, 2));
                 this.tasks = [];
+                this.filteredTasks = [];
             }
         } catch (error) {
             Logger.error('Failed to load tasks:', error);
@@ -270,8 +305,15 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     async refresh(): Promise<void> {
         Logger.info('[EnhancedGorevTreeProvider] Refreshing tree view...');
         try {
+            // Clear cached data to force full reload
+            this.tasks = [];
+            this.filteredTasks = [];
+            
             await this.loadTasks();
-            this._onDidChangeTreeData.fire();
+            
+            // Fire change event with undefined to refresh entire tree
+            this._onDidChangeTreeData.fire(undefined);
+            
             Logger.info('[EnhancedGorevTreeProvider] Tree view refreshed successfully');
         } catch (error) {
             Logger.error('[EnhancedGorevTreeProvider] Failed to refresh tree view:', error);
@@ -508,7 +550,12 @@ export class TaskTreeViewItem extends vscode.TreeItem {
         private selection: TaskSelection,
         public parent?: GroupTreeViewItem
     ) {
-        super(task.baslik, vscode.TreeItemCollapsibleState.None);
+        // Alt görevleri varsa collapsible yap
+        const collapsibleState = (task.alt_gorevler && task.alt_gorevler.length > 0) 
+            ? vscode.TreeItemCollapsibleState.Collapsed 
+            : vscode.TreeItemCollapsibleState.None;
+        
+        super(task.baslik, collapsibleState);
 
         // Seçim durumu
         const isSelected = !!(task.id && selection.selectedTasks.has(task.id));
@@ -577,6 +624,13 @@ export class TaskTreeViewItem extends vscode.TreeItem {
     private getTaskDescription(): string {
         const parts = [];
 
+        // Alt görev sayısı
+        if (this.task.alt_gorevler && this.task.alt_gorevler.length > 0) {
+            const completedCount = this.task.alt_gorevler.filter(t => t.durum === GorevDurum.Tamamlandi).length;
+            parts.push(`📎 ${completedCount}/${this.task.alt_gorevler.length}`);
+            Logger.debug(`[TaskTreeViewItem] Task "${this.task.baslik}" has ${this.task.alt_gorevler.length} subtasks, ${completedCount} completed`);
+        }
+
         // Gecikme durumu
         if (this.task.son_tarih) {
             const dueDate = new Date(this.task.son_tarih);
@@ -595,14 +649,37 @@ export class TaskTreeViewItem extends vscode.TreeItem {
             parts.push(this.task.etiketler.map(tag => `#${tag}`).join(' '));
         }
 
-        // Bağımlılık göstergesi
-        if (this.task.bagimliliklar && this.task.bagimliliklar.length > 0) {
+        // Bağımlılık göstergesi - yeni format
+        const depParts = [];
+        
+        // Bu görevin bağımlılıkları (bu görev başka görevlere bağımlı)
+        if (this.task.bagimli_gorev_sayisi && this.task.bagimli_gorev_sayisi > 0) {
+            if (this.task.tamamlanmamis_bagimlilik_sayisi && this.task.tamamlanmamis_bagimlilik_sayisi > 0) {
+                // Tamamlanmamış bağımlılıklar var
+                depParts.push(`[🔗${this.task.bagimli_gorev_sayisi} ⚠️${this.task.tamamlanmamis_bagimlilik_sayisi}]`);
+            } else {
+                // Tüm bağımlılıklar tamamlanmış
+                depParts.push(`[🔗${this.task.bagimli_gorev_sayisi}]`);
+            }
+        }
+        
+        // Bu göreve bağımlı görevler
+        if (this.task.bu_goreve_bagimli_sayisi && this.task.bu_goreve_bagimli_sayisi > 0) {
+            depParts.push(`[← ${this.task.bu_goreve_bagimli_sayisi}]`);
+        }
+        
+        // Eski format desteği (geriye uyumluluk için)
+        if (!depParts.length && this.task.bagimliliklar && this.task.bagimliliklar.length > 0) {
             const blockedCount = this.task.bagimliliklar.filter(b => b.hedef_durum !== GorevDurum.Tamamlandi).length;
             if (blockedCount > 0) {
-                parts.push(`🔒${blockedCount}`); // Bloklanmış bağımlılık sayısı
+                depParts.push(`[→ ${this.task.bagimliliklar.length}]`);
             } else {
-                parts.push('✅🔗'); // Tüm bağımlılıklar tamamlanmış
+                depParts.push(`[✓ ${this.task.bagimliliklar.length}]`);
             }
+        }
+        
+        if (depParts.length > 0) {
+            parts.push(depParts.join(' '));
         }
 
         return parts.join(' • ');
@@ -625,6 +702,21 @@ export class TaskTreeViewItem extends vscode.TreeItem {
 
         if (this.task.etiketler && this.task.etiketler.length > 0) {
             lines.push('', `Etiketler: ${this.task.etiketler.join(', ')}`);
+        }
+
+        // Bağımlılık bilgileri
+        if (this.task.bagimli_gorev_sayisi && this.task.bagimli_gorev_sayisi > 0) {
+            lines.push('', `Bağımlılıklar (${this.task.bagimli_gorev_sayisi}):`);
+            if (this.task.tamamlanmamis_bagimlilik_sayisi && this.task.tamamlanmamis_bagimlilik_sayisi > 0) {
+                lines.push(`  ⚠️ ${this.task.tamamlanmamis_bagimlilik_sayisi} tamamlanmamış`);
+                lines.push(`  ✓ ${this.task.bagimli_gorev_sayisi - this.task.tamamlanmamis_bagimlilik_sayisi} tamamlanmış`);
+            } else {
+                lines.push(`  ✓ Tümü tamamlanmış`);
+            }
+        }
+        
+        if (this.task.bu_goreve_bagimli_sayisi && this.task.bu_goreve_bagimli_sayisi > 0) {
+            lines.push('', `Bu göreve bağımlı: ${this.task.bu_goreve_bagimli_sayisi} görev`);
         }
 
         return lines.join('\n');

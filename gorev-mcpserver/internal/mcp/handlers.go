@@ -360,11 +360,15 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		metin += "*Açıklama girilmemiş*"
 	}
 
-	// Bağımlılıkları ekle
+	// Bağımlılıkları ekle - Her zaman göster
+	metin += "\n\n## 🔗 Bağımlılıklar\n"
+	
 	baglantilar, err := h.isYonetici.GorevBaglantilariGetir(id)
-	if err == nil && len(baglantilar) > 0 {
-		metin += "\n\n## 🔗 Bağımlılıklar\n"
-
+	if err != nil {
+		metin += "*Bağımlılık bilgileri alınamadı*\n"
+	} else if len(baglantilar) == 0 {
+		metin += "*Bu görevin herhangi bir bağımlılığı bulunmuyor*\n"
+	} else {
 		var oncekiler []string
 		var sonrakiler []string
 
@@ -395,6 +399,8 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 			for _, onceki := range oncekiler {
 				metin += fmt.Sprintf("- %s\n", onceki)
 			}
+		} else {
+			metin += "\n### 📋 Bu görev için beklenen görevler:\n*Hiçbir göreve bağımlı değil*\n"
 		}
 
 		if len(sonrakiler) > 0 {
@@ -402,6 +408,8 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 			for _, sonraki := range sonrakiler {
 				metin += sonraki + "\n"
 			}
+		} else {
+			metin += "\n### 🎯 Bu göreve bağımlı görevler:\n*Hiçbir görev bu göreve bağımlı değil*\n"
 		}
 
 		// Bağımlılık durumu kontrolü

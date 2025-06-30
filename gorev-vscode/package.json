@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "Gorev",
   "description": "Powerful task management for VS Code powered by MCP protocol",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -42,7 +42,7 @@
       "properties": {
         "gorev.serverPath": {
           "type": "string",
-          "default": "",
+          "default": "/mnt/f/Development/Projects/Gorev/gorev-mcpserver/build/gorev",
           "description": "Full path to the Gorev MCP server executable (e.g., /path/to/gorev or C:\\path\\to\\gorev.exe)"
         },
         "gorev.autoConnect": {
@@ -127,6 +127,11 @@
           "default": true,
           "description": "Allow creating task dependencies via drag and drop"
         },
+        "gorev.dragDrop.allowParentChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow changing task parent via drag and drop"
+        },
         "gorev.dragDrop.showDropIndicator": {
           "type": "boolean",
           "default": true,
@@ -200,6 +205,30 @@
         "title": "Delete Task",
         "category": "Gorev",
         "icon": "$(trash)"
+      },
+      {
+        "command": "gorev.createSubtask",
+        "title": "Create Subtask",
+        "category": "Gorev",
+        "icon": "$(add)"
+      },
+      {
+        "command": "gorev.changeParent",
+        "title": "Change Parent Task",
+        "category": "Gorev",
+        "icon": "$(move)"
+      },
+      {
+        "command": "gorev.removeParent",
+        "title": "Remove Parent (Make Root Task)",
+        "category": "Gorev",
+        "icon": "$(ungroup-by-ref-type)"
+      },
+      {
+        "command": "gorev.addDependency",
+        "title": "Add Dependency",
+        "category": "Gorev",
+        "icon": "$(link)"
       },
       {
         "command": "gorev.quickCreateTask",
@@ -509,43 +538,63 @@
       "view/item/context": [
         {
           "command": "gorev.showTaskDetail",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "1_view"
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "1_gorev_islemleri@1"
         },
         {
           "command": "gorev.editTaskTitle",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "2_modify@1"
-        },
-        {
-          "command": "gorev.quickStatusChange",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "2_modify@2"
-        },
-        {
-          "command": "gorev.quickPriorityChange",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "2_modify@3"
-        },
-        {
-          "command": "gorev.quickDateChange",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "2_modify@4"
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "1_gorev_islemleri@2"
         },
         {
           "command": "gorev.detailedEdit",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "2_modify@5"
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "1_gorev_islemleri@3"
         },
         {
           "command": "gorev.updateTaskStatus",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "2_modify@6"
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "2_durum_degistir@1"
+        },
+        {
+          "command": "gorev.quickStatusChange",
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "2_durum_degistir@2"
+        },
+        {
+          "command": "gorev.createSubtask",
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent)",
+          "group": "3_organizasyon@1"
+        },
+        {
+          "command": "gorev.addDependency",
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "3_organizasyon@2"
+        },
+        {
+          "command": "gorev.changeParent",
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "3_organizasyon@3"
+        },
+        {
+          "command": "gorev.removeParent",
+          "when": "view == gorevTasks && viewItem == task:child",
+          "group": "3_organizasyon@4"
+        },
+        {
+          "command": "gorev.quickPriorityChange",
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "4_hizli_islemler@1"
+        },
+        {
+          "command": "gorev.quickDateChange",
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "4_hizli_islemler@2"
         },
         {
           "command": "gorev.deleteTask",
-          "when": "view == gorevTasks && viewItem == task",
-          "group": "3_delete"
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:parent || viewItem == task:child)",
+          "group": "5_tehlikeli_islemler"
         },
         {
           "command": "gorev.setActiveProject",

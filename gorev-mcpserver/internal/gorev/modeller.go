@@ -17,6 +17,10 @@ type Gorev struct {
 	Etiketler       []*Etiket  `json:"etiketler,omitempty"`
 	AltGorevler     []*Gorev   `json:"alt_gorevler,omitempty"`
 	Seviye          int        `json:"seviye,omitempty"`
+	// Bağımlılık sayaçları - TreeView gösterimi için
+	BagimliGorevSayisi             int `json:"bagimli_gorev_sayisi,omitempty"`
+	TamamlanmamisBagimlilikSayisi  int `json:"tamamlanmamis_bagimlilik_sayisi,omitempty"`
+	BuGoreveBagimliSayisi          int `json:"bu_goreve_bagimli_sayisi,omitempty"`
 }
 
 // Etiket görevleri kategorize etmek için kullanılır

@@ -58,7 +58,47 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 }
 
 func (iy *IsYonetici) GorevListele(durum, sirala, filtre string) ([]*Gorev, error) {
-	return iy.veriYonetici.GorevleriGetir(durum, sirala, filtre)
+	gorevler, err := iy.veriYonetici.GorevleriGetir(durum, sirala, filtre)
+	if err != nil {
+		return nil, err
+	}
+
+	// Her görev için bağımlılık sayılarını hesapla
+	for _, gorev := range gorevler {
+		// Bu görevin bağımlılıklarını al (bu görev başka görevlere bağımlı)
+		baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorev.ID)
+		if err == nil && len(baglantilar) > 0 {
+			gorev.BagimliGorevSayisi = len(baglantilar)
+			
+			// Tamamlanmamış bağımlılıkları say
+			tamamlanmamisSayisi := 0
+			for _, baglanti := range baglantilar {
+				hedefGorev, err := iy.veriYonetici.GorevGetir(baglanti.HedefID)
+				if err == nil && hedefGorev.Durum != "tamamlandi" {
+					tamamlanmamisSayisi++
+				}
+			}
+			gorev.TamamlanmamisBagimlilikSayisi = tamamlanmamisSayisi
+		}
+
+		// Bu göreve bağımlı olan görevleri bul
+		buGoreveBagimliSayisi := 0
+		tumGorevler, _ := iy.veriYonetici.GorevleriGetir("", "", "")
+		for _, digerGorev := range tumGorevler {
+			digerBaglantilar, err := iy.veriYonetici.BaglantilariGetir(digerGorev.ID)
+			if err == nil {
+				for _, baglanti := range digerBaglantilar {
+					if baglanti.HedefID == gorev.ID {
+						buGoreveBagimliSayisi++
+						break
+					}
+				}
+			}
+		}
+		gorev.BuGoreveBagimliSayisi = buGoreveBagimliSayisi
+	}
+
+	return gorevler, nil
 }
 
 func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
@@ -209,7 +249,47 @@ func (iy *IsYonetici) ProjeListele() ([]*Proje, error) {
 }
 
 func (iy *IsYonetici) ProjeGorevleri(projeID string) ([]*Gorev, error) {
-	return iy.veriYonetici.ProjeGorevleriGetir(projeID)
+	gorevler, err := iy.veriYonetici.ProjeGorevleriGetir(projeID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Her görev için bağımlılık sayılarını hesapla
+	for _, gorev := range gorevler {
+		// Bu görevin bağımlılıklarını al (bu görev başka görevlere bağımlı)
+		baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorev.ID)
+		if err == nil && len(baglantilar) > 0 {
+			gorev.BagimliGorevSayisi = len(baglantilar)
+			
+			// Tamamlanmamış bağımlılıkları say
+			tamamlanmamisSayisi := 0
+			for _, baglanti := range baglantilar {
+				hedefGorev, err := iy.veriYonetici.GorevGetir(baglanti.HedefID)
+				if err == nil && hedefGorev.Durum != "tamamlandi" {
+					tamamlanmamisSayisi++
+				}
+			}
+			gorev.TamamlanmamisBagimlilikSayisi = tamamlanmamisSayisi
+		}
+
+		// Bu göreve bağımlı olan görevleri bul
+		buGoreveBagimliSayisi := 0
+		tumGorevler, _ := iy.veriYonetici.GorevleriGetir("", "", "")
+		for _, digerGorev := range tumGorevler {
+			digerBaglantilar, err := iy.veriYonetici.BaglantilariGetir(digerGorev.ID)
+			if err == nil {
+				for _, baglanti := range digerBaglantilar {
+					if baglanti.HedefID == gorev.ID {
+						buGoreveBagimliSayisi++
+						break
+					}
+				}
+			}
+		}
+		gorev.BuGoreveBagimliSayisi = buGoreveBagimliSayisi
+	}
+
+	return gorevler, nil
 }
 
 func (iy *IsYonetici) ProjeGorevSayisi(projeID string) (int, error) {

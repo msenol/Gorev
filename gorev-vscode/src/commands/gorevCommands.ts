@@ -187,6 +187,186 @@ export function registerGorevCommands(
     })
   );
 
+  // Create Subtask
+  context.subscriptions.push(
+    vscode.commands.registerCommand(COMMANDS.CREATE_SUBTASK, async (item: any) => {
+      try {
+        const baslik = await vscode.window.showInputBox({
+          prompt: 'Subtask title',
+          placeHolder: `Create subtask for "${item.task.baslik}"`,
+          validateInput: (value) => {
+            if (!value || value.trim().length === 0) {
+              return 'Subtask title is required';
+            }
+            return null;
+          },
+        });
+
+        if (!baslik) return;
+
+        const aciklama = await vscode.window.showInputBox({
+          prompt: 'Subtask description (optional)',
+          placeHolder: 'Enter subtask description',
+        });
+
+        const oncelik = await vscode.window.showQuickPick(
+          [
+            { label: 'High', value: GorevOncelik.Yuksek },
+            { label: 'Medium', value: GorevOncelik.Orta },
+            { label: 'Low', value: GorevOncelik.Dusuk },
+          ],
+          {
+            placeHolder: 'Select priority',
+          }
+        );
+
+        if (!oncelik) return;
+
+        await mcpClient.callTool('gorev_altgorev_olustur', {
+          parent_id: item.task.id,
+          baslik,
+          aciklama: aciklama || '',
+          oncelik: oncelik.value,
+        });
+
+        vscode.window.showInformationMessage('Subtask created successfully');
+        await providers.gorevTreeProvider.refresh();
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to create subtask: ${error}`);
+      }
+    })
+  );
+
+  // Change Parent
+  context.subscriptions.push(
+    vscode.commands.registerCommand(COMMANDS.CHANGE_PARENT, async (item: any) => {
+      try {
+        // Get all tasks except the current one and its subtasks
+        const result = await mcpClient.callTool('gorev_listele', {
+          tum_projeler: true,
+        });
+        
+        if (!result || !result.content || !result.content[0]) {
+          throw new Error('Failed to fetch tasks');
+        }
+
+        const tasks = result.content[0].text
+          .split('\n')
+          .filter((line: string) => line.includes('ID:'))
+          .map((line: string) => {
+            const idMatch = line.match(/ID:\s*([a-f0-9-]+)/);
+            const titleMatch = line.match(/\[.+\]\s+(.+)\s+\(/);
+            return idMatch && titleMatch ? { id: idMatch[1], baslik: titleMatch[1] } : null;
+          })
+          .filter((task: any) => task && task.id !== item.task.id);
+
+        const parentChoice = await vscode.window.showQuickPick(
+          [
+            { label: 'No parent (make root task)', value: null },
+            ...tasks.map((t: any) => ({ label: t.baslik, value: t.id }))
+          ],
+          {
+            placeHolder: 'Select new parent task',
+          }
+        );
+
+        if (!parentChoice) return;
+
+        await mcpClient.callTool('gorev_ust_degistir', {
+          gorev_id: item.task.id,
+          yeni_parent_id: parentChoice.value || '',
+        });
+
+        vscode.window.showInformationMessage('Parent changed successfully');
+        await providers.gorevTreeProvider.refresh();
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to change parent: ${error}`);
+      }
+    })
+  );
+
+  // Remove Parent (make root task)
+  context.subscriptions.push(
+    vscode.commands.registerCommand(COMMANDS.REMOVE_PARENT, async (item: any) => {
+      try {
+        await mcpClient.callTool('gorev_ust_degistir', {
+          gorev_id: item.task.id,
+          yeni_parent_id: '',
+        });
+
+        vscode.window.showInformationMessage('Task is now a root task');
+        await providers.gorevTreeProvider.refresh();
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to remove parent: ${error}`);
+      }
+    })
+  );
+
+  // Add Dependency
+  context.subscriptions.push(
+    vscode.commands.registerCommand(COMMANDS.ADD_DEPENDENCY, async (item: any) => {
+      try {
+        // Get all tasks except the current one
+        const result = await mcpClient.callTool('gorev_listele', {
+          tum_projeler: true,
+        });
+        
+        if (!result || !result.content || !result.content[0]) {
+          throw new Error('Failed to fetch tasks');
+        }
+
+        // Parse tasks from the result
+        const tasks = result.content[0].text
+          .split('\n')
+          .filter((line: string) => line.includes('ID:'))
+          .map((line: string) => {
+            const idMatch = line.match(/ID:\s*([a-f0-9-]+)/);
+            const titleMatch = line.match(/\[.+\]\s+(.+?)\s+\(/);
+            const statusMatch = line.match(/\[(beklemede|devam_ediyor|tamamlandi)\]/);
+            return idMatch && titleMatch ? { 
+              id: idMatch[1], 
+              baslik: titleMatch[1].trim(),
+              durum: statusMatch ? statusMatch[1] : 'beklemede'
+            } : null;
+          })
+          .filter((task: any) => task && task.id !== item.task.id);
+
+        if (tasks.length === 0) {
+          vscode.window.showInformationMessage('No other tasks available to add as dependency');
+          return;
+        }
+
+        // Create quick pick items with status icons
+        const quickPickItems = tasks.map((t: any) => ({
+          label: `${t.durum === 'tamamlandi' ? '✓' : t.durum === 'devam_ediyor' ? '▶' : '○'} ${t.baslik}`,
+          description: t.durum === 'tamamlandi' ? 'Completed' : t.durum === 'devam_ediyor' ? 'In Progress' : 'Pending',
+          value: t.id
+        }));
+
+        const selectedTask = await vscode.window.showQuickPick(
+          quickPickItems,
+          {
+            placeHolder: `Select a task that "${item.task.baslik}" depends on`,
+          }
+        );
+
+        if (!selectedTask) return;
+
+        // Add the dependency
+        await mcpClient.callTool('gorev_bagimlilik_ekle', {
+          kaynak_id: item.task.id,
+          hedef_id: selectedTask.value,
+          baglanti_tipi: 'bagimli', // depends on
+        });
+
+        vscode.window.showInformationMessage('Dependency added successfully');
+        await providers.gorevTreeProvider.refresh();
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to add dependency: ${error}`);
+      }
+    })
+  );
+
 }
 
 function getTaskDetailHtml(content: string): string {
