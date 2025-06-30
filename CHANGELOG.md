@@ -1,118 +1,125 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to the Gorev project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.0] - 2025-06-30
+## VS Code Extension
 
-### Added
-- **Subtask System with Unlimited Hierarchy** - Major feature implementation
+### [0.3.3] - 2025-06-30
+
+#### Fixed
+- Fixed progress percentage display issue in task detail panel
+- Circular progress chart percentage was not visible
+- Implemented CSS overlay solution with absolute positioning
+- Progress percentage now displays correctly in the center of the progress indicator
+- Enhanced hierarchy progress parsing with more flexible pattern matching
+- Added fallback calculation when server response doesn't include percentage
+- Fixed potential NaN values in progress display with proper validation
+- Fixed dependency section not showing in task detail panel when task has no dependencies
+- Dependencies section now always visible with proper fallback messages
+- Enhanced dependency information display with clear status indicators
+
+### [0.3.2] - 2025-06-30
+
+#### Added
+- Enhanced TreeView with grouping, multi-select, and priority-based color coding
+- Drag & Drop support for moving tasks, changing status, and creating dependencies
+- Inline editing with F2/double-click, context menus, and date pickers
+- Advanced filtering toolbar with search, filters, and saved profiles
+- Rich task detail panel with markdown editor and dependency visualization
+- Template wizard UI with multi-step interface and dynamic forms
+- Hierarchical task display with tree structure
+- Progress indicators showing subtask completion percentage
+
+#### Fixed
+- Fixed filter state persistence issue
+- Fixed tag display when tasks created via CLI
+- Fixed project task count showing as 0 in TreeView
+- Fixed task detail panel UI issues in dark theme
+- Fixed single-click task selection in TreeView
+
+## MCP Server
+
+### [0.8.0] - 2025-06-30
+
+#### Added
+- Implemented subtask system with unlimited hierarchy
   - Added `parent_id` column to tasks table with foreign key constraint
-  - Created recursive CTE view `gorev_hiyerarsi` for efficient hierarchy queries
-  - Implemented circular dependency prevention with validation
-  - Added parent task progress tracking based on subtask completion percentage
-  - New MCP tools for subtask management:
+  - Created recursive CTE views for efficient hierarchy queries
+  - New MCP tools:
     - `gorev_altgorev_olustur` - Create subtask under a parent task
-    - `gorev_ust_degistir` - Move task to different parent or root level
+    - `gorev_ust_degistir` - Move task to different parent or root
     - `gorev_hiyerarsi_goster` - Show complete task hierarchy with statistics
-  - Business rules enforcement:
-    - Tasks cannot be deleted if they have subtasks
-    - Tasks cannot be completed unless all subtasks are completed
-    - Moving a task to a different project automatically moves all its subtasks
-    - Subtasks inherit their parent's project
-  - Hierarchical task display in `gorev_listele` with tree structure
-  - Visual indicators: ✓ (completed), 🔄 (in progress), ⏳ (pending)
-  - Comprehensive test coverage for all subtask operations
+  - Circular dependency prevention
+  - Parent task progress tracking based on subtask completion
+
+- **VS Code Extension**
+  - Hierarchical task display with tree structure
+  - Progress indicators showing subtask completion percentage
+  - Visual hierarchy with indentation and tree connectors
 
 ### Changed
-- Updated `gorev_listele` to display tasks in hierarchical tree structure
-- Enhanced `gorev_guncelle` to validate subtask completion before allowing parent completion
-- Modified `gorev_sil` to prevent deletion of tasks with subtasks
-- Updated `gorev_duzenle` to cascade project changes to all subtasks
-- Total MCP tools increased from 16 to 19
+- **Business Rules**
+  - Tasks cannot be deleted if they have subtasks
+  - Tasks cannot be completed unless all subtasks are completed
+  - Moving a task to a different project moves all its subtasks
+  - Subtasks inherit parent's project
+
+## [0.7.1] - 2025-06-30
 
 ### Fixed
-- Filter state persistence issue - users can now clear filters without restarting VS Code
-  - Added `clearFilters()` method to EnhancedGorevTreeProvider
-  - Updated FilterToolbar to properly reset filter state
-  - Added keyboard shortcut `Ctrl+Alt+R` / `Cmd+Alt+R` to clear filters
-  - Fixed filter update logic to detect and handle empty filter objects
+- **VS Code Extension**
+  - Fixed filter state persistence issue
+  - Added `clearFilters()` method to `EnhancedGorevTreeProvider`
+  - Fixed `clearAllFilters()` in FilterToolbar to properly reset state
+  - Added keyboard shortcut `Ctrl+Alt+R` / `Cmd+Alt+R` for quick filter clearing
 
 ## [0.7.0-beta.1] - 2025-06-30
 
 ### Added
-- **Test Infrastructure**:
-  - Comprehensive edge case testing for all 16 MCP tools
-  - Template unit tests with 100% handler coverage
-  - Concurrent operation tests for thread safety
-  - Testing framework evaluation and decision documentation
-  - MCP package coverage increased from 75.1% to 81.5%
-  - Created `handlers_edge_cases_test.go` (600+ LOC)
-  - Created `template_yonetici_test.go` (400+ LOC)
-  - Added `docs/testing-framework-decision.md`
-  - Added `docs/test-coverage-phase1-summary.md`
+- **Test Infrastructure**
+  - MCP Server test coverage improved from 75.1% to 81.5%
+  - VS Code Extension achieved 50.9% file coverage
+  - Created comprehensive test suites for both components
+  - Added test coverage analysis tools
 
-- **VS Code Extension**:
+- **VS Code Extension Features**
   - Enhanced TreeView with grouping, multi-select, and priority-based color coding
   - Drag & Drop support for moving tasks, changing status, and creating dependencies
   - Inline editing with F2/double-click, context menus, and date pickers
   - Advanced filtering toolbar with search, filters, and saved profiles
   - Rich task detail panel with markdown editor and dependency visualization
   - Template wizard UI with multi-step interface and dynamic forms
-  - Comprehensive test suite achieving 50.9% file coverage (19 files tested)
 
 ### Fixed
-- Database migration issues with `etiketler` table in tests
-- Concurrent access test failures (switched to file-based database)
-- TypeScript compilation error in `markdownParser.ts`
-- Tag display in VS Code UI when tasks created via CLI
-- Project task count showing as 0 in TreeView
-- Task detail panel UI issues in dark theme
+- **MCP Server**
+  - Fixed path resolution for database and migrations
+  - Enhanced `GorevListele` and `ProjeGorevleri` handlers to include tags and due dates
 
-### Changed
-- Testing framework decision: Continue with testify (152x faster than ginkgo)
-- Enhanced `GorevListele` and `ProjeGorevleri` handlers to include tags and due dates
+- **VS Code Extension**
+  - Fixed tag display when tasks created via CLI
+  - Fixed project task count showing as 0 in TreeView
+  - Fixed task detail panel UI issues in dark theme
+  - Fixed single-click task selection in TreeView
 
-### Discovered
-- Input validation gaps (whitespace-only titles accepted)
-- Missing enum validation for priority and status values
-- These issues are documented for future improvements
+### Removed
+- Non-functional dependency graph feature
 
 ## [0.6.0] - 2025-06-29
 
 ### Added
-- Task Template System with predefined templates (Bug Report, Feature Request, Technical Debt, Research)
-- Task Dependencies with validation
-- Due Dates with filtering for urgent/overdue tasks
-- Tagging System with multiple tags per task
-- Database Schema Management using golang-migrate
-- New MCP tools: `gorev_bagimlilik_ekle`, `template_listele`, `templateden_gorev_olustur`
-- Enhanced filtering and sorting parameters for `gorev_listele`
+- Task dependency system with `gorev_bagimlilik_ekle` tool
+- Due dates functionality for tasks
+- Enhanced filtering with date-based filters (urgent/overdue)
 
-### Changed
-- GorevOlustur now accepts 6 parameters (added sonTarih, etiketler)
-- GorevListele now accepts 3 parameters (added sirala, filtre)
-- VeriYonetici constructor requires migrations path
-
-## [0.5.0] - 2025-06-28
+## [0.5.0] - 2025-06-29
 
 ### Added
-- Initial MCP server implementation with 13 core tools
-- VS Code extension with TreeView providers
-- SQLite database storage
-- Project management features
-- Active project context
-- Basic task CRUD operations
-
-### Features
-- Task management (create, list, update, delete)
-- Project management
-- Task status tracking (beklemede, devam_ediyor, tamamlandi)
-- Priority levels (dusuk, orta, yuksek)
-- Summary statistics
-
----
-
-*For detailed documentation of all features, see the [docs/](docs/) directory.*
+- Task template system with predefined templates
+- Tagging system for task categorization
+- Database schema version control with golang-migrate
+- New MCP tools:
+  - `template_listele` - List available templates
+  - `templateden_gorev_olustur` - Create tasks from templates

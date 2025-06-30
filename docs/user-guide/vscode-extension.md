@@ -1,7 +1,7 @@
 # VS Code Extension Dokümantasyonu
 
-> **Versiyon**: Bu dokümantasyon v0.7.0-beta.1 için geçerlidir.  
-> **Son Güncelleme**: 29 June 2025  
+> **Versiyon**: Bu dokümantasyon v0.3.3 için geçerlidir.  
+> **Son Güncelleme**: 30 June 2025  
 > **Marketplace**: [mehmetsenol.gorev-vscode](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
 Gorev VS Code Extension, MCP server'a görsel arayüz sağlayan TypeScript tabanlı bir VS Code eklentisidir.
@@ -28,6 +28,10 @@ Gorev VS Code Extension, kullanıcıların VS Code içinden doğrudan görev yö
 - **Status Bar**: Anlık durum bilgisi
 - **Context Menüler**: Sağ tık işlemleri
 - **Tema Desteği**: Öncelik bazlı renklendirme
+- **Dependency Visualization**: Task bağımlılıklarının TreeView'da badge'lerle gösterimi
+- **Task Detail Panel**: Zengin task detay paneli bağımlılık bilgileriyle
+- **Drag & Drop**: Task'ları sürükle-bırak ile düzenleme
+- **Advanced Filtering**: Gelişmiş filtreleme ve gruplama seçenekleri
 
 ## Mimari
 
@@ -89,6 +93,14 @@ interface GorevTreeItem {
 - Öncelik renklendirmesi (Yüksek: kırmızı, Orta: sarı, Düşük: yeşil)
 - Son tarih gösterimi
 - Etiket badges
+- **Dependency Badges**: Task bağımlılıklarının görsel gösterimi
+  - `[🔗3]`: Bu task 3 göreve bağımlı
+  - `[🔗2 ⚠️1]`: 2 bağımlılık, 1 tanesi tamamlanmamış
+  - `[← 2]`: 2 task bu göreve bağımlı
+- Hierarchical task display (subtask desteği)
+- Multi-select ve bulk operations
+- Drag & drop işlemleri
+- Advanced filtering ve search
 
 #### Projeler TreeView
 ```typescript
@@ -131,9 +143,11 @@ interface TemplateTreeItem {
 | Show Task Detail | `gorev.showTaskDetail` | - | Görev detaylarını göster |
 | Update Task Status | `gorev.updateTaskStatus` | - | Görev durumunu güncelle |
 | Delete Task | `gorev.deleteTask` | - | Görevi sil |
+| **Add Dependency** | `gorev.addDependency` | - | **Task bağımlılığı ekle** |
 | Show Summary | `gorev.showSummary` | - | İstatistikleri göster |
 | Connect | `gorev.connect` | - | Server'a bağlan |
 | Disconnect | `gorev.disconnect` | - | Bağlantıyı kes |
+| Clear All Filters | `gorev.clearAllFilters` | `Ctrl+Alt+R` | Tüm filtreleri temizle |
 | Refresh | `gorev.refreshTasks` | - | Listeleri yenile |
 
 ### Status Bar
@@ -145,6 +159,37 @@ Status bar şu bilgileri gösterir:
 - Aktif proje adı
 
 Tıklandığında özet istatistikleri gösterir.
+
+### Task Dependencies (v0.3.3+)
+
+Task bağımlılıkları iki yerde görsel olarak gösterilir:
+
+#### TreeView Dependency Badges
+
+Her task'ın adının yanında dependency durumunu gösteren badge'ler:
+
+| Badge | Anlamı |
+|-------|--------|
+| `[🔗3]` | Bu task 3 göreve bağımlı |
+| `[🔗2 ⚠️1]` | 2 bağımlılık var, 1 tanesi tamamlanmamış (riskli) |
+| `[← 2]` | 2 task bu göreve bağımlı |
+| `[🔗1] [← 1]` | 1 göreve bağımlı ve 1 task buna bağımlı |
+
+#### Task Detail Panel Dependencies
+
+Task'a tıkladığınızda açılan detail panel'de:
+
+- **🔗 Bağımlılıklar** bölümü her zaman gösterilir
+- **📋 Bu görev için beklenen görevler**: Bu task'ın bağımlı olduğu görevler
+- **🎯 Bu göreve bağımlı görevler**: Bu task'a bağımlı olan görevler
+- Durum göstergeleri: ✅ (tamamlandı), ⏳ (beklemede)
+
+#### Context Menu Dependencies
+
+Task'a sağ tıklayıp **Add Dependency** seçeneği ile:
+- Mevcut task'ları listeleyen picker açılır
+- Seçilen task bu task'ın bağımlılığı olur
+- Circular dependency kontrolü otomatik yapılır
 
 ## Kurulum
 

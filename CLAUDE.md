@@ -6,7 +6,22 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
-### Recent Changes (v0.8.0)
+### Recent Changes
+
+#### VS Code Extension (v0.3.3)
+- **Fixed Progress Percentage Display Issue** (30 June 2025):
+  - Fixed circular progress chart percentage not being visible in task detail panel
+  - Implemented CSS overlay solution with absolute positioning for percentage text
+  - Added `.percentage-overlay` class with proper centering and theme-aware styling
+  - Progress percentage now displays correctly in the center of the circular progress indicator
+- **Enhanced Progress Percentage Parsing** (30 June 2025):
+  - Improved `parseHierarchyInfo` method with more flexible pattern matching
+  - Added fallback calculation when server doesn't provide percentage
+  - Added validation to ensure percentage is always a valid number (0-100)
+  - Added debug logging for troubleshooting hierarchy parsing issues
+  - Fixed potential NaN values in progress display
+
+#### MCP Server (v0.8.0)
 
 #### Major Features (30 June 2025)
 - **Implemented Subtask System with Unlimited Hierarchy**:

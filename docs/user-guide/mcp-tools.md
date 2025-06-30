@@ -13,20 +13,25 @@ Gorev'in sağladığı tüm MCP tool'larının detaylı açıklaması.
 6. [gorev_sil](#gorev_sil) - Görev silme
 7. [gorev_bagimlilik_ekle](#gorev_bagimlilik_ekle) - Görevler arası bağımlılık oluşturma
 
+### Subtask Yönetimi (v0.8.0+)
+8. [gorev_altgorev_olustur](#gorev_altgorev_olustur) - Alt görev oluşturma
+9. [gorev_ust_degistir](#gorev_ust_degistir) - Görevin üst görevini değiştirme
+10. [gorev_hiyerarsi_goster](#gorev_hiyerarsi_goster) - Görev hiyerarşisini gösterme
+
 ### Görev Şablonları
-8. [template_listele](#template_listele) - Görev şablonlarını listeleme
-9. [templateden_gorev_olustur](#templateden_gorev_olustur) - Şablondan görev oluşturma
+11. [template_listele](#template_listele) - Görev şablonlarını listeleme
+12. [templateden_gorev_olustur](#templateden_gorev_olustur) - Şablondan görev oluşturma
 
 ### Proje Yönetimi
-10. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
-11. [proje_listele](#proje_listele) - Tüm projeleri listeleme
-12. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
-13. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
-14. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
-15. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
+13. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
+14. [proje_listele](#proje_listele) - Tüm projeleri listeleme
+15. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
+16. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
+17. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
+18. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
 
 ### Raporlama
-16. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
+19. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
 
 ---
 
@@ -192,7 +197,7 @@ Görevleri filtreleyerek listeler.
 
 ## gorev_detay
 
-Bir görevin detaylı bilgilerini markdown formatında görüntüler.
+Bir görevin detaylı bilgilerini markdown formatında görüntüler. Bağımlılık bilgileri her zaman gösterilir (boş olsa bile).
 
 ### Parametreler
 
@@ -800,6 +805,104 @@ beklemede → devam_ediyor → tamamlandi
 |-----------|----------|-------|
 | -32602 | Geçersiz parametreler | Parametre tiplerini kontrol edin |
 | -32000 | İşlem hatası | Görev ID'sinin doğru olduğundan emin olun |
+
+---
+
+## gorev_altgorev_olustur
+
+Ana görevin altında yeni bir alt görev oluşturur.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `parent_id` | string | ✅ | Ana görev ID'si | - |
+| `baslik` | string | ✅ | Alt görev başlığı | - |
+| `aciklama` | string | ❌ | Alt görev açıklaması | "" |
+| `oncelik` | string | ❌ | Öncelik seviyesi | `orta` |
+| `son_tarih` | string | ❌ | Son teslim tarihi (YYYY-AA-GG) | - |
+| `etiketler` | string | ❌ | Virgülle ayrılmış etiketler | - |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_altgorev_olustur",
+  "arguments": {
+    "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+    "baslik": "API endpoint'lerini test et",
+    "aciklama": "Tüm REST API endpoint'lerinin unit test'lerini yaz",
+    "oncelik": "yuksek"
+  }
+}
+```
+
+---
+
+## gorev_ust_degistir
+
+Bir görevin üst görevini değiştirir veya kök seviyeye taşır.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `gorev_id` | string | ✅ | Taşınacak görev ID'si |
+| `yeni_parent_id` | string | ❌ | Yeni ana görev ID'si (boş ise kök seviyeye taşır) |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_ust_degistir",
+  "arguments": {
+    "gorev_id": "550e8400-e29b-41d4-a716-446655440001",
+    "yeni_parent_id": "550e8400-e29b-41d4-a716-446655440002"
+  }
+}
+```
+
+---
+
+## gorev_hiyerarsi_goster
+
+Bir görevin tüm hiyerarşisini (üst görevler ve alt görevler) gösterir.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `gorev_id` | string | ✅ | Hiyerarşisi gösterilecek görev ID'si |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_hiyerarsi_goster",
+  "arguments": {
+    "gorev_id": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+```
+
+### Çıktı Formatı
+
+```markdown
+# Görev Hiyerarşisi: Ana Proje
+
+## 📊 Hiyerarşi İstatistikleri
+- **Toplam alt görev**: 3
+- **Tamamlanan**: 1 (33%)
+- **Devam eden**: 2 (67%)
+
+## 🌳 Üst Görevler
+*Bu görev kök seviyededir*
+
+## 📋 Alt Görevler
+└─ [🔄] Backend API (yüksek öncelik)
+  └─ [✓] Veritabanı tasarımı (orta öncelik)
+  └─ [⏳] API endpoint'leri (yüksek öncelik)
+```
 
 ---
 
