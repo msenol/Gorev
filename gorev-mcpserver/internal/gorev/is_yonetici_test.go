@@ -209,6 +209,66 @@ func (m *MockVeriYonetici) VarsayilanTemplateleriOlustur() error {
 	return nil
 }
 
+func (m *MockVeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
+	var result []*Gorev
+	for _, gorev := range m.gorevler {
+		if gorev.ParentID == parentID {
+			result = append(result, gorev)
+		}
+	}
+	return result, nil
+}
+
+func (m *MockVeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) {
+	// Simplified implementation for testing
+	return m.AltGorevleriGetir(parentID)
+}
+
+func (m *MockVeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
+	var result []*Gorev
+	gorev, ok := m.gorevler[gorevID]
+	if !ok || gorev.ParentID == "" {
+		return result, nil
+	}
+
+	parent, ok := m.gorevler[gorev.ParentID]
+	if ok {
+		result = append(result, parent)
+	}
+	return result, nil
+}
+
+func (m *MockVeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error) {
+	gorev, err := m.GorevGetir(gorevID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GorevHiyerarsi{
+		Gorev:           gorev,
+		UstGorevler:     []*Gorev{},
+		ToplamAltGorev:  0,
+		TamamlananAlt:   0,
+		DevamEdenAlt:    0,
+		BeklemedeAlt:    0,
+		IlerlemeYuzdesi: 0,
+	}, nil
+}
+
+func (m *MockVeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error {
+	gorev, ok := m.gorevler[gorevID]
+	if !ok {
+		return errors.New("görev bulunamadı")
+	}
+	gorev.ParentID = yeniParentID
+	return nil
+}
+
+func (m *MockVeriYonetici) DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error) {
+	// Simple check for testing - just check if they're the same
+	return gorevID == hedefParentID, nil
+}
+
 // Tests
 
 func TestYeniIsYonetici(t *testing.T) {

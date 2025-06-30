@@ -19,6 +19,66 @@ func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 	}
 }
 
+// gorevHiyerarsiYazdir bir görevi ve alt görevlerini hiyerarşik olarak yazdırır
+func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]*gorev.Gorev, seviye int, projeGoster bool) string {
+	indent := strings.Repeat("  ", seviye)
+	prefix := ""
+	if seviye > 0 {
+		prefix = "└─ "
+	}
+
+	durum := ""
+	switch gorev.Durum {
+	case "tamamlandi":
+		durum = "✓"
+	case "devam_ediyor":
+		durum = "🔄"
+	case "beklemede":
+		durum = "⏳"
+	}
+
+	metin := fmt.Sprintf("%s%s[%s] %s (%s öncelik)\n", indent, prefix, durum, gorev.Baslik, gorev.Oncelik)
+
+	if gorev.Aciklama != "" {
+		metin += fmt.Sprintf("%s  %s\n", indent, gorev.Aciklama)
+	}
+
+	if projeGoster && gorev.ProjeID != "" {
+		proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
+		if proje != nil {
+			metin += fmt.Sprintf("%s  Proje: %s\n", indent, proje.Isim)
+		}
+		metin += fmt.Sprintf("%s  ProjeID: %s\n", indent, gorev.ProjeID)
+	}
+
+	if gorev.SonTarih != nil {
+		metin += fmt.Sprintf("%s  Son tarih: %s\n", indent, gorev.SonTarih.Format("2006-01-02"))
+	}
+
+	if len(gorev.Etiketler) > 0 {
+		etiketIsimleri := make([]string, len(gorev.Etiketler))
+		for i, etiket := range gorev.Etiketler {
+			etiketIsimleri[i] = etiket.Isim
+		}
+		metin += fmt.Sprintf("%s  Etiketler: %s\n", indent, strings.Join(etiketIsimleri, ", "))
+	}
+
+	metin += fmt.Sprintf("%s  ID: %s\n", indent, gorev.ID)
+
+	// Alt görevleri bul ve yazdır
+	for _, g := range gorevMap {
+		if g.ParentID == gorev.ID {
+			metin += h.gorevHiyerarsiYazdir(g, gorevMap, seviye+1, projeGoster)
+		}
+	}
+
+	if seviye == 0 {
+		metin += "\n"
+	}
+
+	return metin
+}
+
 // GorevOlustur yeni bir görev oluşturur
 func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	baslik, ok := params["baslik"].(string)
@@ -118,33 +178,29 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	}
 	metin += "\n\n"
 
-	for _, gorev := range gorevler {
-		metin += fmt.Sprintf("- [%s] %s (%s öncelik)\n", gorev.Durum, gorev.Baslik, gorev.Oncelik)
-		if gorev.Aciklama != "" {
-			metin += fmt.Sprintf("  %s\n", gorev.Aciklama)
+	// Görevleri hiyerarşik olarak organize et
+	gorevMap := make(map[string]*gorev.Gorev)
+	kokGorevler := []*gorev.Gorev{}
+
+	for _, g := range gorevler {
+		gorevMap[g.ID] = g
+		if g.ParentID == "" {
+			kokGorevler = append(kokGorevler, g)
 		}
-		// Proje bilgisini her zaman ekle
-		if gorev.ProjeID != "" {
-			proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
-			if proje != nil {
-				metin += fmt.Sprintf("  Proje: %s\n", proje.Isim)
+	}
+
+	// Kök görevlerden başlayarak hiyerarşiyi oluştur
+	for _, kokGorev := range kokGorevler {
+		metin += h.gorevHiyerarsiYazdir(kokGorev, gorevMap, 0, aktifProje == nil)
+	}
+
+	// Parent'ı olmayan ama parent_id'si dolu olanları da göster (parent görünmeyen görevler)
+	for _, g := range gorevler {
+		if g.ParentID != "" {
+			if _, parentVar := gorevMap[g.ParentID]; !parentVar {
+				metin += h.gorevHiyerarsiYazdir(g, gorevMap, 0, aktifProje == nil)
 			}
-			// Proje ID'sini de ekle (parse için gerekli)
-			metin += fmt.Sprintf("  ProjeID: %s\n", gorev.ProjeID)
 		}
-		// Son tarih varsa göster
-		if gorev.SonTarih != nil {
-			metin += fmt.Sprintf("  Son tarih: %s\n", gorev.SonTarih.Format("2006-01-02"))
-		}
-		// Etiketler varsa göster
-		if len(gorev.Etiketler) > 0 {
-			etiketIsimleri := make([]string, len(gorev.Etiketler))
-			for i, etiket := range gorev.Etiketler {
-				etiketIsimleri[i] = etiket.Isim
-			}
-			metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
-		}
-		metin += fmt.Sprintf("  ID: %s\n\n", gorev.ID)
 	}
 
 	return mcp.NewToolResultText(metin), nil
@@ -698,6 +754,116 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 }
 
 // RegisterTools tüm araçları MCP sunucusuna kaydeder
+// GorevAltGorevOlustur mevcut bir görevin altına yeni görev oluşturur
+func (h *Handlers) GorevAltGorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	parentID, ok := params["parent_id"].(string)
+	if !ok || parentID == "" {
+		return mcp.NewToolResultError("parent_id parametresi gerekli"), nil
+	}
+
+	baslik, ok := params["baslik"].(string)
+	if !ok || baslik == "" {
+		return mcp.NewToolResultError("başlık parametresi gerekli"), nil
+	}
+
+	aciklama, _ := params["aciklama"].(string)
+	oncelik, _ := params["oncelik"].(string)
+	if oncelik == "" {
+		oncelik = "orta"
+	}
+
+	sonTarih, _ := params["son_tarih"].(string)
+	etiketlerStr, _ := params["etiketler"].(string)
+	var etiketler []string
+	if etiketlerStr != "" {
+		etiketler = strings.Split(etiketlerStr, ",")
+		for i := range etiketler {
+			etiketler[i] = strings.TrimSpace(etiketler[i])
+		}
+	}
+
+	gorev, err := h.isYonetici.AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarih, etiketler)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("alt görev oluşturulamadı: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("✓ Alt görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID)), nil
+}
+
+// GorevUstDegistir bir görevin üst görevini değiştirir
+func (h *Handlers) GorevUstDegistir(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	gorevID, ok := params["gorev_id"].(string)
+	if !ok || gorevID == "" {
+		return mcp.NewToolResultError("gorev_id parametresi gerekli"), nil
+	}
+
+	yeniParentID, _ := params["yeni_parent_id"].(string)
+
+	err := h.isYonetici.GorevUstDegistir(gorevID, yeniParentID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("üst görev değiştirilemedi: %v", err)), nil
+	}
+
+	if yeniParentID == "" {
+		return mcp.NewToolResultText(fmt.Sprintf("✓ Görev kök seviyeye taşındı")), nil
+	}
+	return mcp.NewToolResultText(fmt.Sprintf("✓ Görev yeni üst göreve taşındı")), nil
+}
+
+// GorevHiyerarsiGoster bir görevin tam hiyerarşisini gösterir
+func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	gorevID, ok := params["gorev_id"].(string)
+	if !ok || gorevID == "" {
+		return mcp.NewToolResultError("gorev_id parametresi gerekli"), nil
+	}
+
+	hiyerarsi, err := h.isYonetici.GorevHiyerarsiGetir(gorevID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("hiyerarşi alınamadı: %v", err)), nil
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("# 📊 Görev Hiyerarşisi: %s\n\n", hiyerarsi.Gorev.Baslik))
+
+	// Üst görevler
+	if len(hiyerarsi.UstGorevler) > 0 {
+		sb.WriteString("## 📍 Üst Görevler\n")
+		for i := len(hiyerarsi.UstGorevler) - 1; i >= 0; i-- {
+			ust := hiyerarsi.UstGorevler[i]
+			sb.WriteString(fmt.Sprintf("%s└─ %s (%s)\n", strings.Repeat("  ", len(hiyerarsi.UstGorevler)-i-1), ust.Baslik, ust.Durum))
+		}
+		sb.WriteString(fmt.Sprintf("%s└─ **%s** (Mevcut Görev)\n\n", strings.Repeat("  ", len(hiyerarsi.UstGorevler)), hiyerarsi.Gorev.Baslik))
+	}
+
+	// Alt görev istatistikleri
+	sb.WriteString("## 📈 Alt Görev İstatistikleri\n")
+	sb.WriteString(fmt.Sprintf("- **Toplam Alt Görev:** %d\n", hiyerarsi.ToplamAltGorev))
+	sb.WriteString(fmt.Sprintf("- **Tamamlanan:** %d ✓\n", hiyerarsi.TamamlananAlt))
+	sb.WriteString(fmt.Sprintf("- **Devam Eden:** %d 🔄\n", hiyerarsi.DevamEdenAlt))
+	sb.WriteString(fmt.Sprintf("- **Beklemede:** %d ⏳\n", hiyerarsi.BeklemedeAlt))
+	sb.WriteString(fmt.Sprintf("- **İlerleme:** %.1f%%\n\n", hiyerarsi.IlerlemeYuzdesi))
+
+	// Doğrudan alt görevler
+	altGorevler, err := h.isYonetici.AltGorevleriGetir(gorevID)
+	if err == nil && len(altGorevler) > 0 {
+		sb.WriteString("## 🌳 Doğrudan Alt Görevler\n")
+		for _, alt := range altGorevler {
+			durum := ""
+			switch alt.Durum {
+			case "tamamlandi":
+				durum = "✓"
+			case "devam_ediyor":
+				durum = "🔄"
+			case "beklemede":
+				durum = "⏳"
+			}
+			sb.WriteString(fmt.Sprintf("- %s %s (ID: %s)\n", durum, alt.Baslik, alt.ID))
+		}
+	}
+
+	return mcp.NewToolResultText(sb.String()), nil
+}
+
 func (h *Handlers) RegisterTools(s *server.MCPServer) {
 	// Görev oluştur
 	s.AddTool(mcp.Tool{
@@ -1014,4 +1180,76 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 			Required: []string{"template_id", "degerler"},
 		},
 	}, h.TemplatedenGorevOlustur)
+
+	// Alt görev oluştur
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_altgorev_olustur",
+		Description: "Mevcut bir görevin altına yeni görev oluşturur",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"parent_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Üst görevin ID'si",
+				},
+				"baslik": map[string]interface{}{
+					"type":        "string",
+					"description": "Alt görevin başlığı",
+				},
+				"aciklama": map[string]interface{}{
+					"type":        "string",
+					"description": "Alt görevin açıklaması",
+				},
+				"oncelik": map[string]interface{}{
+					"type":        "string",
+					"description": "Öncelik seviyesi (yuksek, orta, dusuk)",
+				},
+				"son_tarih": map[string]interface{}{
+					"type":        "string",
+					"description": "Son tarih (YYYY-AA-GG formatında)",
+				},
+				"etiketler": map[string]interface{}{
+					"type":        "string",
+					"description": "Virgülle ayrılmış etiket listesi",
+				},
+			},
+			Required: []string{"parent_id", "baslik"},
+		},
+	}, h.GorevAltGorevOlustur)
+
+	// Görev üst değiştir
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ust_degistir",
+		Description: "Bir görevin üst görevini değiştirir veya kök göreve taşır",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"gorev_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Taşınacak görevin ID'si",
+				},
+				"yeni_parent_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Yeni üst görevin ID'si (boş string kök göreve taşır)",
+				},
+			},
+			Required: []string{"gorev_id"},
+		},
+	}, h.GorevUstDegistir)
+
+	// Görev hiyerarşi göster
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_hiyerarsi_goster",
+		Description: "Bir görevin tam hiyerarşisini ve alt görev istatistiklerini gösterir",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"gorev_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Görevin ID'si",
+				},
+			},
+			Required: []string{"gorev_id"},
+		},
+	}, h.GorevHiyerarsiGoster)
 }

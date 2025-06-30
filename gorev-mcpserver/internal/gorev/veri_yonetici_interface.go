@@ -23,5 +23,11 @@ type VeriYoneticiInterface interface {
 	TemplateGetir(templateID string) (*GorevTemplate, error)
 	TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error)
 	VarsayilanTemplateleriOlustur() error
+	AltGorevleriGetir(parentID string) ([]*Gorev, error)
+	TumAltGorevleriGetir(parentID string) ([]*Gorev, error)
+	UstGorevleriGetir(gorevID string) ([]*Gorev, error)
+	GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error)
+	ParentIDGuncelle(gorevID, yeniParentID string) error
+	DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error)
 	Kapat() error
 }

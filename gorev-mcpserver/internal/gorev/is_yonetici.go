@@ -79,6 +79,20 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 		}
 	}
 
+	// Eğer görev "tamamlandi" durumuna geçiyorsa, tüm alt görevlerin tamamlandığını kontrol et
+	if durum == "tamamlandi" && gorev.Durum != "tamamlandi" {
+		altGorevler, err := iy.veriYonetici.AltGorevleriGetir(id)
+		if err != nil {
+			return fmt.Errorf("alt görevler kontrol edilemedi: %w", err)
+		}
+
+		for _, altGorev := range altGorevler {
+			if altGorev.Durum != "tamamlandi" {
+				return fmt.Errorf("bu görev tamamlanamaz, önce tüm alt görevler tamamlanmalı")
+			}
+		}
+	}
+
 	gorev.Durum = durum
 	gorev.GuncellemeTarih = time.Now()
 
@@ -135,6 +149,22 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 		gorev.Oncelik = oncelik
 	}
 	if projeVar {
+		// Proje değiştiriliyorsa, tüm alt görevleri de taşı
+		if gorev.ProjeID != projeID {
+			altGorevler, err := iy.veriYonetici.TumAltGorevleriGetir(id)
+			if err != nil {
+				return fmt.Errorf("alt görevler alınamadı: %w", err)
+			}
+
+			// Tüm alt görevlerin projesini güncelle
+			for _, altGorev := range altGorevler {
+				altGorev.ProjeID = projeID
+				altGorev.GuncellemeTarih = time.Now()
+				if err := iy.veriYonetici.GorevGuncelle(altGorev); err != nil {
+					return fmt.Errorf("alt görev güncellenemedi: %w", err)
+				}
+			}
+		}
 		gorev.ProjeID = projeID
 	}
 	if sonTarihVar {
@@ -159,6 +189,16 @@ func (iy *IsYonetici) GorevSil(id string) error {
 	_, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
 		return fmt.Errorf("görev bulunamadı: %w", err)
+	}
+
+	// Alt görevleri kontrol et
+	altGorevler, err := iy.veriYonetici.AltGorevleriGetir(id)
+	if err != nil {
+		return fmt.Errorf("alt görevler kontrol edilemedi: %w", err)
+	}
+
+	if len(altGorevler) > 0 {
+		return fmt.Errorf("bu görev silinemez, önce %d alt görev silinmeli", len(altGorevler))
 	}
 
 	return iy.veriYonetici.GorevSil(id)
@@ -303,4 +343,91 @@ func (iy *IsYonetici) TemplateListele(kategori string) ([]*GorevTemplate, error)
 // TemplatedenGorevOlustur template kullanarak görev oluşturur
 func (iy *IsYonetici) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
 	return iy.veriYonetici.TemplatedenGorevOlustur(templateID, degerler)
+}
+
+// AltGorevOlustur mevcut bir görevin altına yeni görev oluşturur
+func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+	// Parent görevi kontrol et
+	parent, err := iy.veriYonetici.GorevGetir(parentID)
+	if err != nil {
+		return nil, fmt.Errorf("üst görev bulunamadı: %w", err)
+	}
+
+	var sonTarih *time.Time
+	if sonTarihStr != "" {
+		t, err := time.Parse("2006-01-02", sonTarihStr)
+		if err != nil {
+			return nil, fmt.Errorf("geçersiz son tarih formatı (YYYY-AA-GG olmalı): %w", err)
+		}
+		sonTarih = &t
+	}
+
+	gorev := &Gorev{
+		ID:              uuid.New().String(),
+		Baslik:          baslik,
+		Aciklama:        aciklama,
+		Oncelik:         oncelik,
+		Durum:           "beklemede",
+		ProjeID:         parent.ProjeID, // Alt görev aynı projede olmalı
+		ParentID:        parentID,
+		OlusturmaTarih:  time.Now(),
+		GuncellemeTarih: time.Now(),
+		SonTarih:        sonTarih,
+	}
+
+	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
+		return nil, fmt.Errorf("alt görev kaydedilemedi: %w", err)
+	}
+
+	if len(etiketIsimleri) > 0 {
+		etiketler, err := iy.veriYonetici.EtiketleriGetirVeyaOlustur(etiketIsimleri)
+		if err != nil {
+			return nil, fmt.Errorf("etiketler işlenemedi: %w", err)
+		}
+		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
+			return nil, fmt.Errorf("etiketler ayarlanamadı: %w", err)
+		}
+		gorev.Etiketler = etiketler
+	}
+
+	return gorev, nil
+}
+
+// GorevUstDegistir bir görevin üst görevini değiştirir
+func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
+	// Görevi kontrol et
+	gorev, err := iy.veriYonetici.GorevGetir(gorevID)
+	if err != nil {
+		return fmt.Errorf("görev bulunamadı: %w", err)
+	}
+
+	// Yeni parent varsa kontrol et
+	if yeniParentID != "" {
+		parent, err := iy.veriYonetici.GorevGetir(yeniParentID)
+		if err != nil {
+			return fmt.Errorf("yeni üst görev bulunamadı: %w", err)
+		}
+
+		// Alt görev ve üst görev aynı projede olmalı
+		if gorev.ProjeID != parent.ProjeID {
+			return fmt.Errorf("alt görev ve üst görev aynı projede olmalı")
+		}
+	}
+
+	return iy.veriYonetici.ParentIDGuncelle(gorevID, yeniParentID)
+}
+
+// GorevHiyerarsiGetir bir görevin tam hiyerarşi bilgilerini getirir
+func (iy *IsYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error) {
+	return iy.veriYonetici.GorevHiyerarsiGetir(gorevID)
+}
+
+// AltGorevleriGetir bir görevin doğrudan alt görevlerini getirir
+func (iy *IsYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
+	return iy.veriYonetici.AltGorevleriGetir(parentID)
+}
+
+// TumAltGorevleriGetir bir görevin tüm alt görev ağacını getirir
+func (iy *IsYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) {
+	return iy.veriYonetici.TumAltGorevleriGetir(parentID)
 }

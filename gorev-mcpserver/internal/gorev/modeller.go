@@ -10,10 +10,13 @@ type Gorev struct {
 	Durum           string     `json:"durum"`
 	Oncelik         string     `json:"oncelik"`
 	ProjeID         string     `json:"proje_id,omitempty"`
+	ParentID        string     `json:"parent_id,omitempty"`
 	OlusturmaTarih  time.Time  `json:"olusturma_tarih"`
 	GuncellemeTarih time.Time  `json:"guncelleme_tarih"`
 	SonTarih        *time.Time `json:"son_tarih,omitempty"`
 	Etiketler       []*Etiket  `json:"etiketler,omitempty"`
+	AltGorevler     []*Gorev   `json:"alt_gorevler,omitempty"`
+	Seviye          int        `json:"seviye,omitempty"`
 }
 
 // Etiket görevleri kategorize etmek için kullanılır
@@ -71,4 +74,15 @@ type TemplateAlan struct {
 	Zorunlu    bool     `json:"zorunlu"`
 	Varsayilan string   `json:"varsayilan"`
 	Secenekler []string `json:"secenekler,omitempty"`
+}
+
+// GorevHiyerarsi görev hiyerarşi bilgilerini tutar
+type GorevHiyerarsi struct {
+	Gorev           *Gorev   `json:"gorev"`
+	UstGorevler     []*Gorev `json:"ust_gorevler,omitempty"`
+	ToplamAltGorev  int      `json:"toplam_alt_gorev"`
+	TamamlananAlt   int      `json:"tamamlanan_alt"`
+	DevamEdenAlt    int      `json:"devam_eden_alt"`
+	BeklemedeAlt    int      `json:"beklemede_alt"`
+	IlerlemeYuzdesi float64  `json:"ilerleme_yuzdesi"`
 }

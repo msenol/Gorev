@@ -83,8 +83,8 @@ func (vy *VeriYonetici) Kapat() error {
 }
 
 func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
-	sorgu := `INSERT INTO gorevler (id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih)
-	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	sorgu := `INSERT INTO gorevler (id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih)
+	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := vy.db.Exec(sorgu,
 		gorev.ID,
@@ -93,6 +93,7 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 		gorev.Durum,
 		gorev.Oncelik,
 		gorev.ProjeID,
+		sql.NullString{String: gorev.ParentID, Valid: gorev.ParentID != ""},
 		gorev.OlusturmaTarih,
 		gorev.GuncellemeTarih,
 		gorev.SonTarih,
@@ -102,11 +103,11 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 }
 
 func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih
+	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
 	          FROM gorevler WHERE id = ?`
 
 	gorev := &Gorev{}
-	var projeID sql.NullString
+	var projeID, parentID sql.NullString
 
 	err := vy.db.QueryRow(sorgu, id).Scan(
 		&gorev.ID,
@@ -115,6 +116,7 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 		&gorev.Durum,
 		&gorev.Oncelik,
 		&projeID,
+		&parentID,
 		&gorev.OlusturmaTarih,
 		&gorev.GuncellemeTarih,
 		&gorev.SonTarih,
@@ -126,6 +128,10 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 
 	if projeID.Valid {
 		gorev.ProjeID = projeID.String
+	}
+
+	if parentID.Valid {
+		gorev.ParentID = parentID.String
 	}
 
 	// Etiketleri getir
@@ -142,7 +148,7 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 }
 
 func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih
+	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
 	          FROM gorevler`
 	args := []interface{}{}
 	whereClauses := []string{}
@@ -180,7 +186,7 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 	var gorevler []*Gorev
 	for rows.Next() {
 		gorev := &Gorev{}
-		var projeID sql.NullString
+		var projeID, parentID sql.NullString
 
 		err := rows.Scan(
 			&gorev.ID,
@@ -189,6 +195,7 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 			&gorev.Durum,
 			&gorev.Oncelik,
 			&projeID,
+			&parentID,
 			&gorev.OlusturmaTarih,
 			&gorev.GuncellemeTarih,
 			&gorev.SonTarih,
@@ -199,6 +206,10 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 
 		if projeID.Valid {
 			gorev.ProjeID = projeID.String
+		}
+
+		if parentID.Valid {
+			gorev.ParentID = parentID.String
 		}
 
 		// Etiketleri getir
@@ -477,4 +488,298 @@ func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 		baglantilar = append(baglantilar, b)
 	}
 	return baglantilar, nil
+}
+
+// AltGorevleriGetir belirtilen görevin doğrudan alt görevlerini getirir
+func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
+	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
+	          FROM gorevler WHERE parent_id = ? ORDER BY olusturma_tarih`
+
+	rows, err := vy.db.Query(sorgu, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var gorevler []*Gorev
+	for rows.Next() {
+		gorev := &Gorev{}
+		var projeID, parentID sql.NullString
+
+		err := rows.Scan(
+			&gorev.ID,
+			&gorev.Baslik,
+			&gorev.Aciklama,
+			&gorev.Durum,
+			&gorev.Oncelik,
+			&projeID,
+			&parentID,
+			&gorev.OlusturmaTarih,
+			&gorev.GuncellemeTarih,
+			&gorev.SonTarih,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if projeID.Valid {
+			gorev.ProjeID = projeID.String
+		}
+		if parentID.Valid {
+			gorev.ParentID = parentID.String
+		}
+
+		// Etiketleri getir
+		etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Etiketler getirilemedi: %v", err)
+		}
+		gorev.Etiketler = etiketler
+
+		gorevler = append(gorevler, gorev)
+	}
+
+	return gorevler, nil
+}
+
+// TumAltGorevleriGetir belirtilen görevin tüm alt görev hiyerarşisini getirir (recursive)
+func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) {
+	sorgu := `
+		WITH RECURSIVE alt_gorevler AS (
+			SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, 
+			       olusturma_tarih, guncelleme_tarih, son_tarih, 1 as seviye
+			FROM gorevler
+			WHERE parent_id = ?
+			
+			UNION ALL
+			
+			SELECT g.id, g.baslik, g.aciklama, g.durum, g.oncelik, g.proje_id, g.parent_id,
+			       g.olusturma_tarih, g.guncelleme_tarih, g.son_tarih, ag.seviye + 1
+			FROM gorevler g
+			INNER JOIN alt_gorevler ag ON g.parent_id = ag.id
+		)
+		SELECT * FROM alt_gorevler ORDER BY seviye, olusturma_tarih`
+
+	rows, err := vy.db.Query(sorgu, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var gorevler []*Gorev
+	for rows.Next() {
+		gorev := &Gorev{}
+		var projeID, parentID sql.NullString
+
+		err := rows.Scan(
+			&gorev.ID,
+			&gorev.Baslik,
+			&gorev.Aciklama,
+			&gorev.Durum,
+			&gorev.Oncelik,
+			&projeID,
+			&parentID,
+			&gorev.OlusturmaTarih,
+			&gorev.GuncellemeTarih,
+			&gorev.SonTarih,
+			&gorev.Seviye,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if projeID.Valid {
+			gorev.ProjeID = projeID.String
+		}
+		if parentID.Valid {
+			gorev.ParentID = parentID.String
+		}
+
+		// Etiketleri getir
+		etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Etiketler getirilemedi: %v", err)
+		}
+		gorev.Etiketler = etiketler
+
+		gorevler = append(gorevler, gorev)
+	}
+
+	return gorevler, nil
+}
+
+// UstGorevleriGetir belirtilen görevin tüm üst görev hiyerarşisini getirir
+func (vy *VeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
+	sorgu := `
+		WITH RECURSIVE ust_gorevler AS (
+			SELECT g2.id, g2.baslik, g2.aciklama, g2.durum, g2.oncelik, g2.proje_id, g2.parent_id,
+			       g2.olusturma_tarih, g2.guncelleme_tarih, g2.son_tarih
+			FROM gorevler g1
+			JOIN gorevler g2 ON g1.parent_id = g2.id
+			WHERE g1.id = ?
+			
+			UNION ALL
+			
+			SELECT g.id, g.baslik, g.aciklama, g.durum, g.oncelik, g.proje_id, g.parent_id,
+			       g.olusturma_tarih, g.guncelleme_tarih, g.son_tarih
+			FROM gorevler g
+			INNER JOIN ust_gorevler ug ON ug.parent_id = g.id
+		)
+		SELECT * FROM ust_gorevler`
+
+	rows, err := vy.db.Query(sorgu, gorevID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var gorevler []*Gorev
+	for rows.Next() {
+		gorev := &Gorev{}
+		var projeID, parentID sql.NullString
+
+		err := rows.Scan(
+			&gorev.ID,
+			&gorev.Baslik,
+			&gorev.Aciklama,
+			&gorev.Durum,
+			&gorev.Oncelik,
+			&projeID,
+			&parentID,
+			&gorev.OlusturmaTarih,
+			&gorev.GuncellemeTarih,
+			&gorev.SonTarih,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if projeID.Valid {
+			gorev.ProjeID = projeID.String
+		}
+		if parentID.Valid {
+			gorev.ParentID = parentID.String
+		}
+
+		gorevler = append(gorevler, gorev)
+	}
+
+	return gorevler, nil
+}
+
+// GorevHiyerarsiGetir bir görevin tam hiyerarşi bilgilerini getirir
+func (vy *VeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error) {
+	// Ana görevi getir
+	gorev, err := vy.GorevGetir(gorevID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Üst görevleri getir
+	ustGorevler, err := vy.UstGorevleriGetir(gorevID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+
+	// Alt görev istatistiklerini hesapla
+	sorgu := `
+		WITH RECURSIVE alt_gorevler AS (
+			SELECT id, durum
+			FROM gorevler
+			WHERE parent_id = ?
+			
+			UNION ALL
+			
+			SELECT g.id, g.durum
+			FROM gorevler g
+			INNER JOIN alt_gorevler ag ON g.parent_id = ag.id
+		)
+		SELECT 
+			COUNT(*) as toplam,
+			SUM(CASE WHEN durum = 'tamamlandi' THEN 1 ELSE 0 END) as tamamlanan,
+			SUM(CASE WHEN durum = 'devam_ediyor' THEN 1 ELSE 0 END) as devam_eden,
+			SUM(CASE WHEN durum = 'beklemede' THEN 1 ELSE 0 END) as beklemede
+		FROM alt_gorevler`
+
+	var toplam, tamamlanan, devamEden, beklemede int
+	err = vy.db.QueryRow(sorgu, gorevID).Scan(&toplam, &tamamlanan, &devamEden, &beklemede)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+
+	// İlerleme yüzdesini hesapla
+	var ilerlemeYuzdesi float64
+	if toplam > 0 {
+		ilerlemeYuzdesi = (float64(tamamlanan) / float64(toplam)) * 100
+	} else if gorev.Durum == "tamamlandi" {
+		ilerlemeYuzdesi = 100
+	}
+
+	return &GorevHiyerarsi{
+		Gorev:           gorev,
+		UstGorevler:     ustGorevler,
+		ToplamAltGorev:  toplam,
+		TamamlananAlt:   tamamlanan,
+		DevamEdenAlt:    devamEden,
+		BeklemedeAlt:    beklemede,
+		IlerlemeYuzdesi: ilerlemeYuzdesi,
+	}, nil
+}
+
+// ParentIDGuncelle bir görevin parent_id'sini günceller
+func (vy *VeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error {
+	// Önce circular dependency kontrolü yap
+	if yeniParentID != "" {
+		daireVar, err := vy.DaireBagimliligiKontrolEt(gorevID, yeniParentID)
+		if err != nil {
+			return err
+		}
+		if daireVar {
+			return fmt.Errorf("dairesel bağımlılık tespit edildi")
+		}
+	}
+
+	var sorgu string
+	var err error
+
+	if yeniParentID == "" {
+		sorgu = `UPDATE gorevler SET parent_id = NULL, guncelleme_tarih = CURRENT_TIMESTAMP WHERE id = ?`
+		_, err = vy.db.Exec(sorgu, gorevID)
+	} else {
+		sorgu = `UPDATE gorevler SET parent_id = ?, guncelleme_tarih = CURRENT_TIMESTAMP WHERE id = ?`
+		_, err = vy.db.Exec(sorgu, yeniParentID, gorevID)
+	}
+
+	return err
+}
+
+// DaireBagimliligiKontrolEt bir görevin belirtilen parent'a taşınması durumunda dairesel bağımlılık oluşup oluşmayacağını kontrol eder
+func (vy *VeriYonetici) DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error) {
+	// Kendisine parent olamaz
+	if gorevID == hedefParentID {
+		return true, nil
+	}
+
+	// Hedef parent'ın üst hiyerarşisinde gorevID var mı kontrol et
+	sorgu := `
+		WITH RECURSIVE ust_gorevler AS (
+			SELECT id, parent_id
+			FROM gorevler
+			WHERE id = ?
+			
+			UNION ALL
+			
+			SELECT g.id, g.parent_id
+			FROM gorevler g
+			INNER JOIN ust_gorevler ug ON g.id = ug.parent_id
+		)
+		SELECT COUNT(*) FROM ust_gorevler WHERE id = ?`
+
+	var count int
+	err := vy.db.QueryRow(sorgu, hedefParentID, gorevID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
