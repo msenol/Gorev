@@ -115,38 +115,91 @@ export class MarkdownParser {
     static parseGorevListesi(markdown: string): Gorev[] {
         const lines = markdown.split('\n');
         const gorevler: Gorev[] = [];
+        const gorevMap: Map<string, Gorev> = new Map();
+        const parentStack: { id: string, level: number }[] = [];
         let currentGorev: Partial<Gorev> | null = null;
         let descriptionLines: string[] = [];
         
+        console.log('[MarkdownParser] Starting to parse tasks...');
+        console.log('[MarkdownParser] First 5 lines:', lines.slice(0, 5));
+        console.log('[MarkdownParser] Total lines:', lines.length);
+        
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
+            const line = lines[i];
+            // Calculate indent level before trimming
+            let indentLevel = 0;
+            if (line.startsWith('  ')) {
+                // Count spaces at the beginning
+                const spaceCount = line.length - line.trimStart().length;
+                indentLevel = Math.floor(spaceCount / 2);
+            }
+            const trimmedLine = line.trim();
             
-            // Görev satırı: - [durum] başlık (öncelik)
-            const taskMatch = line.match(/^- \[([^\]]+)\] (.+) \((\w+) öncelik\)/);
+            // Görev satırı formatları:
+            // └─ [durum] başlık (öncelik) - alt görev
+            // [durum] başlık (öncelik) - normal görev  
+            // - [durum] başlık (öncelik) - liste formatında görev
+            const taskRegex = /^(└─\s*|-\s*)?\[([^\]]+)\] (.+) \(([a-zA-ZğüşıöçĞÜŞİÖÇ]+) öncelik\)/;
+            const taskMatch = trimmedLine.match(taskRegex);
+            
+            if (i < 10 && trimmedLine.includes('[')) {
+                console.log(`[MarkdownParser] Line ${i}: "${line}"`);
+                console.log(`[MarkdownParser] Indent level: ${indentLevel}, trimmed: "${trimmedLine}"`);
+                console.log(`[MarkdownParser] taskMatch:`, taskMatch);
+            }
+            
             if (taskMatch) {
                 // Önceki görevi kaydet
                 if (currentGorev && currentGorev.id) {
                     if (descriptionLines.length > 0) {
                         currentGorev.aciklama = descriptionLines.join(' ').trim();
                     }
-                    gorevler.push(currentGorev as Gorev);
+                    const gorev = currentGorev as Gorev;
+                    gorev.seviye = currentGorev.seviye || 0;
+                    gorev.alt_gorevler = [];
+                    
+                    // Parent-child ilişkisini kur
+                    while (parentStack.length > 0 && parentStack[parentStack.length - 1].level >= gorev.seviye) {
+                        parentStack.pop();
+                    }
+                    
+                    if (parentStack.length > 0) {
+                        const parent = parentStack[parentStack.length - 1];
+                        gorev.parent_id = parent.id;
+                        const parentGorev = gorevMap.get(parent.id);
+                        if (parentGorev && parentGorev.alt_gorevler) {
+                            parentGorev.alt_gorevler.push(gorev);
+                            console.log(`[MarkdownParser] Added ${gorev.baslik} as child of ${parentGorev.baslik}`);
+                        }
+                    } else {
+                        // Root level görev
+                        gorevler.push(gorev);
+                        console.log(`[MarkdownParser] Added ${gorev.baslik} as root task`);
+                    }
+                    
+                    gorevMap.set(gorev.id!, gorev);
+                    parentStack.push({ id: gorev.id!, level: gorev.seviye });
+                    console.log(`[MarkdownParser] Parent stack after adding ${gorev.baslik}:`, parentStack.map(p => `${p.id}(L${p.level})`).join(' -> '));
                 }
                 
                 // Yeni görev
-                const [, durum, baslik, oncelik] = taskMatch;
+                // taskMatch groups: [full match, prefix (└─ or -), durum, baslik, oncelik]
+                const [, prefix, durum, baslik, oncelik] = taskMatch;
                 currentGorev = {
                     baslik,
                     durum: this.parseDurum(durum),
                     oncelik: this.parseOncelik(oncelik),
-                    etiketler: []
+                    etiketler: [],
+                    alt_gorevler: [],
+                    seviye: indentLevel
                 };
                 descriptionLines = [];
                 continue;
             }
             
             // ID satırı
-            if (currentGorev && line.includes('ID:')) {
-                const idMatch = line.match(/ID:\s*([a-f0-9-]+)/);
+            if (currentGorev && trimmedLine.includes('ID:')) {
+                const idMatch = trimmedLine.match(/ID:\s*([a-f0-9-]+)/);
                 if (idMatch) {
                     currentGorev.id = idMatch[1];
                 }
@@ -154,8 +207,8 @@ export class MarkdownParser {
             }
             
             // Proje satırı
-            if (currentGorev && line.includes('Proje:')) {
-                const projeMatch = line.match(/Proje:\s*(.+)/);
+            if (currentGorev && trimmedLine.includes('Proje:')) {
+                const projeMatch = trimmedLine.match(/Proje:\s*(.+)/);
                 if (projeMatch) {
                     // Proje ismi var, sadece görsel için sakla
                     (currentGorev as any).proje_isim = projeMatch[1];
@@ -164,8 +217,8 @@ export class MarkdownParser {
             }
             
             // ProjeID satırı
-            if (currentGorev && line.includes('ProjeID:')) {
-                const projeIDMatch = line.match(/ProjeID:\s*([a-f0-9-]+)/);
+            if (currentGorev && trimmedLine.includes('ProjeID:')) {
+                const projeIDMatch = trimmedLine.match(/ProjeID:\s*([a-f0-9-]+)/);
                 if (projeIDMatch) {
                     currentGorev.proje_id = projeIDMatch[1];
                 }
@@ -173,8 +226,8 @@ export class MarkdownParser {
             }
             
             // Son Tarih
-            if (currentGorev && line.includes('Son tarih:')) {
-                const tarihMatch = line.match(/Son tarih:\s*(\d{4}-\d{2}-\d{2})/);
+            if (currentGorev && trimmedLine.includes('Son tarih:')) {
+                const tarihMatch = trimmedLine.match(/Son tarih:\s*(\d{4}-\d{2}-\d{2})/);
                 if (tarihMatch) {
                     currentGorev.son_tarih = tarihMatch[1];
                 }
@@ -182,8 +235,8 @@ export class MarkdownParser {
             }
             
             // Etiketler
-            if (currentGorev && line.includes('Etiketler:')) {
-                const etiketMatch = line.match(/Etiketler:\s*(.+)/);
+            if (currentGorev && trimmedLine.includes('Etiketler:')) {
+                const etiketMatch = trimmedLine.match(/Etiketler:\s*(.+)/);
                 if (etiketMatch) {
                     currentGorev.etiketler = etiketMatch[1].split(',').map(e => e.trim());
                 }
@@ -191,8 +244,8 @@ export class MarkdownParser {
             }
             
             // Açıklama satırı (ID, Proje, vs. değilse)
-            if (currentGorev && line && !line.startsWith('- [') && !line.startsWith('##')) {
-                descriptionLines.push(line);
+            if (currentGorev && trimmedLine && !trimmedLine.startsWith('[') && !trimmedLine.startsWith('##') && !trimmedLine.startsWith('└─')) {
+                descriptionLines.push(trimmedLine);
             }
         }
         
@@ -201,9 +254,32 @@ export class MarkdownParser {
             if (descriptionLines.length > 0) {
                 currentGorev.aciklama = descriptionLines.join(' ').trim();
             }
-            gorevler.push(currentGorev as Gorev);
+            const gorev = currentGorev as Gorev;
+            gorev.seviye = gorev.seviye || 0;
+            gorev.alt_gorevler = [];
+            
+            // Parent-child ilişkisini kur
+            while (parentStack.length > 0 && parentStack[parentStack.length - 1].level >= gorev.seviye) {
+                parentStack.pop();
+            }
+            
+            if (parentStack.length > 0) {
+                const parent = parentStack[parentStack.length - 1];
+                gorev.parent_id = parent.id;
+                const parentGorev = gorevMap.get(parent.id);
+                if (parentGorev && parentGorev.alt_gorevler) {
+                    parentGorev.alt_gorevler.push(gorev);
+                }
+            } else {
+                // Root level görev
+                gorevler.push(gorev);
+            }
+            
+            gorevMap.set(gorev.id, gorev);
         }
         
+        console.log('[MarkdownParser] Total tasks parsed:', gorevler.length);
+        console.log('[MarkdownParser] Tasks with subtasks:', gorevler.filter(g => g.alt_gorevler && g.alt_gorevler.length > 0).map(g => `${g.baslik} (${g.alt_gorevler!.length} subtasks)`));
         return gorevler;
     }
     
@@ -460,6 +536,20 @@ export class MarkdownParser {
     private static parseDurum(durum: string): GorevDurum {
         const normalizedDurum = durum.toLowerCase().replace(/\s/g, '_');
         
+        // Handle emoji status indicators
+        switch (durum) {
+            case '✓':
+            case '✅':
+                return GorevDurum.Tamamlandi;
+            case '🔄':
+            case '⚡':
+                return GorevDurum.DevamEdiyor;
+            case '⏳':
+            case '○':
+                return GorevDurum.Beklemede;
+        }
+        
+        // Handle text status
         switch (normalizedDurum) {
             case 'beklemede':
             case 'bekleyen':

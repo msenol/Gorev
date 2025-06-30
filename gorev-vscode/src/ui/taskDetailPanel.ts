@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { MCPClient } from '../mcp/client';
-import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
+import { Gorev, GorevDurum, GorevOncelik, GorevHiyerarsi } from '../models/gorev';
 import { Logger } from '../utils/logger';
 import { MarkdownParser } from '../utils/markdownParser';
 import * as path from 'path';
@@ -12,6 +12,7 @@ export class TaskDetailPanel {
     private static currentPanel: TaskDetailPanel | undefined;
     private readonly panel: vscode.WebviewPanel;
     private task: Gorev;
+    private hierarchyInfo?: GorevHiyerarsi;
     private disposables: vscode.Disposable[] = [];
     
     private constructor(
@@ -57,12 +58,9 @@ export class TaskDetailPanel {
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
         
-        // If we already have a panel, show it
+        // If we already have a panel, dispose it and create a new one to force reload
         if (TaskDetailPanel.currentPanel) {
-            TaskDetailPanel.currentPanel.task = task;
-            TaskDetailPanel.currentPanel.panel.reveal(column);
-            TaskDetailPanel.currentPanel.update();
-            return;
+            TaskDetailPanel.currentPanel.dispose();
         }
         
         // Otherwise, create a new panel
@@ -72,10 +70,10 @@ export class TaskDetailPanel {
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
-                retainContextWhenHidden: true,
+                retainContextWhenHidden: false, // Force reload on hide/show
                 localResourceRoots: [
                     vscode.Uri.joinPath(extensionUri, 'media'),
-                    vscode.Uri.joinPath(extensionUri, 'node_modules')
+                    vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode', 'codicons', 'dist')
                 ]
             }
         );
@@ -98,9 +96,21 @@ export class TaskDetailPanel {
             // Parse task details from markdown
             this.parseTaskDetails(content);
             
+            // Get hierarchy information if available
+            try {
+                const hierarchyResult = await this.mcpClient.callTool('gorev_hiyerarsi_goster', { gorev_id: this.task.id });
+                if (hierarchyResult && hierarchyResult.content && hierarchyResult.content[0]) {
+                    this.parseHierarchyInfo(hierarchyResult.content[0].text);
+                }
+            } catch (err) {
+                Logger.debug('Hierarchy info not available:', err);
+            }
+            
             // Update webview content
+            Logger.info('[TaskDetailPanel] Setting new HTML content with breadcrumb navigation');
             this.panel.webview.html = this.getHtmlContent();
             this.panel.title = `Görev: ${this.task.baslik}`;
+            Logger.info('[TaskDetailPanel] HTML content updated successfully');
         } catch (error) {
             Logger.error('Failed to update task details:', error);
             vscode.window.showErrorMessage('Görev detayları yüklenemedi');
@@ -131,6 +141,76 @@ export class TaskDetailPanel {
         });
     }
     
+    private parseHierarchyInfo(content: string) {
+        // Parse hierarchy statistics from the response
+        const lines = content.split('\n');
+        const stats: any = {};
+        
+        // Add debug logging
+        Logger.debug('Parsing hierarchy info from content:', content);
+        
+        for (const line of lines) {
+            if (line.includes('Toplam Alt Görev:')) {
+                const match = line.match(/\*?\*?Toplam Alt Görev:\*?\*?\s*(\d+)/);
+                if (match) stats.toplamAltGorev = parseInt(match[1]);
+            }
+            if (line.includes('Tamamlanan:')) {
+                const match = line.match(/\*?\*?Tamamlanan:\*?\*?\s*(\d+)/);
+                if (match) stats.tamamlananAlt = parseInt(match[1]);
+            }
+            if (line.includes('Devam Eden:')) {
+                const match = line.match(/\*?\*?Devam Eden:\*?\*?\s*(\d+)/);
+                if (match) stats.devamEdenAlt = parseInt(match[1]);
+            }
+            if (line.includes('Beklemede:')) {
+                const match = line.match(/\*?\*?Beklemede:\*?\*?\s*(\d+)/);
+                if (match) stats.beklemedeAlt = parseInt(match[1]);
+            }
+            // More flexible parsing for İlerleme (Progress)
+            if (line.includes('İlerleme:') || line.includes('Progress:')) {
+                // Try multiple patterns for better compatibility
+                const patterns = [
+                    /\*?\*?İlerleme:\*?\*?\s*([\d.]+)%/,  // Handles **İlerleme:** format
+                    /İlerleme:\s*([\d.]+)%/,
+                    /İlerleme:\s*%([\d.]+)/,
+                    /Progress:\s*([\d.]+)%/,
+                    /İlerleme:\s*([\d.]+)/
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = line.match(pattern);
+                    if (match) {
+                        stats.ilerlemeYuzdesi = parseFloat(match[1]);
+                        Logger.debug('Parsed progress percentage:', stats.ilerlemeYuzdesi);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Calculate progress if not provided but we have the data
+        if (stats.ilerlemeYuzdesi === undefined && stats.toplamAltGorev > 0) {
+            stats.ilerlemeYuzdesi = Math.round((stats.tamamlananAlt / stats.toplamAltGorev) * 100);
+            Logger.debug('Calculated progress percentage:', stats.ilerlemeYuzdesi);
+        }
+        
+        // Ensure ilerleme_yuzdesi is always a valid number
+        const progressPercentage = stats.ilerlemeYuzdesi || 0;
+        const validPercentage = isNaN(progressPercentage) ? 0 : Math.min(100, Math.max(0, progressPercentage));
+        
+        this.hierarchyInfo = {
+            gorev: this.task,
+            ust_gorevler: [],
+            toplam_alt_gorev: stats.toplamAltGorev || 0,
+            tamamlanan_alt: stats.tamamlananAlt || 0,
+            devam_eden_alt: stats.devamEdenAlt || 0,
+            beklemede_alt: stats.beklemedeAlt || 0,
+            ilerleme_yuzdesi: validPercentage
+        };
+        
+        Logger.debug('Final hierarchy info:', this.hierarchyInfo);
+    }
+    
     private parseDependencies(content: string): any[] {
         const dependencies: any[] = [];
         const depSection = content.split('## Bağımlılıklar')[1];
@@ -153,12 +233,13 @@ export class TaskDetailPanel {
     }
     
     private getHtmlContent(): string {
+        // Add timestamp for cache-busting
+        const timestamp = new Date().getTime();
         const styleUri = this.panel.webview.asWebviewUri(
             vscode.Uri.joinPath(this.extensionUri, 'media', 'taskDetail.css')
-        );
-        const codiconsUri = this.panel.webview.asWebviewUri(
-            vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css')
-        );
+        ) + `?v=${timestamp}`;
+        // VS Code provides codicons through its own CSS
+        const vscodeIconsUri = 'https://microsoft.github.io/vscode-codicons/dist/codicon.css';
         
         const nonce = this.getNonce();
         
@@ -167,143 +248,212 @@ export class TaskDetailPanel {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this.panel.webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; font-src ${this.panel.webview.cspSource};">
-    <link href="${codiconsUri}" rel="stylesheet" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this.panel.webview.cspSource} 'unsafe-inline' https://microsoft.github.io; script-src 'nonce-${nonce}'; font-src ${this.panel.webview.cspSource} https://microsoft.github.io;">
+    <link href="${vscodeIconsUri}" rel="stylesheet" />
     <link href="${styleUri}" rel="stylesheet">
     <title>Görev Detayı</title>
+    <script nonce="${nonce}">
+        console.log('TaskDetail CSS loaded:', '${styleUri}');
+        console.log('Page loaded at:', new Date().toISOString());
+        console.log('HTML Version: 2.0 - Two Column Layout with Breadcrumb');
+        // Log when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            console.log('Found breadcrumb:', document.querySelector('.breadcrumb-navigation'));
+            console.log('Found two-column layout:', document.querySelector('.content-layout'));
+        });
+    </script>
 </head>
 <body>
-    <div class="container">
-        <!-- Header Section -->
-        <div class="header">
-            <div class="header-content">
-                <h1 class="task-title">
-                    <span class="status-icon ${this.getStatusClass()}" title="${this.task.durum}">
-                        <i class="codicon ${this.getStatusIcon()}"></i>
-                    </span>
-                    <span contenteditable="true" id="taskTitle">${this.escapeHtml(this.task.baslik)}</span>
-                </h1>
-                <div class="task-meta">
-                    <span class="priority priority-${this.task.oncelik.toLowerCase()}">
-                        <i class="codicon codicon-arrow-up"></i> ${this.getPriorityLabel()}
-                    </span>
-                    ${this.task.son_tarih ? `
-                        <span class="due-date ${this.getDueDateClass()}">
-                            <i class="codicon codicon-calendar"></i> ${this.formatDate(this.task.son_tarih)}
-                        </span>
-                    ` : ''}
-                    ${this.task.proje_id ? `
-                        <span class="project">
-                            <i class="codicon codicon-folder"></i> <span id="projectName">Proje</span>
-                        </span>
-                    ` : ''}
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="action-button" id="updateStatusBtn" title="Durum Güncelle">
-                    <i class="codicon codicon-check"></i> Durum
-                </button>
-                <button class="action-button" id="editTaskBtn" title="Düzenle">
-                    <i class="codicon codicon-edit"></i> Düzenle
-                </button>
-                <button class="action-button danger" id="deleteTaskBtn" title="Sil">
-                    <i class="codicon codicon-trash"></i> Sil
-                </button>
-            </div>
-        </div>
+    <div class="main-container">
+        <!-- Breadcrumb Navigation -->
+        ${this.renderBreadcrumb()}
         
-        <!-- Tags Section -->
-        <div class="tags-section">
-            <h3><i class="codicon codicon-tag"></i> Etiketler</h3>
-            <div class="tags">
-                ${this.task.etiketler && this.task.etiketler.length > 0 ? 
-                    this.task.etiketler.map((tag: string) => `
-                        <span class="tag">${this.escapeHtml(tag)}</span>
-                    `).join('') : 
-                    '<span class="empty-state">Henüz etiket yok</span>'
-                }
-                <button class="tag add-tag" id="addTagBtn">
-                    <i class="codicon codicon-add"></i> Ekle
-                </button>
-            </div>
-        </div>
-        
-        <!-- Description Section -->
-        <div class="description-section">
-            <h3><i class="codicon codicon-note"></i> Açıklama</h3>
-            <div class="markdown-editor">
-                <div class="editor-toolbar">
-                    <button id="boldBtn" title="Kalın" aria-label="Kalın">
-                        <strong>B</strong>
-                    </button>
-                    <button id="italicBtn" title="İtalik" aria-label="İtalik">
-                        <em>I</em>
-                    </button>
-                    <button id="linkBtn" title="Link" aria-label="Link Ekle">
-                        🔗
-                    </button>
-                    <button id="codeBtn" title="Kod" aria-label="Kod">
-                        &lt;/&gt;
-                    </button>
-                    <button id="listBtn" title="Liste" aria-label="Liste">
-                        ☰
-                    </button>
-                    <span class="separator"></span>
-                    <button id="previewBtn" title="Önizleme" aria-label="Önizleme">
-                        👁 Önizleme
-                    </button>
-                </div>
-                <textarea id="descriptionEditor" class="editor-content">${this.escapeHtml(this.task.aciklama || '')}</textarea>
-                <div id="descriptionPreview" class="preview-content" style="display: none;"></div>
-            </div>
-        </div>
-        
-        <!-- Dependencies Section -->
-        ${this.task.bagimliliklar && this.task.bagimliliklar.length > 0 ? `
-            <div class="dependencies-section">
-                <h3><i class="codicon codicon-link"></i> Bağımlılıklar</h3>
-                <div class="dependency-graph">
-                    ${this.renderDependencyGraph()}
-                </div>
-                <div class="dependency-list">
-                    ${this.task.bagimliliklar.map((dep: any) => `
-                        <div class="dependency-item">
-                            <span class="dep-status status-${dep.durum}">
-                                <i class="codicon ${this.getDepStatusIcon(dep.durum)}"></i>
+        <!-- Two Column Layout -->
+        <div class="content-layout">
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Header Section -->
+                <div class="header card">
+                    <div class="header-content">
+                        <div class="status-badge ${this.getStatusClass()}">
+                            <i class="codicon ${this.getStatusIcon()}"></i>
+                            <span>${this.getStatusLabel()}</span>
+                        </div>
+                        <h1 class="task-title">
+                            <span contenteditable="true" id="taskTitle">${this.escapeHtml(this.task.baslik)}</span>
+                        </h1>
+                        <div class="task-meta">
+                            <span class="priority-badge priority-${this.task.oncelik.toLowerCase()}">
+                                <i class="codicon codicon-arrow-up"></i> ${this.getPriorityLabel()}
                             </span>
-                            <span class="dep-title">${this.escapeHtml(dep.baslik)}</span>
-                            <button class="link-button" data-task-id="${dep.id}">
-                                <i class="codicon codicon-arrow-right"></i>
+                            ${this.task.son_tarih ? `
+                                <span class="due-date-badge ${this.getDueDateClass()}">
+                                    <i class="codicon codicon-calendar"></i> ${this.formatDate(this.task.son_tarih)}
+                                </span>
+                            ` : ''}
+                            ${this.task.proje_id ? `
+                                <span class="project-badge">
+                                    <i class="codicon codicon-folder"></i> <span id="projectName">Proje</span>
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description Section -->
+                <div class="description-section card">
+                    <div class="section-header">
+                        <h3><i class="codicon codicon-note"></i> Açıklama</h3>
+                        <div class="editor-mode-toggle">
+                            <button class="mode-btn active" data-mode="edit">
+                                <i class="codicon codicon-edit"></i> Düzenle
+                            </button>
+                            <button class="mode-btn" data-mode="preview">
+                                <i class="codicon codicon-eye"></i> Önizle
+                            </button>
+                            <button class="mode-btn" data-mode="split">
+                                <i class="codicon codicon-split-horizontal"></i> Böl
                             </button>
                         </div>
-                    `).join('')}
-                </div>
-                <button class="add-dependency" id="addDependencyBtn">
-                    <i class="codicon codicon-add"></i> Bağımlılık Ekle
-                </button>
-            </div>
-        ` : ''}
-        
-        <!-- Activity Section -->
-        <div class="activity-section">
-            <h3><i class="codicon codicon-history"></i> Aktivite</h3>
-            <div class="activity-timeline">
-                <div class="timeline-item">
-                    <span class="timeline-icon"><i class="codicon codicon-add"></i></span>
-                    <div class="timeline-content">
-                        <div class="timeline-title">Görev oluşturuldu</div>
-                        <div class="timeline-time">${this.formatDate(this.task.olusturma_tarih)}</div>
                     </div>
-                </div>
-                ${this.task.guncelleme_tarih ? `
-                    <div class="timeline-item">
-                        <span class="timeline-icon"><i class="codicon codicon-edit"></i></span>
-                        <div class="timeline-content">
-                            <div class="timeline-title">Son güncelleme</div>
-                            <div class="timeline-time">${this.formatDate(this.task.guncelleme_tarih)}</div>
+                    <div class="markdown-editor enhanced">
+                        <div class="editor-toolbar">
+                            <div class="toolbar-group">
+                                <button id="boldBtn" title="Kalın (Ctrl+B)">
+                                    <i class="codicon codicon-bold"></i>
+                                </button>
+                                <button id="italicBtn" title="İtalik (Ctrl+I)">
+                                    <i class="codicon codicon-italic"></i>
+                                </button>
+                                <button id="strikeBtn" title="Üstü Çizili">
+                                    <i class="codicon codicon-text-strikethrough"></i>
+                                    <span style="font-size: 11px; margin-left: 2px;">S</span>
+                                </button>
+                            </div>
+                            <div class="toolbar-separator"></div>
+                            <div class="toolbar-group">
+                                <button id="h1Btn" title="Başlık 1">H1</button>
+                                <button id="h2Btn" title="Başlık 2">H2</button>
+                                <button id="h3Btn" title="Başlık 3">H3</button>
+                            </div>
+                            <div class="toolbar-separator"></div>
+                            <div class="toolbar-group">
+                                <button id="linkBtn" title="Link Ekle (Ctrl+K)">
+                                    <i class="codicon codicon-link"></i>
+                                </button>
+                                <button id="imageBtn" title="Resim Ekle">
+                                    <i class="codicon codicon-file-media"></i>
+                                </button>
+                                <button id="codeBtn" title="Kod">
+                                    <i class="codicon codicon-code"></i>
+                                </button>
+                                <button id="codeBlockBtn" title="Kod Bloğu">
+                                    <i class="codicon codicon-symbol-namespace"></i>
+                                </button>
+                            </div>
+                            <div class="toolbar-separator"></div>
+                            <div class="toolbar-group">
+                                <button id="listBtn" title="Liste">
+                                    <i class="codicon codicon-list-unordered"></i>
+                                </button>
+                                <button id="orderedListBtn" title="Numaralı Liste">
+                                    <i class="codicon codicon-list-ordered"></i>
+                                </button>
+                                <button id="checklistBtn" title="Checkbox">
+                                    <i class="codicon codicon-checklist"></i>
+                                </button>
+                                <button id="tableBtn" title="Tablo Ekle">
+                                    <i class="codicon codicon-table"></i>
+                                </button>
+                            </div>
+                            <div class="toolbar-separator"></div>
+                            <div class="toolbar-group">
+                                <button id="undoBtn" title="Geri Al (Ctrl+Z)">
+                                    <i class="codicon codicon-discard"></i>
+                                </button>
+                                <button id="redoBtn" title="İleri Al (Ctrl+Y)">
+                                    <i class="codicon codicon-redo"></i>
+                                </button>
+                            </div>
+                            <div class="toolbar-spacer"></div>
+                            <div class="toolbar-status">
+                                <span id="saveStatus" class="save-status">
+                                    <i class="codicon codicon-check"></i> Kaydedildi
+                                </span>
+                            </div>
+                        </div>
+                        <div class="editor-container" id="editorContainer">
+                            <div class="editor-pane">
+                                <textarea id="descriptionEditor" class="editor-content" placeholder="Görev açıklamasını buraya yazın...">${this.escapeHtml(this.task.aciklama || '')}</textarea>
+                            </div>
+                            <div class="preview-pane" id="previewPane" style="display: none;">
+                                <div id="descriptionPreview" class="preview-content"></div>
+                            </div>
                         </div>
                     </div>
-                ` : ''}
+                </div>
+                
+                <!-- Tags Section -->
+                <div class="tags-section card">
+                    <h3><i class="codicon codicon-tag"></i> Etiketler</h3>
+                    <div class="tags-container">
+                        ${this.task.etiketler && this.task.etiketler.length > 0 ? 
+                            this.task.etiketler.map((tag: string) => `
+                                <span class="tag">
+                                    <span class="tag-text">${this.escapeHtml(tag)}</span>
+                                    <button class="tag-remove" data-tag="${this.escapeHtml(tag)}">
+                                        <i class="codicon codicon-close"></i>
+                                    </button>
+                                </span>
+                            `).join('') : 
+                            '<span class="empty-state">Henüz etiket yok</span>'
+                        }
+                        <button class="tag-add" id="addTagBtn">
+                            <i class="codicon codicon-add"></i> Etiket Ekle
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Quick Actions -->
+                <div class="quick-actions card">
+                    <h3>Hızlı İşlemler</h3>
+                    <div class="actions-grid">
+                        <button class="quick-action-btn" id="updateStatusBtn" title="Durum Güncelle">
+                            <i class="codicon codicon-check"></i>
+                            <span>Durum</span>
+                        </button>
+                        <button class="quick-action-btn" id="editTaskBtn" title="Düzenle">
+                            <i class="codicon codicon-edit"></i>
+                            <span>Düzenle</span>
+                        </button>
+                        <button class="quick-action-btn" id="duplicateBtn" title="Kopyala">
+                            <i class="codicon codicon-files"></i>
+                            <span>Kopyala</span>
+                        </button>
+                        <button class="quick-action-btn danger" id="deleteTaskBtn" title="Sil">
+                            <i class="codicon codicon-trash"></i>
+                            <span>Sil</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Hierarchy Section -->
+                ${this.renderEnhancedHierarchySection()}
+                
+                <!-- Dependencies Section -->
+                ${this.renderDependenciesSection()}
+                
+                <!-- Activity Section -->
+                <div class="activity-section card">
+                    <h3><i class="codicon codicon-history"></i> Aktivite</h3>
+                    <div class="activity-timeline compact">
+                        ${this.renderActivityTimeline()}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -311,6 +461,15 @@ export class TaskDetailPanel {
     <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
         const taskId = '${this.task.id}';
+        
+        // Debug: Check if styles are loaded
+        window.addEventListener('load', () => {
+            const styles = document.styleSheets;
+            console.log('Loaded stylesheets:', styles.length);
+            for (let i = 0; i < styles.length; i++) {
+                console.log('Stylesheet', i, ':', styles[i].href);
+            }
+        });
         
         // Handle title editing
         document.getElementById('taskTitle').addEventListener('blur', function() {
@@ -335,6 +494,14 @@ export class TaskDetailPanel {
             }, 1000); // Auto-save after 1 second of inactivity
         });
         
+        // Handle create subtask button
+        const createSubtaskBtn = document.getElementById('createSubtaskBtn');
+        if (createSubtaskBtn) {
+            createSubtaskBtn.addEventListener('click', function() {
+                vscode.postMessage({ command: 'createSubtask' });
+            });
+        }
+        
         // Add event listeners for buttons
         document.getElementById('updateStatusBtn').addEventListener('click', function() {
             vscode.postMessage({ command: 'updateStatus' });
@@ -355,13 +522,63 @@ export class TaskDetailPanel {
             }
         });
         
+        // Editor mode toggle
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                handleEditorMode(this.dataset.mode);
+            });
+        });
+        
         // Markdown editor buttons
-        document.getElementById('boldBtn').addEventListener('click', function() { toggleBold(); });
-        document.getElementById('italicBtn').addEventListener('click', function() { toggleItalic(); });
-        document.getElementById('linkBtn').addEventListener('click', function() { insertLink(); });
-        document.getElementById('codeBtn').addEventListener('click', function() { insertCode(); });
-        document.getElementById('listBtn').addEventListener('click', function() { insertList(); });
-        document.getElementById('previewBtn').addEventListener('click', function() { togglePreview(); });
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const strikeBtn = document.getElementById('strikeBtn');
+        
+        if (boldBtn) {
+            boldBtn.addEventListener('click', function() { 
+                console.log('Bold button clicked');
+                toggleBold(); 
+            });
+        }
+        if (italicBtn) {
+            italicBtn.addEventListener('click', function() { 
+                console.log('Italic button clicked');
+                toggleItalic(); 
+            });
+        }
+        if (strikeBtn) {
+            strikeBtn.addEventListener('click', function() { 
+                console.log('Strike button clicked');
+                toggleStrike(); 
+            });
+        }
+        // Safely add event listeners for all editor buttons
+        const editorButtons = [
+            { id: 'h1Btn', handler: () => insertHeading(1) },
+            { id: 'h2Btn', handler: () => insertHeading(2) },
+            { id: 'h3Btn', handler: () => insertHeading(3) },
+            { id: 'linkBtn', handler: insertLink },
+            { id: 'imageBtn', handler: insertImage },
+            { id: 'codeBtn', handler: insertCode },
+            { id: 'codeBlockBtn', handler: insertCodeBlock },
+            { id: 'listBtn', handler: insertList },
+            { id: 'orderedListBtn', handler: insertOrderedList },
+            { id: 'checklistBtn', handler: insertChecklist },
+            { id: 'tableBtn', handler: insertTable },
+            { id: 'undoBtn', handler: performUndo },
+            { id: 'redoBtn', handler: performRedo }
+        ];
+        
+        editorButtons.forEach(({ id, handler }) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', handler);
+            } else {
+                console.warn('Button not found:', id);
+            }
+        });
         
         // Add dependency button
         const addDepBtn = document.getElementById('addDependencyBtn');
@@ -388,20 +605,61 @@ export class TaskDetailPanel {
             insertMarkdown('*', '*');
         }
         
+        function toggleStrike() {
+            insertMarkdown('~~', '~~');
+        }
+        
+        function insertHeading(level) {
+            const prefix = '#'.repeat(level) + ' ';
+            insertAtLineStart(prefix);
+        }
+        
         function insertLink() {
-            const url = prompt('URL:');
-            if (url) {
-                const text = prompt('Link metni:') || url;
-                insertText('[' + text + '](' + url + ')');
+            // Use vscode message passing instead of prompt
+            const selectedText = getSelectedText();
+            if (selectedText) {
+                vscode.postMessage({ command: 'insertLink', selectedText: selectedText });
+            } else {
+                vscode.postMessage({ command: 'insertLink' });
             }
+        }
+        
+        function insertImage() {
+            vscode.postMessage({ command: 'insertImage' });
         }
         
         function insertCode() {
             insertMarkdown('\`', '\`');
         }
         
+        function insertCodeBlock() {
+            vscode.postMessage({ command: 'insertCodeBlock' });
+        }
+        
+        function getSelectedText() {
+            const editor = document.getElementById('descriptionEditor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            if (start !== end) {
+                return editor.value.substring(start, end);
+            }
+            return '';
+        }
+        
         function insertList() {
-            insertText('\\n- ');
+            insertAtLineStart('- ');
+        }
+        
+        function insertOrderedList() {
+            insertAtLineStart('1. ');
+        }
+        
+        function insertChecklist() {
+            insertAtLineStart('- [ ] ');
+        }
+        
+        function insertTable() {
+            vscode.postMessage({ command: 'insertTable' });
         }
         
         function insertMarkdown(before, after) {
@@ -411,9 +669,16 @@ export class TaskDetailPanel {
             const text = editor.value;
             const selected = text.substring(start, end);
             
+            // Save current state before change
+            saveUndoState(text);
+            
             editor.value = text.substring(0, start) + before + selected + after + text.substring(end);
             editor.focus();
             editor.setSelectionRange(start + before.length, end + before.length);
+            
+            // Save new state and trigger input
+            lastValue = editor.value;
+            editor.dispatchEvent(new Event('input'));
         }
         
         function insertText(text) {
@@ -421,39 +686,620 @@ export class TaskDetailPanel {
             const start = editor.selectionStart;
             const value = editor.value;
             
+            // Save current state before change
+            saveUndoState(value);
+            
             editor.value = value.substring(0, start) + text + value.substring(start);
             editor.focus();
             editor.setSelectionRange(start + text.length, start + text.length);
+            
+            // Save new state
+            lastValue = editor.value;
+            
+            // Trigger input event for auto-save
+            editor.dispatchEvent(new Event('input'));
         }
         
-        let previewMode = false;
-        function togglePreview() {
-            previewMode = !previewMode;
+        function insertAtLineStart(text) {
             const editor = document.getElementById('descriptionEditor');
-            const preview = document.getElementById('descriptionPreview');
+            const start = editor.selectionStart;
+            const value = editor.value;
             
-            if (previewMode) {
-                editor.style.display = 'none';
-                preview.style.display = 'block';
-                // Simple markdown to HTML conversion
-                preview.innerHTML = convertMarkdownToHtml(editor.value);
-            } else {
-                editor.style.display = 'block';
-                preview.style.display = 'none';
+            // Save current state before change
+            saveUndoState(value);
+            
+            // Find start of current line
+            let lineStart = start;
+            while (lineStart > 0 && value[lineStart - 1] !== '\\n') {
+                lineStart--;
+            }
+            
+            editor.value = value.substring(0, lineStart) + text + value.substring(lineStart);
+            editor.focus();
+            const newPos = lineStart + text.length;
+            editor.setSelectionRange(newPos, newPos);
+            
+            // Save new state
+            lastValue = editor.value;
+            
+            // Trigger input event for auto-save
+            editor.dispatchEvent(new Event('input'));
+        }
+        
+        function handleEditorMode(mode) {
+            const container = document.getElementById('editorContainer');
+            const editorPane = container.querySelector('.editor-pane');
+            const previewPane = document.getElementById('previewPane');
+            const preview = document.getElementById('descriptionPreview');
+            const editor = document.getElementById('descriptionEditor');
+            
+            switch(mode) {
+                case 'edit':
+                    editorPane.style.display = 'block';
+                    editorPane.style.width = '100%';
+                    previewPane.style.display = 'none';
+                    break;
+                case 'preview':
+                    editorPane.style.display = 'none';
+                    previewPane.style.display = 'block';
+                    previewPane.style.width = '100%';
+                    preview.innerHTML = convertMarkdownToHtml(editor.value);
+                    break;
+                case 'split':
+                    editorPane.style.display = 'block';
+                    editorPane.style.width = '50%';
+                    previewPane.style.display = 'block';
+                    previewPane.style.width = '50%';
+                    preview.innerHTML = convertMarkdownToHtml(editor.value);
+                    container.style.display = 'flex';
+                    break;
             }
         }
         
         function convertMarkdownToHtml(markdown) {
-            return markdown
-                .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
-                .replace(/\\*(.+?)\\*/g, '<em>$1</em>')
-                .replace(/\`(.+?)\`/g, '<code>$1</code>')
-                .replace(/\\[(.+?)\\]\\((.+?)\\)/g, '<a href="$2">$1</a>')
-                .replace(/\\n/g, '<br>');
+            let html = markdown;
+            
+            // Code blocks first (to avoid conflicts)
+            html = html.replace(/\`\`\`([^\\n]*)\\n([^\`]+)\`\`\`/g, '<pre><code class="language-$1">$2</code></pre>');
+            
+            // Headers
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            
+            // Bold and italic
+            html = html.replace(/\\*\\*\\*(.+?)\\*\\*\\*/g, '<strong><em>$1</em></strong>');
+            html = html.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+            html = html.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+            html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+            
+            // Inline code
+            html = html.replace(/\`(.+?)\`/g, '<code>$1</code>');
+            
+            // Links and images
+            html = html.replace(/!\\[([^\\]]+)\\]\\(([^\\)]+)\\)/g, '<img src="$2" alt="$1" />');
+            html = html.replace(/\\[([^\\]]+)\\]\\(([^\\)]+)\\)/g, '<a href="$2">$1</a>');
+            
+            // Lists
+            html = html.replace(/^\\* (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/^\\d+\\. (.+)$/gm, '<li>$1</li>');
+            
+            // Checkboxes
+            html = html.replace(/^- \\[x\\] (.+)$/gm, '<li><input type="checkbox" checked disabled> $1</li>');
+            html = html.replace(/^- \\[ \\] (.+)$/gm, '<li><input type="checkbox" disabled> $1</li>');
+            
+            // Wrap consecutive li elements in ul
+            html = html.replace(/(<li>.*<\\/li>\\s*)+/g, function(match) {
+                return '<ul>' + match + '</ul>';
+            });
+            
+            // Line breaks
+            html = html.replace(/\\n\\n/g, '</p><p>');
+            html = html.replace(/\\n/g, '<br>');
+            
+            // Wrap in paragraphs
+            if (!html.startsWith('<')) {
+                html = '<p>' + html + '</p>';
+            }
+            
+            return html;
         }
+        
+        // Undo/Redo functionality
+        let undoStack = [];
+        let redoStack = [];
+        let lastValue = document.getElementById('descriptionEditor').value;
+        
+        function saveUndoState(value) {
+            if (value !== lastValue) {
+                undoStack.push(lastValue);
+                redoStack = []; // Clear redo stack on new change
+                lastValue = value;
+                // Limit undo stack size
+                if (undoStack.length > 50) {
+                    undoStack.shift();
+                }
+            }
+        }
+        
+        function performUndo() {
+            const editor = document.getElementById('descriptionEditor');
+            if (undoStack.length > 0) {
+                redoStack.push(editor.value);
+                const previousValue = undoStack.pop();
+                editor.value = previousValue;
+                lastValue = previousValue;
+                editor.dispatchEvent(new Event('input'));
+                console.log('Undo performed');
+            }
+        }
+        
+        function performRedo() {
+            const editor = document.getElementById('descriptionEditor');
+            if (redoStack.length > 0) {
+                undoStack.push(editor.value);
+                const nextValue = redoStack.pop();
+                editor.value = nextValue;
+                lastValue = nextValue;
+                editor.dispatchEvent(new Event('input'));
+                console.log('Redo performed');
+            }
+        }
+        
+        // Track changes for undo/redo
+        let undoTimer;
+        document.getElementById('descriptionEditor').addEventListener('input', function() {
+            clearTimeout(undoTimer);
+            undoTimer = setTimeout(() => {
+                saveUndoState(this.value);
+            }, 500); // Save state after 500ms of no typing
+        });
+        
+        // Keyboard shortcuts
+        document.getElementById('descriptionEditor').addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+                e.preventDefault();
+                performUndo();
+            } else if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'Z' || e.key === 'y')) {
+                e.preventDefault();
+                performRedo();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                toggleBold();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                toggleItalic();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                insertLink();
+            }
+        });
+        
+        // Update preview in split mode as user types
+        let updatePreviewTimeout;
+        document.getElementById('descriptionEditor').addEventListener('input', function() {
+            const mode = document.querySelector('.mode-btn.active').dataset.mode;
+            if (mode === 'split') {
+                clearTimeout(updatePreviewTimeout);
+                updatePreviewTimeout = setTimeout(() => {
+                    const preview = document.getElementById('descriptionPreview');
+                    preview.innerHTML = convertMarkdownToHtml(this.value);
+                }, 300);
+            }
+        });
+        
+        // Handle messages from VS Code
+        window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.command) {
+                case 'updateTask':
+                    // Update UI with new task data
+                    location.reload();
+                    break;
+                case 'insertText':
+                    insertText(message.text);
+                    if (message.cursorOffset) {
+                        const editor = document.getElementById('descriptionEditor');
+                        const pos = editor.selectionStart + message.cursorOffset;
+                        editor.setSelectionRange(pos, pos);
+                    }
+                    break;
+            }
+        });
     </script>
 </body>
 </html>`;
+    }
+    
+    private renderBreadcrumb(): string {
+        // TODO: Implement actual hierarchy fetching
+        return `
+            <div class="breadcrumb-navigation">
+                <a href="#" class="breadcrumb-item">
+                    <i class="codicon codicon-home"></i> Ana Sayfa
+                </a>
+                <i class="codicon codicon-chevron-right"></i>
+                <a href="#" class="breadcrumb-item">Projeler</a>
+                <i class="codicon codicon-chevron-right"></i>
+                <a href="#" class="breadcrumb-item">Frontend</a>
+                <i class="codicon codicon-chevron-right"></i>
+                <span class="breadcrumb-current">${this.escapeHtml(this.task.baslik)}</span>
+            </div>
+        `;
+    }
+    
+    private renderEnhancedHierarchySection(): string {
+        // Check both hierarchyInfo and task.alt_gorevler
+        const hasSubtasks = (this.task.alt_gorevler && this.task.alt_gorevler.length > 0);
+        const hasHierarchyInfo = this.hierarchyInfo && this.hierarchyInfo.toplam_alt_gorev > 0;
+        const hasHierarchy = hasSubtasks || hasHierarchyInfo || this.task.parent_id;
+        
+        // Calculate progress from task.alt_gorevler if hierarchyInfo is not available
+        let progressInfo = this.hierarchyInfo;
+        if (!progressInfo && hasSubtasks) {
+            // Count all subtasks recursively
+            const counts = this.countAllSubtasks(this.task.alt_gorevler!);
+            const totalSubtasks = counts.total;
+            const completedSubtasks = counts.completed;
+            const inProgressSubtasks = counts.inProgress;
+            const pendingSubtasks = counts.pending;
+            const progressPercentage = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
+            
+            progressInfo = {
+                gorev: this.task,
+                ust_gorevler: [],
+                toplam_alt_gorev: totalSubtasks,
+                tamamlanan_alt: completedSubtasks,
+                devam_eden_alt: inProgressSubtasks,
+                beklemede_alt: pendingSubtasks,
+                ilerleme_yuzdesi: progressPercentage
+            };
+        }
+        
+        return `
+            <div class="hierarchy-section card">
+                <h3><i class="codicon codicon-type-hierarchy"></i> Hiyerarşi</h3>
+                
+                ${hasHierarchy ? `
+                    <!-- Progress Overview -->
+                    ${progressInfo && progressInfo.toplam_alt_gorev > 0 ? `
+                        <div class="progress-overview">
+                            <div class="circular-progress">
+                                <svg viewBox="0 0 36 36" class="circular-chart">
+                                    <path class="circle-bg"
+                                        d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    />
+                                    <path class="circle"
+                                        stroke-dasharray="${progressInfo.ilerleme_yuzdesi || 0}, 100"
+                                        d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    />
+                                </svg>
+                                <div class="percentage-overlay">${Math.round(progressInfo.ilerleme_yuzdesi || 0)}%</div>
+                            </div>
+                            <div class="progress-details">
+                                <div class="stat-item">
+                                    <span class="stat-value">${progressInfo.toplam_alt_gorev}</span>
+                                    <span class="stat-label">Toplam</span>
+                                </div>
+                                <div class="stat-item success">
+                                    <span class="stat-value">${progressInfo.tamamlanan_alt}</span>
+                                    <span class="stat-label">Tamamlandı</span>
+                                </div>
+                                <div class="stat-item warning">
+                                    <span class="stat-value">${progressInfo.devam_eden_alt || 0}</span>
+                                    <span class="stat-label">Devam Ediyor</span>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Task Tree -->
+                    <div class="task-tree">
+                        ${this.renderTaskTree()}
+                    </div>
+                ` : `
+                    <div class="empty-state">
+                        <i class="codicon codicon-type-hierarchy"></i>
+                        <p>Bu görev henüz bir hiyerarşiye sahip değil</p>
+                    </div>
+                `}
+                
+                <div class="hierarchy-actions">
+                    <button class="action-button small" id="createSubtaskBtn">
+                        <i class="codicon codicon-add"></i> Alt Görev
+                    </button>
+                    ${this.task.parent_id ? `
+                        <button class="action-button small" onclick="vscode.postMessage({command: 'removeParent'})">
+                            <i class="codicon codicon-ungroup-by-ref-type"></i> Bağımsız Yap
+                        </button>
+                    ` : `
+                        <button class="action-button small" onclick="vscode.postMessage({command: 'changeParent'})">
+                            <i class="codicon codicon-type-hierarchy-sub"></i> Üst Görev Ata
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+    
+    private renderTaskTree(): string {
+        // Show actual task hierarchy
+        let treeHtml = '';
+        
+        // If task has parent, show it
+        if (this.task.parent_id) {
+            treeHtml += `
+                <div class="tree-item parent">
+                    <span class="tree-icon"><i class="codicon codicon-chevron-down"></i></span>
+                    <span class="tree-content">
+                        <i class="codicon codicon-symbol-class"></i> Üst Görev
+                    </span>
+                </div>
+            `;
+        }
+        
+        // Show current task
+        treeHtml += `
+            <div class="tree-item ${this.task.parent_id ? 'child' : ''} current">
+                <span class="tree-icon"></span>
+                <span class="tree-content">
+                    <i class="codicon codicon-circle-filled"></i> ${this.escapeHtml(this.task.baslik)}
+                    <span class="tree-badge">Şu an</span>
+                </span>
+            </div>
+        `;
+        
+        // Show subtasks if any
+        if (this.task.alt_gorevler && this.task.alt_gorevler.length > 0) {
+            treeHtml += this.renderSubtasks(this.task.alt_gorevler, 1);
+        }
+        
+        return treeHtml;
+    }
+    
+    private countAllSubtasks(subtasks: Gorev[]): { total: number; completed: number; inProgress: number; pending: number } {
+        let counts = { total: 0, completed: 0, inProgress: 0, pending: 0 };
+        
+        subtasks.forEach(subtask => {
+            counts.total++;
+            
+            switch (subtask.durum) {
+                case GorevDurum.Tamamlandi:
+                    counts.completed++;
+                    break;
+                case GorevDurum.DevamEdiyor:
+                    counts.inProgress++;
+                    break;
+                default:
+                    counts.pending++;
+                    break;
+            }
+            
+            // Recursively count sub-subtasks
+            if (subtask.alt_gorevler && subtask.alt_gorevler.length > 0) {
+                const subCounts = this.countAllSubtasks(subtask.alt_gorevler);
+                counts.total += subCounts.total;
+                counts.completed += subCounts.completed;
+                counts.inProgress += subCounts.inProgress;
+                counts.pending += subCounts.pending;
+            }
+        });
+        
+        return counts;
+    }
+    
+    private renderSubtasks(subtasks: Gorev[], level: number): string {
+        let html = '';
+        const indent = '    '.repeat(level);
+        
+        subtasks.forEach(subtask => {
+            const statusIcon = this.getSubtaskStatusIcon(subtask.durum);
+            const statusClass = this.getSubtaskStatusClass(subtask.durum);
+            const hasChildren = subtask.alt_gorevler && subtask.alt_gorevler.length > 0;
+            
+            html += `
+                <div class="tree-item child" style="padding-left: ${level * 20}px;">
+                    <span class="tree-icon">
+                        ${hasChildren ? '<i class="codicon codicon-chevron-right"></i>' : ''}
+                    </span>
+                    <span class="tree-content">
+                        <i class="codicon codicon-symbol-method"></i> ${this.escapeHtml(subtask.baslik)}
+                        <span class="tree-status ${statusClass}">${statusIcon}</span>
+                    </span>
+                </div>
+            `;
+            
+            // Recursively render sub-subtasks
+            if (hasChildren) {
+                html += this.renderSubtasks(subtask.alt_gorevler!, level + 1);
+            }
+        });
+        
+        return html;
+    }
+    
+    private getSubtaskStatusIcon(durum: GorevDurum): string {
+        switch (durum) {
+            case GorevDurum.Tamamlandi: return '✓';
+            case GorevDurum.DevamEdiyor: return '🔄';
+            default: return '⏳';
+        }
+    }
+    
+    private getSubtaskStatusClass(durum: GorevDurum): string {
+        switch (durum) {
+            case GorevDurum.Tamamlandi: return 'completed';
+            case GorevDurum.DevamEdiyor: return 'in-progress';
+            default: return 'pending';
+        }
+    }
+    
+    private renderHierarchySection(): string {
+        // Keep old method for backward compatibility
+        return this.renderEnhancedHierarchySection();
+    }
+    
+    private renderDependenciesSection(): string {
+        // Debug: Log dependency information
+        console.log('Task dependency info:', {
+            bagimli_gorev_sayisi: this.task.bagimli_gorev_sayisi,
+            tamamlanmamis_bagimlilik_sayisi: this.task.tamamlanmamis_bagimlilik_sayisi,
+            bu_goreve_bagimli_sayisi: this.task.bu_goreve_bagimli_sayisi,
+            bagimliliklar: this.task.bagimliliklar,
+            taskId: this.task.id,
+            taskTitle: this.task.baslik
+        });
+        
+        const hasDependencyInfo = this.task.bagimli_gorev_sayisi || this.task.bu_goreve_bagimli_sayisi || 
+                                  (this.task.bagimliliklar && this.task.bagimliliklar.length > 0);
+        
+        let html = `
+            <div class="dependencies-section card">
+                <h3><i class="codicon codicon-link"></i> Bağımlılıklar</h3>
+        `;
+        
+        // Summary stats or empty state
+        if (this.task.bagimli_gorev_sayisi || this.task.bu_goreve_bagimli_sayisi) {
+            html += `
+                <div class="dependency-stats">
+                    ${this.task.bagimli_gorev_sayisi ? `
+                        <div class="stat-item">
+                            <i class="codicon codicon-arrow-right"></i>
+                            <span class="stat-label">Bu görev bağımlı:</span>
+                            <span class="stat-value">${this.task.bagimli_gorev_sayisi} görev</span>
+                            ${this.task.tamamlanmamis_bagimlilik_sayisi ? `
+                                <span class="stat-warning">⚠️ ${this.task.tamamlanmamis_bagimlilik_sayisi} tamamlanmamış</span>
+                            ` : '<span class="stat-success">✓ Tümü tamamlanmış</span>'}
+                        </div>
+                    ` : ''}
+                    
+                    ${this.task.bu_goreve_bagimli_sayisi ? `
+                        <div class="stat-item">
+                            <i class="codicon codicon-arrow-left"></i>
+                            <span class="stat-label">Bu göreve bağımlı:</span>
+                            <span class="stat-value">${this.task.bu_goreve_bagimli_sayisi} görev</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else if (!hasDependencyInfo) {
+            // Empty state
+            html += `
+                <div class="empty-state">
+                    <i class="codicon codicon-link"></i>
+                    <p>Bu görev henüz hiçbir göreve bağımlı değil</p>
+                </div>
+            `;
+        }
+        
+        // Dependency list (if available)
+        if (this.task.bagimliliklar && this.task.bagimliliklar.length > 0) {
+            html += `
+                <div class="dependency-list compact">
+                    <h4>Bağımlı Olduğu Görevler:</h4>
+                    ${this.task.bagimliliklar.map((dep: any) => `
+                        <div class="dependency-item">
+                            <span class="dep-status ${this.getDepStatusClass(dep.hedef_durum || 'beklemede')}">
+                                <i class="codicon ${this.getDepStatusIcon(dep.hedef_durum || 'beklemede')}"></i>
+                            </span>
+                            <span class="dep-title">${this.escapeHtml(dep.hedef_baslik || 'Görev')}</span>
+                            <button class="link-button" onclick="vscode.postMessage({command: 'openTask', taskId: '${dep.hedef_id}'})" title="Görevi Aç">
+                                <i class="codicon codicon-arrow-right"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        html += `
+                <button class="add-button" id="addDependencyBtn" onclick="vscode.postMessage({command: 'addDependency'})">
+                    <i class="codicon codicon-add"></i> Bağımlılık Ekle
+                </button>
+            </div>
+        `;
+        
+        return html;
+    }
+    
+    private getDepStatusClass(durum: string): string {
+        if (durum.includes('tamamland')) return 'completed';
+        if (durum.includes('devam')) return 'in-progress';
+        return 'pending';
+    }
+    
+    private renderActivityTimeline(): string {
+        let html = '';
+        
+        // Oluşturulma aktivitesi
+        html += `
+            <div class="timeline-item">
+                <span class="timeline-icon"><i class="codicon codicon-add"></i></span>
+                <div class="timeline-content">
+                    <div class="timeline-title">Oluşturuldu</div>
+                    <div class="timeline-time">${this.formatRelativeTime(this.task.olusturma_tarih)}</div>
+                </div>
+            </div>
+        `;
+        
+        // Durum değişiklikleri
+        if (this.task.durum === GorevDurum.DevamEdiyor) {
+            html += `
+                <div class="timeline-item">
+                    <span class="timeline-icon"><i class="codicon codicon-debug-start"></i></span>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Başlatıldı</div>
+                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarih)}</div>
+                    </div>
+                </div>
+            `;
+        } else if (this.task.durum === GorevDurum.Tamamlandi) {
+            // Başlatılma (varsa)
+            if (this.task.guncelleme_tarih !== this.task.olusturma_tarih) {
+                html += `
+                    <div class="timeline-item">
+                        <span class="timeline-icon"><i class="codicon codicon-debug-start"></i></span>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Başlatıldı</div>
+                            <div class="timeline-time">-</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Tamamlanma
+            html += `
+                <div class="timeline-item">
+                    <span class="timeline-icon"><i class="codicon codicon-pass-filled"></i></span>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Tamamlandı</div>
+                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarih)}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Son güncelleme (farklıysa)
+        if (this.task.guncelleme_tarih && 
+            this.task.guncelleme_tarih !== this.task.olusturma_tarih &&
+            this.task.durum === GorevDurum.Beklemede) {
+            html += `
+                <div class="timeline-item">
+                    <span class="timeline-icon"><i class="codicon codicon-edit"></i></span>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Güncellendi</div>
+                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarih)}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return html;
     }
     
     private renderDependencyGraph(): string {
@@ -514,6 +1360,18 @@ export class TaskDetailPanel {
                 case 'addTag':
                     await this.addTag(message.tag);
                     break;
+                case 'insertLink':
+                    await this.handleInsertLink(message.selectedText);
+                    break;
+                case 'insertImage':
+                    await this.handleInsertImage();
+                    break;
+                case 'insertCodeBlock':
+                    await this.handleInsertCodeBlock();
+                    break;
+                case 'insertTable':
+                    await this.handleInsertTable();
+                    break;
                     
                 case 'addDependency':
                     await this.showDependencyPicker();
@@ -521,6 +1379,18 @@ export class TaskDetailPanel {
                     
                 case 'openTask':
                     await this.openTask(message.taskId);
+                    break;
+                    
+                case 'createSubtask':
+                    await vscode.commands.executeCommand('gorev.createSubtask', { task: this.task });
+                    break;
+                    
+                case 'changeParent':
+                    await vscode.commands.executeCommand('gorev.changeParent', { task: this.task });
+                    break;
+                    
+                case 'removeParent':
+                    await vscode.commands.executeCommand('gorev.removeParent', { task: this.task });
                     break;
             }
         } catch (error) {
@@ -602,6 +1472,89 @@ export class TaskDetailPanel {
         this.update();
     }
     
+    private async handleInsertLink(selectedText?: string) {
+        const url = await vscode.window.showInputBox({
+            prompt: 'Link URL\'sini girin',
+            placeHolder: 'https://example.com'
+        });
+        
+        if (url) {
+            const linkText = selectedText || await vscode.window.showInputBox({
+                prompt: 'Link metni',
+                placeHolder: 'Link açıklaması',
+                value: selectedText || ''
+            }) || url;
+            
+            this.panel.webview.postMessage({
+                command: 'insertText',
+                text: `[${linkText}](${url})`
+            });
+        }
+    }
+    
+    private async handleInsertImage() {
+        const url = await vscode.window.showInputBox({
+            prompt: 'Resim URL\'sini girin',
+            placeHolder: 'https://example.com/image.png'
+        });
+        
+        if (url) {
+            const altText = await vscode.window.showInputBox({
+                prompt: 'Alternatif metin',
+                placeHolder: 'Resim açıklaması',
+                value: 'Resim'
+            }) || 'Resim';
+            
+            this.panel.webview.postMessage({
+                command: 'insertText',
+                text: `![${altText}](${url})`
+            });
+        }
+    }
+    
+    private async handleInsertCodeBlock() {
+        const language = await vscode.window.showInputBox({
+            prompt: 'Programlama dili (opsiyonel)',
+            placeHolder: 'javascript, python, go, vb.'
+        }) || '';
+        
+        this.panel.webview.postMessage({
+            command: 'insertText',
+            text: `\n\`\`\`${language}\n\n\`\`\`\n`,
+            cursorOffset: -5
+        });
+    }
+    
+    private async handleInsertTable() {
+        const colsStr = await vscode.window.showInputBox({
+            prompt: 'Kolon sayısını girin',
+            placeHolder: '3',
+            value: '3'
+        });
+        
+        if (colsStr) {
+            const cols = parseInt(colsStr) || 3;
+            let table = '\n| ';
+            for (let i = 0; i < cols; i++) {
+                table += `Başlık ${i + 1} | `;
+            }
+            table += '\n| ';
+            for (let i = 0; i < cols; i++) {
+                table += '--- | ';
+            }
+            table += '\n| ';
+            for (let i = 0; i < cols; i++) {
+                table += 'Hücre | ';
+            }
+            table += '\n';
+            
+            this.panel.webview.postMessage({
+                command: 'insertText',
+                text: table
+            });
+        }
+    }
+    
     private async showDependencyPicker() {
         // Show task picker for adding dependency
         vscode.commands.executeCommand('gorev.addDependency', this.task.id);
@@ -635,6 +1588,14 @@ export class TaskDetailPanel {
             case GorevDurum.Tamamlandi: return 'codicon-pass-filled';
             case GorevDurum.DevamEdiyor: return 'codicon-debug-start';
             default: return 'codicon-circle-outline';
+        }
+    }
+    
+    private getStatusLabel(): string {
+        switch (this.task.durum) {
+            case GorevDurum.Tamamlandi: return 'Tamamlandı';
+            case GorevDurum.DevamEdiyor: return 'Devam Ediyor';
+            default: return 'Beklemede';
         }
     }
     
@@ -682,6 +1643,30 @@ export class TaskDetailPanel {
         };
         
         return date.toLocaleDateString('tr-TR', options);
+    }
+    
+    private formatRelativeTime(dateStr?: string): string {
+        if (!dateStr) return '';
+        
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        
+        if (diffSecs < 60) {
+            return 'Az önce';
+        } else if (diffMins < 60) {
+            return `${diffMins} dakika önce`;
+        } else if (diffHours < 24) {
+            return `${diffHours} saat önce`;
+        } else if (diffDays < 7) {
+            return `${diffDays} gün önce`;
+        } else {
+            return this.formatDate(dateStr);
+        }
     }
     
     private escapeHtml(text: string): string {

@@ -94,16 +94,23 @@ export class InlineEditProvider {
 
         if (selected && selected.value !== task.durum) {
             try {
-                await this.mcpClient.callTool('gorev_guncelle', {
+                Logger.info(`[QuickStatusChange] Updating task ${task.id} from ${task.durum} to ${selected.value}`);
+                
+                const result = await this.mcpClient.callTool('gorev_guncelle', {
                     id: task.id,
                     durum: selected.value
                 });
+                
+                Logger.info(`[QuickStatusChange] MCP response:`, JSON.stringify(result));
 
                 vscode.window.showInformationMessage('Görev durumu güncellendi');
-                Logger.info(`Task ${task.id} status updated to: ${selected.value}`);
+                Logger.info(`[QuickStatusChange] Task ${task.id} status updated to: ${selected.value}`);
+                
+                // Force a command execution to refresh all trees
+                await vscode.commands.executeCommand('gorev.refreshTasks');
             } catch (error) {
                 vscode.window.showErrorMessage(`Durum güncellemesi başarısız: ${error}`);
-                Logger.error('Failed to update task status:', error);
+                Logger.error('[QuickStatusChange] Failed to update task status:', error);
             }
         }
     }

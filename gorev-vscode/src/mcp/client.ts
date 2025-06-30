@@ -35,15 +35,19 @@ export class MCPClient extends EventEmitter {
     Logger.info(`Connecting to MCP server at: ${serverPath}`);
 
     try {
+      // Set working directory to server's directory
+      const path = require('path');
+      
       // Spawn the MCP server process
       const spawnOptions: any = {
         stdio: ['pipe', 'pipe', 'pipe'],
         shell: false,
-        env: { ...process.env },
+        env: { 
+          ...process.env,
+          // Set GOREV_ROOT to a data directory
+          GOREV_ROOT: path.join(path.dirname(serverPath), '..', 'data')
+        },
       };
-
-      // Set working directory to server's directory
-      const path = require('path');
       const serverDir = path.dirname(serverPath);
       if (serverDir) {
         spawnOptions.cwd = serverDir;

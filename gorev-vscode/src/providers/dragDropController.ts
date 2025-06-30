@@ -112,6 +112,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
      */
     private identifyDropTarget(target: any): DropTarget | null {
         if (!target) {
+            // Boş alana drop - parent'ı kaldır (root görev yap)
             return {
                 type: DropTargetType.EmptyArea
             };
@@ -143,7 +144,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             }
         }
 
-        // Görev üzerine drop (bağımlılık oluşturma için)
+        // Görev üzerine drop (bağımlılık oluşturma veya parent değiştirme için)
         if (target.task) {
             return {
                 type: DropTargetType.Task,
@@ -183,8 +184,14 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
                     break;
 
                 case DropTargetType.Task:
-                    if (this.config.allowDependencyCreate && dropTarget.targetTask) {
-                        await this.createDependency(task, dropTarget.targetTask);
+                    if (dropTarget.targetTask) {
+                        await this.handleTaskOnTaskDrop(task, dropTarget.targetTask);
+                    }
+                    break;
+                    
+                case DropTargetType.EmptyArea:
+                    if (this.config.allowParentChange && task.parent_id) {
+                        await this.removeTaskParent(task);
                     }
                     break;
             }
@@ -228,6 +235,20 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
                 case DropTargetType.ProjectGroup:
                     if (this.config.allowProjectMove && dropTarget.newProjectId !== undefined) {
                         operations.push(this.moveTaskToProject(task, dropTarget.newProjectId));
+                    }
+                    break;
+                    
+                case DropTargetType.Task:
+                    // Çoklu görevde sadece bağımlılık oluşturma destekleniyor
+                    if (this.config.allowDependencyCreate && dropTarget.targetTask) {
+                        operations.push(this.createDependency(task, dropTarget.targetTask));
+                    }
+                    break;
+                    
+                case DropTargetType.EmptyArea:
+                    // Parent'ı olan görevleri root yap
+                    if (this.config.allowParentChange && task.parent_id) {
+                        operations.push(this.removeTaskParent(task));
                     }
                     break;
             }
@@ -313,14 +334,114 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
     }
 
     /**
-     * İki görev arasında bağımlılık oluşturur
+     * Görev üzerine görev bırakıldığında - parent değiştirme veya bağımlılık oluşturma
      */
-    private async createDependency(sourceTask: Gorev, targetTask: Gorev): Promise<void> {
+    private async handleTaskOnTaskDrop(sourceTask: Gorev, targetTask: Gorev): Promise<void> {
         if (sourceTask.id === targetTask.id) {
             vscode.window.showWarningMessage('Bir görev kendisine bağımlı olamaz');
             return;
         }
 
+        // Hangi seçenekleri göstereceğimizi belirle
+        const options = [];
+        
+        if (this.config.allowParentChange) {
+            options.push({ 
+                label: '$(type-hierarchy) Alt Görev Yap', 
+                value: 'make_subtask', 
+                description: `"${sourceTask.baslik}" görevini "${targetTask.baslik}" görevinin altına taşı` 
+            });
+        }
+        
+        if (this.config.allowDependencyCreate) {
+            options.push({ 
+                label: '$(link) Bağımlılık Oluştur', 
+                value: 'create_dependency', 
+                description: `"${sourceTask.baslik}" ile "${targetTask.baslik}" arasında bağımlılık oluştur` 
+            });
+        }
+
+        if (options.length === 0) {
+            return;
+        }
+
+        // Eğer sadece bir seçenek varsa direkt onu uygula
+        if (options.length === 1) {
+            if (options[0].value === 'make_subtask') {
+                await this.changeTaskParent(sourceTask, targetTask);
+            } else {
+                await this.createDependency(sourceTask, targetTask);
+            }
+            return;
+        }
+
+        // Birden fazla seçenek varsa kullanıcıya sor
+        const action = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Ne yapmak istiyorsunuz?'
+        });
+
+        if (!action) return;
+
+        if (action.value === 'make_subtask') {
+            await this.changeTaskParent(sourceTask, targetTask);
+        } else {
+            await this.createDependency(sourceTask, targetTask);
+        }
+    }
+
+    /**
+     * Görevin parent'ını değiştirir
+     */
+    private async changeTaskParent(task: Gorev, newParent: Gorev): Promise<void> {
+        try {
+            // Circular dependency kontrolü yapmak için MCP tool'u kullan
+            await this.mcpClient.callTool('gorev_ust_degistir', {
+                gorev_id: task.id,
+                yeni_parent_id: newParent.id
+            });
+
+            vscode.window.showInformationMessage(
+                `✅ "${task.baslik}" artık "${newParent.baslik}" görevinin alt görevi`
+            );
+
+            Logger.info(`Task ${task.id} parent changed to ${newParent.id}`);
+        } catch (error: any) {
+            if (error.message?.includes('dairesel bağımlılık')) {
+                vscode.window.showErrorMessage('Bu işlem dairesel bağımlılık oluşturur!');
+            } else if (error.message?.includes('aynı projede olmalı')) {
+                vscode.window.showErrorMessage('Alt görev ve üst görev aynı projede olmalı!');
+            } else {
+                vscode.window.showErrorMessage(`Parent değiştirme başarısız: ${error.message || error}`);
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Görevin parent'ını kaldırır (root görev yapar)
+     */
+    private async removeTaskParent(task: Gorev): Promise<void> {
+        try {
+            await this.mcpClient.callTool('gorev_ust_degistir', {
+                gorev_id: task.id,
+                yeni_parent_id: ''
+            });
+
+            vscode.window.showInformationMessage(
+                `✅ "${task.baslik}" artık bir kök görev`
+            );
+
+            Logger.info(`Task ${task.id} parent removed, now a root task`);
+        } catch (error: any) {
+            vscode.window.showErrorMessage(`Parent kaldırma başarısız: ${error.message || error}`);
+            throw error;
+        }
+    }
+
+    /**
+     * İki görev arasında bağımlılık oluşturur
+     */
+    private async createDependency(sourceTask: Gorev, targetTask: Gorev): Promise<void> {
         // Circular dependency kontrolü yapılabilir
         
         const result = await vscode.window.showQuickPick(
@@ -382,6 +503,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             allowPriorityChange: config.get('allowPriorityChange', true),
             allowProjectMove: config.get('allowProjectMove', true),
             allowDependencyCreate: config.get('allowDependencyCreate', true),
+            allowParentChange: config.get('allowParentChange', true),
             showDropIndicator: config.get('showDropIndicator', true),
             animateOnDrop: config.get('animateOnDrop', true)
         };
@@ -420,7 +542,15 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             case DropTargetType.ProjectGroup:
                 return this.config.allowProjectMove;
             case DropTargetType.Task:
-                return this.config.allowDependencyCreate;
+                return this.config.allowDependencyCreate || this.config.allowParentChange;
+            case DropTargetType.EmptyArea:
+                // Sadece parent'ı olan görevler boş alana bırakılabilir
+                if (hasTaskData) {
+                    const taskData = dataTransfer.get(DragDataType.Task);
+                    const task = (taskData?.value as TaskDragData)?.task;
+                    return this.config.allowParentChange && !!task?.parent_id;
+                }
+                return false;
             default:
                 return false;
         }

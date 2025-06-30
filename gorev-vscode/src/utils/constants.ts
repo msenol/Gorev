@@ -37,6 +37,10 @@ export const COLORS = {
 export const COMMANDS = {
   // Task commands
   CREATE_TASK: 'gorev.createTask',
+  CREATE_SUBTASK: 'gorev.createSubtask',
+  CHANGE_PARENT: 'gorev.changeParent',
+  REMOVE_PARENT: 'gorev.removeParent',
+  ADD_DEPENDENCY: 'gorev.addDependency',
   REFRESH_TASKS: 'gorev.refreshTasks',
   SHOW_TASK_DETAIL: 'gorev.showTaskDetail',
   UPDATE_TASK_STATUS: 'gorev.updateTaskStatus',

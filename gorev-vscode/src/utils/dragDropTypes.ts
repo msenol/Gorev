@@ -72,6 +72,7 @@ export interface DragDropConfig {
     allowPriorityChange: boolean;
     allowProjectMove: boolean;
     allowDependencyCreate: boolean;
+    allowParentChange: boolean;
     showDropIndicator: boolean;
     animateOnDrop: boolean;
 }

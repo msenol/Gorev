@@ -4,6 +4,7 @@ import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { InlineEditProvider } from '../providers/inlineEditProvider';
 import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvider';
+import { Logger } from '../utils/logger';
 
 export function registerInlineEditCommands(
     context: vscode.ExtensionContext,
@@ -35,13 +36,38 @@ export function registerInlineEditCommands(
     // Quick Status Change
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.QUICK_STATUS_CHANGE, async (item: any) => {
+            Logger.info('[QuickStatusChange Command] Called');
+            Logger.info('[QuickStatusChange Command] Item type:', item?.constructor?.name);
+            Logger.info('[QuickStatusChange Command] Has task property:', !!item?.task);
+            
+            if (item?.task) {
+                Logger.info('[QuickStatusChange Command] Task ID:', item.task.id);
+                Logger.info('[QuickStatusChange Command] Task title:', item.task.baslik);
+                Logger.info('[QuickStatusChange Command] Current status:', item.task.durum);
+            }
+            
             if (!item || !item.task) {
+                Logger.warn('[QuickStatusChange Command] No task found in item');
                 vscode.window.showWarningMessage('Lütfen bir görev seçin');
                 return;
             }
 
-            await editProvider.quickStatusChange(item.task);
-            await treeProvider.refresh();
+            try {
+                Logger.info('[QuickStatusChange Command] Calling editProvider.quickStatusChange');
+                await editProvider.quickStatusChange(item.task);
+                // Add a small delay to ensure the backend has processed the update
+                await new Promise(resolve => setTimeout(resolve, 100));
+                Logger.info('[QuickStatusChange Command] Refreshing tree view');
+                await treeProvider.refresh();
+                
+                // Also refresh the project tree if it exists
+                const projeTreeProvider = (global as any).projeTreeProvider;
+                if (projeTreeProvider) {
+                    await projeTreeProvider.refresh();
+                }
+            } catch (error) {
+                Logger.error('Quick status change failed:', error);
+            }
         })
     );
 
