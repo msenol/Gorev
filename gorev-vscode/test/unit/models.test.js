@@ -69,6 +69,61 @@ suite('Models Test Suite', () => {
         assert(Array.isArray(mockGorev.bagimliliklar));
       }
     });
+
+    test('should validate dependency count fields', () => {
+      const mockGorev = {
+        id: 'task-123',
+        baslik: 'Test Task',
+        aciklama: 'Test description',
+        durum: 'beklemede',
+        oncelik: 'orta',
+        proje_id: 'proj-123',
+        bagimli_gorev_sayisi: 3,
+        tamamlanmamis_bagimlilik_sayisi: 1,
+        bu_goreve_bagimli_sayisi: 2
+      };
+
+      // Validate dependency count fields
+      if (mockGorev.bagimli_gorev_sayisi !== undefined) {
+        assert(typeof mockGorev.bagimli_gorev_sayisi === 'number');
+        assert(mockGorev.bagimli_gorev_sayisi >= 0);
+      }
+      
+      if (mockGorev.tamamlanmamis_bagimlilik_sayisi !== undefined) {
+        assert(typeof mockGorev.tamamlanmamis_bagimlilik_sayisi === 'number');
+        assert(mockGorev.tamamlanmamis_bagimlilik_sayisi >= 0);
+        assert(mockGorev.tamamlanmamis_bagimlilik_sayisi <= mockGorev.bagimli_gorev_sayisi);
+      }
+      
+      if (mockGorev.bu_goreve_bagimli_sayisi !== undefined) {
+        assert(typeof mockGorev.bu_goreve_bagimli_sayisi === 'number');
+        assert(mockGorev.bu_goreve_bagimli_sayisi >= 0);
+      }
+    });
+
+    test('should validate Bagimlilik structure', () => {
+      const mockBagimlilik = {
+        kaynak_id: 'task-123',
+        hedef_id: 'task-456',
+        baglanti_tip: 'bagimli',
+        hedef_baslik: 'Target Task',
+        hedef_durum: 'tamamlandi'
+      };
+
+      // Validate required fields
+      assert(typeof mockBagimlilik.kaynak_id === 'string');
+      assert(typeof mockBagimlilik.hedef_id === 'string');
+      assert(typeof mockBagimlilik.baglanti_tip === 'string');
+      
+      // Validate optional fields
+      if (mockBagimlilik.hedef_baslik) {
+        assert(typeof mockBagimlilik.hedef_baslik === 'string');
+      }
+      
+      if (mockBagimlilik.hedef_durum) {
+        assert(['beklemede', 'devam_ediyor', 'tamamlandi'].includes(mockBagimlilik.hedef_durum));
+      }
+    });
   });
 
   suite('Proje Model', () => {

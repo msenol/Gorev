@@ -181,7 +181,7 @@ func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
 func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 	var result []*Baglanti
 	for _, b := range m.baglantilar {
-		if b.KaynakID == gorevID || b.HedefID == gorevID {
+		if b.KaynakID == gorevID {
 			result = append(result, b)
 		}
 	}
@@ -1021,5 +1021,75 @@ func TestIsYonetici_ProjeGorevSayisi(t *testing.T) {
 				t.Errorf("expected count %d, got %d", tc.expectedCount, count)
 			}
 		})
+	}
+}
+
+func TestIsYonetici_GorevListele_WithDependencyCounts(t *testing.T) {
+	mockVeri := NewMockVeriYonetici()
+	iy := YeniIsYonetici(mockVeri)
+
+	// Create test tasks
+	task1 := &Gorev{ID: "task1", Baslik: "Task 1", Durum: "beklemede", Oncelik: "orta"}
+	task2 := &Gorev{ID: "task2", Baslik: "Task 2", Durum: "tamamlandi", Oncelik: "orta"}
+	task3 := &Gorev{ID: "task3", Baslik: "Task 3", Durum: "beklemede", Oncelik: "orta"}
+
+	mockVeri.gorevler["task1"] = task1
+	mockVeri.gorevler["task2"] = task2
+	mockVeri.gorevler["task3"] = task3
+
+	// Create dependencies
+	// task1 depends on task2 (completed)
+	mockVeri.baglantilar = append(mockVeri.baglantilar, &Baglanti{
+		ID:          "dep1",
+		KaynakID:    "task1",
+		HedefID:     "task2",
+		BaglantiTip: "bagimli",
+	})
+
+	// task3 depends on task1 (not completed)
+	mockVeri.baglantilar = append(mockVeri.baglantilar, &Baglanti{
+		ID:          "dep2",
+		KaynakID:    "task3",
+		HedefID:     "task1",
+		BaglantiTip: "bagimli",
+	})
+
+	// Get tasks with dependency counts
+	gorevler, err := iy.GorevListele("", "", "")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	// Verify dependency counts
+	for _, gorev := range gorevler {
+		switch gorev.ID {
+		case "task1":
+			if gorev.BagimliGorevSayisi != 1 {
+				t.Errorf("task1: expected BagimliGorevSayisi 1, got %d", gorev.BagimliGorevSayisi)
+			}
+			if gorev.TamamlanmamisBagimlilikSayisi != 0 {
+				t.Errorf("task1: expected TamamlanmamisBagimlilikSayisi 0, got %d", gorev.TamamlanmamisBagimlilikSayisi)
+			}
+			if gorev.BuGoreveBagimliSayisi != 1 {
+				t.Errorf("task1: expected BuGoreveBagimliSayisi 1, got %d", gorev.BuGoreveBagimliSayisi)
+			}
+		case "task2":
+			if gorev.BagimliGorevSayisi != 0 {
+				t.Errorf("task2: expected BagimliGorevSayisi 0, got %d", gorev.BagimliGorevSayisi)
+			}
+			if gorev.BuGoreveBagimliSayisi != 1 {
+				t.Errorf("task2: expected BuGoreveBagimliSayisi 1, got %d", gorev.BuGoreveBagimliSayisi)
+			}
+		case "task3":
+			if gorev.BagimliGorevSayisi != 1 {
+				t.Errorf("task3: expected BagimliGorevSayisi 1, got %d", gorev.BagimliGorevSayisi)
+			}
+			if gorev.TamamlanmamisBagimlilikSayisi != 1 {
+				t.Errorf("task3: expected TamamlanmamisBagimlilikSayisi 1, got %d", gorev.TamamlanmamisBagimlilikSayisi)
+			}
+			if gorev.BuGoreveBagimliSayisi != 0 {
+				t.Errorf("task3: expected BuGoreveBagimliSayisi 0, got %d", gorev.BuGoreveBagimliSayisi)
+			}
+		}
 	}
 }

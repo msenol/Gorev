@@ -372,6 +372,30 @@ suite('EnhancedGorevTreeProvider Test Suite', () => {
       }
     });
 
+    test('should display dependency badges in task description', () => {
+      const TaskTreeViewItem = require('../../dist/providers/enhancedGorevTreeProvider').TaskTreeViewItem;
+      
+      if (TaskTreeViewItem) {
+        const mockTaskWithDeps = {
+          id: 'task-123',
+          baslik: 'Test Task',
+          durum: 'beklemede',
+          oncelik: 'orta',
+          bagimli_gorev_sayisi: 3,
+          tamamlanmamis_bagimlilik_sayisi: 1,
+          bu_goreve_bagimli_sayisi: 2
+        };
+
+        const selection = { selectedTasks: new Set() };
+        const treeItem = new TaskTreeViewItem(mockTaskWithDeps, selection);
+        
+        // Check that description contains dependency info
+        assert(treeItem.description);
+        assert(treeItem.description.includes('[🔗3 ⚠️1]'), 'Should show dependency count with warning');
+        assert(treeItem.description.includes('[← 2]'), 'Should show tasks depending on this');
+      }
+    });
+
     test('should create tree item for group', () => {
       if (provider.getTreeItem) {
         const mockGroup = {
