@@ -6,7 +6,7 @@ This roadmap outlines the planned development path for the Gorev task management
 
 ### High Priority
 
-#### 1. 🔍 Test Coverage Improvement (Target 95%)
+#### 1. 🔍 Test Coverage Improvement (Target 95%) - Geçici olarak durdurldu.
 **Status:** Pending  
 **Description:** Expand test suite for both modules to achieve 95% coverage and implement E2E testing.
 
@@ -118,8 +118,8 @@ This roadmap outlines the planned development path for the Gorev task management
 - Cross-platform builds under 15 minutes
 - Rollback capability under 5 minutes
 
-#### 7. 🐛 Fix Filter State Persistence Issue
-**Status:** Pending  
+#### 7. ✅ Fix Filter State Persistence Issue
+**Status:** Completed (30 June 2025)  
 **Description:** Users cannot clear filters once applied - requires VS Code restart to reset.
 
 **Problem:**

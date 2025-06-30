@@ -6,7 +6,16 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
-### Recent Changes (v0.7.0-beta.1)
+### Recent Changes (v0.7.1)
+
+#### Bug Fixes (30 June 2025)
+- **Fixed Filter State Persistence Issue** in VS Code extension:
+  - Added `clearFilters()` method to `EnhancedGorevTreeProvider`
+  - Fixed `clearAllFilters()` in FilterToolbar to properly reset state
+  - Added keyboard shortcut `Ctrl+Alt+R` / `Cmd+Alt+R` for quick filter clearing
+  - Users can now clear filters without restarting VS Code
+
+### Previous Changes (v0.7.0-beta.1)
 
 #### Test Infrastructure Improvements (30 June 2025)
 - **MCP Server Test Coverage**:
