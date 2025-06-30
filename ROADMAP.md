@@ -42,16 +42,20 @@ This roadmap outlines the planned development path for the Gorev task management
 - Visual link indicators
 - Drag & drop dependency creation
 
-#### 4. ✨ Subtask System with Unlimited Hierarchy
-**Status:** Pending  
+#### 4. ✅ Subtask System with Unlimited Hierarchy
+**Status:** Completed (30 June 2025) - v0.8.0  
 **Description:** Unlimited depth hierarchical task structure.
 
-**Technical Details:**
-- Add `parent_id` column
-- Recursive CTE queries
-- Collapsible hierarchy in TreeView
-- Circular dependency prevention
-- Parent task progress tracking
+**Implemented Features:**
+- ✅ Added `parent_id` column with foreign key constraints
+- ✅ Recursive CTE queries for efficient hierarchy operations
+- ✅ Hierarchical display in task listing with tree structure
+- ✅ Circular dependency prevention with validation
+- ✅ Parent task progress tracking based on subtask completion
+- ✅ Business rules: deletion prevention, completion validation, project inheritance
+- ✅ New MCP tools: `gorev_altgorev_olustur`, `gorev_ust_degistir`, `gorev_hiyerarsi_goster`
+- ✅ Comprehensive test coverage for all subtask operations
+- 🔲 Collapsible hierarchy in VS Code TreeView (future enhancement)
 
 #### 5. 🤖 AI-Powered Task Enrichment System
 **Status:** Pending  
@@ -231,7 +235,7 @@ This roadmap outlines the planned development path for the Gorev task management
 - UI/UX Improvements
 
 ### Q2 2026 (April - June)
-- Subtask System
+- ~~Subtask System~~ ✅ Completed early (June 2025)
 - Dependency Visualization
 - Preparation for v1.0.0
 

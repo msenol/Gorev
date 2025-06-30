@@ -6,7 +6,35 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
-### Recent Changes (v0.7.1)
+### Recent Changes (v0.8.0)
+
+#### Major Features (30 June 2025)
+- **Implemented Subtask System with Unlimited Hierarchy**:
+  - Added `parent_id` column to tasks table with foreign key constraint
+  - Created recursive CTE views for efficient hierarchy queries
+  - Implemented circular dependency prevention
+  - Added parent task progress tracking based on subtask completion
+  - **New MCP Tools**:
+    - `gorev_altgorev_olustur` - Create subtask under a parent task
+    - `gorev_ust_degistir` - Move task to different parent or root
+    - `gorev_hiyerarsi_goster` - Show complete task hierarchy with statistics
+  - **Business Rules**:
+    - Tasks cannot be deleted if they have subtasks
+    - Tasks cannot be completed unless all subtasks are completed
+    - Moving a task to a different project moves all its subtasks
+    - Subtasks inherit parent's project
+  - **Data Layer Methods**:
+    - `AltGorevleriGetir` - Get direct subtasks
+    - `TumAltGorevleriGetir` - Get entire subtask tree recursively
+    - `UstGorevleriGetir` - Get parent hierarchy
+    - `GorevHiyerarsiGetir` - Get hierarchy statistics
+    - `DaireBagimliligiKontrolEt` - Prevent circular dependencies
+  - **UI Enhancements**:
+    - Hierarchical task display in `gorev_listele` with tree structure
+    - Progress indicators showing subtask completion percentage
+    - Visual hierarchy with indentation and tree connectors
+
+### Previous Changes (v0.7.1)
 
 #### Bug Fixes (30 June 2025)
 - **Fixed Filter State Persistence Issue** in VS Code extension:
@@ -200,7 +228,7 @@ npm run package         # Create .vsix package
 
 ## MCP Tools
 
-The server implements 16 MCP tools:
+The server implements 19 MCP tools:
 
 ### Task Management
 1. **gorev_olustur**: Create new task (params: baslik, aciklama, oncelik, proje_id?, son_tarih?, etiketler?)
@@ -218,24 +246,35 @@ The server implements 16 MCP tools:
    - Validates dependencies before allowing "devam_ediyor" status
 5. **gorev_duzenle**: Edit task properties (params: id, baslik?, aciklama?, oncelik?, proje_id?, son_tarih?)
 6. **gorev_sil**: Delete task (params: id, onay)
+   - Prevents deletion if task has subtasks
 7. **gorev_bagimlilik_ekle**: Create task dependency (params: kaynak_id, hedef_id, baglanti_tipi)
 
+### Subtask Management
+8. **gorev_altgorev_olustur**: Create subtask under a parent (params: parent_id, baslik, aciklama?, oncelik?, son_tarih?, etiketler?)
+   - Subtask inherits parent's project
+   - parent_id: ID of the parent task
+9. **gorev_ust_degistir**: Change task's parent (params: gorev_id, yeni_parent_id?)
+   - yeni_parent_id: empty string moves task to root level
+   - Validates circular dependencies
+10. **gorev_hiyerarsi_goster**: Show task hierarchy (params: gorev_id)
+   - Shows parent hierarchy, subtask statistics, and progress
+
 ### Task Templates
-8. **template_listele**: List available templates (params: kategori?)
+11. **template_listele**: List available templates (params: kategori?)
    - Shows predefined templates for consistent task creation
-9. **templateden_gorev_olustur**: Create task from template (params: template_id, degerler)
+12. **templateden_gorev_olustur**: Create task from template (params: template_id, degerler)
    - degerler is an object with field values for the template
 
 ### Project Management
-10. **proje_olustur**: Create project (params: isim, tanim)
-11. **proje_listele**: List all projects with task counts (no params)
-12. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
-13. **proje_aktif_yap**: Set active project (params: proje_id)
-14. **aktif_proje_goster**: Show current active project (no params)
-15. **aktif_proje_kaldir**: Remove active project setting (no params)
+13. **proje_olustur**: Create project (params: isim, tanim)
+14. **proje_listele**: List all projects with task counts (no params)
+15. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
+16. **proje_aktif_yap**: Set active project (params: proje_id)
+17. **aktif_proje_goster**: Show current active project (no params)
+18. **aktif_proje_kaldir**: Remove active project setting (no params)
 
 ### Reporting
-16. **ozet_goster**: Show summary statistics (no params)
+19. **ozet_goster**: Show summary statistics (no params)
 
 All tools follow the pattern in `internal/mcp/handlers.go` and are registered in `RegisterTools()`. Task descriptions support full markdown formatting.
 
@@ -277,15 +316,16 @@ func TestGorevOlustur(t *testing.T) {
 
 ## Database Schema
 
-SQLite database with seven tables:
+SQLite database with seven tables and one view:
 
 - **projeler**: id, isim, tanim, olusturma_tarih, guncelleme_tarih
-- **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih, son_tarih
+- **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
 - **baglantilar**: id, kaynak_id, hedef_id, baglanti_tip (for task dependencies)
 - **aktif_proje**: id (CHECK id=1), proje_id (stores single active project)
 - **etiketler**: id, isim (tags)
 - **gorev_etiketleri**: gorev_id, etiket_id (many-to-many relationship)
 - **gorev_templateleri**: id, isim, tanim, varsayilan_baslik, aciklama_template, alanlar, ornek_degerler, kategori, aktif (task templates)
+- **gorev_hiyerarsi** (VIEW): Recursive CTE view for efficient hierarchy queries with path and level information
 
 Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 
@@ -307,11 +347,13 @@ Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 ## Important Files
 
 ### gorev-mcpserver
-- `internal/gorev/modeller.go`: Domain model definitions (includes GorevTemplate, TemplateAlan)
-- `internal/mcp/handlers.go`: MCP tool implementations (includes template handlers)
-- `internal/gorev/veri_yonetici.go`: Database operations
+- `internal/gorev/modeller.go`: Domain model definitions (includes GorevTemplate, TemplateAlan, GorevHiyerarsi)
+- `internal/mcp/handlers.go`: MCP tool implementations (includes template and subtask handlers)
+- `internal/gorev/veri_yonetici.go`: Database operations (includes hierarchy queries with recursive CTEs)
+- `internal/gorev/is_yonetici.go`: Business logic (includes subtask validation and circular dependency checks)
 - `internal/gorev/template_yonetici.go`: Template management operations
 - `cmd/gorev/main.go`: CLI and server initialization (includes template commands, path resolution)
+- `internal/veri/migrations/000005_add_parent_id_to_gorevler.up.sql`: Subtask hierarchy migration
 
 ### gorev-vscode
 - `src/extension.ts`: Extension entry point and activation

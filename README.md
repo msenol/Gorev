@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** June 30, 2025 | **Version:** v0.7.0-beta.1
+**Last Updated:** June 30, 2025 | **Version:** v0.8.0
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
@@ -48,6 +48,8 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **🔄 Görev bağımlılıkları** - İlişkili görevler arası otomasyon
 - **📋 Hazır şablonlar** - Bug raporu, feature request ve daha fazlası
 - **🔍 Gelişmiş filtreleme** - Durum, etiket, tarih bazlı sorgulama
+- **🌳 Alt görev hiyerarşisi** - Sınırsız derinlikte görev ağacı yapısı
+- **📊 İlerleme takibi** - Ana görevde alt görev tamamlanma yüzdesi
 
 ### 🤖 AI Entegrasyonu
 - **Doğal dil işleme** - AI asistanlarla konuşarak görev yönetimi

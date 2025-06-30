@@ -5,7 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.0] - 2025-06-30
+
+### Added
+- **Subtask System with Unlimited Hierarchy** - Major feature implementation
+  - Added `parent_id` column to tasks table with foreign key constraint
+  - Created recursive CTE view `gorev_hiyerarsi` for efficient hierarchy queries
+  - Implemented circular dependency prevention with validation
+  - Added parent task progress tracking based on subtask completion percentage
+  - New MCP tools for subtask management:
+    - `gorev_altgorev_olustur` - Create subtask under a parent task
+    - `gorev_ust_degistir` - Move task to different parent or root level
+    - `gorev_hiyerarsi_goster` - Show complete task hierarchy with statistics
+  - Business rules enforcement:
+    - Tasks cannot be deleted if they have subtasks
+    - Tasks cannot be completed unless all subtasks are completed
+    - Moving a task to a different project automatically moves all its subtasks
+    - Subtasks inherit their parent's project
+  - Hierarchical task display in `gorev_listele` with tree structure
+  - Visual indicators: ✓ (completed), 🔄 (in progress), ⏳ (pending)
+  - Comprehensive test coverage for all subtask operations
+
+### Changed
+- Updated `gorev_listele` to display tasks in hierarchical tree structure
+- Enhanced `gorev_guncelle` to validate subtask completion before allowing parent completion
+- Modified `gorev_sil` to prevent deletion of tasks with subtasks
+- Updated `gorev_duzenle` to cascade project changes to all subtasks
+- Total MCP tools increased from 16 to 19
 
 ### Fixed
 - Filter state persistence issue - users can now clear filters without restarting VS Code
