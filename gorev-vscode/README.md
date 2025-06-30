@@ -36,12 +36,33 @@ Gorev için güçlü ve kullanıcı dostu VS Code extension'ı. MCP protokolü �
 - 📊 Status bar entegrasyonu
 - ⚡ Hızlı filtre kısayolları
 
+### Task Dependencies (v0.3.4 NEW!)
+- 🏷️ **Dependency Badges**: TreeView'da görsel bağımlılık göstergeleri
+  - `[🔗3]`: Bu task 3 göreve bağımlı
+  - `[🔗2 ⚠️1]`: 2 bağımlılık, 1 tanesi tamamlanmamış
+  - `[← 2]`: 2 task bu göreve bağımlı
+- ➕ **Add Dependency**: Context menu ile kolay bağımlılık ekleme
+- 📋 **Always Visible Dependencies**: Task detail'de her zaman gösterilen dependency section
+- ⚠️ **Smart Warnings**: Tamamlanmamış bağımlılık uyarıları
+
+### Unlimited Subtask Hierarchy (v0.3.4 NEW!)
+- 🌳 **Infinite Nesting**: Sınırsız derinlikte subtask oluşturma
+- 📊 **Progress Tracking**: Ana task'ların otomatik progress hesaplaması
+  - `📎 2/5`: 5 subtask'tan 2'si tamamlandı
+- 🔄 **Visual Hierarchy**: TreeView'da indentasyon ile hiyerarşi gösterimi
+- 🎯 **Smart Business Rules**:
+  - Ana task'lar tüm subtask'lar tamamlanmadan completion'a geçemez
+  - Subtask'ı olan task'lar silinemez
+  - Subtask'lar parent'ın projesini otomatik inherit eder
+- 🏗️ **MCP Integration**: Server-side hierarchy support ile güçlü backend
+
 ### Zengin Görev Detayı
 - 📝 Split-view markdown editörü
 - 👁️ Canlı önizleme
-- 🔗 Bağımlılık görselleştirme grafiği
-- 📊 Aktivite zaman çizelgesi
+- 🔗 Bağımlılık bilgileri (her zaman görünür)
+- 📊 Gelişmiş progress indicator (fixed v0.3.3)
 - 🏷️ Template alan göstergeleri
+- 🎨 Enhanced theming (dark/light mode improvements)
 
 ### Template Wizard
 - 🧙 Çok adımlı arayüz
@@ -187,6 +208,31 @@ Test suite şunları içerir:
 ## 📝 Lisans
 
 MIT
+
+## 🆕 What's New in v0.3.4
+
+### Major Features Added:
+- 🎯 **Task Dependencies**: Visual dependency tracking with TreeView badges
+- 🌳 **Unlimited Subtask Hierarchy**: Infinite nesting with visual tree structure
+- 📊 **Smart Progress Tracking**: Automatic parent task completion based on subtasks  
+- 🔗 **Add Dependency Command**: Easy dependency creation via context menu
+- 📋 **Always-Visible Dependencies**: Enhanced task detail panel 
+- 🐛 **Progress Display Fix**: Circular progress percentage now visible
+- 🎨 **Theme Improvements**: Better dark/light mode support
+- ⚡ **Performance**: Optimized TreeView rendering and parsing
+
+### Subtask System Highlights:
+- **Infinite Depth**: Create subtasks under subtasks with no limits
+- **Visual Hierarchy**: TreeView shows indented structure with progress indicators
+- **Business Rules**: Smart completion and deletion constraints
+- **MCP Backend**: Server-side hierarchy support with recursive queries
+
+### Bug Fixes:
+- Fixed progress percentage display in task detail panel
+- Enhanced hierarchy parsing with flexible pattern matching
+- Improved dependency section visibility
+- Fixed circular progress chart rendering
+- Enhanced CSP-compliant event handling
 
 ## 🤝 Katkıda Bulunma
 
