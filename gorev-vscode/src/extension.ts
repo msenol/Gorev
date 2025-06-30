@@ -43,7 +43,12 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   
   // Initialize filter toolbar
   filterToolbar = new FilterToolbar(mcpClient, (filter) => {
-    gorevTreeProvider.updateFilter(filter);
+    // If the filter object is empty, clear all filters
+    if (Object.keys(filter).length === 0) {
+      gorevTreeProvider.clearFilters();
+    } else {
+      gorevTreeProvider.updateFilter(filter);
+    }
   });
 
   // Register tree data providers

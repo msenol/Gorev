@@ -289,6 +289,15 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     }
 
     /**
+     * Tüm filtreleri temizler
+     */
+    clearFilters(): void {
+        this.config.filters = {};
+        this.events.onFilterChanged?.(this.config.filters);
+        this._onDidChangeTreeData.fire();
+    }
+
+    /**
      * Gruplama stratejisini değiştirir
      */
     setGrouping(grouping: GroupingStrategy): void {

@@ -298,7 +298,9 @@ export class FilterToolbar {
      * Tüm filtreleri temizle
      */
     clearAllFilters(): void {
-        this.updateFilter({});
+        this.activeFilters = {};
+        this.onFilterChange({}); // Empty filter object to clear all filters
+        this.updateActiveFilterDisplay();
         vscode.window.showInformationMessage('Tüm filtreler temizlendi.');
     }
 

@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "Gorev",
   "description": "Powerful task management for VS Code powered by MCP protocol",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -337,7 +337,7 @@
       },
       {
         "command": "gorev.clearAllFilters",
-        "title": "Clear All Filters",
+        "title": "Tüm Filtreleri Temizle",
         "category": "Gorev",
         "icon": "$(clear-all)"
       },
@@ -639,6 +639,12 @@
         "command": "gorev.editTaskTitle",
         "key": "f2",
         "when": "viewItem == task"
+      },
+      {
+        "command": "gorev.clearAllFilters",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "focusedView == gorevTasks"
       }
     ],
     "colors": [
