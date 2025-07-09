@@ -3,6 +3,18 @@ import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { ProjeTreeItem } from '../providers/projeTreeProvider';
+import { MarkdownParser } from '../utils/markdownParser';
+import { Proje } from '../models/proje';
+
+async function getProjectList(mcpClient: MCPClient): Promise<Proje[]> {
+  try {
+    const result = await mcpClient.callTool('proje_listele');
+    return MarkdownParser.parseProjeListesi(result.content[0].text);
+  } catch (error) {
+    console.error('Failed to get project list:', error);
+    return [];
+  }
+}
 
 export function registerProjeCommands(
   context: vscode.ExtensionContext,
@@ -46,25 +58,53 @@ export function registerProjeCommands(
 
   // Set Active Project
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.SET_ACTIVE_PROJECT, async (item: ProjeTreeItem) => {
+    vscode.commands.registerCommand(COMMANDS.SET_ACTIVE_PROJECT, async (item?: ProjeTreeItem) => {
       try {
-        if (item.isActive) {
-          const deactivate = await vscode.window.showQuickPick(
-            ['Deactivate', 'Cancel'],
+        // If no item provided (e.g., command palette), show project picker
+        if (!item) {
+          const projects = await getProjectList(mcpClient);
+          if (projects.length === 0) {
+            vscode.window.showWarningMessage('No projects found. Create a project first.');
+            return;
+          }
+
+          const selected = await vscode.window.showQuickPick(
+            projects.map(p => ({
+              label: p.isim,
+              description: `${p.gorev_sayisi || 0} tasks`,
+              project: p
+            })),
             {
-              placeHolder: 'This project is already active. Do you want to deactivate it?',
+              placeHolder: 'Select a project to activate'
             }
           );
 
-          if (deactivate === 'Deactivate') {
-            await mcpClient.callTool('aktif_proje_kaldir');
-            vscode.window.showInformationMessage('Project deactivated');
-          }
-        } else {
+          if (!selected) return;
+
           await mcpClient.callTool('proje_aktif_yap', {
-            proje_id: item.project.id,
+            proje_id: selected.project.id,
           });
-          vscode.window.showInformationMessage(`"${item.project.isim}" is now the active project`);
+          vscode.window.showInformationMessage(`"${selected.project.isim}" is now the active project`);
+        } else {
+          // Item provided from tree view
+          if (item.isActive) {
+            const deactivate = await vscode.window.showQuickPick(
+              ['Deactivate', 'Cancel'],
+              {
+                placeHolder: 'This project is already active. Do you want to deactivate it?',
+              }
+            );
+
+            if (deactivate === 'Deactivate') {
+              await mcpClient.callTool('aktif_proje_kaldir');
+              vscode.window.showInformationMessage('Project deactivated');
+            }
+          } else {
+            await mcpClient.callTool('proje_aktif_yap', {
+              proje_id: item.project.id,
+            });
+            vscode.window.showInformationMessage(`"${item.project.isim}" is now the active project`);
+          }
         }
 
         await providers.projeTreeProvider.refresh();

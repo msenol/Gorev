@@ -2,6 +2,28 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.3.7] - 2025-07-09
+
+### Fixed
+- Task list not showing any tasks due to parser not recognizing new status emoji (🔄)
+- Subtask hierarchy not being preserved in TreeView
+- Multiline task descriptions not being parsed correctly
+- Parser format detection not recognizing compact format v0.8.1+
+
+### Changed
+- Enhanced MarkdownParser to support all task status emojis (⏳, 🚀, ✅, ✓, 🔄)
+- Improved compact format parser with proper hierarchy support
+- Better handling of multiline descriptions where ID appears on a separate line
+
+## [0.3.6] - 2025-07-09
+
+### Added
+- Screenshot support in package.json for VS Code marketplace
+- Gallery banner configuration for better marketplace appearance
+
+### Changed
+- Updated extension description to highlight key features
+
 ## [0.3.5] - 2025-07-09
 
 ### Added

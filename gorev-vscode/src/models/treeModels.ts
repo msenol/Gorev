@@ -100,6 +100,7 @@ export interface TaskFilter {
     dueThisWeek?: boolean;
     hasTag?: boolean;
     hasDependency?: boolean;
+    showAllProjects?: boolean;
 }
 
 /**

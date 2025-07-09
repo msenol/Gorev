@@ -114,14 +114,25 @@ export class MarkdownParser {
      */
     static parseGorevListesi(markdown: string): Gorev[] {
         const lines = markdown.split('\n');
+        
+        // Check if this is the new compact format
+        const hasCompactFormat = lines.some(line => /^\[⏳\]|\[🚀\]|\[✅\]|\[🔄\]|\[✓\]/.test(line.trim()));
+        
+        console.log('[MarkdownParser] Starting to parse tasks...');
+        console.log('[MarkdownParser] Format detected:', hasCompactFormat ? 'Compact (v0.8.1+)' : 'Legacy');
+        console.log('[MarkdownParser] First 5 lines:', lines.slice(0, 5));
+        
+        if (hasCompactFormat) {
+            return this.parseCompactGorevListesi(markdown);
+        }
+        
+        // Legacy parsing logic
         const gorevler: Gorev[] = [];
         const gorevMap: Map<string, Gorev> = new Map();
         const parentStack: { id: string, level: number }[] = [];
         let currentGorev: Partial<Gorev> | null = null;
         let descriptionLines: string[] = [];
         
-        console.log('[MarkdownParser] Starting to parse tasks...');
-        console.log('[MarkdownParser] First 5 lines:', lines.slice(0, 5));
         console.log('[MarkdownParser] Total lines:', lines.length);
         
         for (let i = 0; i < lines.length; i++) {
@@ -314,6 +325,205 @@ export class MarkdownParser {
         console.log('[MarkdownParser] Tasks with subtasks:', gorevler.filter(g => g.alt_gorevler && g.alt_gorevler.length > 0).map(g => `${g.baslik} (${g.alt_gorevler!.length} subtasks)`));
         console.log('[MarkdownParser] Tasks with proje_id:', gorevler.filter(g => g.proje_id).map(g => `${g.baslik} -> ${g.proje_id}`));
         console.log('[MarkdownParser] Tasks WITHOUT proje_id:', gorevler.filter(g => !g.proje_id).map(g => g.baslik));
+        return gorevler;
+    }
+    
+    /**
+     * Compact format görev listesi markdown'ını parse eder (v0.8.1+)
+     * Format: [StatusIcon] Title (Priority)
+     *         Description | Tarih: DD/MM | Etiket: tags | ID:uuid
+     */
+    static parseCompactGorevListesi(markdown: string): Gorev[] {
+        const lines = markdown.split('\n');
+        const gorevler: Gorev[] = [];
+        const gorevMap = new Map<string, Gorev>(); // ID to Gorev mapping
+        const parentStack: { id: string, indentLevel: number }[] = []; // Track parent hierarchy
+        let i = 0;
+        
+        console.log('[MarkdownParser] Parsing compact format with hierarchy...');
+        console.log('[MarkdownParser] Total lines to parse:', lines.length);
+        
+        while (i < lines.length) {
+            const line = lines[i];
+            
+            // Calculate indent level before trimming
+            let indentLevel = 0;
+            if (line.startsWith('  ')) {
+                const match = line.match(/^(\s*)/);
+                if (match) {
+                    indentLevel = Math.floor(match[1].length / 2);
+                }
+            }
+            
+            const trimmedLine = line.trim();
+            
+            // Skip empty lines and header lines
+            if (!trimmedLine || trimmedLine.startsWith('#') || trimmedLine.startsWith('Görevler (') || trimmedLine.startsWith('Proje:')) {
+                i++;
+                continue;
+            }
+            
+            // Match task header: [⏳|🚀|✅|✓|🔄] Title (Y|O|D)
+            // Also handle subtasks with └─ prefix
+            const headerMatch = trimmedLine.match(/^(└─\s*)?\[(⏳|🚀|✅|✓|🔄)\] (.+?) \(([YOD])\)$/);
+            if (headerMatch) {
+                const [_, prefix, statusIcon, title, priorityLetter] = headerMatch;
+                console.log(`[MarkdownParser] Found task header at line ${i}: ${title}, indent: ${indentLevel}`);
+                
+                // Map status icon to durum
+                let durum = GorevDurum.Beklemede;
+                if (statusIcon === '🚀' || statusIcon === '🔄') durum = GorevDurum.DevamEdiyor;
+                else if (statusIcon === '✅' || statusIcon === '✓') durum = GorevDurum.Tamamlandi;
+                
+                // Map priority letter to oncelik
+                let oncelik = GorevOncelik.Orta;
+                if (priorityLetter === 'Y') oncelik = GorevOncelik.Yuksek;
+                else if (priorityLetter === 'D') oncelik = GorevOncelik.Dusuk;
+                
+                // Check next line(s) for details
+                i++;
+                let detailsLine = '';
+                
+                // Collect details from next line(s) - sometimes description spans multiple lines
+                if (i < lines.length) {
+                    const nextLine = lines[i];
+                    detailsLine = nextLine.trim();
+                    
+                    // Check if this is a multiline description
+                    if (detailsLine.startsWith('-') && !detailsLine.includes('ID:')) {
+                        // This is a multiline description, keep reading until we find ID
+                        let fullDetails = detailsLine;
+                        i++;
+                        while (i < lines.length) {
+                            const continuationLine = lines[i].trim();
+                            if (continuationLine.includes('ID:')) {
+                                fullDetails += ' ' + continuationLine;
+                                break;
+                            } else if (continuationLine && !continuationLine.startsWith('[')) {
+                                fullDetails += ' ' + continuationLine;
+                                i++;
+                            } else {
+                                break;
+                            }
+                        }
+                        detailsLine = fullDetails;
+                    }
+                    
+                    console.log(`[MarkdownParser] Details line: ${detailsLine}`);
+                    
+                    // Parse different detail formats
+                    let detailsMatch = null;
+                    let description = '';
+                    let dueDate = '';
+                    let tags: string[] = [];
+                    let id = '';
+                    
+                    // Format 1: Description | Bekleyen: N | ID:uuid
+                    // Format 2: Description | Tarih: DD/MM | Bekleyen: N | ID:uuid
+                    // Format 3: Description | Proje: Name | ID:uuid
+                    // Format 4: - Description | ID:uuid (for subtasks)
+                    
+                    // Extract ID first (always at the end)
+                    const idMatch = detailsLine.match(/ID:([a-f0-9-]+)$/);
+                    if (idMatch) {
+                        id = idMatch[1];
+                        const detailsWithoutId = detailsLine.substring(0, detailsLine.lastIndexOf('|')).trim();
+                        
+                        // Extract description (everything before first | or after - for subtasks)
+                        if (detailsWithoutId.startsWith('- ')) {
+                            description = detailsWithoutId.substring(2).split('|')[0].trim();
+                        } else {
+                            description = detailsWithoutId.split('|')[0].trim();
+                        }
+                        
+                        // Extract other fields
+                        const parts = detailsWithoutId.split('|').slice(1);
+                        for (const part of parts) {
+                            const trimmedPart = part.trim();
+                            if (trimmedPart.startsWith('Tarih:')) {
+                                dueDate = trimmedPart.substring(6).trim();
+                            } else if (trimmedPart.startsWith('Etiket:')) {
+                                tags = trimmedPart.substring(7).split(',').map(t => t.trim());
+                            }
+                        }
+                    }
+                    
+                    if (id) {
+                        console.log(`[MarkdownParser] Parsed details - ID: ${id}, Description: ${description}`);
+                        
+                        // Convert date from DD/MM to YYYY-MM-DD (assuming current year) if date exists
+                        let formattedDate = '';
+                        if (dueDate) {
+                            const currentYear = new Date().getFullYear();
+                            const [day, month] = dueDate.split('/');
+                            if (day && month) {
+                                formattedDate = `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                            }
+                        }
+                        
+                        const gorev: Gorev = {
+                            id: id.trim(),
+                            baslik: title,
+                            aciklama: description ? description.trim() : '',
+                            durum,
+                            oncelik,
+                            proje_id: '', // Not provided in compact format, will be filled by provider
+                            son_tarih: formattedDate || '',
+                            etiketler: tags || [],
+                            olusturma_tarih: new Date().toISOString(), // Not provided in compact format
+                            guncelleme_tarih: new Date().toISOString(), // Not provided in compact format
+                            alt_gorevler: [],
+                            seviye: indentLevel,
+                            parent_id: '' // Will be set based on hierarchy
+                        };
+                        
+                        // Update parent stack based on indent level
+                        while (parentStack.length > 0 && parentStack[parentStack.length - 1].indentLevel >= indentLevel) {
+                            parentStack.pop();
+                        }
+                        
+                        // Set parent_id if this is a subtask
+                        if (parentStack.length > 0 && indentLevel > 0) {
+                            const parent = parentStack[parentStack.length - 1];
+                            gorev.parent_id = parent.id;
+                            // Add to parent's alt_gorevler
+                            const parentGorev = gorevMap.get(parent.id);
+                            if (parentGorev) {
+                                parentGorev.alt_gorevler = parentGorev.alt_gorevler || [];
+                                parentGorev.alt_gorevler.push(gorev);
+                                console.log(`[MarkdownParser] Added ${title} as child of ${parentGorev.baslik}`);
+                            }
+                        }
+                        
+                        // Add to map and stack
+                        gorevMap.set(gorev.id, gorev);
+                        if (indentLevel === 0 || !gorev.parent_id) {
+                            // Only add root tasks to the main array
+                            gorevler.push(gorev);
+                        }
+                        
+                        // Push to parent stack for potential children
+                        parentStack.push({ id: gorev.id, indentLevel });
+                        
+                        console.log(`[MarkdownParser] Successfully parsed task: ${title} (${id}) at level ${indentLevel}`);
+                    } else {
+                        console.warn(`[MarkdownParser] Failed to parse details line: ${detailsLine}`);
+                    }
+                } else {
+                    console.warn(`[MarkdownParser] No details line found for task: ${title}`);
+                }
+            } else if (line.includes('[') && line.includes(']')) {
+                console.log(`[MarkdownParser] Line ${i} contains brackets but didn't match pattern: ${line}`);
+            }
+            i++;
+        }
+        
+        console.log('[MarkdownParser] Total root tasks parsed from compact format:', gorevler.length);
+        console.log('[MarkdownParser] Total tasks including subtasks:', gorevMap.size);
+        if (gorevler.length === 0) {
+            console.warn('[MarkdownParser] No tasks were parsed! First 10 lines of markdown:');
+            lines.slice(0, 10).forEach((line, idx) => console.log(`  ${idx}: ${line}`));
+        }
         return gorevler;
     }
     

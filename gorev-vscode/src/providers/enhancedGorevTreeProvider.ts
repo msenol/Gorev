@@ -292,9 +292,30 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             // Get page size from configuration
             const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 100);
             
-            Logger.debug('[EnhancedGorevTreeProvider] Calling gorev_listele with page size:', pageSize);
+            // Check if we should show all projects or just active project
+            const showAllProjects = this.config.filters?.showAllProjects || false;
+            
+            // First get the active project to assign project_id to tasks
+            let activeProjectId = '';
+            if (!showAllProjects) {
+                try {
+                    const activeProjectResult = await this.mcpClient.callTool('aktif_proje_goster', {});
+                    if (activeProjectResult && activeProjectResult.content && activeProjectResult.content[0]) {
+                        const activeProjectText = activeProjectResult.content[0].text;
+                        const idMatch = activeProjectText.match(/ID:\s*([a-f0-9-]+)/);
+                        if (idMatch) {
+                            activeProjectId = idMatch[1];
+                            Logger.debug('[EnhancedGorevTreeProvider] Active project ID:', activeProjectId);
+                        }
+                    }
+                } catch (err) {
+                    Logger.warn('[EnhancedGorevTreeProvider] Failed to get active project:', err);
+                }
+            }
+            
+            Logger.debug('[EnhancedGorevTreeProvider] Calling gorev_listele with page size:', pageSize, 'showAllProjects:', showAllProjects);
             const result = await this.mcpClient.callTool('gorev_listele', {
-                tum_projeler: true,
+                tum_projeler: showAllProjects,
                 limit: pageSize,
                 offset: 0
             });
@@ -313,8 +334,20 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 // Debug: Log parsed tasks
                 Logger.info('[EnhancedGorevTreeProvider] Parsed tasks count:', this.tasks.length);
                 
+                // If tasks don't have project_id and we're showing active project tasks only, assign it
+                if (!showAllProjects && activeProjectId && this.tasks.length > 0) {
+                    for (const task of this.tasks) {
+                        if (!task.proje_id || task.proje_id === '') {
+                            task.proje_id = activeProjectId;
+                            Logger.debug(`[EnhancedGorevTreeProvider] Assigned project_id ${activeProjectId} to task: ${task.baslik}`);
+                        }
+                    }
+                }
+                
                 if (this.tasks.length > 0) {
                     Logger.debug('[EnhancedGorevTreeProvider] First task:', JSON.stringify(this.tasks[0], null, 2));
+                    Logger.debug('[EnhancedGorevTreeProvider] Tasks with project_id:', this.tasks.filter(t => t.proje_id).length);
+                    Logger.debug('[EnhancedGorevTreeProvider] Tasks without project_id:', this.tasks.filter(t => !t.proje_id).length);
                 } else {
                     Logger.warn('[EnhancedGorevTreeProvider] No tasks parsed from response');
                     // Log a few lines to debug
