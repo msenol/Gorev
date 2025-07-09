@@ -8,6 +8,27 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 ### Recent Changes
 
+#### MCP Server (v0.9.0) - AI Context Management
+- **Implemented AI Context Management & Automation** (9 July 2025):
+  - Added 6 new MCP tools for AI context management and NLP queries
+  - **New Tables**: `ai_interactions`, `ai_context` for tracking AI sessions
+  - **Auto-State Management**: Tasks automatically transition to "devam_ediyor" when viewed
+  - **Context Persistence**: Active task maintained across AI interactions
+  - **Batch Operations**: New `gorev_batch_update` for efficient bulk updates
+  - **Natural Language Queries**: New `gorev_nlp_query` for intuitive task search
+  - **AI-Optimized Summary**: `gorev_context_summary` provides session overview
+  - **New Tools**:
+    - `gorev_set_active` - Set and track active task
+    - `gorev_get_active` - Get current active task
+    - `gorev_recent` - List recent task interactions
+    - `gorev_context_summary` - AI-optimized session summary
+    - `gorev_batch_update` - Bulk task updates
+    - `gorev_nlp_query` - Natural language task search
+  - **Database Updates**:
+    - Added `last_ai_interaction`, `estimated_hours`, `actual_hours` to tasks
+    - Created AI interaction tracking tables
+    - Migration 000006 adds AI context support
+
 #### MCP Server (v0.8.1)
 - **Fixed Token Limit Errors with Pagination and Compact Formatting** (9 July 2025):
   - Added pagination support to `gorev_listele` and `proje_gorevleri` MCP tools
@@ -278,7 +299,7 @@ npm run package         # Create .vsix package
 
 ## MCP Tools
 
-The server implements 19 MCP tools:
+The server implements 25 MCP tools:
 
 ### Task Management
 1. **gorev_olustur**: Create new task (params: baslik, aciklama, oncelik, proje_id?, son_tarih?, etiketler?)
@@ -330,7 +351,28 @@ The server implements 19 MCP tools:
 ### Reporting
 19. **ozet_goster**: Show summary statistics (no params)
 
+### AI Context Management (NEW)
+20. **gorev_set_active**: Set active task for AI session (params: task_id)
+   - Automatically transitions task to "devam_ediyor" status
+   - Maintains context across AI interactions
+21. **gorev_get_active**: Get current active task (no params)
+   - Returns detailed information about the active task
+22. **gorev_recent**: Get recent tasks interacted with (params: limit?)
+   - limit: number of recent tasks to return (default: 5)
+23. **gorev_context_summary**: Get AI-optimized session summary (no params)
+   - Shows active task, recent tasks, priorities, and blockers
+24. **gorev_batch_update**: Batch update multiple tasks (params: updates)
+   - updates: array of {id: string, updates: {durum?: string, ...}}
+   - Efficient bulk operations for AI workflows
+25. **gorev_nlp_query**: Natural language task search (params: query)
+   - Supports queries like: "bugün üzerinde çalıştığım görevler", "yüksek öncelikli", "database ile ilgili"
+   - Tag search: "etiket:bug" or "tag:frontend"
+   - Status queries: "tamamlanmamış", "devam eden", "tamamlanan"
+   - Time-based: "acil", "gecikmiş", "son oluşturulan"
+
 All tools follow the pattern in `internal/mcp/handlers.go` and are registered in `RegisterTools()`. Task descriptions support full markdown formatting.
+
+**Auto-State Management**: When `gorev_detay` is called, tasks automatically transition from "beklemede" to "devam_ediyor" status to reflect AI interaction.
 
 ## Testing Strategy
 
@@ -370,15 +412,17 @@ func TestGorevOlustur(t *testing.T) {
 
 ## Database Schema
 
-SQLite database with seven tables and one view:
+SQLite database with nine tables and one view:
 
 - **projeler**: id, isim, tanim, olusturma_tarih, guncelleme_tarih
-- **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
+- **gorevler**: id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih, last_ai_interaction, estimated_hours, actual_hours
 - **baglantilar**: id, kaynak_id, hedef_id, baglanti_tip (for task dependencies)
 - **aktif_proje**: id (CHECK id=1), proje_id (stores single active project)
 - **etiketler**: id, isim (tags)
 - **gorev_etiketleri**: gorev_id, etiket_id (many-to-many relationship)
 - **gorev_templateleri**: id, isim, tanim, varsayilan_baslik, aciklama_template, alanlar, ornek_degerler, kategori, aktif (task templates)
+- **ai_interactions**: id, gorev_id, action_type, context, timestamp (tracks AI-task interactions)
+- **ai_context**: id (CHECK id=1), active_task_id, recent_tasks, session_data, last_updated (AI session context)
 - **gorev_hiyerarsi** (VIEW): Recursive CTE view for efficient hierarchy queries with path and level information
 
 Migrations are handled by golang-migrate in `internal/veri/migrations/`.
@@ -402,12 +446,14 @@ Migrations are handled by golang-migrate in `internal/veri/migrations/`.
 
 ### gorev-mcpserver
 - `internal/gorev/modeller.go`: Domain model definitions (includes GorevTemplate, TemplateAlan, GorevHiyerarsi)
-- `internal/mcp/handlers.go`: MCP tool implementations (includes template and subtask handlers)
+- `internal/mcp/handlers.go`: MCP tool implementations (includes template, subtask, and AI context handlers)
 - `internal/gorev/veri_yonetici.go`: Database operations (includes hierarchy queries with recursive CTEs)
 - `internal/gorev/is_yonetici.go`: Business logic (includes subtask validation and circular dependency checks)
+- `internal/gorev/ai_context_yonetici.go`: AI context management and auto-state transitions
 - `internal/gorev/template_yonetici.go`: Template management operations
 - `cmd/gorev/main.go`: CLI and server initialization (includes template commands, path resolution)
 - `internal/veri/migrations/000005_add_parent_id_to_gorevler.up.sql`: Subtask hierarchy migration
+- `internal/veri/migrations/000006_add_ai_context_tables.up.sql`: AI context tables migration
 
 ### gorev-vscode
 - `src/extension.ts`: Extension entry point and activation

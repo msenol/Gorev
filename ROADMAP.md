@@ -23,14 +23,16 @@ This roadmap outlines the planned development path for the Gorev task management
 
 #### 2. ✨ Advanced Search and Filtering System
 **Status:** Pending  
-**Description:** Full-text search, multi-filter combinations, and saved filter profiles.
+**Description:** Full-text search with natural language support, multi-filter combinations, and saved filter profiles.
 
 **Features:**
 - SQLite FTS5 extension
+- Natural language query support (integrates with AI Context Management)
 - Fuzzy search support
 - Filter profiles (save/load)
 - Command Palette integration
 - Search history
+- Smart suggestions based on AI interactions
 
 #### 3. 🔧 Task Dependencies in TreeView
 **Status:** Completed (5 July 2025)  
@@ -61,51 +63,70 @@ This roadmap outlines the planned development path for the Gorev task management
 - ✅ Comprehensive test coverage for all subtask operations
 - 🔲 Collapsible hierarchy in VS Code TreeView (future enhancement)
 
-#### 5. 🤖 AI-Powered Task Enrichment System
+#### 5. 🤖 AI Context Management & Automation System
 **Status:** Pending  
-**Description:** Intelligent system that enriches tasks with current technology information using user-provided API keys.
+**Description:** Smart context management and automation system optimized for AI users, addressing the critical issue of 0% active tasks and improving AI-human collaboration.
 
-**Technical Architecture:**
+**Core Problems Addressed:**
+- **77.5% tasks stuck in "beklemede"** - No automatic state transitions
+- **0% tasks in "devam_ediyor"** - AI forgets to update task states
+- **Context loss in long conversations** - No persistent task context
+- **Manual everything** - No automation or smart suggestions
 
-##### API Key Management
-- Secure storage using VS Code Secret Storage API
-- Supported services: OpenAI, Anthropic, Context7, GitHub APIs
-- Secure API key input in Settings UI
+##### Phase 1: Context Management (Priority 1)
+- **New MCP Tools:**
+  - `gorev_set_active(task_id)` - Set active task context
+  - `gorev_get_active()` - Get current active task
+  - `gorev_recent(limit=5)` - Get recent task interactions
+  - `gorev_context_summary()` - AI-optimized session summary
+- **Database Updates:**
+  - New table: `ai_context` (active task, recent tasks, session data)
+  - New table: `ai_interactions` (track AI-task interactions)
+  - Add columns: `last_ai_interaction`, `estimated_hours`, `actual_hours`
+- **Auto-State Management:**
+  - Auto-transition to "devam_ediyor" when task accessed
+  - Auto-transition to "beklemede" after 30min inactivity
+  - Parent task completion check when subtasks complete
+  - Git commit integration for status updates
 
-##### MCP Server Updates
-- New MCP tool: `gorev_zenginlestir`
-- New table: `gorev_zenginlestirmeleri` (cache and history)
-- NLP technology extraction
-- Smart caching (TTL: 7 days)
+##### Phase 2: Natural Language & Batch Operations
+- **NLP Query Interface:**
+  - `gorev_nlp_query("bugün üzerinde çalıştığım görevler")`
+  - Relative references: "son oluşturduğum görev", "database görevleri"
+  - Smart interpretation: "yarın yapalım" → son_tarih: tomorrow
+- **Batch Operations:**
+  - `gorev_batch_update([{id: "123", status: "completed"}, ...])`
+  - `gorev_bulk_create([task1, task2, ...])` 
+  - `gorev_bulk_transition(ids[], new_status)`
+- **AI Summary Dashboard:**
+  - Current sprint overview with blockers
+  - Suggested next actions based on priorities
+  - Time tracking: estimated vs actual
 
-##### VS Code Extension Updates
-- New settings for AI enablement and auto-enrichment
-- API key management panel with connection testing
-- "🤖 AI Enrich" button in task details
-- Progress indicators and notifications
+##### Phase 3: Smart Automation
+- **Intelligent Task Creation:**
+  - Auto-split into subtasks based on description
+  - ML-based time estimation
+  - Similar task detection and template suggestion
+- **Integration Hooks:**
+  - File edit → task progress update
+  - Code review → task creation from TODOs
+  - PR merge → task completion
+- **Predictive Analytics:**
+  - Task completion predictions
+  - Risk analysis (deadline miss probability)
+  - Bottleneck detection
 
-##### Enrichment Types
-1. **Technology Updates**: Framework versions, best practices, migration guides
-2. **Resources**: Documentation links, tutorials, Stack Overflow solutions
-3. **Risk Warnings**: Deprecated APIs, security vulnerabilities, breaking changes
-4. **Alternative Suggestions**: Similar technologies, modern approaches, community recommendations
+**Implementation Timeline:**
+- Phase 1 (2 weeks): Context & auto-state management
+- Phase 2 (3 weeks): NLP queries & batch operations  
+- Phase 3 (4 weeks): Automation & predictions
 
-##### Smart Features
-- Contextual understanding with NLP
-- Progressive enhancement levels
-- Team preference learning
-- Offline mode support
-
-**Implementation Phases:**
-- Phase 1 (2 weeks): Basic infrastructure, API key management
-- Phase 2 (3 weeks): AI integration, NLP analysis
-- Phase 3 (2 weeks): Auto-enrichment, analytics
-
-**Expected Benefits:**
-- 40% faster task planning
-- Current technology tracking
-- Early risk detection
-- Standardized best practices
+**Success Metrics:**
+- Active task ratio: >20% (from current 0%)
+- Context switches: <5 per AI session
+- Bulk operations: >30% of all updates
+- Auto-state accuracy: >80%
 
 ### Medium Priority
 
@@ -224,8 +245,8 @@ This roadmap outlines the planned development path for the Gorev task management
 ## 📅 Timeline
 
 ### Q3 2025 (July - September)
-- AI-Powered Task Enrichment System
-- Advanced Search and Filtering
+- AI Context Management & Automation System (Phase 1 & 2)
+- Advanced Search and Filtering (with NLP support)
 - Test Coverage Improvement
 
 ### Q4 2025 (October - December)

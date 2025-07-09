@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** July 9, 2025 | **Version:** v0.8.1
+**Last Updated:** July 9, 2025 | **Version:** v0.9.0
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
@@ -304,7 +304,8 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 
 - 📦 [Installation Guide](docs/getting-started/installation.md) - Platform-specific installation instructions
 - 📖 [Usage Guide](docs/user-guide/usage.md) - Detailed usage examples
-- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 16 MCP tools
+- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 25 MCP tools
+- 🤖 [AI MCP Tools](docs/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
 - 🏗 [System Architecture](docs/development/architecture.md) - Technical details
 - 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
 - 💻 [Contributing Guide](docs/development/contributing.md) - How to contribute

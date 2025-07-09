@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## MCP Server
 
+### [0.9.0] - 2025-07-09
+
+#### Added
+- **AI Context Management & Automation System**
+  - 6 new MCP tools for AI-optimized task management
+  - Automatic state transitions when AI views tasks (beklemede → devam_ediyor)
+  - Persistent AI context across sessions
+  - Natural language query support for Turkish
+  - Batch operations for efficient bulk updates
+  - AI-optimized context summary dashboard
+
+- **New MCP Tools**
+  - `gorev_set_active` - Set and track active task with auto-state management
+  - `gorev_get_active` - Get current active task with full details
+  - `gorev_recent` - List recently interacted tasks (limit parameter)
+  - `gorev_context_summary` - AI-optimized session overview with statistics
+  - `gorev_batch_update` - Bulk update multiple tasks in single operation
+  - `gorev_nlp_query` - Natural language task search (Turkish support)
+
+- **Database Changes**
+  - Added migration 000006 for AI context tables
+  - New tables: `ai_interactions`, `ai_context`
+  - New columns in `gorevler`: `last_ai_interaction`, `estimated_hours`, `actual_hours`
+  - Tracking for AI interactions: viewed, created, updated, completed, set_active, bulk_operation
+
+- **Code Architecture**
+  - Added `internal/gorev/ai_context_yonetici.go` - AI context manager
+  - Added `AIContextYonetici` field to MCP Handlers
+  - Integrated auto-state management into `GorevDetay` handler
+  - Added comprehensive unit tests (`ai_context_yonetici_test.go`)
+  - Added integration tests (`handlers_ai_test.go`)
+
+#### Changed
+- `GorevDetay` now automatically transitions tasks from "beklemede" to "devam_ediyor" when viewed
+- Updated total MCP tools count from 19 to 25
+- Enhanced `is_yonetici.go` with `VeriYonetici()` method for AI context access
+
+#### Documentation
+- Updated CLAUDE.md with v0.9.0 features
+- Updated ROADMAP.md with AI Context Management as priority 5
+- Added comprehensive AI feature documentation
+
 ### [0.8.1] - 2025-07-09
 
 #### Fixed

@@ -1,6 +1,8 @@
 # MCP Araçları Referansı
 
-Gorev'in sağladığı tüm MCP tool'larının detaylı açıklaması.
+Gorev'in sağladığı 25 MCP tool'unun detaylı açıklaması.
+
+> **Not**: AI Context Management araçları için [AI MCP Araçları Dokümantasyonu](../mcp-araclari-ai.md)'na bakın.
 
 ## 📋 Araç Listesi
 
@@ -32,6 +34,16 @@ Gorev'in sağladığı tüm MCP tool'larının detaylı açıklaması.
 
 ### Raporlama
 19. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
+
+### AI Context Management (v0.9.0+)
+20. [gorev_set_active](#ai-araçları) - Aktif görevi ayarlama ve otomatik durum yönetimi
+21. [gorev_get_active](#ai-araçları) - Aktif görevi görüntüleme
+22. [gorev_recent](#ai-araçları) - Son görüntülenen görevleri listeleme
+23. [gorev_context_summary](#ai-araçları) - AI oturum özeti
+24. [gorev_batch_update](#ai-araçları) - Toplu görev güncelleme
+25. [gorev_nlp_query](#ai-araçları) - Doğal dil ile görev arama
+
+> **Detaylı bilgi için**: [AI MCP Araçları Dokümantasyonu](../mcp-araclari-ai.md)
 
 ---
 
