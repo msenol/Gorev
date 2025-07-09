@@ -9,6 +9,14 @@ import (
 	"github.com/msenol/gorev/internal/gorev"
 )
 
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 type Handlers struct {
 	isYonetici *gorev.IsYonetici
 }
@@ -17,6 +25,86 @@ func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 	return &Handlers{
 		isYonetici: isYonetici,
 	}
+}
+
+// gorevResponseSizeEstimate bir görev için tahmini response boyutunu hesaplar
+func (h *Handlers) gorevResponseSizeEstimate(gorev *gorev.Gorev) int {
+	// Tahmini karakter sayıları
+	size := 100 // Temel formatlar için
+	size += len(gorev.Baslik) + len(gorev.Aciklama)
+	size += len(gorev.ID) + len(gorev.ProjeID)
+	
+	if gorev.SonTarih != nil {
+		size += 30 // Tarih formatı için
+	}
+	
+	for _, etiket := range gorev.Etiketler {
+		size += len(etiket.Isim) + 5
+	}
+	
+	// Bağımlılık bilgileri
+	if gorev.BagimliGorevSayisi > 0 || gorev.BuGoreveBagimliSayisi > 0 {
+		size += 100
+	}
+	
+	return size
+}
+
+// gorevOzetYazdir bir görevi özet formatta yazdırır (ProjeGorevleri için)
+func (h *Handlers) gorevOzetYazdir(g *gorev.Gorev) string {
+	// Öncelik kısaltması
+	oncelik := ""
+	switch g.Oncelik {
+	case "yuksek":
+		oncelik = "Y"
+	case "orta":
+		oncelik = "O"
+	case "dusuk":
+		oncelik = "D"
+	}
+	
+	metin := fmt.Sprintf("- **%s** (%s)", g.Baslik, oncelik)
+	
+	// Inline detaylar
+	details := []string{}
+	if g.Aciklama != "" && len(g.Aciklama) <= 50 {
+		details = append(details, g.Aciklama)
+	} else if g.Aciklama != "" {
+		details = append(details, g.Aciklama[:47]+"...")
+	}
+	
+	if g.SonTarih != nil {
+		details = append(details, g.SonTarih.Format("02/01"))
+	}
+	
+	if len(g.Etiketler) > 0 && len(g.Etiketler) <= 2 {
+		etiketler := make([]string, len(g.Etiketler))
+		for i, e := range g.Etiketler {
+			etiketler[i] = e.Isim
+		}
+		details = append(details, strings.Join(etiketler, ","))
+	} else if len(g.Etiketler) > 2 {
+		details = append(details, fmt.Sprintf("%d etiket", len(g.Etiketler)))
+	}
+	
+	if g.TamamlanmamisBagimlilikSayisi > 0 {
+		details = append(details, fmt.Sprintf("🔒%d", g.TamamlanmamisBagimlilikSayisi))
+	}
+	
+	details = append(details, g.ID[:8])
+	
+	if len(details) > 0 {
+		metin += " - " + strings.Join(details, " | ")
+	}
+	metin += "\n"
+	
+	return metin
+}
+
+// gorevOzetYazdirTamamlandi tamamlanmış bir görevi özet formatta yazdırır
+func (h *Handlers) gorevOzetYazdirTamamlandi(g *gorev.Gorev) string {
+	// Çok kısa format - sadece başlık ve ID
+	return fmt.Sprintf("- ~~%s~~ | %s\n", g.Baslik, g.ID[:8])
 }
 
 // gorevHiyerarsiYazdir bir görevi ve alt görevlerini hiyerarşik olarak yazdırır
@@ -37,33 +125,67 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 		durum = "⏳"
 	}
 
-	metin := fmt.Sprintf("%s%s[%s] %s (%s öncelik)\n", indent, prefix, durum, gorev.Baslik, gorev.Oncelik)
+	// Öncelik kısaltması
+	oncelikKisa := ""
+	switch gorev.Oncelik {
+	case "yuksek":
+		oncelikKisa = "Y"
+	case "orta":
+		oncelikKisa = "O"
+	case "dusuk":
+		oncelikKisa = "D"
+	default:
+		oncelikKisa = gorev.Oncelik
+	}
 
+	// Temel satır - öncelik parantez içinde kısaltılmış
+	metin := fmt.Sprintf("%s%s[%s] %s (%s)\n", indent, prefix, durum, gorev.Baslik, oncelikKisa)
+
+	// Sadece dolu alanları göster, boş satırlar ekleme
+	details := []string{}
+	
 	if gorev.Aciklama != "" {
-		metin += fmt.Sprintf("%s  %s\n", indent, gorev.Aciklama)
+		// Açıklamayı kısalt - maksimum 100 karakter
+		aciklama := gorev.Aciklama
+		if len(aciklama) > 100 {
+			aciklama = aciklama[:97] + "..."
+		}
+		details = append(details, aciklama)
 	}
 
 	if projeGoster && gorev.ProjeID != "" {
 		proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
 		if proje != nil {
-			metin += fmt.Sprintf("%s  Proje: %s\n", indent, proje.Isim)
+			details = append(details, fmt.Sprintf("Proje: %s", proje.Isim))
 		}
-		metin += fmt.Sprintf("%s  ProjeID: %s\n", indent, gorev.ProjeID)
 	}
 
 	if gorev.SonTarih != nil {
-		metin += fmt.Sprintf("%s  Son tarih: %s\n", indent, gorev.SonTarih.Format("2006-01-02"))
+		details = append(details, fmt.Sprintf("Tarih: %s", gorev.SonTarih.Format("02/01")))
 	}
 
-	if len(gorev.Etiketler) > 0 {
+	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= 3 {
 		etiketIsimleri := make([]string, len(gorev.Etiketler))
 		for i, etiket := range gorev.Etiketler {
 			etiketIsimleri[i] = etiket.Isim
 		}
-		metin += fmt.Sprintf("%s  Etiketler: %s\n", indent, strings.Join(etiketIsimleri, ", "))
+		details = append(details, fmt.Sprintf("Etiket: %s", strings.Join(etiketIsimleri, ",")))
+	} else if len(gorev.Etiketler) > 3 {
+		details = append(details, fmt.Sprintf("Etiket: %d adet", len(gorev.Etiketler)))
 	}
 
-	metin += fmt.Sprintf("%s  ID: %s\n", indent, gorev.ID)
+	// Bağımlılık bilgileri - sadece varsa ve sıfırdan büyükse
+	if gorev.TamamlanmamisBagimlilikSayisi > 0 {
+		details = append(details, fmt.Sprintf("Bekleyen: %d", gorev.TamamlanmamisBagimlilikSayisi))
+	}
+	
+	// ID'yi en sona ekle
+	details = append(details, fmt.Sprintf("ID:%s", gorev.ID))
+
+	// Detayları tek satırda göster
+	if len(details) > 0 {
+		metin += fmt.Sprintf("%s  %s\n", indent, strings.Join(details, " | "))
+	}
 
 	// Alt görevleri bul ve yazdır
 	for _, g := range gorevMap {
@@ -128,6 +250,16 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	filtre, _ := params["filtre"].(string)
 	etiket, _ := params["etiket"].(string)
 	tumProjeler, _ := params["tum_projeler"].(bool)
+	
+	// Pagination parametreleri
+	limit := 50 // Varsayılan limit
+	if l, ok := params["limit"].(float64); ok && l > 0 {
+		limit = int(l)
+	}
+	offset := 0
+	if o, ok := params["offset"].(float64); ok && o >= 0 {
+		offset = int(o)
+	}
 
 	gorevler, err := h.isYonetici.GorevListele(durum, sirala, filtre)
 	if err != nil {
@@ -164,7 +296,10 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		}
 	}
 
-	if len(gorevler) == 0 {
+	// Toplam görev sayısı
+	toplamGorevSayisi := len(gorevler)
+	
+	if toplamGorevSayisi == 0 {
 		mesaj := "Henüz görev bulunmuyor."
 		if aktifProje != nil {
 			mesaj = fmt.Sprintf("%s projesinde henüz görev bulunmuyor.", aktifProje.Isim)
@@ -172,11 +307,22 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		return mcp.NewToolResultText(mesaj), nil
 	}
 
-	metin := "## Görev Listesi"
-	if aktifProje != nil && !tumProjeler {
-		metin += fmt.Sprintf(" - %s", aktifProje.Isim)
+	metin := ""
+	
+	// Kompakt başlık ve pagination bilgisi
+	if toplamGorevSayisi > limit || offset > 0 {
+		metin = fmt.Sprintf("Görevler (%d-%d / %d)\n", 
+			offset+1, 
+			min(offset+limit, toplamGorevSayisi),
+			toplamGorevSayisi)
+	} else {
+		metin = fmt.Sprintf("Görevler (%d)\n", toplamGorevSayisi)
 	}
-	metin += "\n\n"
+	
+	if aktifProje != nil && !tumProjeler {
+		metin += fmt.Sprintf("Proje: %s\n", aktifProje.Isim)
+	}
+	metin += "\n"
 
 	// Görevleri hiyerarşik olarak organize et
 	gorevMap := make(map[string]*gorev.Gorev)
@@ -189,16 +335,60 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		}
 	}
 
+	// Pagination uygula - sadece root level görevlere
+	paginatedKokGorevler := kokGorevler
+	if offset < len(kokGorevler) {
+		end := offset + limit
+		if end > len(kokGorevler) {
+			end = len(kokGorevler)
+		}
+		paginatedKokGorevler = kokGorevler[offset:end]
+	} else {
+		paginatedKokGorevler = []*gorev.Gorev{}
+	}
+
+	// Response boyutunu tahmin et ve gerekirse daha az görev göster
+	estimatedSize := 0
+	const maxResponseSize = 20000 // ~20K karakter güvenli limit
+	
+	gorevlerToShow := []*gorev.Gorev{}
+	for _, kokGorev := range paginatedKokGorevler {
+		gorevSize := h.gorevResponseSizeEstimate(kokGorev)
+		// Alt görevler için ek boyut tahmin et
+		for _, g := range gorevMap {
+			if g.ParentID == kokGorev.ID {
+				gorevSize += h.gorevResponseSizeEstimate(g)
+			}
+		}
+		
+		if estimatedSize + gorevSize > maxResponseSize && len(gorevlerToShow) > 0 {
+			// Boyut aşılacak, daha fazla görev ekleme
+			metin += fmt.Sprintf("\n*Not: Response boyut limiti nedeniyle %d görev daha var. 'offset' parametresi ile devam edebilirsiniz.*\n", 
+				len(paginatedKokGorevler) - len(gorevlerToShow))
+			break
+		}
+		estimatedSize += gorevSize
+		gorevlerToShow = append(gorevlerToShow, kokGorev)
+	}
+
 	// Kök görevlerden başlayarak hiyerarşiyi oluştur
-	for _, kokGorev := range kokGorevler {
-		metin += h.gorevHiyerarsiYazdir(kokGorev, gorevMap, 0, aktifProje == nil)
+	for _, kokGorev := range gorevlerToShow {
+		metin += h.gorevHiyerarsiYazdir(kokGorev, gorevMap, 0, tumProjeler || aktifProje == nil)
 	}
 
 	// Parent'ı olmayan ama parent_id'si dolu olanları da göster (parent görünmeyen görevler)
-	for _, g := range gorevler {
-		if g.ParentID != "" {
-			if _, parentVar := gorevMap[g.ParentID]; !parentVar {
-				metin += h.gorevHiyerarsiYazdir(g, gorevMap, 0, aktifProje == nil)
+	// Bu sadece pagination'da ilk sayfadaysa gösterilecek
+	if offset == 0 {
+		for _, g := range gorevler {
+			if g.ParentID != "" {
+				if _, parentVar := gorevMap[g.ParentID]; !parentVar {
+					gorevSize := h.gorevResponseSizeEstimate(g)
+					if estimatedSize + gorevSize > maxResponseSize {
+						break
+					}
+					metin += h.gorevHiyerarsiYazdir(g, gorevMap, 0, tumProjeler || aktifProje == nil)
+					estimatedSize += gorevSize
+				}
 			}
 		}
 	}
@@ -504,10 +694,24 @@ func (h *Handlers) ProjeListele(params map[string]interface{}) (*mcp.CallToolRes
 		if err == nil {
 			metin += fmt.Sprintf("- **Görev Sayısı:** %d\n", gorevSayisi)
 		}
-		metin += "\n"
 	}
 
 	return mcp.NewToolResultText(metin), nil
+}
+
+// gorevBagimlilikBilgisi görev için bağımlılık bilgilerini formatlar
+func (h *Handlers) gorevBagimlilikBilgisi(g *gorev.Gorev, indent string) string {
+	bilgi := ""
+	if g.BagimliGorevSayisi > 0 {
+		bilgi += fmt.Sprintf("%sBağımlı görev sayısı: %d\n", indent, g.BagimliGorevSayisi)
+		if g.TamamlanmamisBagimlilikSayisi > 0 {
+			bilgi += fmt.Sprintf("%sTamamlanmamış bağımlılık sayısı: %d\n", indent, g.TamamlanmamisBagimlilikSayisi)
+		}
+	}
+	if g.BuGoreveBagimliSayisi > 0 {
+		bilgi += fmt.Sprintf("%sBu göreve bağımlı sayısı: %d\n", indent, g.BuGoreveBagimliSayisi)
+	}
+	return bilgi
 }
 
 // ProjeGorevleri bir projenin görevlerini listeler
@@ -515,6 +719,16 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	projeID, ok := params["proje_id"].(string)
 	if !ok || projeID == "" {
 		return mcp.NewToolResultError("proje_id parametresi gerekli"), nil
+	}
+	
+	// Pagination parametreleri
+	limit := 50 // Varsayılan limit
+	if l, ok := params["limit"].(float64); ok && l > 0 {
+		limit = int(l)
+	}
+	offset := 0
+	if o, ok := params["offset"].(float64); ok && o >= 0 {
+		offset = int(o)
 	}
 
 	// Önce projenin var olduğunu kontrol et
@@ -528,11 +742,25 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 		return mcp.NewToolResultError(fmt.Sprintf("görevler alınamadı: %v", err)), nil
 	}
 
-	metin := fmt.Sprintf("## %s - Görevler\n\n", proje.Isim)
+	// Toplam görev sayısı
+	toplamGorevSayisi := len(gorevler)
+	
+	metin := ""
 
-	if len(gorevler) == 0 {
-		metin += "*Bu projede henüz görev bulunmuyor.*"
+	if toplamGorevSayisi == 0 {
+		metin = fmt.Sprintf("%s - Görev yok", proje.Isim)
 		return mcp.NewToolResultText(metin), nil
+	}
+	
+	// Kompakt başlık
+	if toplamGorevSayisi > limit || offset > 0 {
+		metin = fmt.Sprintf("%s (%d-%d / %d)\n", 
+			proje.Isim,
+			offset+1, 
+			min(offset+limit, toplamGorevSayisi),
+			toplamGorevSayisi)
+	} else {
+		metin = fmt.Sprintf("%s (%d görev)\n", proje.Isim, toplamGorevSayisi)
 	}
 
 	// Duruma göre grupla
@@ -550,69 +778,118 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 			tamamlandi = append(tamamlandi, g)
 		}
 	}
-
-	// Devam eden görevler
-	if len(devamEdiyor) > 0 {
-		metin += "### 🔵 Devam Ediyor\n"
-		for _, g := range devamEdiyor {
-			metin += fmt.Sprintf("- **%s** (%s öncelik)\n", g.Baslik, g.Oncelik)
-			if g.Aciklama != "" {
-				metin += fmt.Sprintf("  %s\n", g.Aciklama)
-			}
-			metin += fmt.Sprintf("  ProjeID: %s\n", g.ProjeID)
-			if g.SonTarih != nil {
-				metin += fmt.Sprintf("  Son tarih: %s\n", g.SonTarih.Format("2006-01-02"))
-			}
-			if len(g.Etiketler) > 0 {
-				etiketIsimleri := make([]string, len(g.Etiketler))
-				for i, etiket := range g.Etiketler {
-					etiketIsimleri[i] = etiket.Isim
-				}
-				metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
-			}
-			metin += fmt.Sprintf("  `ID: %s`\n", g.ID)
-		}
-		metin += "\n"
+	
+	// Pagination uygula - tüm görevleri tek bir listede topla
+	allGorevler := append(append(devamEdiyor, beklemede...), tamamlandi...)
+	
+	// Pagination limitleri
+	start := offset
+	end := offset + limit
+	if start > len(allGorevler) {
+		start = len(allGorevler)
 	}
-
-	// Bekleyen görevler
-	if len(beklemede) > 0 {
-		metin += "### ⚪ Beklemede\n"
-		for _, g := range beklemede {
-			metin += fmt.Sprintf("- **%s** (%s öncelik)\n", g.Baslik, g.Oncelik)
-			if g.Aciklama != "" {
-				metin += fmt.Sprintf("  %s\n", g.Aciklama)
-			}
-			metin += fmt.Sprintf("  ProjeID: %s\n", g.ProjeID)
-			if g.SonTarih != nil {
-				metin += fmt.Sprintf("  Son tarih: %s\n", g.SonTarih.Format("2006-01-02"))
-			}
-			if len(g.Etiketler) > 0 {
-				etiketIsimleri := make([]string, len(g.Etiketler))
-				for i, etiket := range g.Etiketler {
-					etiketIsimleri[i] = etiket.Isim
-				}
-				metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
-			}
-			metin += fmt.Sprintf("  `ID: %s`\n", g.ID)
-		}
-		metin += "\n"
+	if end > len(allGorevler) {
+		end = len(allGorevler)
 	}
-
-	// Tamamlanan görevler
-	if len(tamamlandi) > 0 {
-		metin += "### ✅ Tamamlandı\n"
-		for _, g := range tamamlandi {
-			metin += fmt.Sprintf("- ~~%s~~ (%s öncelik)\n", g.Baslik, g.Oncelik)
-			metin += fmt.Sprintf("  ProjeID: %s\n", g.ProjeID)
-			if len(g.Etiketler) > 0 {
-				etiketIsimleri := make([]string, len(g.Etiketler))
-				for i, etiket := range g.Etiketler {
-					etiketIsimleri[i] = etiket.Isim
-				}
-				metin += fmt.Sprintf("  Etiketler: %s\n", strings.Join(etiketIsimleri, ", "))
+	
+	// Response boyut kontrolü
+	estimatedSize := len(metin)
+	const maxResponseSize = 20000
+	gorevleriGoster := 0
+	
+	// Önce devam eden görevleri göster
+	devamEdiyorStart := 0
+	devamEdiyorEnd := len(devamEdiyor)
+	
+	if start < len(devamEdiyor) {
+		devamEdiyorStart = start
+		if end < len(devamEdiyor) {
+			devamEdiyorEnd = end
+		}
+		start = len(devamEdiyor)
+	} else {
+		devamEdiyorStart = len(devamEdiyor)
+		devamEdiyorEnd = len(devamEdiyor)
+		start -= len(devamEdiyor)
+	}
+	
+	if devamEdiyorEnd > devamEdiyorStart {
+		metin += "\n🔵 Devam Ediyor\n"
+		for i := devamEdiyorStart; i < devamEdiyorEnd; i++ {
+			g := devamEdiyor[i]
+			gorevSize := h.gorevResponseSizeEstimate(g)
+			if estimatedSize + gorevSize > maxResponseSize && gorevleriGoster > 0 {
+				metin += fmt.Sprintf("*... ve %d görev daha (boyut limiti)*\n", devamEdiyorEnd-i)
+				break
 			}
-			metin += fmt.Sprintf("  `ID: %s`\n", g.ID)
+			metin += h.gorevOzetYazdir(g)
+			estimatedSize += gorevSize
+			gorevleriGoster++
+		}
+	}
+	
+	// Bekleyen görevleri göster
+	beklemedeStart := 0
+	beklemedeEnd := len(beklemede)
+	
+	if start < len(devamEdiyor) + len(beklemede) {
+		if start > len(devamEdiyor) {
+			beklemedeStart = start - len(devamEdiyor)
+		}
+		if end < len(devamEdiyor) + len(beklemede) {
+			beklemedeEnd = end - len(devamEdiyor)
+			if beklemedeEnd < 0 {
+				beklemedeEnd = 0
+			}
+		}
+		start = len(devamEdiyor) + len(beklemede)
+	} else {
+		beklemedeStart = len(beklemede)
+		beklemedeEnd = len(beklemede)
+		start -= len(beklemede)
+	}
+	
+	if beklemedeEnd > beklemedeStart && estimatedSize < maxResponseSize {
+		metin += "\n⚪ Beklemede\n"
+		for i := beklemedeStart; i < beklemedeEnd; i++ {
+			g := beklemede[i]
+			gorevSize := h.gorevResponseSizeEstimate(g)
+			if estimatedSize + gorevSize > maxResponseSize && gorevleriGoster > 0 {
+				metin += fmt.Sprintf("*... ve %d görev daha (boyut limiti)*\n", beklemedeEnd-i)
+				break
+			}
+			metin += h.gorevOzetYazdir(g)
+			estimatedSize += gorevSize
+			gorevleriGoster++
+		}
+	}
+	
+	// Tamamlanan görevleri göster
+	tamamlandiStart := 0
+	tamamlandiEnd := len(tamamlandi)
+	
+	remainingOffset := offset - len(devamEdiyor) - len(beklemede)
+	if remainingOffset > 0 && remainingOffset < len(tamamlandi) {
+		tamamlandiStart = remainingOffset
+	}
+	
+	remainingEnd := end - len(devamEdiyor) - len(beklemede)
+	if remainingEnd < len(tamamlandi) && remainingEnd >= 0 {
+		tamamlandiEnd = remainingEnd
+	}
+	
+	if tamamlandiEnd > tamamlandiStart && estimatedSize < maxResponseSize {
+		metin += "\n✅ Tamamlandı\n"
+		for i := tamamlandiStart; i < tamamlandiEnd; i++ {
+			g := tamamlandi[i]
+			gorevSize := h.gorevResponseSizeEstimate(g) 
+			if estimatedSize + gorevSize > maxResponseSize && gorevleriGoster > 0 {
+				metin += fmt.Sprintf("*... ve %d görev daha (boyut limiti)*\n", tamamlandiEnd-i)
+				break
+			}
+			metin += h.gorevOzetYazdirTamamlandi(g)
+			estimatedSize += gorevSize
+			gorevleriGoster++
 		}
 	}
 
@@ -940,6 +1217,14 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 					"type":        "boolean",
 					"description": "Tüm projelerdeki görevleri gösterir. Varsayılan olarak sadece aktif projenin görevleri listelenir.",
 				},
+				"limit": map[string]interface{}{
+					"type":        "number",
+					"description": "Gösterilecek maksimum görev sayısı. Varsayılan: 50",
+				},
+				"offset": map[string]interface{}{
+					"type":        "number",
+					"description": "Atlanacak görev sayısı (pagination için). Varsayılan: 0",
+				},
 			},
 		},
 	}, h.GorevListele)
@@ -1078,6 +1363,14 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 				"proje_id": map[string]interface{}{
 					"type":        "string",
 					"description": "Proje ID",
+				},
+				"limit": map[string]interface{}{
+					"type":        "number",
+					"description": "Gösterilecek maksimum görev sayısı. Varsayılan: 50",
+				},
+				"offset": map[string]interface{}{
+					"type":        "number",
+					"description": "Atlanacak görev sayısı (pagination için). Varsayılan: 0",
 				},
 			},
 			Required: []string{"proje_id"},
