@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## MCP Server
 
+### [0.9.1] - 2025-07-09
+
+#### Fixed
+- **Critical Pagination Bug**: Fixed issue where pagination was counting all tasks (147) but only paginating through root tasks (38)
+  - Second page (offset 100+) was returning empty responses
+  - Now correctly paginates through all tasks including subtasks
+  - VS Code extension now displays all tasks correctly
+
+#### Changed
+- Improved pagination logic in `GorevListele` handler to handle both root and subtasks
+- Better task organization in paginated responses
+
 ### [0.9.0] - 2025-07-09
 
 #### Added

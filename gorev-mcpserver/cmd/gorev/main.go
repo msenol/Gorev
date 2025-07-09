@@ -239,7 +239,7 @@ func runServer() error {
 	}
 
 	// Sunucuyu çalıştır
-	fmt.Fprintln(os.Stderr, "Gorev MCP sunucusu başlatılıyor...")
+	// fmt.Fprintln(os.Stderr, "Gorev MCP sunucusu başlatılıyor...")
 	if err := mcp.ServeSunucu(sunucu); err != nil {
 		return fmt.Errorf("sunucu başlatılamadı: %w", err)
 	}
