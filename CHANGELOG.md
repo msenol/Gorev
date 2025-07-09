@@ -5,6 +5,36 @@ All notable changes to the Gorev project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## MCP Server
+
+### [0.8.1] - 2025-07-09
+
+#### Fixed
+- Fixed token limit errors in MCP tools (`gorev_listele` and `proje_gorevleri` exceeding 25k tokens)
+- Implemented pagination support with `limit` and `offset` parameters
+- Optimized response formatting to reduce token usage by ~60%
+  - Priority shown as Y/O/D instead of full words (yuksek/orta/dusuk)
+  - Task details condensed to single line with pipe separators
+  - Descriptions truncated to 100 chars, IDs to 8 chars
+  - Removed empty fields and unnecessary newlines
+  - Simplified section headers (removed ### markdown)
+- Added response size estimation to prevent token limit errors
+- Maximum response size set to 20K characters to stay under 25K token limit
+
+#### Changed
+- Updated MCP tool schemas for `gorev_listele` and `proje_gorevleri` to include pagination parameters
+
+## VS Code Extension
+
+### [0.3.4] - 2025-07-09
+
+#### Added
+- Added `gorev.pagination.pageSize` configuration option (default: 100)
+- Extension now passes pagination parameters to MCP tools
+
+#### Changed
+- Updated `enhancedGorevTreeProvider` to use pagination when calling MCP tools
+
 ## VS Code Extension
 
 ### [0.3.3] - 2025-06-30

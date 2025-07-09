@@ -2,11 +2,46 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 30 June 2025
+## Last Updated: 9 July 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
 ### Recent Changes
+
+#### MCP Server (v0.8.1)
+- **Fixed Token Limit Errors with Pagination and Compact Formatting** (9 July 2025):
+  - Added pagination support to `gorev_listele` and `proje_gorevleri` MCP tools
+  - Added `limit` (default: 50) and `offset` (default: 0) parameters
+  - Implemented response size estimation to prevent token limit errors
+  - Maximum response size set to 20K characters to stay under 25K token limit
+  - **Optimized Response Formatting**:
+    - Reduced verbosity: priority shown as Y/O/D instead of yuksek/orta/dusuk
+    - Condensed task details to single line with pipe separators
+    - Truncated descriptions to 100 chars, IDs to 8 chars
+    - Removed empty fields and unnecessary newlines
+    - Simplified section headers (removed ### markdown)
+  - **VS Code Extension Update**:
+    - Added `gorev.pagination.pageSize` configuration (default: 100)
+    - Extension now passes pagination parameters to MCP tools
+  - **New/Updated Functions**:
+    - `gorevResponseSizeEstimate` - Estimates response size for a task
+    - `gorevOzetYazdir` - Compact task formatting (reduced by ~60%)
+    - `gorevOzetYazdirTamamlandi` - Ultra-compact completed task format
+    - `gorevHiyerarsiYazdir` - Optimized hierarchical task display
+
+#### VS Code Extension (v0.3.4)
+- **Enhanced TreeView Visual Indicators** (5 July 2025):
+  - Added visual progress bars for parent tasks showing subtask completion
+  - Implemented priority badges (🔥⚡ℹ️) with color coding
+  - Added smart due date formatting (Today, Tomorrow, 3d left, etc.)
+  - Enhanced dependency badges with lock/unlock status (🔒🔓🔗)
+  - Converted tags to colored pill badges with configurable limit
+  - Created rich markdown tooltips with progress visualization
+  - Added TaskDecorationProvider for managing visual decorations
+  - Added 9 new configuration options for visual preferences
+  - Improved task description formatting with separators
+  - **Fixed dependency data transmission** - MCP handlers now include dependency counts in markdown output
+  - **Updated MarkdownParser** to parse dependency information from server responses
 
 #### VS Code Extension (v0.3.3)
 - **Fixed Progress Percentage Display Issue** (30 June 2025):
@@ -250,11 +285,13 @@ The server implements 19 MCP tools:
    - proje_id is optional; if not provided, uses active project
    - son_tarih: optional due date in YYYY-MM-DD format
    - etiketler: optional comma-separated tags
-2. **gorev_listele**: List tasks (params: durum?, tum_projeler?, sirala?, filtre?, etiket?)
+2. **gorev_listele**: List tasks (params: durum?, tum_projeler?, sirala?, filtre?, etiket?, limit?, offset?)
    - tum_projeler: if false/omitted, shows only active project tasks
    - sirala: son_tarih_asc, son_tarih_desc
    - filtre: acil (due in 7 days), gecmis (overdue)
    - etiket: filter by tag name
+   - limit: maximum number of tasks to return (default: 50)
+   - offset: number of tasks to skip for pagination (default: 0)
 3. **gorev_detay**: Show detailed task info in markdown (params: id)
    - Shows due dates, tags, and dependencies with status indicators
 4. **gorev_guncelle**: Update task status (params: id, durum)
@@ -283,7 +320,9 @@ The server implements 19 MCP tools:
 ### Project Management
 13. **proje_olustur**: Create project (params: isim, tanim)
 14. **proje_listele**: List all projects with task counts (no params)
-15. **proje_gorevleri**: List project tasks grouped by status (params: proje_id)
+15. **proje_gorevleri**: List project tasks grouped by status (params: proje_id, limit?, offset?)
+   - limit: maximum number of tasks to return (default: 50)
+   - offset: number of tasks to skip for pagination (default: 0)
 16. **proje_aktif_yap**: Set active project (params: proje_id)
 17. **aktif_proje_goster**: Show current active project (no params)
 18. **aktif_proje_kaldir**: Remove active project setting (no params)

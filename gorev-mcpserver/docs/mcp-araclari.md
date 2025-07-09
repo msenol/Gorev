@@ -37,6 +37,8 @@ Görevleri listeler ve filtreler.
 - `sirala` (opsiyonel): son_tarih_asc veya son_tarih_desc
 - `filtre` (opsiyonel): acil (7 gün içinde) veya gecmis (süresi geçmiş)
 - `etiket` (opsiyonel): Filtrelenecek etiket ismi
+- `limit` (opsiyonel): Gösterilecek maksimum görev sayısı (varsayılan: 50)
+- `offset` (opsiyonel): Atlanacak görev sayısı - pagination için (varsayılan: 0)
 
 **Çıktı:** Hiyerarşik ağaç yapısında görev listesi
 
@@ -157,6 +159,8 @@ Bir projenin görevlerini duruma göre gruplandırarak listeler.
 
 **Parametreler:**
 - `proje_id` (zorunlu): Proje ID'si
+- `limit` (opsiyonel): Gösterilecek maksimum görev sayısı (varsayılan: 50)
+- `offset` (opsiyonel): Atlanacak görev sayısı - pagination için (varsayılan: 0)
 
 #### 16. `proje_aktif_yap`
 Belirtilen projeyi aktif proje olarak ayarlar.
