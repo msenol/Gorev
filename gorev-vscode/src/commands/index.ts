@@ -103,12 +103,10 @@ async function connectToServer(mcpClient: MCPClient, providers: CommandContext):
     await mcpClient.connect(serverPath);
     providers.statusBarManager.setConnected();
     
-    // Refresh all views after connection
-    await Promise.all([
-      providers.gorevTreeProvider.refresh(),
-      providers.projeTreeProvider.refresh(),
-      providers.templateTreeProvider.refresh(),
-    ]);
+    // Refresh all views after connection - sequentially to avoid overwhelming the MCP server
+    await providers.gorevTreeProvider.refresh();
+    await providers.projeTreeProvider.refresh();
+    await providers.templateTreeProvider.refresh();
     
     vscode.window.showInformationMessage('Connected to Gorev server');
   } catch (error) {

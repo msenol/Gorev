@@ -41,11 +41,23 @@ export class TestDataSeeder {
                 progress.report({ increment: 20, message: 'Bağımlılıklar oluşturuluyor...' });
                 await this.createTestDependencies(taskIds);
 
-                // 4. Bazı görevleri tamamla
-                progress.report({ increment: 20, message: 'Görev durumları güncelleniyor...' });
+                // 4. Alt görevler oluştur
+                progress.report({ increment: 10, message: 'Alt görevler oluşturuluyor...' });
+                await this.createSubtasks(taskIds);
+
+                // 5. Template'lerden görevler oluştur
+                progress.report({ increment: 10, message: 'Template görevleri oluşturuluyor...' });
+                await this.createTasksFromTemplates(projectIds);
+
+                // 6. Bazı görevleri tamamla ve AI interaksiyonları ekle
+                progress.report({ increment: 10, message: 'Görev durumları güncelleniyor...' });
                 await this.updateSomeTaskStatuses(taskIds);
 
-                progress.report({ increment: 20, message: 'Tamamlandı!' });
+                // 7. AI context oluştur
+                progress.report({ increment: 10, message: 'AI context oluşturuluyor...' });
+                await this.setupAIContext(taskIds);
+
+                progress.report({ increment: 10, message: 'Tamamlandı!' });
             });
 
             vscode.window.showInformationMessage('✅ Test verileri başarıyla oluşturuldu!');
@@ -401,6 +413,241 @@ export class TestDataSeeder {
                 } catch (error) {
                     Logger.error('Failed to update task status:', error);
                 }
+            }
+        }
+    }
+
+    /**
+     * Alt görevler oluştur
+     */
+    private async createSubtasks(parentTaskIds: string[]): Promise<void> {
+        // Ana sayfa tasarımı için alt görevler
+        if (parentTaskIds[0]) {
+            const subtasks = [
+                {
+                    parent_id: parentTaskIds[0],
+                    baslik: 'Hero section mockup',
+                    aciklama: 'Ana sayfa hero bölümü için Figma mockup hazırla',
+                    oncelik: GorevOncelik.Yuksek,
+                    etiketler: 'design,ui,mockup'
+                },
+                {
+                    parent_id: parentTaskIds[0],
+                    baslik: 'Responsive grid sistemi',
+                    aciklama: 'Bootstrap 5 veya Tailwind CSS ile responsive grid',
+                    oncelik: GorevOncelik.Orta,
+                    etiketler: 'frontend,css,responsive'
+                },
+                {
+                    parent_id: parentTaskIds[0],
+                    baslik: 'Animation ve transitions',
+                    aciklama: 'Smooth scroll ve hover effect animasyonları',
+                    oncelik: GorevOncelik.Dusuk,
+                    etiketler: 'frontend,animation,ux'
+                }
+            ];
+
+            for (const subtask of subtasks) {
+                try {
+                    const result = await this.mcpClient.callTool('gorev_altgorev_olustur', subtask);
+                    
+                    // İkinci seviye alt görev ekle
+                    if (subtask.baslik === 'Hero section mockup') {
+                        const responseText = result.content[0].text;
+                        const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+                        if (idMatch) {
+                            await this.mcpClient.callTool('gorev_altgorev_olustur', {
+                                parent_id: idMatch[1],
+                                baslik: 'Color palette seçimi',
+                                aciklama: 'Brand guidelines\'a uygun renk paleti',
+                                oncelik: GorevOncelik.Yuksek,
+                                etiketler: 'design,branding'
+                            });
+                        }
+                    }
+                } catch (error) {
+                    Logger.error('Failed to create subtask:', error);
+                }
+            }
+        }
+
+        // Login sistemi için alt görevler
+        if (parentTaskIds[1]) {
+            const subtasks = [
+                {
+                    parent_id: parentTaskIds[1],
+                    baslik: 'JWT token implementasyonu',
+                    aciklama: 'Access ve refresh token yönetimi',
+                    oncelik: GorevOncelik.Yuksek,
+                    son_tarih: this.getDateString(3),
+                    etiketler: 'backend,security,jwt'
+                },
+                {
+                    parent_id: parentTaskIds[1],
+                    baslik: 'Password reset flow',
+                    aciklama: 'Email ile şifre sıfırlama akışı',
+                    oncelik: GorevOncelik.Orta,
+                    etiketler: 'backend,email,feature'
+                }
+            ];
+
+            for (const subtask of subtasks) {
+                try {
+                    await this.mcpClient.callTool('gorev_altgorev_olustur', subtask);
+                } catch (error) {
+                    Logger.error('Failed to create subtask:', error);
+                }
+            }
+        }
+
+        // Dashboard prototype için alt görevler
+        if (parentTaskIds[13]) {
+            const subtasks = [
+                {
+                    parent_id: parentTaskIds[13],
+                    baslik: 'KPI cards tasarımı',
+                    aciklama: 'Ana metrikleri gösteren kart componentleri',
+                    oncelik: GorevOncelik.Yuksek,
+                    etiketler: 'design,dashboard,component'
+                },
+                {
+                    parent_id: parentTaskIds[13],
+                    baslik: 'Chart library araştırması',
+                    aciklama: 'Chart.js vs D3.js vs ApexCharts karşılaştırması',
+                    oncelik: GorevOncelik.Orta,
+                    etiketler: 'research,frontend,visualization'
+                },
+                {
+                    parent_id: parentTaskIds[13],
+                    baslik: 'Real-time data updates',
+                    aciklama: 'WebSocket ile canlı veri güncellemeleri',
+                    oncelik: GorevOncelik.Orta,
+                    etiketler: 'frontend,websocket,realtime'
+                }
+            ];
+
+            for (const subtask of subtasks) {
+                try {
+                    await this.mcpClient.callTool('gorev_altgorev_olustur', subtask);
+                } catch (error) {
+                    Logger.error('Failed to create subtask:', error);
+                }
+            }
+        }
+    }
+
+    /**
+     * Template'lerden görevler oluştur
+     */
+    private async createTasksFromTemplates(projectIds: string[]): Promise<void> {
+        try {
+            // Önce template'leri listele
+            const templatesResult = await this.mcpClient.callTool('template_listele', {});
+            Logger.debug('Available templates:', templatesResult.content[0].text);
+
+            // Bug raporu template'inden görev oluştur
+            try {
+                await this.mcpClient.callTool('templateden_gorev_olustur', {
+                    template_id: '311422f9-51ad-4678-8631-e0f7957aae47', // Bug Raporu template ID
+                    degerler: {
+                        baslik: 'Login sayfası 404 hatası veriyor',
+                        aciklama: 'Production ortamında /login URL\'ine gittiğimizde 404 hatası alıyoruz',
+                        modul: 'Authentication',
+                        ortam: 'production',
+                        adimlar: '1. Production URL\'ine git\n2. /login sayfasına git\n3. 404 hatası görünüyor',
+                        beklenen: 'Login sayfası açılmalı',
+                        mevcut: '404 Not Found hatası',
+                        oncelik: 'yuksek',
+                        etiketler: 'bug,critical,production'
+                    }
+                });
+            } catch (error) {
+                Logger.error('Failed to create task from bug template:', error);
+            }
+
+            // Araştırma görevi template'inden oluştur
+            try {
+                await this.mcpClient.callTool('templateden_gorev_olustur', {
+                    template_id: '146837f2-bd50-4a88-9d93-38da1d7c09d6', // Araştırma Görevi template ID
+                    degerler: {
+                        konu: 'Next.js 14 App Router',
+                        amac: 'Yeni projede kullanmak için Next.js 14 App Router özelliklerini araştırmak',
+                        sorular: '1. Performance karşılaştırması?\n2. Migration süreci?\n3. Edge runtime desteği?',
+                        kaynaklar: 'Next.js dokümantasyonu, Vercel blog, YouTube tutorialları',
+                        alternatifler: 'Pages Router, Remix, SvelteKit',
+                        kriterler: 'Performance, Developer Experience, SEO, Bundle Size',
+                        son_tarih: this.getDateString(14),
+                        oncelik: 'orta',
+                        etiketler: 'araştırma,nextjs,frontend'
+                    }
+                });
+            } catch (error) {
+                Logger.error('Failed to create task from research template:', error);
+            }
+
+            // Özellik isteği template'inden oluştur
+            try {
+                await this.mcpClient.callTool('templateden_gorev_olustur', {
+                    template_id: '430d308c-440d-49cd-a307-9db78f8608bf', // Özellik İsteği template ID
+                    degerler: {
+                        baslik: 'Dark mode toggle özelliği',
+                        aciklama: 'Kullanıcılar tema tercihlerini kaydedebilmeli',
+                        amac: 'Kullanıcı deneyimini iyileştirmek ve göz yorgunluğunu azaltmak',
+                        kullanicilar: 'Tüm kullanıcılar, özellikle gece çalışanlar',
+                        kriterler: '1. Sistem temasına uyum\n2. Manuel toggle\n3. Tercih kaydetme\n4. Smooth transition',
+                        ui_ux: 'Header\'da toggle switch, sistem temasını takip et opsiyonu',
+                        efor: 'orta',
+                        oncelik: 'orta',
+                        etiketler: 'özellik,ui,enhancement'
+                    }
+                });
+            } catch (error) {
+                Logger.error('Failed to create task from feature template:', error);
+            }
+        } catch (error) {
+            Logger.error('Failed to list templates:', error);
+        }
+    }
+
+    /**
+     * AI context ve interaksiyonları oluştur
+     */
+    private async setupAIContext(taskIds: string[]): Promise<void> {
+        // Bazı görevleri AI için aktif yap
+        if (taskIds.length > 0) {
+            try {
+                // İlk görevi aktif yap
+                await this.mcpClient.callTool('gorev_set_active', {
+                    task_id: taskIds[0]
+                });
+                Logger.info('Set active task for AI context');
+
+                // Doğal dil sorgusu test et
+                const nlpResults = [
+                    await this.mcpClient.callTool('gorev_nlp_query', { query: 'bugün yapılacak görevler' }),
+                    await this.mcpClient.callTool('gorev_nlp_query', { query: 'yüksek öncelikli görevler' }),
+                    await this.mcpClient.callTool('gorev_nlp_query', { query: 'etiket:bug' })
+                ];
+
+                Logger.info('Tested NLP queries');
+
+                // Context summary al
+                const contextSummary = await this.mcpClient.callTool('gorev_context_summary', {});
+                Logger.info('Generated AI context summary');
+
+                // Batch update test et - bazı görevlerin durumunu toplu güncelle
+                if (taskIds.length > 5) {
+                    await this.mcpClient.callTool('gorev_batch_update', {
+                        updates: [
+                            { id: taskIds[2], updates: { durum: 'devam_ediyor' } },
+                            { id: taskIds[3], updates: { durum: 'devam_ediyor' } },
+                            { id: taskIds[4], updates: { durum: 'tamamlandi' } }
+                        ]
+                    });
+                    Logger.info('Performed batch update');
+                }
+            } catch (error) {
+                Logger.error('Failed to setup AI context:', error);
             }
         }
     }

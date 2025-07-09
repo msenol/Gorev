@@ -184,11 +184,10 @@ async function refreshAllViews(): Promise<void> {
   }
   
   try {
-    await Promise.all([
-      gorevTreeProvider.refresh(),
-      projeTreeProvider.refresh(),
-      templateTreeProvider.refresh(),
-    ]);
+    // Refresh sequentially to avoid overwhelming the MCP server
+    await gorevTreeProvider.refresh();
+    await projeTreeProvider.refresh();
+    await templateTreeProvider.refresh();
     
     statusBarManager.update();
   } catch (error) {
