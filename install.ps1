@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 
 # Variables
 $REPO = "msenol/Gorev"
-$VERSION = if ($env:VERSION) { $env:VERSION } else { "v0.8.0" }
+$VERSION = if ($env:VERSION) { $env:VERSION } else { "v0.9.0" }
 $INSTALL_DIR = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { "$env:LOCALAPPDATA\Programs\gorev" }
 $DATA_DIR = if ($env:DATA_DIR) { $env:DATA_DIR } else { "$env:APPDATA\gorev" }
 
