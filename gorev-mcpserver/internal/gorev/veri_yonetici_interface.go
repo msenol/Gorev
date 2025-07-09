@@ -16,6 +16,8 @@ type VeriYoneticiInterface interface {
 	AktifProjeKaldir() error
 	BaglantiEkle(baglanti *Baglanti) error
 	BaglantilariGetir(gorevID string) ([]*Baglanti, error)
+	BulkBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error)
+	BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error)
 	EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error)
 	GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error
 	TemplateOlustur(template *GorevTemplate) error

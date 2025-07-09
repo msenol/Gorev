@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
+	// "log"
 	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -48,11 +48,11 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	}
 
 	// Hata ayıklama için versiyonları logla
-	version, dirty, err := m.Version()
+	_, _, err = m.Version()
 	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
-		log.Printf("Migration öncesi versiyon alınamadı: %v", err)
+		// //log.Printf("Migration öncesi versiyon alınamadı: %v", err)
 	} else {
-		log.Printf("Migration öncesi veritabanı versiyonu: %d, dirty: %v", version, dirty)
+		// //log.Printf("Migration öncesi veritabanı versiyonu: %d, dirty: %v", version, dirty)
 	}
 
 	err = m.Up()
@@ -60,18 +60,18 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 		return fmt.Errorf("migration işlemi başarısız: %w", err)
 	}
 
-	version, dirty, err = m.Version()
+	_, _, err = m.Version()
 	if err != nil {
-		log.Printf("Migration sonrası versiyon alınamadı: %v", err)
+		// //log.Printf("Migration sonrası versiyon alınamadı: %v", err)
 	} else {
-		log.Printf("Migration sonrası veritabanı versiyonu: %d, dirty: %v", version, dirty)
+		// //log.Printf("Migration sonrası veritabanı versiyonu: %d, dirty: %v", version, dirty)
 	}
 
-	log.Println("Veritabanı başarıyla migrate edildi.")
+	// //log.Println("Veritabanı başarıyla migrate edildi.")
 
 	// Varsayılan template'leri oluştur
 	if err := vy.VarsayilanTemplateleriOlustur(); err != nil {
-		log.Printf("Varsayılan template'ler oluşturulurken uyarı: %v", err)
+		// //log.Printf("Varsayılan template'ler oluşturulurken uyarı: %v", err)
 		// Hata durumunda devam et, kritik değil
 	}
 
@@ -137,7 +137,7 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 	// Etiketleri getir
 	etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
 	if err != nil {
-		log.Printf("görev etiketleri getirilemedi: %v", err)
+		//log.Printf("görev etiketleri getirilemedi: %v", err)
 		// Etiket getirme başarısız olsa bile görevi döndür
 		gorev.Etiketler = []*Etiket{}
 	} else {
@@ -216,7 +216,7 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 		etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
 		if err != nil {
 			// Hata durumunda logla ve devam et, görevi etiketsiz döndür
-			log.Printf("görev etiketleri getirilemedi: %v", err)
+			//log.Printf("görev etiketleri getirilemedi: %v", err)
 		}
 		gorev.Etiketler = etiketler
 
@@ -227,20 +227,13 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 }
 
 func (vy *VeriYonetici) gorevEtiketleriniGetir(gorevID string) ([]*Etiket, error) {
-	// First check if etiketler table exists
-	var tableExists int
-	err := vy.db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='etiketler'").Scan(&tableExists)
-	if err != nil || tableExists == 0 {
-		// Table doesn't exist, return empty slice instead of error
-		return []*Etiket{}, nil
-	}
-
 	sorgu := `SELECT e.id, e.isim FROM etiketler e
 	          JOIN gorev_etiketleri ge ON e.id = ge.etiket_id
 	          WHERE ge.gorev_id = ?`
 	rows, err := vy.db.Query(sorgu, gorevID)
 	if err != nil {
-		return nil, err
+		// Muhtemelen tablo yok, boş dön
+		return []*Etiket{}, nil
 	}
 	defer rows.Close()
 
@@ -532,7 +525,7 @@ func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
 		// Etiketleri getir
 		etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("Etiketler getirilemedi: %v", err)
+			//log.Printf("Etiketler getirilemedi: %v", err)
 		}
 		gorev.Etiketler = etiketler
 
@@ -598,7 +591,7 @@ func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) 
 		// Etiketleri getir
 		etiketler, err := vy.gorevEtiketleriniGetir(gorev.ID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("Etiketler getirilemedi: %v", err)
+			//log.Printf("Etiketler getirilemedi: %v", err)
 		}
 		gorev.Etiketler = etiketler
 
@@ -782,4 +775,86 @@ func (vy *VeriYonetici) DaireBagimliligiKontrolEt(gorevID, hedefParentID string)
 	}
 
 	return count > 0, nil
+}
+
+// BulkBagimlilikSayilariGetir tüm görevlerin bağımlılık sayılarını tek sorguda hesaplar
+// Bu N+1 sorgu problemini çözer ve performansı büyük ölçüde artırır
+func (vy *VeriYonetici) BulkBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	if len(gorevIDs) == 0 {
+		return make(map[string]int), nil
+	}
+
+	// Placeholder'ları oluştur
+	placeholders := make([]string, len(gorevIDs))
+	args := make([]interface{}, len(gorevIDs))
+	for i, id := range gorevIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	sorgu := fmt.Sprintf(`
+		SELECT kaynak_id, COUNT(*) as bagli_sayi
+		FROM baglantilar 
+		WHERE kaynak_id IN (%s)
+		GROUP BY kaynak_id
+	`, strings.Join(placeholders, ","))
+
+	rows, err := vy.db.Query(sorgu, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]int)
+	for rows.Next() {
+		var gorevID string
+		var count int
+		if err := rows.Scan(&gorevID, &count); err != nil {
+			return nil, err
+		}
+		result[gorevID] = count
+	}
+
+	return result, nil
+}
+
+// BulkTamamlanmamiaBagimlilikSayilariGetir tüm görevlerin tamamlanmamış bağımlılık sayılarını hesaplar
+func (vy *VeriYonetici) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	if len(gorevIDs) == 0 {
+		return make(map[string]int), nil
+	}
+
+	// Placeholder'ları oluştur
+	placeholders := make([]string, len(gorevIDs))
+	args := make([]interface{}, len(gorevIDs))
+	for i, id := range gorevIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	sorgu := fmt.Sprintf(`
+		SELECT b.kaynak_id, COUNT(*) as tamamlanmamis_sayi
+		FROM baglantilar b
+		INNER JOIN gorevler g ON b.hedef_id = g.id
+		WHERE b.kaynak_id IN (%s) AND g.durum != 'tamamlandi'
+		GROUP BY b.kaynak_id
+	`, strings.Join(placeholders, ","))
+
+	rows, err := vy.db.Query(sorgu, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]int)
+	for rows.Next() {
+		var gorevID string
+		var count int
+		if err := rows.Scan(&gorevID, &count); err != nil {
+			return nil, err
+		}
+		result[gorevID] = count
+	}
+
+	return result, nil
 }

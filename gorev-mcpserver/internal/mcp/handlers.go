@@ -266,10 +266,16 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		offset = int(o)
 	}
 
+	// DEBUG: Log parametreleri
+	// fmt.Fprintf(os.Stderr, "GorevListele called - durum: %s, limit: %d, offset: %d\n", durum, limit, offset)
+
 	gorevler, err := h.isYonetici.GorevListele(durum, sirala, filtre)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görevler listelenemedi: %v", err)), nil
 	}
+	
+	// DEBUG: Log görev sayısı
+	// fmt.Fprintf(os.Stderr, "GorevListele fetched %d tasks\n", len(gorevler))
 
 	// Etikete göre filtrele
 	if etiket != "" {
@@ -340,16 +346,27 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		}
 	}
 
-	// Pagination uygula - sadece root level görevlere
-	paginatedKokGorevler := kokGorevler
-	if offset < len(kokGorevler) {
+	// Pagination uygula - TÜM görevlere (hem root hem subtask)
+	paginatedGorevler := gorevler
+	if offset < len(gorevler) {
 		end := offset + limit
-		if end > len(kokGorevler) {
-			end = len(kokGorevler)
+		if end > len(gorevler) {
+			end = len(gorevler)
 		}
-		paginatedKokGorevler = kokGorevler[offset:end]
+		paginatedGorevler = gorevler[offset:end]
 	} else {
-		paginatedKokGorevler = []*gorev.Gorev{}
+		paginatedGorevler = []*gorev.Gorev{}
+	}
+
+	// Paginated görevlerden root olanları bul
+	paginatedKokGorevler := []*gorev.Gorev{}
+	paginatedGorevMap := make(map[string]*gorev.Gorev)
+	
+	for _, g := range paginatedGorevler {
+		paginatedGorevMap[g.ID] = g
+		if g.ParentID == "" {
+			paginatedKokGorevler = append(paginatedKokGorevler, g)
+		}
 	}
 
 	// Response boyutunu tahmin et ve gerekirse daha az görev göster
@@ -381,12 +398,20 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		metin += h.gorevHiyerarsiYazdir(kokGorev, gorevMap, 0, tumProjeler || aktifProje == nil)
 	}
 
-	// Parent'ı olmayan ama parent_id'si dolu olanları da göster (parent görünmeyen görevler)
-	// Bu sadece pagination'da ilk sayfadaysa gösterilecek
-	if offset == 0 {
-		for _, g := range gorevler {
-			if g.ParentID != "" {
-				if _, parentVar := gorevMap[g.ParentID]; !parentVar {
+	// Parent'ı paginated listede olmayan ama kendisi olan görevleri de göster
+	for _, g := range paginatedGorevler {
+		if g.ParentID != "" {
+			// Parent'ı bu sayfada değilse, görevi root olarak göster
+			if _, parentVar := paginatedGorevMap[g.ParentID]; !parentVar {
+				// Bu görev zaten gösterilmediyse
+				alreadyShown := false
+				for _, shown := range gorevlerToShow {
+					if shown.ID == g.ID {
+						alreadyShown = true
+						break
+					}
+				}
+				if !alreadyShown {
 					gorevSize := h.gorevResponseSizeEstimate(g)
 					if estimatedSize+gorevSize > maxResponseSize {
 						break
@@ -516,7 +541,7 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 	// Auto-state management: Record task view and potentially transition state
 	if err := h.aiContextYonetici.RecordTaskView(id); err != nil {
 		// Log but don't fail the request
-		fmt.Printf("Görev görüntüleme kaydı hatası: %v\n", err)
+		// fmt.Printf("Görev görüntüleme kaydı hatası: %v\n", err)
 	}
 
 	// Markdown formatında detaylı görev bilgisi
@@ -1681,7 +1706,7 @@ func (h *Handlers) GorevSetActive(params map[string]interface{}) (*mcp.CallToolR
 	// Also record task view for auto-state management
 	if err := h.aiContextYonetici.RecordTaskView(taskID); err != nil {
 		// Log but don't fail
-		fmt.Printf("Görev görüntüleme kaydı hatası: %v\n", err)
+		// fmt.Printf("Görev görüntüleme kaydı hatası: %v\n", err)
 	}
 
 	return mcp.NewToolResultText(fmt.Sprintf("✅ Görev %s başarıyla aktif görev olarak ayarlandı.", taskID)), nil
