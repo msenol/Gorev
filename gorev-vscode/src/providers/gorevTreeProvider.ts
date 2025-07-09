@@ -42,20 +42,52 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
 
   private async loadTasks(): Promise<void> {
     try {
-      const result = await this.mcpClient.callTool('gorev_listele', {
-        tum_projeler: false,
-      });
+      this.tasks = [];
+      let offset = 0;
+      const pageSize = 100;
+      let hasMoreTasks = true;
       
-      // Debug: Log raw response
-      console.log('[GorevTreeProvider] Raw MCP response:', result);
-      console.log('[GorevTreeProvider] Content text:', result.content[0].text);
+      // Fetch all tasks with pagination
+      while (hasMoreTasks) {
+        console.log('[GorevTreeProvider] Fetching tasks with offset:', offset);
+        
+        const result = await this.mcpClient.callTool('gorev_listele', {
+          tum_projeler: true,
+          limit: pageSize,
+          offset: offset
+        });
+        
+        if (!result || !result.content || !result.content[0]) {
+          break;
+        }
+        
+        const responseText = result.content[0].text;
+        
+        // Check for pagination info
+        const paginationMatch = responseText.match(/Görevler \((\d+)-(\d+) \/ (\d+)\)/);
+        if (paginationMatch) {
+          const [_, start, end, total] = paginationMatch;
+          console.log(`[GorevTreeProvider] Pagination: ${start}-${end} / ${total}`);
+          
+          if (parseInt(end) >= parseInt(total)) {
+            hasMoreTasks = false;
+          }
+        } else {
+          hasMoreTasks = false;
+        }
+        
+        // Parse tasks from this page
+        const pageTasks = this.parseTasksFromContent(responseText);
+        this.tasks.push(...pageTasks);
+        
+        // Update offset
+        offset += pageSize;
+        
+        // Safety check
+        if (offset > 1000) break;
+      }
       
-      // Parse the markdown content to extract tasks
-      this.tasks = this.parseTasksFromContent(result.content[0].text);
-      
-      // Debug: Log parsed tasks
-      console.log('[GorevTreeProvider] Parsed tasks count:', this.tasks.length);
-      console.log('[GorevTreeProvider] Parsed tasks:', this.tasks);
+      console.log('[GorevTreeProvider] Total tasks fetched:', this.tasks.length);
     } catch (error) {
       Logger.error('Failed to load tasks:', error);
       throw error;

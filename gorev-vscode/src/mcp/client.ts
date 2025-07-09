@@ -10,6 +10,7 @@ import {
   MCPToolResult,
   MCPTool,
 } from './types';
+import * as vscode from 'vscode';
 
 export class MCPClient extends EventEmitter {
   private process: ChildProcess | null = null;
@@ -54,7 +55,16 @@ export class MCPClient extends EventEmitter {
         Logger.debug(`Setting working directory to: ${serverDir}`);
       }
 
+      Logger.debug(`Spawning process: ${serverPath} serve`);
+      Logger.debug(`Spawn options: ${JSON.stringify(spawnOptions)}`);
+      
       this.process = spawn(serverPath, ['serve'], spawnOptions);
+      
+      if (!this.process) {
+        throw new Error('Failed to spawn process');
+      }
+      
+      Logger.debug(`Process spawned with PID: ${this.process.pid}`);
 
       this.setupProcessHandlers();
 
@@ -136,6 +146,7 @@ export class MCPClient extends EventEmitter {
 
     this.process.on('error', (error) => {
       Logger.error('MCP Process Error:', error);
+      Logger.error('Error details:', JSON.stringify(error));
       this.handleProcessError(error);
     });
 
@@ -152,6 +163,7 @@ export class MCPClient extends EventEmitter {
 
   private handleData(data: string): void {
     this.buffer += data;
+    Logger.debug(`Buffer size: ${this.buffer.length}, Data chunk size: ${data.length}`);
     
     // Process complete messages from buffer
     const lines = this.buffer.split('\n');
@@ -161,7 +173,7 @@ export class MCPClient extends EventEmitter {
       if (line.trim()) {
         try {
           const message = JSON.parse(line);
-          Logger.debug('Parsed message:', message);
+          Logger.debug(`Parsed message (${line.length} chars):`, message);
           this.handleMessage(message);
         } catch (error) {
           Logger.error('Failed to parse MCP message:', line, error);
@@ -243,11 +255,15 @@ export class MCPClient extends EventEmitter {
         params,
       };
 
+      // Get timeout from configuration
+      const config = vscode.workspace.getConfiguration('gorev');
+      const timeoutMs = config.get<number>('debug.serverTimeout', 5000);
+      
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(id);
-        Logger.error(`Request timeout for ${method} (id: ${id})`);
+        Logger.error(`Request timeout for ${method} (id: ${id}) after ${timeoutMs}ms`);
         reject(new Error(`Request timeout: ${method}`));
-      }, 10000); // 10 second timeout
+      }, timeoutMs);
 
       this.pendingRequests.set(id, { resolve, reject, timeout });
 
@@ -255,7 +271,16 @@ export class MCPClient extends EventEmitter {
       Logger.debug(`Sending request: ${method} (id: ${id})`, request);
       
       try {
-        this.process?.stdin?.write(message, (error) => {
+        if (!this.process) {
+          Logger.error('Process is null when trying to send request');
+          throw new Error('Process not available');
+        }
+        if (!this.process.stdin) {
+          Logger.error('Process stdin is null');
+          throw new Error('Process stdin not available');
+        }
+        
+        this.process.stdin.write(message, (error) => {
           if (error) {
             Logger.error('Failed to write to stdin:', error);
             this.pendingRequests.delete(id);

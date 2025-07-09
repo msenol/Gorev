@@ -3,7 +3,7 @@
 export const APP_NAME = 'Gorev';
 export const APP_ID = 'gorev-vscode';
 
-export const DEFAULT_TIMEOUT = 30000; // 30 seconds
+export const DEFAULT_TIMEOUT = 5000; // 5 seconds
 
 export const ICONS = {
   // Task status icons

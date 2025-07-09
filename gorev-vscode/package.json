@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "Gorev",
   "description": "Powerful task management with unlimited subtask hierarchy, dependency visualization, and smart progress tracking for VS Code powered by MCP protocol",
-  "version": "0.3.7",
+  "version": "0.3.9",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -67,7 +67,7 @@
       "properties": {
         "gorev.serverPath": {
           "type": "string",
-          "default": "/mnt/f/Development/Projects/Gorev/gorev-mcpserver/gorev",
+          "default": "/mnt/f/Development/Projects/Gorev/gorev-mcpserver/build/gorev",
           "description": "Full path to the Gorev MCP server executable (e.g., /path/to/gorev or C:\\path\\to\\gorev.exe)"
         },
         "gorev.autoConnect": {
@@ -249,6 +249,23 @@
               }
             }
           }
+        },
+        "gorev.debug.useWrapper": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use debug wrapper to log MCP communication"
+        },
+        "gorev.debug.logPath": {
+          "type": "string",
+          "default": "/tmp/gorev-debug",
+          "description": "Path to debug log directory"
+        },
+        "gorev.debug.serverTimeout": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 5000,
+          "maximum": 120000,
+          "description": "Server response timeout in milliseconds"
         }
       }
     },
@@ -431,6 +448,30 @@
         "title": "Clear Test Data",
         "category": "Gorev Debug",
         "icon": "$(trash)"
+      },
+      {
+        "command": "gorev.toggleDebugMode",
+        "title": "Toggle Debug Mode",
+        "category": "Gorev Debug",
+        "icon": "$(debug)"
+      },
+      {
+        "command": "gorev.showDebugLogs",
+        "title": "Show Debug Logs",
+        "category": "Gorev Debug",
+        "icon": "$(output)"
+      },
+      {
+        "command": "gorev.clearDebugLogs",
+        "title": "Clear Debug Logs",
+        "category": "Gorev Debug",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "gorev.testConnection",
+        "title": "Test MCP Connection",
+        "category": "Gorev Debug",
+        "icon": "$(testing-run-icon)"
       },
       {
         "command": "gorev.showSearchInput",

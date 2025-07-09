@@ -293,7 +293,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 100);
             
             // Check if we should show all projects or just active project
-            const showAllProjects = this.config.filters?.showAllProjects || false;
+            const showAllProjects = this.config.filters?.showAllProjects || true;
             
             // First get the active project to assign project_id to tasks
             let activeProjectId = '';
@@ -313,56 +313,85 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 }
             }
             
-            Logger.debug('[EnhancedGorevTreeProvider] Calling gorev_listele with page size:', pageSize, 'showAllProjects:', showAllProjects);
-            const result = await this.mcpClient.callTool('gorev_listele', {
-                tum_projeler: showAllProjects,
-                limit: pageSize,
-                offset: 0
-            });
+            // Initialize tasks array
+            this.tasks = [];
+            let offset = 0;
+            let hasMoreTasks = true;
+            let totalTaskCount = 0;
             
-            // Debug: Log raw response
-            Logger.debug('[EnhancedGorevTreeProvider] Raw MCP response:', JSON.stringify(result, null, 2));
-            
-            if (result && result.content && result.content[0]) {
+            // Fetch all tasks with pagination
+            while (hasMoreTasks) {
+                Logger.debug('[EnhancedGorevTreeProvider] Fetching tasks with offset:', offset, 'limit:', pageSize);
+                
+                const result = await this.mcpClient.callTool('gorev_listele', {
+                    tum_projeler: showAllProjects,
+                    limit: pageSize,
+                    offset: offset
+                });
+                
+                if (!result || !result.content || !result.content[0]) {
+                    Logger.warn('[EnhancedGorevTreeProvider] No content in response');
+                    break;
+                }
+                
                 const responseText = result.content[0].text;
-                Logger.debug('[EnhancedGorevTreeProvider] Content text length:', responseText.length);
-                Logger.debug('[EnhancedGorevTreeProvider] Content text (first 500 chars):', responseText.substring(0, 500));
+                
+                // Check for pagination info: "Görevler (1-100 / 147)"
+                const paginationMatch = responseText.match(/Görevler \((\d+)-(\d+) \/ (\d+)\)/);
+                if (paginationMatch) {
+                    const [_, start, end, total] = paginationMatch;
+                    totalTaskCount = parseInt(total);
+                    Logger.info(`[EnhancedGorevTreeProvider] Pagination: ${start}-${end} / ${total}`);
+                    
+                    // Check if we need to fetch more
+                    if (parseInt(end) >= totalTaskCount) {
+                        hasMoreTasks = false;
+                    }
+                } else {
+                    // No pagination info, assume this is the last page
+                    hasMoreTasks = false;
+                }
                 
                 // Parse the markdown content to extract tasks
-                this.tasks = MarkdownParser.parseGorevListesi(responseText);
+                const pageTasks = MarkdownParser.parseGorevListesi(responseText);
+                Logger.info('[EnhancedGorevTreeProvider] Parsed tasks from page:', pageTasks.length);
                 
-                // Debug: Log parsed tasks
-                Logger.info('[EnhancedGorevTreeProvider] Parsed tasks count:', this.tasks.length);
+                // Add to our task list
+                this.tasks.push(...pageTasks);
                 
-                // If tasks don't have project_id and we're showing active project tasks only, assign it
-                if (!showAllProjects && activeProjectId && this.tasks.length > 0) {
-                    for (const task of this.tasks) {
-                        if (!task.proje_id || task.proje_id === '') {
-                            task.proje_id = activeProjectId;
-                            Logger.debug(`[EnhancedGorevTreeProvider] Assigned project_id ${activeProjectId} to task: ${task.baslik}`);
-                        }
+                // Update offset for next page
+                offset += pageSize;
+                
+                // Safety check to prevent infinite loop
+                if (offset > 1000 || this.tasks.length > 1000) {
+                    Logger.warn('[EnhancedGorevTreeProvider] Safety limit reached, stopping pagination');
+                    break;
+                }
+            }
+            
+            Logger.info('[EnhancedGorevTreeProvider] Total tasks fetched:', this.tasks.length, 'Expected:', totalTaskCount);
+            
+            // If tasks don't have project_id and we're showing active project tasks only, assign it
+            if (!showAllProjects && activeProjectId && this.tasks.length > 0) {
+                for (const task of this.tasks) {
+                    if (!task.proje_id || task.proje_id === '') {
+                        task.proje_id = activeProjectId;
+                        Logger.debug(`[EnhancedGorevTreeProvider] Assigned project_id ${activeProjectId} to task: ${task.baslik}`);
                     }
                 }
-                
-                if (this.tasks.length > 0) {
-                    Logger.debug('[EnhancedGorevTreeProvider] First task:', JSON.stringify(this.tasks[0], null, 2));
-                    Logger.debug('[EnhancedGorevTreeProvider] Tasks with project_id:', this.tasks.filter(t => t.proje_id).length);
-                    Logger.debug('[EnhancedGorevTreeProvider] Tasks without project_id:', this.tasks.filter(t => !t.proje_id).length);
-                } else {
-                    Logger.warn('[EnhancedGorevTreeProvider] No tasks parsed from response');
-                    // Log a few lines to debug
-                    const lines = responseText.split('\n').slice(0, 10);
-                    Logger.debug('[EnhancedGorevTreeProvider] First 10 lines of response:', lines);
-                }
-                
-                // IMPORTANT: Set filtered tasks after loading
-                this.filteredTasks = [...this.tasks];
-                Logger.debug('[EnhancedGorevTreeProvider] After filtering:', this.filteredTasks.length, 'tasks');
-            } else {
-                Logger.error('[EnhancedGorevTreeProvider] Invalid MCP response structure:', JSON.stringify(result, null, 2));
-                this.tasks = [];
-                this.filteredTasks = [];
             }
+            
+            if (this.tasks.length > 0) {
+                Logger.debug('[EnhancedGorevTreeProvider] First task:', JSON.stringify(this.tasks[0], null, 2));
+                Logger.debug('[EnhancedGorevTreeProvider] Tasks with project_id:', this.tasks.filter(t => t.proje_id).length);
+                Logger.debug('[EnhancedGorevTreeProvider] Tasks without project_id:', this.tasks.filter(t => !t.proje_id).length);
+            } else {
+                Logger.warn('[EnhancedGorevTreeProvider] No tasks parsed from response');
+            }
+            
+            // IMPORTANT: Set filtered tasks after loading
+            this.filteredTasks = [...this.tasks];
+            Logger.debug('[EnhancedGorevTreeProvider] After filtering:', this.filteredTasks.length, 'tasks');
         } catch (error) {
             Logger.error('Failed to load tasks:', error);
             throw error;

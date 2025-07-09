@@ -2,6 +2,26 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.3.9] - 2025-07-10
+
+### Fixed
+- Pagination logic in MCP server v0.9.1 that was causing incomplete task lists
+- VS Code extension now correctly displays all tasks when there are many subtasks
+
+### Changed
+- Updated to work with MCP server v0.9.1 pagination improvements
+
+## [0.3.8] - 2025-07-09
+
+### Fixed
+- Task count display issue where only 38 tasks were shown instead of all 147 tasks
+- MCP server pagination logic that was counting all tasks but only paginating root tasks
+- Empty response for second page (offset 100+) when fetching tasks
+
+### Changed
+- Updated MCP server pagination to correctly handle all tasks (root and subtasks)
+- Improved task fetching to display complete task hierarchy across all pages
+
 ## [0.3.7] - 2025-07-09
 
 ### Fixed

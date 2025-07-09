@@ -182,11 +182,11 @@ export class MarkdownParser {
                             parentGorev.alt_gorevler.push(gorev);
                             console.log(`[MarkdownParser] Added ${gorev.baslik} as child of ${parentGorev.baslik}`);
                         }
-                    } else {
-                        // Root level görev
-                        gorevler.push(gorev);
-                        console.log(`[MarkdownParser] Added ${gorev.baslik} as root task with proje_id: ${gorev.proje_id || 'NONE'}`);
                     }
+                    
+                    // Add ALL tasks to the main array, regardless of hierarchy
+                    gorevler.push(gorev);
+                    console.log(`[MarkdownParser] Added ${gorev.baslik} as task with proje_id: ${gorev.proje_id || 'NONE'}`); 
                     
                     gorevMap.set(gorev.id!, gorev);
                     parentStack.push({ id: gorev.id!, level: gorev.seviye });
@@ -313,10 +313,10 @@ export class MarkdownParser {
                 if (parentGorev && parentGorev.alt_gorevler) {
                     parentGorev.alt_gorevler.push(gorev);
                 }
-            } else {
-                // Root level görev
-                gorevler.push(gorev);
             }
+            
+            // Add ALL tasks to the main array, regardless of hierarchy
+            gorevler.push(gorev);
             
             gorevMap.set(gorev.id, gorev);
         }
@@ -497,10 +497,8 @@ export class MarkdownParser {
                         
                         // Add to map and stack
                         gorevMap.set(gorev.id, gorev);
-                        if (indentLevel === 0 || !gorev.parent_id) {
-                            // Only add root tasks to the main array
-                            gorevler.push(gorev);
-                        }
+                        // Add ALL tasks to the main array, not just root tasks
+                        gorevler.push(gorev);
                         
                         // Push to parent stack for potential children
                         parentStack.push({ id: gorev.id, indentLevel });
