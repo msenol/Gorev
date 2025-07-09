@@ -333,7 +333,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 		// Record batch operation
 		if err := acy.recordInteraction(update.ID, "bulk_operation", update.Updates); err != nil {
 			// Log but don't fail the operation
-			fmt.Printf("interaction kaydetme hatası: %v\n", err)
+			// fmt.Printf("interaction kaydetme hatası: %v\n", err)
 		}
 	}
 
