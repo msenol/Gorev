@@ -33,14 +33,18 @@ This roadmap outlines the planned development path for the Gorev task management
 - Search history
 
 #### 3. 🔧 Task Dependencies in TreeView
-**Status:** Pending  
+**Status:** Completed (5 July 2025)  
 **Description:** Visualize dependencies within TreeView instead of separate dependency graph.
 
-**Solution:**
-- Badge system (🔗 emoji, counter)
-- Tooltips showing dependent tasks
-- Visual link indicators
-- Drag & drop dependency creation
+**Implemented Features:**
+- ✅ Enhanced visual indicators with progress bars, priority badges, and due date formatting
+- ✅ Smart dependency badges (🔒 locked, 🔓 unlocked, 🔗 blocking)
+- ✅ Rich markdown tooltips with progress visualization
+- ✅ Tag pill badges with configurable display
+- ✅ Configuration options for all visual preferences
+- ✅ Created TaskDecorationProvider for managing decorations
+- ✅ Improved task descriptions with separator formatting
+- ✅ Smart due date formatting (Today, Tomorrow, 3d left, etc.)
 
 #### 4. ✅ Subtask System with Unlimited Hierarchy
 **Status:** Completed (30 June 2025) - v0.8.0  
