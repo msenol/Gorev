@@ -174,7 +174,7 @@ export class MarkdownParser {
                     } else {
                         // Root level görev
                         gorevler.push(gorev);
-                        console.log(`[MarkdownParser] Added ${gorev.baslik} as root task`);
+                        console.log(`[MarkdownParser] Added ${gorev.baslik} as root task with proje_id: ${gorev.proje_id || 'NONE'}`);
                     }
                     
                     gorevMap.set(gorev.id!, gorev);
@@ -202,6 +202,7 @@ export class MarkdownParser {
                 const idMatch = trimmedLine.match(/ID:\s*([a-f0-9-]+)/);
                 if (idMatch) {
                     currentGorev.id = idMatch[1];
+                    console.log(`[MarkdownParser] Parsed task ID: ${idMatch[1]} for task: ${currentGorev.baslik}`);
                 }
                 continue;
             }
@@ -218,9 +219,13 @@ export class MarkdownParser {
             
             // ProjeID satırı
             if (currentGorev && trimmedLine.includes('ProjeID:')) {
+                console.log(`[MarkdownParser] Found ProjeID line: "${trimmedLine}"`);
                 const projeIDMatch = trimmedLine.match(/ProjeID:\s*([a-f0-9-]+)/);
                 if (projeIDMatch) {
                     currentGorev.proje_id = projeIDMatch[1];
+                    console.log(`[MarkdownParser] Parsed ProjeID: ${projeIDMatch[1]}`);
+                } else {
+                    console.log(`[MarkdownParser] Failed to parse ProjeID from: "${trimmedLine}"`);
                 }
                 continue;
             }
@@ -239,6 +244,33 @@ export class MarkdownParser {
                 const etiketMatch = trimmedLine.match(/Etiketler:\s*(.+)/);
                 if (etiketMatch) {
                     currentGorev.etiketler = etiketMatch[1].split(',').map(e => e.trim());
+                }
+                continue;
+            }
+            
+            // Bağımlı görev sayısı
+            if (currentGorev && trimmedLine.includes('Bağımlı görev sayısı:')) {
+                const match = trimmedLine.match(/Bağımlı görev sayısı:\s*(\d+)/);
+                if (match) {
+                    currentGorev.bagimli_gorev_sayisi = parseInt(match[1]);
+                }
+                continue;
+            }
+            
+            // Tamamlanmamış bağımlılık sayısı
+            if (currentGorev && trimmedLine.includes('Tamamlanmamış bağımlılık sayısı:')) {
+                const match = trimmedLine.match(/Tamamlanmamış bağımlılık sayısı:\s*(\d+)/);
+                if (match) {
+                    currentGorev.tamamlanmamis_bagimlilik_sayisi = parseInt(match[1]);
+                }
+                continue;
+            }
+            
+            // Bu göreve bağımlı sayısı
+            if (currentGorev && trimmedLine.includes('Bu göreve bağımlı sayısı:')) {
+                const match = trimmedLine.match(/Bu göreve bağımlı sayısı:\s*(\d+)/);
+                if (match) {
+                    currentGorev.bu_goreve_bagimli_sayisi = parseInt(match[1]);
                 }
                 continue;
             }
@@ -280,6 +312,8 @@ export class MarkdownParser {
         
         console.log('[MarkdownParser] Total tasks parsed:', gorevler.length);
         console.log('[MarkdownParser] Tasks with subtasks:', gorevler.filter(g => g.alt_gorevler && g.alt_gorevler.length > 0).map(g => `${g.baslik} (${g.alt_gorevler!.length} subtasks)`));
+        console.log('[MarkdownParser] Tasks with proje_id:', gorevler.filter(g => g.proje_id).map(g => `${g.baslik} -> ${g.proje_id}`));
+        console.log('[MarkdownParser] Tasks WITHOUT proje_id:', gorevler.filter(g => !g.proje_id).map(g => g.baslik));
         return gorevler;
     }
     

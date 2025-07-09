@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "Gorev",
   "description": "Powerful task management with unlimited subtask hierarchy, dependency visualization, and smart progress tracking for VS Code powered by MCP protocol",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -47,7 +47,7 @@
       "properties": {
         "gorev.serverPath": {
           "type": "string",
-          "default": "/mnt/f/Development/Projects/Gorev/gorev-mcpserver/build/gorev",
+          "default": "/mnt/f/Development/Projects/Gorev/gorev-mcpserver/gorev",
           "description": "Full path to the Gorev MCP server executable (e.g., /path/to/gorev or C:\\path\\to\\gorev.exe)"
         },
         "gorev.autoConnect": {
@@ -142,10 +142,71 @@
           "default": true,
           "description": "Show visual indicators when dragging over drop zones"
         },
+        "gorev.treeView.visuals.showProgressBars": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show progress bars for parent tasks with subtasks"
+        },
+        "gorev.treeView.visuals.showPriorityBadges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show priority badges (🔥⚡ℹ️) on tasks"
+        },
+        "gorev.treeView.visuals.showDueDateIndicators": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show due date indicators with smart formatting"
+        },
+        "gorev.treeView.visuals.showDependencyBadges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show dependency badges (🔒🔓🔗) on tasks"
+        },
+        "gorev.treeView.visuals.showTagPills": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show tags as colored pill badges"
+        },
+        "gorev.treeView.visuals.progressBarStyle": {
+          "type": "string",
+          "default": "blocks",
+          "enum": ["blocks", "percentage", "both"],
+          "enumDescriptions": [
+            "Show progress as block characters (█░)",
+            "Show progress as percentage only",
+            "Show both blocks and percentage"
+          ],
+          "description": "Style for progress indicators"
+        },
+        "gorev.treeView.visuals.dueDateFormat": {
+          "type": "string",
+          "default": "smart",
+          "enum": ["smart", "relative", "absolute"],
+          "enumDescriptions": [
+            "Smart formatting (Today, Tomorrow, 3d, etc.)",
+            "Always relative (3 days left, 2 days overdue)",
+            "Always absolute date (15 Jan)"
+          ],
+          "description": "How to format due dates in task descriptions"
+        },
+        "gorev.treeView.visuals.maxTagsToShow": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum number of tags to show in task description (0 = hide tags)"
+        },
         "gorev.dragDrop.animateOnDrop": {
           "type": "boolean",
           "default": true,
           "description": "Show success animation after dropping"
+        },
+        "gorev.pagination.pageSize": {
+          "type": "number",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 500,
+          "description": "Number of tasks to load per page (to prevent token limit errors)"
         },
         "gorev.filterProfiles": {
           "type": "object",

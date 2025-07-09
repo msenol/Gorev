@@ -17,6 +17,7 @@ import {
 } from '../models/treeModels';
 import { GroupingStrategyProvider } from './groupingStrategy';
 import { DragDropController } from './dragDropController';
+import { TaskDecorationProvider } from './decorationProvider';
 import { ICONS, COLORS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { MarkdownParser } from '../utils/markdownParser';
@@ -30,6 +31,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
     private tasks: Gorev[] = [];
     private filteredTasks: Gorev[] = [];
+    private projects: Map<string, any> = new Map(); // Proje ID -> Proje bilgisi
     private config: TreeViewConfig;
     private selection: TaskSelection;
     private events: TreeViewEvents = {};
@@ -38,6 +40,9 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     public readonly dragDropController: DragDropController;
     readonly dropMimeTypes: readonly string[];
     readonly dragMimeTypes: readonly string[];
+    
+    // Decoration provider
+    private decorationProvider: TaskDecorationProvider;
 
     constructor(private mcpClient: MCPClient) {
         // Varsayılan konfigürasyon
@@ -60,6 +65,9 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         this.dragDropController = new DragDropController(mcpClient);
         this.dropMimeTypes = this.dragDropController.dropMimeTypes;
         this.dragMimeTypes = this.dragDropController.dragMimeTypes;
+        
+        // Decoration provider
+        this.decorationProvider = new TaskDecorationProvider();
 
         // Konfigürasyon değişikliklerini dinle
         this.loadConfiguration();
@@ -195,7 +203,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 groupKey,
                 this.config.grouping,
                 tasksInGroup,
-                this.config.expandedGroups.has(groupKey)
+                this.config.expandedGroups.has(groupKey),
+                this.projects
             );
 
             groupItems.push(groupItem);
@@ -218,7 +227,11 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
         // Sadece root level görevleri göster (parent_id olmayan)
         const rootTasks = sortedTasks.filter(task => !task.parent_id);
-        return rootTasks.map(task => new TaskTreeViewItem(task, this.selection, group));
+        return rootTasks.map(task => {
+            const item = new TaskTreeViewItem(task, this.selection, group);
+            this.decorationProvider.updateTaskDecoration(task, item);
+            return item;
+        });
     }
 
     /**
@@ -236,7 +249,11 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             this.config.sortAscending
         );
 
-        return sortedSubtasks.map(task => new TaskTreeViewItem(task, this.selection));
+        return sortedSubtasks.map(task => {
+            const item = new TaskTreeViewItem(task, this.selection);
+            this.decorationProvider.updateTaskDecoration(task, item);
+            return item;
+        });
     }
 
     /**
@@ -257,9 +274,29 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      */
     private async loadTasks(): Promise<void> {
         try {
-            Logger.debug('[EnhancedGorevTreeProvider] Calling gorev_listele...');
+            // Önce projeleri yükle
+            Logger.debug('[EnhancedGorevTreeProvider] Loading projects...');
+            const projectsResult = await this.mcpClient.callTool('proje_listele', {});
+            if (projectsResult && projectsResult.content && projectsResult.content[0]) {
+                const projectsText = projectsResult.content[0].text;
+                const projeler = MarkdownParser.parseProjeListesi(projectsText);
+                this.projects.clear();
+                for (const proje of projeler) {
+                    if (proje.id) {
+                        this.projects.set(proje.id, proje);
+                    }
+                }
+                Logger.debug(`[EnhancedGorevTreeProvider] Loaded ${this.projects.size} projects`);
+            }
+            
+            // Get page size from configuration
+            const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 100);
+            
+            Logger.debug('[EnhancedGorevTreeProvider] Calling gorev_listele with page size:', pageSize);
             const result = await this.mcpClient.callTool('gorev_listele', {
                 tum_projeler: true,
+                limit: pageSize,
+                offset: 0
             });
             
             // Debug: Log raw response
@@ -481,9 +518,19 @@ export class GroupTreeViewItem extends vscode.TreeItem {
         public groupKey: string,
         public groupType: GroupingStrategy,
         public tasks: Gorev[],
-        expanded: boolean = true
+        expanded: boolean = true,
+        private projects?: Map<string, any>
     ) {
-        const label = GroupingStrategyProvider.getGroupLabel(groupKey, groupType);
+        let label = GroupingStrategyProvider.getGroupLabel(groupKey, groupType);
+        
+        // Proje gruplandırması için proje ismini kullan
+        if (groupType === GroupingStrategy.ByProject && projects && groupKey !== 'no-project') {
+            const project = projects.get(groupKey);
+            if (project && project.isim) {
+                label = project.isim;
+            }
+        }
+        
         const collapsibleState = expanded 
             ? vscode.TreeItemCollapsibleState.Expanded 
             : vscode.TreeItemCollapsibleState.Collapsed;
@@ -563,8 +610,15 @@ export class TaskTreeViewItem extends vscode.TreeItem {
         // Icon
         this.iconPath = this.getTaskIcon(isSelected) as any;
 
-        // Açıklama
-        this.description = this.getTaskDescription();
+        // Açıklama - configuration'a göre ayarla
+        const config = vscode.workspace.getConfiguration('gorev.treeView.visuals');
+        if (config.get('showPriorityBadges', true) || 
+            config.get('showDueDateIndicators', true) || 
+            config.get('showDependencyBadges', true) || 
+            config.get('showProgressBars', true) ||
+            config.get('showTagPills', true)) {
+            this.description = this.getTaskDescription();
+        }
 
         // Context value - seçim durumuna göre
         if (isSelected && selection.selectedTasks.size > 1) {
@@ -624,102 +678,229 @@ export class TaskTreeViewItem extends vscode.TreeItem {
     private getTaskDescription(): string {
         const parts = [];
 
-        // Alt görev sayısı
+        // Progress indicator for parent tasks
         if (this.task.alt_gorevler && this.task.alt_gorevler.length > 0) {
             const completedCount = this.task.alt_gorevler.filter(t => t.durum === GorevDurum.Tamamlandi).length;
-            parts.push(`📎 ${completedCount}/${this.task.alt_gorevler.length}`);
-            Logger.debug(`[TaskTreeViewItem] Task "${this.task.baslik}" has ${this.task.alt_gorevler.length} subtasks, ${completedCount} completed`);
+            const total = this.task.alt_gorevler.length;
+            const percentage = Math.round((completedCount / total) * 100);
+            
+            // Visual progress bar
+            const filledBlocks = Math.round(percentage / 10);
+            const emptyBlocks = 10 - filledBlocks;
+            const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
+            
+            parts.push(`[${progressBar}] ${percentage}%`);
+            Logger.debug(`[TaskTreeViewItem] Task "${this.task.baslik}" has ${total} subtasks, ${completedCount} completed (${percentage}%)`);
         }
 
-        // Gecikme durumu
+        // Priority indicator with colored badges (for non-completed tasks)
+        if (this.task.durum !== GorevDurum.Tamamlandi) {
+            switch (this.task.oncelik) {
+                case GorevOncelik.Yuksek:
+                    parts.push('🔥 Yüksek');
+                    break;
+                case GorevOncelik.Orta:
+                    parts.push('⚡ Orta');
+                    break;
+                case GorevOncelik.Dusuk:
+                    parts.push('ℹ️ Düşük');
+                    break;
+            }
+        }
+
+        // Due date with smart formatting
         if (this.task.son_tarih) {
             const dueDate = new Date(this.task.son_tarih);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const diffTime = dueDate.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
-            if (dueDate < today && this.task.durum !== GorevDurum.Tamamlandi) {
-                parts.push('⚠️ Gecikmiş');
-            } else if (dueDate.toDateString() === today.toDateString()) {
-                parts.push('📅 Bugün');
+            if (this.task.durum !== GorevDurum.Tamamlandi) {
+                if (dueDate < today) {
+                    parts.push(`📅 ${Math.abs(diffDays)}g gecikmiş!`);
+                } else if (dueDate.toDateString() === today.toDateString()) {
+                    parts.push('📅 Bugün!');
+                } else if (dueDate.toDateString() === tomorrow.toDateString()) {
+                    parts.push('📅 Yarın');
+                } else if (diffDays <= 7) {
+                    parts.push(`📅 ${diffDays}g kaldı`);
+                } else {
+                    // Format as date for distant dates
+                    const dateStr = dueDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+                    parts.push(`📅 ${dateStr}`);
+                }
             }
         }
 
-        // Etiketler
-        if (this.task.etiketler && this.task.etiketler.length > 0) {
-            parts.push(this.task.etiketler.map(tag => `#${tag}`).join(' '));
-        }
-
-        // Bağımlılık göstergesi - yeni format
+        // Enhanced dependency indicators
         const depParts = [];
         
-        // Bu görevin bağımlılıkları (bu görev başka görevlere bağımlı)
+        // Dependencies with visual lock/unlock icons
         if (this.task.bagimli_gorev_sayisi && this.task.bagimli_gorev_sayisi > 0) {
             if (this.task.tamamlanmamis_bagimlilik_sayisi && this.task.tamamlanmamis_bagimlilik_sayisi > 0) {
-                // Tamamlanmamış bağımlılıklar var
-                depParts.push(`[🔗${this.task.bagimli_gorev_sayisi} ⚠️${this.task.tamamlanmamis_bagimlilik_sayisi}]`);
+                // Blocked by incomplete dependencies
+                depParts.push(`🔒 ${this.task.tamamlanmamis_bagimlilik_sayisi}/${this.task.bagimli_gorev_sayisi}`);
             } else {
-                // Tüm bağımlılıklar tamamlanmış
-                depParts.push(`[🔗${this.task.bagimli_gorev_sayisi}]`);
+                // All dependencies completed
+                depParts.push(`🔓 ${this.task.bagimli_gorev_sayisi}`);
             }
         }
         
-        // Bu göreve bağımlı görevler
+        // Tasks that depend on this
         if (this.task.bu_goreve_bagimli_sayisi && this.task.bu_goreve_bagimli_sayisi > 0) {
-            depParts.push(`[← ${this.task.bu_goreve_bagimli_sayisi}]`);
-        }
-        
-        // Eski format desteği (geriye uyumluluk için)
-        if (!depParts.length && this.task.bagimliliklar && this.task.bagimliliklar.length > 0) {
-            const blockedCount = this.task.bagimliliklar.filter(b => b.hedef_durum !== GorevDurum.Tamamlandi).length;
-            if (blockedCount > 0) {
-                depParts.push(`[→ ${this.task.bagimliliklar.length}]`);
-            } else {
-                depParts.push(`[✓ ${this.task.bagimliliklar.length}]`);
-            }
+            depParts.push(`🔗 ${this.task.bu_goreve_bagimli_sayisi}`);
         }
         
         if (depParts.length > 0) {
             parts.push(depParts.join(' '));
         }
 
-        return parts.join(' • ');
+        // Tags as colored pills (limit to 3 for space)
+        if (this.task.etiketler && this.task.etiketler.length > 0) {
+            const tagPills = this.task.etiketler.slice(0, 3).map(tag => `⬤ ${tag}`);
+            if (this.task.etiketler.length > 3) {
+                tagPills.push(`+${this.task.etiketler.length - 3}`);
+            }
+            parts.push(tagPills.join(' '));
+        }
+
+        return parts.join(' │ ');
     }
 
-    private getTaskTooltip(): string {
-        const lines = [
-            this.task.baslik,
-            `Durum: ${this.task.durum}`,
-            `Öncelik: ${this.task.oncelik}`,
-        ];
+    private getTaskTooltip(): string | vscode.MarkdownString {
+        const md = new vscode.MarkdownString();
+        md.supportHtml = true;
+        
+        // Title with status icon
+        let statusIcon = '';
+        switch (this.task.durum) {
+            case GorevDurum.Tamamlandi:
+                statusIcon = '✅';
+                break;
+            case GorevDurum.DevamEdiyor:
+                statusIcon = '🔄';
+                break;
+            case GorevDurum.Beklemede:
+                statusIcon = '⏸️';
+                break;
+        }
+        md.appendMarkdown(`## ${statusIcon} ${this.task.baslik}\n\n`);
 
+        // Priority with visual indicator
+        let priorityBadge = '';
+        let priorityColor = '';
+        switch (this.task.oncelik) {
+            case GorevOncelik.Yuksek:
+                priorityBadge = '🔥';
+                priorityColor = 'red';
+                break;
+            case GorevOncelik.Orta:
+                priorityBadge = '⚡';
+                priorityColor = 'orange';
+                break;
+            case GorevOncelik.Dusuk:
+                priorityBadge = 'ℹ️';
+                priorityColor = 'blue';
+                break;
+        }
+        md.appendMarkdown(`**Öncelik:** ${priorityBadge} <span style="color: ${priorityColor}">${this.task.oncelik}</span>\n\n`);
+
+        // Due date with smart formatting
         if (this.task.son_tarih) {
-            lines.push(`Son tarih: ${this.task.son_tarih}`);
+            const dueDate = new Date(this.task.son_tarih);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffTime = dueDate.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let dueDateText = dueDate.toLocaleDateString('tr-TR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            if (this.task.durum !== GorevDurum.Tamamlandi) {
+                if (diffDays < 0) {
+                    dueDateText = `⚠️ <span style="color: red">${Math.abs(diffDays)} gün gecikmiş!</span>`;
+                } else if (diffDays === 0) {
+                    dueDateText = `📅 <span style="color: orange">Bugün!</span>`;
+                } else if (diffDays === 1) {
+                    dueDateText = `📅 <span style="color: orange">Yarın</span>`;
+                } else if (diffDays <= 7) {
+                    dueDateText = `📅 ${diffDays} gün kaldı`;
+                }
+            }
+            
+            md.appendMarkdown(`**Son Tarih:** ${dueDateText}\n\n`);
         }
 
+        // Progress visualization for parent tasks
+        if (this.task.alt_gorevler && this.task.alt_gorevler.length > 0) {
+            const total = this.task.alt_gorevler.length;
+            const completed = this.task.alt_gorevler.filter(t => t.durum === GorevDurum.Tamamlandi).length;
+            const percentage = Math.round((completed / total) * 100);
+            
+            md.appendMarkdown(`### 📊 Alt Görev İlerlemesi\n\n`);
+            
+            // Visual progress bar
+            const filledBlocks = Math.round(percentage / 5);
+            const emptyBlocks = 20 - filledBlocks;
+            const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
+            
+            md.appendMarkdown(`\`${progressBar}\` **${percentage}%**\n\n`);
+            md.appendMarkdown(`✅ Tamamlanan: ${completed}/${total}\n\n`);
+        }
+
+        // Description
         if (this.task.aciklama) {
-            lines.push('', this.task.aciklama);
+            md.appendMarkdown(`### 📝 Açıklama\n\n${this.task.aciklama}\n\n`);
         }
 
-        if (this.task.etiketler && this.task.etiketler.length > 0) {
-            lines.push('', `Etiketler: ${this.task.etiketler.join(', ')}`);
-        }
-
-        // Bağımlılık bilgileri
-        if (this.task.bagimli_gorev_sayisi && this.task.bagimli_gorev_sayisi > 0) {
-            lines.push('', `Bağımlılıklar (${this.task.bagimli_gorev_sayisi}):`);
-            if (this.task.tamamlanmamis_bagimlilik_sayisi && this.task.tamamlanmamis_bagimlilik_sayisi > 0) {
-                lines.push(`  ⚠️ ${this.task.tamamlanmamis_bagimlilik_sayisi} tamamlanmamış`);
-                lines.push(`  ✓ ${this.task.bagimli_gorev_sayisi - this.task.tamamlanmamis_bagimlilik_sayisi} tamamlanmış`);
-            } else {
-                lines.push(`  ✓ Tümü tamamlanmış`);
+        // Dependencies visualization
+        if ((this.task.bagimli_gorev_sayisi && this.task.bagimli_gorev_sayisi > 0) || 
+            (this.task.bu_goreve_bagimli_sayisi && this.task.bu_goreve_bagimli_sayisi > 0)) {
+            
+            md.appendMarkdown(`### 🔗 Bağımlılıklar\n\n`);
+            
+            if (this.task.bagimli_gorev_sayisi && this.task.bagimli_gorev_sayisi > 0) {
+                const completed = this.task.bagimli_gorev_sayisi - (this.task.tamamlanmamis_bagimlilik_sayisi || 0);
+                const incomplete = this.task.tamamlanmamis_bagimlilik_sayisi || 0;
+                
+                md.appendMarkdown(`**Bu görev için beklenenler:**\n`);
+                if (incomplete > 0) {
+                    md.appendMarkdown(`- 🔒 ${incomplete} tamamlanmamış\n`);
+                }
+                if (completed > 0) {
+                    md.appendMarkdown(`- 🔓 ${completed} tamamlanmış\n`);
+                }
+                md.appendMarkdown('\n');
+            }
+            
+            if (this.task.bu_goreve_bagimli_sayisi && this.task.bu_goreve_bagimli_sayisi > 0) {
+                md.appendMarkdown(`**Bu görevi bekleyenler:** 🔗 ${this.task.bu_goreve_bagimli_sayisi} görev\n\n`);
             }
         }
-        
-        if (this.task.bu_goreve_bagimli_sayisi && this.task.bu_goreve_bagimli_sayisi > 0) {
-            lines.push('', `Bu göreve bağımlı: ${this.task.bu_goreve_bagimli_sayisi} görev`);
+
+        // Tags as colored badges
+        if (this.task.etiketler && this.task.etiketler.length > 0) {
+            md.appendMarkdown(`### 🏷️ Etiketler\n\n`);
+            this.task.etiketler.forEach(tag => {
+                md.appendMarkdown(`\`${tag}\` `);
+            });
+            md.appendMarkdown('\n\n');
         }
 
-        return lines.join('\n');
+        // Creation date
+        if (this.task.olusturma_tarih) {
+            const createdDate = new Date(this.task.olusturma_tarih);
+            md.appendMarkdown(`---\n\n*Oluşturulma: ${createdDate.toLocaleDateString('tr-TR')}*`);
+        }
+
+        return md;
     }
 }
 
