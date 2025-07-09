@@ -17,6 +17,11 @@ func YeniIsYonetici(veriYonetici VeriYoneticiInterface) *IsYonetici {
 	}
 }
 
+// VeriYonetici returns the data manager interface
+func (iy *IsYonetici) VeriYonetici() VeriYoneticiInterface {
+	return iy.veriYonetici
+}
+
 func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
 	var sonTarih *time.Time
 	if sonTarihStr != "" {
@@ -69,7 +74,7 @@ func (iy *IsYonetici) GorevListele(durum, sirala, filtre string) ([]*Gorev, erro
 		baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorev.ID)
 		if err == nil && len(baglantilar) > 0 {
 			gorev.BagimliGorevSayisi = len(baglantilar)
-			
+
 			// Tamamlanmamış bağımlılıkları say
 			tamamlanmamisSayisi := 0
 			for _, baglanti := range baglantilar {
@@ -260,7 +265,7 @@ func (iy *IsYonetici) ProjeGorevleri(projeID string) ([]*Gorev, error) {
 		baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorev.ID)
 		if err == nil && len(baglantilar) > 0 {
 			gorev.BagimliGorevSayisi = len(baglantilar)
-			
+
 			// Tamamlanmamış bağımlılıkları say
 			tamamlanmamisSayisi := 0
 			for _, baglanti := range baglantilar {
