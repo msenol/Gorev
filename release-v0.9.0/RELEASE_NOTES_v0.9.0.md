@@ -67,6 +67,12 @@ This release introduces **AI Context Management & Automation**, a major feature 
 - Fixed task count display issues
 - Improved error handling in batch operations
 
+### VS Code Extension v0.3.7 Fixes
+- Fixed task list not showing due to parser not recognizing 🔄 emoji
+- Fixed subtask hierarchy preservation in TreeView
+- Fixed multiline task description parsing
+- Enhanced parser for MCP v0.8.1+ compact format compatibility
+
 ## 📚 Documentation
 
 - Comprehensive AI tools documentation in `docs/mcp-araclari-ai.md`
@@ -106,12 +112,15 @@ Download binaries for your platform:
 
 ## 🎨 VS Code Extension
 
-The VS Code extension (v0.3.5) has been updated with:
+The VS Code extension (v0.3.7) has been updated with:
 - Pagination support for large task lists
 - Improved performance with token limit prevention
 - Better integration with AI tools
+- **CRITICAL FIX**: Parser now correctly displays all tasks with MCP v0.8.1+ format
+- Full support for task status emojis (⏳, 🚀, ✅, ✓, 🔄)
+- Preserved subtask hierarchy in TreeView
 
-Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode) or download [gorev-vscode-0.3.7.vsix](https://github.com/msenol/Gorev/releases/download/v0.9.0/gorev-vscode-0.3.7.vsix)
 
 ## 🙏 Acknowledgments
 
