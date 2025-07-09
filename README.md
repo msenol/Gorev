@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** July 9, 2025 | **Version:** v0.9.0
+**Last Updated:** July 9, 2025 | **Version:** v0.9.1-dev
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)

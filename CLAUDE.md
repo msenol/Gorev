@@ -8,6 +8,27 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 ### Recent Changes
 
+#### MCP Server (v0.9.1) - Pagination Fix
+- **Fixed Critical Pagination Bug** (9 July 2025):
+  - Fixed issue where pagination was counting all tasks (147) but only paginating through root tasks (38)
+  - Second page (offset 100+) was returning empty responses
+  - Now correctly paginates through all tasks including subtasks
+  - VS Code extension now displays all tasks correctly
+  - **Updated Functions**:
+    - `GorevListele` handler - pagination logic rewritten to handle all tasks
+    - Added `paginatedGorevMap` for proper hierarchy display
+  - **Performance**:
+    - Added `BulkBagimlilikSayilariGetir` method for N+1 query optimization
+    - Added `BulkTamamlanmamiaBagimlilikSayilariGetir` method
+    - Added database indexes migration (000007)
+
+#### VS Code Extension (v0.3.8)
+- **Fixed Task Display Issues** (9 July 2025):
+  - Fixed pagination to fetch all tasks from MCP server
+  - Updated `enhancedGorevTreeProvider` to handle multiple pages
+  - Updated `markdownParser` to include all tasks (root and subtasks)
+  - Added debug mode features for troubleshooting connection issues
+
 #### MCP Server (v0.9.0) - AI Context Management
 - **Implemented AI Context Management & Automation** (9 July 2025):
   - Added 6 new MCP tools for AI context management and NLP queries
