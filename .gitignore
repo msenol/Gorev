@@ -28,6 +28,16 @@ coverage.html
 tmp/
 test-*.js
 test-*.sh
+*.backup
+
+# Debug scripts and files
+*-debug.sh
+*-wrapper.sh
+*-serve.sh
+debug-*.sh
+echo-test.sh
+*-test.py
+cmd/gorev-debug/
 
 # IDE dosyaları
 .vscode/
