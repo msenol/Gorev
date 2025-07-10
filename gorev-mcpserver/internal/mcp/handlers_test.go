@@ -1049,3 +1049,167 @@ func TestTemplateConcurrency(t *testing.T) {
 		assert.Contains(t, text, fmt.Sprintf("Concurrent Bug %d", i))
 	}
 }
+
+// TestGorevOlusturDeprecated tests that the deprecated gorev_olustur handler returns proper error
+func TestGorevOlusturDeprecated(t *testing.T) {
+	veriYonetici, err := gorev.YeniVeriYonetici("test_deprecated_gorev.db", "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+	defer os.Remove("test_deprecated_gorev.db")
+
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := YeniHandlers(isYonetici)
+
+	t.Run("GorevOlustur returns deprecation error", func(t *testing.T) {
+		result, err := handlers.GorevOlustur(map[string]interface{}{
+			"baslik":   "Test Task",
+			"aciklama": "This should fail",
+			"oncelik":  "yuksek",
+		})
+
+		// Should not return a Go error, but should return an MCP error result
+		assert.NoError(t, err)
+		assert.True(t, result.IsError)
+		
+		// Verify the error message contains template requirement information
+		assert.Contains(t, getResultText(result), "gorev_olustur artık kullanılmıyor")
+		assert.Contains(t, getResultText(result), "Template kullanımı zorunludur")
+		assert.Contains(t, getResultText(result), "template_listele")
+		assert.Contains(t, getResultText(result), "templateden_gorev_olustur")
+	})
+
+	t.Run("GorevOlustur ignores all parameters", func(t *testing.T) {
+		// Even with valid parameters, should still return error
+		result, err := handlers.GorevOlustur(map[string]interface{}{
+			"baslik":    "Valid Task Title",
+			"aciklama":  "Valid description",
+			"oncelik":   "orta",
+			"proje_id":  "valid-project-id",
+			"son_tarih": "2025-12-31",
+			"etiketler": "test,valid",
+		})
+
+		assert.NoError(t, err)
+		assert.True(t, result.IsError)
+		assert.Contains(t, getResultText(result), "Template kullanımı zorunludur")
+	})
+
+	t.Run("GorevOlustur with empty parameters still fails", func(t *testing.T) {
+		result, err := handlers.GorevOlustur(map[string]interface{}{})
+
+		assert.NoError(t, err)
+		assert.True(t, result.IsError)
+		assert.Contains(t, getResultText(result), "gorev_olustur artık kullanılmıyor")
+	})
+}
+
+// TestTemplateMandatoryWorkflow tests the complete workflow with mandatory templates
+func TestTemplateMandatoryWorkflow(t *testing.T) {
+	// Setup with default templates
+	veriYonetici, err := gorev.YeniVeriYonetici("test_template_mandatory.db", "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+	defer os.Remove("test_template_mandatory.db")
+
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := YeniHandlers(isYonetici)
+
+	// First, set up a project
+	projectResult := callTool(t, handlers, "proje_olustur", map[string]interface{}{
+		"isim":  "Template Test Project",
+		"tanim": "Project for testing mandatory templates",
+	})
+	assert.False(t, projectResult.IsError)
+
+	t.Run("Complete template workflow", func(t *testing.T) {
+		// 1. List available templates
+		templatesResult := callTool(t, handlers, "template_listele", map[string]interface{}{})
+		assert.False(t, templatesResult.IsError)
+		
+		templatesText := getResultText(templatesResult)
+		assert.Contains(t, templatesText, "Bug Raporu")
+		assert.Contains(t, templatesText, "Özellik İsteği")
+		assert.Contains(t, templatesText, "Teknik Borç")
+
+		// Get Bug Raporu template ID
+		templates, err := veriYonetici.TemplateListele("Teknik")
+		require.NoError(t, err)
+
+		var bugTemplateID string
+		for _, tmpl := range templates {
+			if tmpl.Isim == "Bug Raporu" {
+				bugTemplateID = tmpl.ID
+				break
+			}
+		}
+		require.NotEmpty(t, bugTemplateID)
+
+		// Set an active project before creating tasks
+		projectText := getResultText(projectResult)
+		projectID := extractProjectIDFromText(projectText)
+		require.NotEmpty(t, projectID)
+		
+		setActiveResult := callTool(t, handlers, "proje_aktif_yap", map[string]interface{}{
+			"proje_id": projectID,
+		})
+		assert.False(t, setActiveResult.IsError)
+
+		// 2. Create task from bug report template
+		taskResult := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": bugTemplateID,
+			"degerler": map[string]interface{}{
+				"baslik":   "Login API fails with 500 error",
+				"aciklama": "Users cannot login due to server error",
+				"modul":    "Authentication",
+				"ortam":    "production",
+				"adimlar":  "1. Go to login page\n2. Enter valid credentials\n3. Click login",
+				"beklenen": "User should be logged in successfully",
+				"mevcut":   "Server returns 500 internal server error",
+				"oncelik":  "yuksek",
+				"etiketler": "bug,login,critical",
+			},
+		})
+		assert.False(t, taskResult.IsError)
+		
+		taskText := getResultText(taskResult)
+		assert.Contains(t, taskText, "Login API fails with 500 error")
+		assert.Contains(t, taskText, "ID:")
+
+		// 3. Verify old direct creation fails
+		oldResult, err := handlers.GorevOlustur(map[string]interface{}{
+			"baslik":   "This should fail",
+			"aciklama": "Old method",
+			"oncelik":  "yuksek",
+		})
+		assert.NoError(t, err)
+		assert.True(t, oldResult.IsError)
+	})
+
+	t.Run("Template validation works", func(t *testing.T) {
+		// Get Bug Raporu template ID
+		templates, err := veriYonetici.TemplateListele("Teknik")
+		require.NoError(t, err)
+
+		var bugTemplateID string
+		for _, tmpl := range templates {
+			if tmpl.Isim == "Bug Raporu" {
+				bugTemplateID = tmpl.ID
+				break
+			}
+		}
+		require.NotEmpty(t, bugTemplateID)
+
+		// Try to create task with missing required fields
+		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": bugTemplateID,
+			"degerler": map[string]interface{}{
+				"baslik": "Incomplete bug report",
+				// Missing required fields like modul, ortam, adimlar, etc.
+			},
+		})
+		assert.True(t, result.IsError)
+		errorText := getResultText(result)
+		assert.Contains(t, errorText, "Zorunlu alanlar eksik")
+	})
+}
