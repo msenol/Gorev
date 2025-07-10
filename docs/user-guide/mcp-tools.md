@@ -139,6 +139,8 @@ Görevleri filtreleyerek listeler.
 | `sirala` | string | ❌ | Sıralama: `son_tarih_asc`, `son_tarih_desc` | - |
 | `filtre` | string | ❌ | Zaman filtresi: `acil` (7 gün içinde), `gecmis` (gecikmiş) | - |
 | `etiket` | string | ❌ | Etiket adına göre filtreleme | - |
+| `limit` | number | ❌ | Maksimum görev sayısı (pagination) | 50 |
+| `offset` | number | ❌ | Kaç görev atlanacak (pagination) | 0 |
 
 ### Örnek Kullanım
 
@@ -191,7 +193,20 @@ Görevleri filtreleyerek listeler.
 }
 ```
 
-**Not:** `tum_projeler` parametresi `false` veya verilmezse ve aktif proje varsa, sadece aktif projenin görevleri listelenir.
+**Pagination kullanımı:**
+```json
+{
+  "name": "gorev_listele",
+  "arguments": {
+    "limit": 100,
+    "offset": 100
+  }
+}
+```
+
+**Not:** 
+- `tum_projeler` parametresi `false` veya verilmezse ve aktif proje varsa, sadece aktif projenin görevleri listelenir.
+- Pagination özelliği v0.8.1+ sürümünde eklenmiştir. Büyük görev listeleri için token limit hatalarını önler.
 
 ### Yanıt
 
@@ -475,9 +490,11 @@ Belirtilen projeye ait görevleri durum gruplarına göre listeler.
 
 ### Parametreler
 
-| Parametre | Tip | Zorunlu | Açıklama |
-|-----------|-----|---------|----------|
-| `proje_id` | string | ✅ | Proje ID'si |
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `proje_id` | string | ✅ | Proje ID'si | - |
+| `limit` | number | ❌ | Maksimum görev sayısı (pagination) | 50 |
+| `offset` | number | ❌ | Kaç görev atlanacak (pagination) | 0 |
 
 ### Örnek Kullanım
 

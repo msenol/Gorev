@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## MCP Server
 
+### [0.9.2] - 2025-07-10
+
+#### Fixed
+- **Enhanced Pagination to Show ALL Descendants**: Fixed critical issue where subtasks weren't displayed if their parent task wasn't in the current paginated set
+  - Added `gorevHiyerarsiYazdirVeIsaretle` and `gorevHiyerarsiYazdirInternal` functions to track displayed tasks
+  - Tasks without visible parents are now shown as root-level tasks
+  - Ensures complete task hierarchy is always visible regardless of pagination boundaries
+
+#### Added
+- **MCP Debug CLI Commands**: New debugging tools for testing MCP functionality
+  - `gorev mcp list` - Lists all available MCP tools
+  - `gorev mcp call <tool> [params]` - Calls any MCP tool directly with parameters
+  - `gorev mcp list-tasks`, `create-task`, `task-detail`, `projects` - Convenient shortcuts
+  - Added `CallTool` method to Handlers for programmatic tool invocation
+- **Enhanced Database Path Resolution**: Now checks `~/.gorev/gorev.db` first before relative paths
+
 ### [0.9.1] - 2025-07-09
 
 #### Fixed
@@ -79,6 +95,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated MCP tool schemas for `gorev_listele` and `proje_gorevleri` to include pagination parameters
 
 ## VS Code Extension
+
+### [0.3.9] - 2025-07-10
+
+#### Added
+- **"Show All Projects" Toggle Feature**: Easy switching between viewing all tasks vs. active project only
+  - New configuration: `gorev.treeView.showAllProjects` (default: true)
+  - Keyboard shortcut: `Ctrl+Alt+P` / `Cmd+Alt+P` to toggle views
+  - Visual indicator in status bar with globe/folder icon
+  - New command: `gorev.toggleAllProjects`
+
+#### Fixed
+- **Enhanced Markdown Parser**: Better parsing of MCP server responses
+  - Fixed parsing of Turkish priority names (düşük/orta/yüksek) alongside short forms (D/O/Y)
+  - Better handling of tasks with emojis in titles
+  - Improved subtask parsing with └─ prefix
+  - Fixed "X adet" tag count format parsing
+- **Filter Toolbar Improvements**:
+  - Added "Tüm Projeler" toggle button to filter options
+  - Fixed `clearAllFilters` to properly reset showAllProjects state
+  - Visual feedback for active filter state
+
+#### Changed
+- Replaced console.log with Logger.debug for better debugging
+- Template wizard now passes values as object instead of JSON string
 
 ### [0.3.4] - 2025-07-09
 

@@ -2,11 +2,26 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 9 July 2025
+## Last Updated: 10 July 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
 ### Recent Changes
+
+#### MCP Server (v0.9.2) - Enhanced Pagination & Debug Tools
+- **Fixed Pagination to Show ALL Descendants** (10 July 2025):
+  - Fixed critical issue where subtasks weren't shown if parent wasn't in paginated set
+  - Added `gorevHiyerarsiYazdirVeIsaretle` and `gorevHiyerarsiYazdirInternal` functions
+  - Tasks without visible parents now shown as root-level tasks
+  - Ensures complete task hierarchy is always visible
+  - **New Features**:
+    - Added MCP debug CLI commands (`gorev mcp list`, `gorev mcp call`)
+    - Added `CallTool` method for direct tool invocation
+    - Enhanced database path resolution (checks ~/.gorev first)
+  - **Files Updated**:
+    - `internal/mcp/handlers.go` - New hierarchy display functions
+    - `cmd/gorev/mcp_commands.go` - New debug commands
+    - `internal/mcp/server.go` - Added helper methods
 
 #### MCP Server (v0.9.1) - Pagination Fix
 - **Fixed Critical Pagination Bug** (9 July 2025):
@@ -21,6 +36,22 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
     - Added `BulkBagimlilikSayilariGetir` method for N+1 query optimization
     - Added `BulkTamamlanmamiaBagimlilikSayilariGetir` method
     - Added database indexes migration (000007)
+
+#### VS Code Extension (v0.3.9) - All Projects Toggle & Parser Improvements
+- **Added "Show All Projects" Toggle** (10 July 2025):
+  - New configuration: `gorev.treeView.showAllProjects` (default: true)
+  - Keyboard shortcut: `Ctrl+Alt+P` / `Cmd+Alt+P` to toggle
+  - Visual indicator in status bar (globe/folder icon)
+  - Fixed issue where only active project tasks were showing
+- **Enhanced Markdown Parser**:
+  - Fixed parsing of Turkish priority names (düşük/orta/yüksek)
+  - Better handling of tasks with emojis in titles
+  - Improved subtask parsing with └─ prefix
+  - Added Logger.debug instead of console.log
+- **Filter Toolbar Improvements**:
+  - Added "Tüm Projeler" toggle button
+  - Fixed clearAllFilters to reset showAllProjects state
+  - Visual feedback for active filter state
 
 #### VS Code Extension (v0.3.8)
 - **Fixed Task Display Issues** (9 July 2025):
