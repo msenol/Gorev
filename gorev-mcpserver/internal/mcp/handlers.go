@@ -206,6 +206,112 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 	return metin
 }
 
+// gorevHiyerarsiYazdirVeIsaretle görevleri yazdırırken hangi görevlerin gösterildiğini işaretler
+func (h *Handlers) gorevHiyerarsiYazdirVeIsaretle(gorev *gorev.Gorev, gorevMap map[string]*gorev.Gorev, seviye int, projeGoster bool, shownGorevIDs map[string]bool) string {
+	// Bu görevi gösterildi olarak işaretle
+	shownGorevIDs[gorev.ID] = true
+
+	// Normal hiyerarşik yazdırma işlemi
+	metin := h.gorevHiyerarsiYazdirInternal(gorev, gorevMap, seviye, projeGoster, shownGorevIDs)
+
+	return metin
+}
+
+// gorevHiyerarsiYazdirInternal görev hiyerarşisini yazdırır ve gösterilenleri işaretler
+func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map[string]*gorev.Gorev, seviye int, projeGoster bool, shownGorevIDs map[string]bool) string {
+	indent := strings.Repeat("  ", seviye)
+	prefix := ""
+	if seviye > 0 {
+		prefix = "└─ "
+	}
+
+	durum := ""
+	switch gorev.Durum {
+	case "tamamlandi":
+		durum = "✓"
+	case "devam_ediyor":
+		durum = "🔄"
+	case "beklemede":
+		durum = "⏳"
+	}
+
+	// Öncelik kısaltması
+	oncelikKisa := ""
+	switch gorev.Oncelik {
+	case "yuksek":
+		oncelikKisa = "Y"
+	case "orta":
+		oncelikKisa = "O"
+	case "dusuk":
+		oncelikKisa = "D"
+	default:
+		oncelikKisa = gorev.Oncelik
+	}
+
+	// Temel satır - öncelik parantez içinde kısaltılmış
+	metin := fmt.Sprintf("%s%s[%s] %s (%s)\n", indent, prefix, durum, gorev.Baslik, oncelikKisa)
+
+	// Sadece dolu alanları göster, boş satırlar ekleme
+	details := []string{}
+
+	if gorev.Aciklama != "" {
+		// Açıklamayı kısalt - maksimum 100 karakter
+		aciklama := gorev.Aciklama
+		if len(aciklama) > 100 {
+			aciklama = aciklama[:97] + "..."
+		}
+		details = append(details, aciklama)
+	}
+
+	if projeGoster && gorev.ProjeID != "" {
+		proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
+		if proje != nil {
+			details = append(details, fmt.Sprintf("Proje: %s", proje.Isim))
+		}
+	}
+
+	if gorev.SonTarih != nil {
+		details = append(details, fmt.Sprintf("Tarih: %s", gorev.SonTarih.Format("02/01")))
+	}
+
+	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= 3 {
+		etiketIsimleri := make([]string, len(gorev.Etiketler))
+		for i, etiket := range gorev.Etiketler {
+			etiketIsimleri[i] = etiket.Isim
+		}
+		details = append(details, fmt.Sprintf("Etiket: %s", strings.Join(etiketIsimleri, ", ")))
+	} else if len(gorev.Etiketler) > 3 {
+		details = append(details, fmt.Sprintf("Etiket: %d adet", len(gorev.Etiketler)))
+	}
+
+	// Bağımlılık bilgileri - sadece varsa ve sıfırdan büyükse
+	if gorev.TamamlanmamisBagimlilikSayisi > 0 {
+		details = append(details, fmt.Sprintf("Bekleyen: %d", gorev.TamamlanmamisBagimlilikSayisi))
+	}
+
+	// ID'yi en sona ekle
+	details = append(details, fmt.Sprintf("ID:%s", gorev.ID))
+
+	// Detayları tek satırda göster
+	if len(details) > 0 {
+		metin += fmt.Sprintf("%s  %s\n", indent, strings.Join(details, " | "))
+	}
+
+	// Alt görevleri bul ve yazdır - TÜM alt görevler gösterilir
+	for _, g := range gorevMap {
+		if g.ParentID == gorev.ID {
+			shownGorevIDs[g.ID] = true
+			metin += h.gorevHiyerarsiYazdirInternal(g, gorevMap, seviye+1, projeGoster, shownGorevIDs)
+		}
+	}
+
+	if seviye == 0 {
+		metin += "\n"
+	}
+
+	return metin
+}
+
 // GorevOlustur yeni bir görev oluşturur
 func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	baslik, ok := params["baslik"].(string)
@@ -273,7 +379,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("görevler listelenemedi: %v", err)), nil
 	}
-	
+
 	// DEBUG: Log görev sayısı
 	// fmt.Fprintf(os.Stderr, "GorevListele fetched %d tasks\n", len(gorevler))
 
@@ -361,7 +467,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	// Paginated görevlerden root olanları bul
 	paginatedKokGorevler := []*gorev.Gorev{}
 	paginatedGorevMap := make(map[string]*gorev.Gorev)
-	
+
 	for _, g := range paginatedGorevler {
 		paginatedGorevMap[g.ID] = g
 		if g.ParentID == "" {
@@ -393,33 +499,27 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		gorevlerToShow = append(gorevlerToShow, kokGorev)
 	}
 
+	// Hangi görevlerin gösterildiğini takip et
+	shownGorevIDs := make(map[string]bool)
+
 	// Kök görevlerden başlayarak hiyerarşiyi oluştur
+	// NOT: gorevMap tüm görevleri içerir, böylece paginated bir görevin TÜM alt görevleri gösterilir
 	for _, kokGorev := range gorevlerToShow {
-		metin += h.gorevHiyerarsiYazdir(kokGorev, gorevMap, 0, tumProjeler || aktifProje == nil)
+		metin += h.gorevHiyerarsiYazdirVeIsaretle(kokGorev, gorevMap, 0, tumProjeler || aktifProje == nil, shownGorevIDs)
 	}
 
-	// Parent'ı paginated listede olmayan ama kendisi olan görevleri de göster
+	// Paginated listede olup henüz gösterilmemiş görevleri bul
+	// (Parent'ları paginated listede olmayan veya daha önce gösterilmiş görevler)
 	for _, g := range paginatedGorevler {
-		if g.ParentID != "" {
-			// Parent'ı bu sayfada değilse, görevi root olarak göster
-			if _, parentVar := paginatedGorevMap[g.ParentID]; !parentVar {
-				// Bu görev zaten gösterilmediyse
-				alreadyShown := false
-				for _, shown := range gorevlerToShow {
-					if shown.ID == g.ID {
-						alreadyShown = true
-						break
-					}
-				}
-				if !alreadyShown {
-					gorevSize := h.gorevResponseSizeEstimate(g)
-					if estimatedSize+gorevSize > maxResponseSize {
-						break
-					}
-					metin += h.gorevHiyerarsiYazdir(g, gorevMap, 0, tumProjeler || aktifProje == nil)
-					estimatedSize += gorevSize
-				}
+		if !shownGorevIDs[g.ID] {
+			// Bu görev henüz gösterilmemiş, root olarak göster
+			gorevSize := h.gorevResponseSizeEstimate(g)
+			if estimatedSize+gorevSize > maxResponseSize && len(shownGorevIDs) > 0 {
+				metin += fmt.Sprintf("\n*Not: Response boyut limiti nedeniyle daha fazla görev gösterilemiyor. 'offset' parametresi ile devam edebilirsiniz.*\n")
+				break
 			}
+			metin += h.gorevHiyerarsiYazdirVeIsaretle(g, gorevMap, 0, tumProjeler || aktifProje == nil, shownGorevIDs)
+			estimatedSize += gorevSize
 		}
 	}
 
@@ -1183,6 +1283,64 @@ func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.Cal
 	}
 
 	return mcp.NewToolResultText(sb.String()), nil
+}
+
+// CallTool çağrı yapmak için yardımcı metod
+func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mcp.CallToolResult, error) {
+	switch toolName {
+	case "gorev_olustur":
+		return h.GorevOlustur(params)
+	case "gorev_listele":
+		return h.GorevListele(params)
+	case "gorev_detay":
+		return h.GorevDetay(params)
+	case "gorev_guncelle":
+		return h.GorevGuncelle(params)
+	case "gorev_duzenle":
+		return h.GorevDuzenle(params)
+	case "gorev_sil":
+		return h.GorevSil(params)
+	case "gorev_bagimlilik_ekle":
+		return h.GorevBagimlilikEkle(params)
+	case "gorev_altgorev_olustur":
+		return h.GorevAltGorevOlustur(params)
+	case "gorev_ust_degistir":
+		return h.GorevUstDegistir(params)
+	case "gorev_hiyerarsi_goster":
+		return h.GorevHiyerarsiGoster(params)
+	case "proje_olustur":
+		return h.ProjeOlustur(params)
+	case "proje_listele":
+		return h.ProjeListele(params)
+	case "proje_gorevleri":
+		return h.ProjeGorevleri(params)
+	case "proje_aktif_yap":
+		return h.AktifProjeAyarla(params)
+	case "aktif_proje_goster":
+		return h.AktifProjeGoster(params)
+	case "aktif_proje_kaldir":
+		return h.AktifProjeKaldir(params)
+	case "ozet_goster":
+		return h.OzetGoster(params)
+	case "template_listele":
+		return h.TemplateListele(params)
+	case "templateden_gorev_olustur":
+		return h.TemplatedenGorevOlustur(params)
+	case "gorev_set_active":
+		return h.GorevSetActive(params)
+	case "gorev_get_active":
+		return h.GorevGetActive(params)
+	case "gorev_recent":
+		return h.GorevRecent(params)
+	case "gorev_context_summary":
+		return h.GorevContextSummary(params)
+	case "gorev_batch_update":
+		return h.GorevBatchUpdate(params)
+	case "gorev_nlp_query":
+		return h.GorevNLPQuery(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("bilinmeyen araç: %s", toolName)), nil
+	}
 }
 
 func (h *Handlers) RegisterTools(s *server.MCPServer) {
