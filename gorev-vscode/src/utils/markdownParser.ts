@@ -2,6 +2,7 @@ import { Gorev, GorevDurum, GorevOncelik, Bagimlilik } from '../models/gorev';
 import { Proje } from '../models/proje';
 import { GorevTemplate } from '../models/template';
 import { TemplateKategori } from '../models/common';
+import { Logger } from '../utils/logger';
 
 /**
  * MCP response'larını parse eden utility sınıfı
@@ -115,12 +116,17 @@ export class MarkdownParser {
     static parseGorevListesi(markdown: string): Gorev[] {
         const lines = markdown.split('\n');
         
-        // Check if this is the new compact format
-        const hasCompactFormat = lines.some(line => /^\[⏳\]|\[🚀\]|\[✅\]|\[🔄\]|\[✓\]/.test(line.trim()));
+        // Check if this is the new compact format - check for indented lines and subtasks too
+        const hasCompactFormat = lines.some(line => {
+            const trimmed = line.trim();
+            return /^\[⏳\]|\[🚀\]|\[✅\]|\[🔄\]|\[✓\]/.test(trimmed) || 
+                   /^└─\s*\[⏳\]|^└─\s*\[🚀\]|^└─\s*\[✅\]|^└─\s*\[🔄\]|^└─\s*\[✓\]/.test(trimmed);
+        });
         
-        console.log('[MarkdownParser] Starting to parse tasks...');
-        console.log('[MarkdownParser] Format detected:', hasCompactFormat ? 'Compact (v0.8.1+)' : 'Legacy');
-        console.log('[MarkdownParser] First 5 lines:', lines.slice(0, 5));
+        Logger.debug('[MarkdownParser] Starting to parse tasks...');
+        Logger.debug('[MarkdownParser] Format detected:', hasCompactFormat ? 'Compact (v0.8.1+)' : 'Legacy');
+        Logger.debug('[MarkdownParser] First 5 lines:', lines.slice(0, 5));
+        Logger.debug('[MarkdownParser] Total lines:', lines.length);
         
         if (hasCompactFormat) {
             return this.parseCompactGorevListesi(markdown);
@@ -133,7 +139,7 @@ export class MarkdownParser {
         let currentGorev: Partial<Gorev> | null = null;
         let descriptionLines: string[] = [];
         
-        console.log('[MarkdownParser] Total lines:', lines.length);
+        Logger.debug('[MarkdownParser] Total lines:', lines.length);
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -154,9 +160,9 @@ export class MarkdownParser {
             const taskMatch = trimmedLine.match(taskRegex);
             
             if (i < 10 && trimmedLine.includes('[')) {
-                console.log(`[MarkdownParser] Line ${i}: "${line}"`);
-                console.log(`[MarkdownParser] Indent level: ${indentLevel}, trimmed: "${trimmedLine}"`);
-                console.log(`[MarkdownParser] taskMatch:`, taskMatch);
+                Logger.debug(`[MarkdownParser] Line ${i}: "${line}"`);
+                Logger.debug(`[MarkdownParser] Indent level: ${indentLevel}, trimmed: "${trimmedLine}"`);
+                Logger.debug(`[MarkdownParser] taskMatch:`, taskMatch);
             }
             
             if (taskMatch) {
@@ -180,17 +186,17 @@ export class MarkdownParser {
                         const parentGorev = gorevMap.get(parent.id);
                         if (parentGorev && parentGorev.alt_gorevler) {
                             parentGorev.alt_gorevler.push(gorev);
-                            console.log(`[MarkdownParser] Added ${gorev.baslik} as child of ${parentGorev.baslik}`);
+                            Logger.debug(`[MarkdownParser] Added ${gorev.baslik} as child of ${parentGorev.baslik}`);
                         }
                     }
                     
                     // Add ALL tasks to the main array, regardless of hierarchy
                     gorevler.push(gorev);
-                    console.log(`[MarkdownParser] Added ${gorev.baslik} as task with proje_id: ${gorev.proje_id || 'NONE'}`); 
+                    Logger.debug(`[MarkdownParser] Added ${gorev.baslik} as task with proje_id: ${gorev.proje_id || 'NONE'}`); 
                     
                     gorevMap.set(gorev.id!, gorev);
                     parentStack.push({ id: gorev.id!, level: gorev.seviye });
-                    console.log(`[MarkdownParser] Parent stack after adding ${gorev.baslik}:`, parentStack.map(p => `${p.id}(L${p.level})`).join(' -> '));
+                    Logger.debug(`[MarkdownParser] Parent stack after adding ${gorev.baslik}:`, parentStack.map(p => `${p.id}(L${p.level})`).join(' -> '));
                 }
                 
                 // Yeni görev
@@ -213,7 +219,7 @@ export class MarkdownParser {
                 const idMatch = trimmedLine.match(/ID:\s*([a-f0-9-]+)/);
                 if (idMatch) {
                     currentGorev.id = idMatch[1];
-                    console.log(`[MarkdownParser] Parsed task ID: ${idMatch[1]} for task: ${currentGorev.baslik}`);
+                    Logger.debug(`[MarkdownParser] Parsed task ID: ${idMatch[1]} for task: ${currentGorev.baslik}`);
                 }
                 continue;
             }
@@ -230,13 +236,13 @@ export class MarkdownParser {
             
             // ProjeID satırı
             if (currentGorev && trimmedLine.includes('ProjeID:')) {
-                console.log(`[MarkdownParser] Found ProjeID line: "${trimmedLine}"`);
+                Logger.debug(`[MarkdownParser] Found ProjeID line: "${trimmedLine}"`);
                 const projeIDMatch = trimmedLine.match(/ProjeID:\s*([a-f0-9-]+)/);
                 if (projeIDMatch) {
                     currentGorev.proje_id = projeIDMatch[1];
-                    console.log(`[MarkdownParser] Parsed ProjeID: ${projeIDMatch[1]}`);
+                    Logger.debug(`[MarkdownParser] Parsed ProjeID: ${projeIDMatch[1]}`);
                 } else {
-                    console.log(`[MarkdownParser] Failed to parse ProjeID from: "${trimmedLine}"`);
+                    Logger.debug(`[MarkdownParser] Failed to parse ProjeID from: "${trimmedLine}"`);
                 }
                 continue;
             }
@@ -321,10 +327,10 @@ export class MarkdownParser {
             gorevMap.set(gorev.id, gorev);
         }
         
-        console.log('[MarkdownParser] Total tasks parsed:', gorevler.length);
-        console.log('[MarkdownParser] Tasks with subtasks:', gorevler.filter(g => g.alt_gorevler && g.alt_gorevler.length > 0).map(g => `${g.baslik} (${g.alt_gorevler!.length} subtasks)`));
-        console.log('[MarkdownParser] Tasks with proje_id:', gorevler.filter(g => g.proje_id).map(g => `${g.baslik} -> ${g.proje_id}`));
-        console.log('[MarkdownParser] Tasks WITHOUT proje_id:', gorevler.filter(g => !g.proje_id).map(g => g.baslik));
+        Logger.debug('[MarkdownParser] Total tasks parsed:', gorevler.length);
+        Logger.debug('[MarkdownParser] Tasks with subtasks:', gorevler.filter(g => g.alt_gorevler && g.alt_gorevler.length > 0).map(g => `${g.baslik} (${g.alt_gorevler!.length} subtasks)`));
+        Logger.debug('[MarkdownParser] Tasks with proje_id:', gorevler.filter(g => g.proje_id).map(g => `${g.baslik} -> ${g.proje_id}`));
+        Logger.debug('[MarkdownParser] Tasks WITHOUT proje_id:', gorevler.filter(g => !g.proje_id).map(g => g.baslik));
         return gorevler;
     }
     
@@ -340,8 +346,8 @@ export class MarkdownParser {
         const parentStack: { id: string, indentLevel: number }[] = []; // Track parent hierarchy
         let i = 0;
         
-        console.log('[MarkdownParser] Parsing compact format with hierarchy...');
-        console.log('[MarkdownParser] Total lines to parse:', lines.length);
+        Logger.debug('[MarkdownParser] Parsing compact format with hierarchy...');
+        Logger.debug('[MarkdownParser] Total lines to parse:', lines.length);
         
         while (i < lines.length) {
             const line = lines[i];
@@ -363,12 +369,13 @@ export class MarkdownParser {
                 continue;
             }
             
-            // Match task header: [⏳|🚀|✅|✓|🔄] Title (Y|O|D)
+            // Match task header: [⏳|🚀|✅|✓|🔄] Title (Y|O|D|düşük|orta|yüksek)
             // Also handle subtasks with └─ prefix
-            const headerMatch = trimmedLine.match(/^(└─\s*)?\[(⏳|🚀|✅|✓|🔄)\] (.+?) \(([YOD])\)$/);
+            // Updated regex to handle titles with emojis and special characters
+            const headerMatch = trimmedLine.match(/^(└─\s*)?\[(⏳|🚀|✅|✓|🔄)\]\s+(.+?)\s+\(([YOD]|düşük|orta|yüksek)\)$/);
             if (headerMatch) {
                 const [_, prefix, statusIcon, title, priorityLetter] = headerMatch;
-                console.log(`[MarkdownParser] Found task header at line ${i}: ${title}, indent: ${indentLevel}`);
+                Logger.debug(`[MarkdownParser] Found task header at line ${i}: "${title}", indent: ${indentLevel}, has prefix: ${!!prefix}`);
                 
                 // Map status icon to durum
                 let durum = GorevDurum.Beklemede;
@@ -377,8 +384,9 @@ export class MarkdownParser {
                 
                 // Map priority letter to oncelik
                 let oncelik = GorevOncelik.Orta;
-                if (priorityLetter === 'Y') oncelik = GorevOncelik.Yuksek;
-                else if (priorityLetter === 'D') oncelik = GorevOncelik.Dusuk;
+                if (priorityLetter === 'Y' || priorityLetter === 'yüksek') oncelik = GorevOncelik.Yuksek;
+                else if (priorityLetter === 'D' || priorityLetter === 'düşük') oncelik = GorevOncelik.Dusuk;
+                else if (priorityLetter === 'O' || priorityLetter === 'orta') oncelik = GorevOncelik.Orta;
                 
                 // Check next line(s) for details
                 i++;
@@ -389,33 +397,37 @@ export class MarkdownParser {
                     const nextLine = lines[i];
                     detailsLine = nextLine.trim();
                     
-                    // Check if this is a multiline description
-                    if (detailsLine.startsWith('-') && !detailsLine.includes('ID:')) {
-                        // This is a multiline description, keep reading until we find ID
+                    // Check if this is a details line without ID (multiline description)
+                    if (detailsLine && !detailsLine.includes('ID:')) {
+                        // This might be a multiline description, keep reading until we find ID
                         let fullDetails = detailsLine;
                         i++;
                         while (i < lines.length) {
                             const continuationLine = lines[i].trim();
                             if (continuationLine.includes('ID:')) {
-                                fullDetails += ' ' + continuationLine;
+                                fullDetails += ' | ' + continuationLine;
                                 break;
                             } else if (continuationLine && !continuationLine.startsWith('[')) {
                                 fullDetails += ' ' + continuationLine;
                                 i++;
                             } else {
+                                // No ID found, this might not be a valid task
+                                Logger.warn(`[MarkdownParser] No ID found for task: ${title}`);
                                 break;
                             }
                         }
                         detailsLine = fullDetails;
                     }
                     
-                    console.log(`[MarkdownParser] Details line: ${detailsLine}`);
+                    Logger.debug(`[MarkdownParser] Details line: ${detailsLine}`);
                     
                     // Parse different detail formats
                     let detailsMatch = null;
                     let description = '';
                     let dueDate = '';
                     let tags: string[] = [];
+                    let projectId = '';
+                    let projectName = '';
                     let id = '';
                     
                     // Format 1: Description | Bekleyen: N | ID:uuid
@@ -429,12 +441,10 @@ export class MarkdownParser {
                         id = idMatch[1];
                         const detailsWithoutId = detailsLine.substring(0, detailsLine.lastIndexOf('|')).trim();
                         
-                        // Extract description (everything before first | or after - for subtasks)
-                        if (detailsWithoutId.startsWith('- ')) {
-                            description = detailsWithoutId.substring(2).split('|')[0].trim();
-                        } else {
-                            description = detailsWithoutId.split('|')[0].trim();
-                        }
+                        // Extract description (everything before first |)
+                        // Remove leading dash if present
+                        const cleanDetails = detailsWithoutId.startsWith('- ') ? detailsWithoutId.substring(2) : detailsWithoutId;
+                        description = cleanDetails.split('|')[0].trim();
                         
                         // Extract other fields
                         const parts = detailsWithoutId.split('|').slice(1);
@@ -443,13 +453,29 @@ export class MarkdownParser {
                             if (trimmedPart.startsWith('Tarih:')) {
                                 dueDate = trimmedPart.substring(6).trim();
                             } else if (trimmedPart.startsWith('Etiket:')) {
-                                tags = trimmedPart.substring(7).split(',').map(t => t.trim());
+                                const etiketPart = trimmedPart.substring(7).trim();
+                                // Handle "X adet" format
+                                const adetMatch = etiketPart.match(/(\d+)\s+adet/);
+                                if (adetMatch) {
+                                    // Don't parse tags if it's just a count
+                                    tags = [];
+                                } else {
+                                    tags = etiketPart.split(',').map(t => t.trim());
+                                }
+                            } else if (trimmedPart.startsWith('Proje:')) {
+                                projectName = trimmedPart.substring(6).trim();
+                                // Try to extract project ID from the project name if it contains ID
+                                const projIdMatch = projectName.match(/\(ID:\s*([a-f0-9-]+)\)/);
+                                if (projIdMatch) {
+                                    projectId = projIdMatch[1];
+                                    projectName = projectName.replace(/\s*\(ID:[^)]+\)/, '').trim();
+                                }
                             }
                         }
                     }
                     
                     if (id) {
-                        console.log(`[MarkdownParser] Parsed details - ID: ${id}, Description: ${description}`);
+                        Logger.debug(`[MarkdownParser] Parsed details - ID: ${id}, Description: ${description}, ProjectID: ${projectId}, ProjectName: ${projectName}`);
                         
                         // Convert date from DD/MM to YYYY-MM-DD (assuming current year) if date exists
                         let formattedDate = '';
@@ -467,7 +493,7 @@ export class MarkdownParser {
                             aciklama: description ? description.trim() : '',
                             durum,
                             oncelik,
-                            proje_id: '', // Not provided in compact format, will be filled by provider
+                            proje_id: projectId || '', // Use extracted project ID if available
                             son_tarih: formattedDate || '',
                             etiketler: tags || [],
                             olusturma_tarih: new Date().toISOString(), // Not provided in compact format
@@ -491,8 +517,11 @@ export class MarkdownParser {
                             if (parentGorev) {
                                 parentGorev.alt_gorevler = parentGorev.alt_gorevler || [];
                                 parentGorev.alt_gorevler.push(gorev);
-                                console.log(`[MarkdownParser] Added ${title} as child of ${parentGorev.baslik}`);
+                                Logger.debug(`[MarkdownParser] Added ${title} as child of ${parentGorev.baslik}`);
                             }
+                        } else {
+                            // Ensure root tasks have empty parent_id
+                            gorev.parent_id = '';
                         }
                         
                         // Add to map and stack
@@ -501,27 +530,35 @@ export class MarkdownParser {
                         gorevler.push(gorev);
                         
                         // Push to parent stack for potential children
-                        parentStack.push({ id: gorev.id, indentLevel });
+                        // Only push if this task could potentially have children (not at max depth, etc.)
+                        if (indentLevel === 0 || parentStack.some(p => p.indentLevel < indentLevel)) {
+                            parentStack.push({ id: gorev.id, indentLevel });
+                        }
                         
-                        console.log(`[MarkdownParser] Successfully parsed task: ${title} (${id}) at level ${indentLevel}`);
+                        Logger.debug(`[MarkdownParser] Successfully parsed task: ${title} (${id}) at level ${indentLevel}, parent_id: ${gorev.parent_id || 'NONE'}`);
                     } else {
-                        console.warn(`[MarkdownParser] Failed to parse details line: ${detailsLine}`);
+                        Logger.warn(`[MarkdownParser] Failed to parse details line: ${detailsLine}`);
                     }
                 } else {
-                    console.warn(`[MarkdownParser] No details line found for task: ${title}`);
+                    Logger.warn(`[MarkdownParser] No details line found for task: ${title}`);
                 }
-            } else if (line.includes('[') && line.includes(']')) {
-                console.log(`[MarkdownParser] Line ${i} contains brackets but didn't match pattern: ${line}`);
+            } else if (trimmedLine.includes('[') && trimmedLine.includes(']')) {
+                Logger.debug(`[MarkdownParser] Line ${i} contains brackets but didn't match pattern: "${trimmedLine}"`);
+                Logger.debug(`[MarkdownParser] Regex test result:`, /^(└─\s*)?\[(⏳|🚀|✅|✓|🔄)\]\s+(.+?)\s+\(([YOD]|düşük|orta|yüksek)\)$/.test(trimmedLine));
             }
             i++;
         }
         
-        console.log('[MarkdownParser] Total root tasks parsed from compact format:', gorevler.length);
-        console.log('[MarkdownParser] Total tasks including subtasks:', gorevMap.size);
+        Logger.debug('[MarkdownParser] Total tasks parsed:', gorevler.length);
+        Logger.debug('[MarkdownParser] Tasks in map:', gorevMap.size);
+        Logger.debug('[MarkdownParser] Task IDs parsed:', Array.from(gorevMap.keys()).sort());
+        
         if (gorevler.length === 0) {
-            console.warn('[MarkdownParser] No tasks were parsed! First 10 lines of markdown:');
-            lines.slice(0, 10).forEach((line, idx) => console.log(`  ${idx}: ${line}`));
+            Logger.warn('[MarkdownParser] No tasks were parsed! First 10 lines of markdown:');
+            lines.slice(0, 10).forEach((line, idx) => Logger.debug(`  ${idx}: ${line}`));
         }
+        
+        // Return all tasks from the array (which should include all tasks regardless of hierarchy)
         return gorevler;
     }
     
@@ -533,7 +570,7 @@ export class MarkdownParser {
         const projeler: Proje[] = [];
         let currentProje: Partial<Proje> | null = null;
         
-        console.log('[MarkdownParser] Parsing project list, first few lines:', lines.slice(0, 10));
+        Logger.debug('[MarkdownParser] Parsing project list, first few lines:', lines.slice(0, 10));
         
         for (const line of lines) {
             // Proje başlığı: ### 🔒 Proje İsmi
@@ -572,7 +609,7 @@ export class MarkdownParser {
                 const sayiMatch = line.match(/\*\*Görev Sayısı:\*\*\s*(\d+)/);
                 if (sayiMatch) {
                     currentProje.gorev_sayisi = parseInt(sayiMatch[1]);
-                    console.log('[MarkdownParser] Found task count for project:', currentProje.isim, '=', currentProje.gorev_sayisi);
+                    Logger.debug('[MarkdownParser] Found task count for project:', currentProje.isim, '=', currentProje.gorev_sayisi);
                 }
             }
         }

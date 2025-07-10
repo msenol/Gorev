@@ -181,7 +181,7 @@ export class TemplateWizard {
             // Create task from template
             const result = await this.mcpClient.callTool('templateden_gorev_olustur', {
                 template_id: this.template.id,
-                degerler: JSON.stringify(values)
+                degerler: values
             });
 
             // Show success message
