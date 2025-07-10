@@ -21,7 +21,7 @@ func createMCPCommand() *cobra.Command {
 		Short: "MCP araçlarını test et",
 		Long:  "MCP (Model Context Protocol) araçlarını doğrudan komut satırından test etmek için kullanılır.",
 	}
-	
+
 	// Global debug flag
 	mcpCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Debug modunu etkinleştir")
 
@@ -47,7 +47,7 @@ func createMCPListCommand() *cobra.Command {
 			// Get database and migrations paths
 			dbPath := getDatabasePath()
 			migrationsPath := getMigrationsPath()
-			
+
 			if debugMode {
 				fmt.Fprintf(os.Stderr, "Debug: Using database: %s\n", dbPath)
 				fmt.Fprintf(os.Stderr, "Debug: Using migrations: %s\n", migrationsPath)
@@ -65,11 +65,11 @@ func createMCPListCommand() *cobra.Command {
 
 			fmt.Println("Kullanılabilir MCP Araçları:")
 			fmt.Println("=" + strings.Repeat("=", 50))
-			
+
 			for _, tool := range tools {
 				fmt.Printf("\n%s\n", tool.Name)
 				fmt.Printf("  Açıklama: %s\n", tool.Description)
-				
+
 				if tool.InputSchema != nil {
 					// Parse schema to show parameters
 					if props, ok := tool.InputSchema["properties"].(map[string]interface{}); ok {
@@ -82,7 +82,7 @@ func createMCPListCommand() *cobra.Command {
 							}
 						}
 					}
-					
+
 					if required, ok := tool.InputSchema["required"].([]interface{}); ok && len(required) > 0 {
 						fmt.Print("  Zorunlu: ")
 						for i, req := range required {
@@ -132,7 +132,7 @@ func createMCPCallCommand() *cobra.Command {
 			// Get database and migrations paths
 			dbPath := getDatabasePath()
 			migrationsPath := getMigrationsPath()
-			
+
 			if debugMode {
 				fmt.Fprintf(os.Stderr, "Debug: Using database: %s\n", dbPath)
 				fmt.Fprintf(os.Stderr, "Debug: Using migrations: %s\n", migrationsPath)
@@ -146,7 +146,7 @@ func createMCPCallCommand() *cobra.Command {
 			defer veriYonetici.Kapat()
 
 			isYonetici := gorev.YeniIsYonetici(veriYonetici)
-			handlers := mcp.NewHandlers(isYonetici)
+			handlers := mcp.YeniHandlers(isYonetici)
 
 			// Call the tool
 			result, err := handlers.CallTool(toolName, params)
@@ -295,14 +295,14 @@ func callMCPTool(toolName string, params map[string]interface{}) error {
 	defer veriYonetici.Kapat()
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
-	handlers := mcp.NewHandlers(isYonetici)
+	handlers := mcp.YeniHandlers(isYonetici)
 
 	// Call the tool
 	result, err := handlers.CallTool(toolName, params)
 	if err != nil {
 		return fmt.Errorf("araç çağrısı başarısız: %w", err)
 	}
-	
+
 	if debugMode {
 		fmt.Fprintf(os.Stderr, "Debug: Tool returned result with %d content items\n", len(result.Content))
 	}
@@ -313,14 +313,14 @@ func callMCPTool(toolName string, params map[string]interface{}) error {
 			if debugMode {
 				fmt.Fprintf(os.Stderr, "Debug: Content type: %T\n", content)
 			}
-			
+
 			// Use reflection to get the Text field
 			// This works with any struct that has a Text field
 			contentValue := reflect.ValueOf(content)
 			if contentValue.Kind() == reflect.Ptr {
 				contentValue = contentValue.Elem()
 			}
-			
+
 			if contentValue.Kind() == reflect.Struct {
 				textField := contentValue.FieldByName("Text")
 				if textField.IsValid() && textField.Kind() == reflect.String {

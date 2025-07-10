@@ -18,6 +18,15 @@ var (
 
 // getMigrationsPath returns the correct path to migrations folder
 func getMigrationsPath() string {
+	// First check if migrations exist in user's home directory
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		homeMigrationsPath := filepath.Join(homeDir, ".gorev", "internal", "veri", "migrations")
+		if _, err := os.Stat(homeMigrationsPath); err == nil {
+			return "file://" + homeMigrationsPath
+		}
+	}
+
 	// Get the executable path
 	exePath, err := os.Executable()
 	if err != nil {
@@ -76,6 +85,15 @@ func getMigrationsPath() string {
 
 // getDatabasePath returns the correct path to database file
 func getDatabasePath() string {
+	// First check if database exists in user's home directory
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		homeDBPath := filepath.Join(homeDir, ".gorev", "gorev.db")
+		if _, err := os.Stat(homeDBPath); err == nil {
+			return homeDBPath
+		}
+	}
+
 	// Get the executable path
 	exePath, err := os.Executable()
 	if err != nil {
@@ -213,7 +231,11 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 	}
 
 	templateCmd.AddCommand(templateListCmd, templateShowCmd, templateInitCmd)
-	rootCmd.AddCommand(serveCmd, versionCmd, templateCmd)
+
+	// MCP test commands
+	mcpCmd := createMCPCommand()
+
+	rootCmd.AddCommand(serveCmd, versionCmd, templateCmd, mcpCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Hata: %v\n", err)
