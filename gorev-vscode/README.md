@@ -4,6 +4,8 @@
   <img src="media/icon.png" alt="Gorev Logo" width="128" height="128">
 </p>
 
+> ⚠️ **BREAKING CHANGE (v0.4.0)**: Template kullanımı artık zorunludur! Doğrudan görev oluşturma kaldırıldı. Tüm görevler template kullanılarak oluşturulmalıdır. [Detaylar](#breaking-change-template-zorunluluğu)
+
 Gorev için güçlü ve kullanıcı dostu VS Code extension'ı. MCP protokolü üzerinden Gorev sunucusuyla iletişim kurarak gelişmiş görev yönetimi özellikleri sunar.
 
 ## 🚀 Özellikler
@@ -237,3 +239,32 @@ MIT
 ## 🤝 Katkıda Bulunma
 
 Pull request'ler kabul edilir. Büyük değişiklikler için lütfen önce bir issue açın.
+
+## ⚠️ BREAKING CHANGE: Template Zorunluluğu
+
+### v0.4.0'dan İtibaren Template Kullanımı Zorunludur!
+
+`gorev_olustur` komutu artık kullanılamaz. Tüm görevler template kullanılarak oluşturulmalıdır.
+
+#### 🔄 Eski Kullanım (Artık Çalışmaz):
+- "Create Task" (Ctrl+Shift+G) - Eskiden dialog açardı
+- "Quick Create Task" - Eskiden hızlı görev oluşturma dialog'u açardı
+
+#### ✅ Yeni Kullanım (Zorunlu):
+- **"Create Task" (Ctrl+Shift+G)** → Template Wizard'ı açar
+- **"Quick Create Task"** → Hızlı template seçimi açar
+- Context menu'den **"Create from Template"** seçeneğini kullanın
+
+#### 🆕 Kullanılabilir Template'ler:
+- **Bug Raporu v2** - Detaylı bug takibi (severity, steps, environment)
+- **Spike Araştırma** - Time-boxed teknik araştırmalar
+- **Performans Sorunu** - Performans optimizasyon görevleri
+- **Güvenlik Düzeltmesi** - Güvenlik açığı düzeltmeleri
+- **Refactoring** - Kod kalitesi iyileştirmeleri
+- **Ve diğer standart template'ler**...
+
+#### 🎯 Neden Template Zorunlu?
+- **Tutarlılık**: Her görev belirli standartlara uygun
+- **Kalite**: Zorunlu alanlar eksik bilgi girişini engeller
+- **Otomasyon**: Template tipine göre otomatik workflow
+- **Raporlama**: Görev tipine göre detaylı metrikler

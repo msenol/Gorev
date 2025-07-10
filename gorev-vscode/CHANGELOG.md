@@ -2,6 +2,37 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.4.0] - 2025-07-10
+
+### ⚠️ BREAKING CHANGES
+
+- **Template Usage is Now Mandatory**: Direct task creation via `gorev_olustur` is no longer supported. All tasks must be created using templates.
+- The "Create Task" (Ctrl+Shift+G) command now opens the template wizard
+- The "Quick Create Task" command now opens the quick template selection
+
+### Changed
+
+- Updated to support MCP server v0.10.0 with mandatory template requirement
+- Modified task creation commands to redirect to template selection
+- `gorev.createTask` command now executes `gorev.openTemplateWizard`
+- `gorev.quickCreateTask` command now executes `gorev.quickCreateFromTemplate`
+
+### Migration Guide
+
+To create tasks in v0.4.0:
+1. Use the template wizard (Ctrl+Shift+G or "Create Task" command)
+2. Select a template from the available options
+3. Fill in the required fields for the template
+4. The task will be created with consistent structure
+
+Available templates include:
+- Bug Report v2 (detailed bug tracking)
+- Spike Research (time-boxed investigations)
+- Performance Issue (performance optimization tasks)
+- Security Fix (security vulnerability fixes)
+- Refactoring (code quality improvements)
+- And more standard templates...
+
 ## [0.3.9] - 2025-07-10
 
 ### Fixed
