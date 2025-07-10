@@ -94,17 +94,17 @@ func (iy *IsYonetici) GorevListele(durum, sirala, filtre string) ([]*Gorev, erro
 
 	// TODO: Bu göreve bağımlı olanları hesaplamak için de bulk query eklenebilir
 	// Şimdilik bu kısmı basitleştirip performans sorununu çözmek öncelikli
-	
+
 	// Her görev için hesaplanan değerleri ata
 	for _, gorev := range gorevler {
 		if count, exists := bagimliSayilari[gorev.ID]; exists {
 			gorev.BagimliGorevSayisi = count
 		}
-		
+
 		if count, exists := tamamlanmamisSayilari[gorev.ID]; exists {
 			gorev.TamamlanmamisBagimlilikSayisi = count
 		}
-		
+
 		// BuGoreveBagimliSayisi hesaplaması şimdilik 0 olarak bırakılıyor
 		// Gerçek kullanımda bu önemli değilse, performans için skip edilebilir
 		gorev.BuGoreveBagimliSayisi = 0

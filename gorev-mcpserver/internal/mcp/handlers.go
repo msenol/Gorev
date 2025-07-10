@@ -312,46 +312,64 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 	return metin
 }
 
-// GorevOlustur yeni bir görev oluşturur
+// templateZorunluAlanlariListele template'in zorunlu alanlarını listeler
+func (h *Handlers) templateZorunluAlanlariListele(template *gorev.GorevTemplate) string {
+	var alanlar []string
+	for _, alan := range template.Alanlar {
+		if alan.Zorunlu {
+			tip := alan.Tip
+			if alan.Tip == "select" && len(alan.Secenekler) > 0 {
+				tip = fmt.Sprintf("select [%s]", strings.Join(alan.Secenekler, ", "))
+			}
+			alanlar = append(alanlar, fmt.Sprintf("- %s (%s)", alan.Isim, tip))
+		}
+	}
+	return strings.Join(alanlar, "\n")
+}
+
+// templateOrnekDegerler template için örnek değerler oluşturur
+func (h *Handlers) templateOrnekDegerler(template *gorev.GorevTemplate) string {
+	var ornekler []string
+	for _, alan := range template.Alanlar {
+		if alan.Zorunlu {
+			ornek := ""
+			switch alan.Tip {
+			case "select":
+				if len(alan.Secenekler) > 0 {
+					ornek = alan.Secenekler[0]
+				}
+			case "date":
+				ornek = "2025-01-15"
+			case "text":
+				ornek = "örnek " + alan.Isim
+			}
+			ornekler = append(ornekler, fmt.Sprintf("'%s': '%s'", alan.Isim, ornek))
+		}
+	}
+	return strings.Join(ornekler, ", ")
+}
+
+// GorevOlustur - DEPRECATED: Template kullanımı artık zorunludur
 func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
-	baslik, ok := params["baslik"].(string)
-	if !ok || baslik == "" {
-		return mcp.NewToolResultError("başlık parametresi gerekli"), nil
-	}
+	return mcp.NewToolResultError(`❌ gorev_olustur artık kullanılmıyor!
 
-	aciklama, _ := params["aciklama"].(string)
-	oncelik, _ := params["oncelik"].(string)
-	if oncelik == "" {
-		oncelik = "orta"
-	}
+Template kullanımı zorunludur. Lütfen şu adımları takip edin:
 
-	projeID, _ := params["proje_id"].(string)
-	sonTarih, _ := params["son_tarih"].(string)
-	etiketlerStr, _ := params["etiketler"].(string)
-	etiketler := strings.Split(etiketlerStr, ",")
+1. Önce mevcut template'leri listeleyin:
+   template_listele
 
-	// Eğer proje_id verilmemişse, aktif projeyi kullan
-	if projeID == "" {
-		aktifProje, err := h.isYonetici.AktifProjeGetir()
-		if err == nil && aktifProje != nil {
-			projeID = aktifProje.ID
-		}
-	}
+2. Uygun template'i seçin ve görev oluşturun:
+   templateden_gorev_olustur template_id='bug_report_v2' baslik='...' ...
 
-	gorev, err := h.isYonetici.GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarih, etiketler)
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("görev oluşturulamadı: %v", err)), nil
-	}
+Mevcut template kategorileri:
+• 🐛 Bug: bug_report, bug_report_v2
+• ✨ Feature: feature_request
+• 🔬 Araştırma: research_task, spike_research
+• ⚡ Performans: performance_issue
+• 🔒 Güvenlik: security_fix
+• ♻️ Teknik: technical_debt, refactoring
 
-	mesaj := fmt.Sprintf("✓ Görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID)
-	if projeID != "" {
-		proje, _ := h.isYonetici.ProjeGetir(projeID)
-		if proje != nil {
-			mesaj += fmt.Sprintf("\n  Proje: %s", proje.Isim)
-		}
-	}
-
-	return mcp.NewToolResultText(mesaj), nil
+Detaylı bilgi için: template_listele kategori='Bug'`), nil
 }
 
 // GorevListele görevleri listeler
@@ -1160,10 +1178,71 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 		return mcp.NewToolResultError("degerler parametresi gerekli ve obje tipinde olmalı"), nil
 	}
 
-	// Interface{} map'i string map'e çevir
+	// Önce template'i kontrol et
+	template, err := h.isYonetici.VeriYonetici().TemplateGetir(templateID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("template bulunamadı: %v", err)), nil
+	}
+
+	// Interface{} map'i string map'e çevir ve validation yap
 	degerler := make(map[string]string)
-	for k, v := range degerlerRaw {
-		degerler[k] = fmt.Sprintf("%v", v)
+	eksikAlanlar := []string{}
+	
+	// Tüm zorunlu alanları kontrol et
+	for _, alan := range template.Alanlar {
+		if val, exists := degerlerRaw[alan.Isim]; exists {
+			// Değer var, string'e çevir
+			strVal := fmt.Sprintf("%v", val)
+			if alan.Zorunlu && strings.TrimSpace(strVal) == "" {
+				eksikAlanlar = append(eksikAlanlar, alan.Isim)
+			} else {
+				degerler[alan.Isim] = strVal
+			}
+		} else if alan.Zorunlu {
+			// Zorunlu alan eksik
+			eksikAlanlar = append(eksikAlanlar, alan.Isim)
+		} else if alan.Varsayilan != "" {
+			// Varsayılan değeri kullan
+			degerler[alan.Isim] = alan.Varsayilan
+		}
+	}
+
+	// Eksik alanlar varsa detaylı hata ver
+	if len(eksikAlanlar) > 0 {
+		return mcp.NewToolResultError(fmt.Sprintf(`❌ Zorunlu alanlar eksik!
+
+Template: %s
+Eksik alanlar: %s
+
+Bu template için zorunlu alanlar:
+%s
+
+Örnek kullanım:
+templateden_gorev_olustur template_id='%s' degerler={%s}`,
+			template.Isim,
+			strings.Join(eksikAlanlar, ", "),
+			h.templateZorunluAlanlariListele(template),
+			templateID,
+			h.templateOrnekDegerler(template))), nil
+	}
+
+	// Select tipindeki alanların geçerli değerlerini kontrol et
+	for _, alan := range template.Alanlar {
+		if alan.Tip == "select" && len(alan.Secenekler) > 0 {
+			if deger, ok := degerler[alan.Isim]; ok && deger != "" {
+				gecerli := false
+				for _, secenek := range alan.Secenekler {
+					if deger == secenek {
+						gecerli = true
+						break
+					}
+				}
+				if !gecerli {
+					return mcp.NewToolResultError(fmt.Sprintf("'%s' alanı için geçersiz değer: '%s'. Geçerli değerler: %s", 
+						alan.Isim, deger, strings.Join(alan.Secenekler, ", "))), nil
+				}
+			}
+		}
 	}
 
 	gorev, err := h.isYonetici.TemplatedenGorevOlustur(templateID, degerler)
@@ -1171,7 +1250,15 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 		return mcp.NewToolResultError(fmt.Sprintf("template'den görev oluşturulamadı: %v", err)), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("✓ Template kullanılarak görev oluşturuldu: %s (ID: %s)", gorev.Baslik, gorev.ID)), nil
+	return mcp.NewToolResultText(fmt.Sprintf(`✓ Template kullanılarak görev oluşturuldu!
+
+Template: %s
+Başlık: %s
+ID: %s
+Öncelik: %s
+
+Detaylar için: gorev_detay id='%s'`, 
+		template.Isim, gorev.Baslik, gorev.ID, gorev.Oncelik, gorev.ID)), nil
 }
 
 // RegisterTools tüm araçları MCP sunucusuna kaydeder
