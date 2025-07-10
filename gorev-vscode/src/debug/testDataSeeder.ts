@@ -5,8 +5,17 @@ import * as vscode from 'vscode';
 
 /**
  * Debug için zengin test verileri oluşturur
+ * Updated to use templates instead of deprecated gorev_olustur
  */
 export class TestDataSeeder {
+    // Template IDs from database
+    private readonly TEMPLATE_IDS = {
+        BUG_RAPORU: '4dd56a2a-caf4-472c-8c0f-276bc8a1f880',
+        OZELLIK_ISTEGI: '6b083358-9c4d-4f4e-b041-9288c05a1bb7',
+        TEKNIK_BORC: '69e2b237-7c2e-4459-9d46-ea6c05aba39a',
+        ARASTIRMA_GOREVI: '13f04fe2-b5b6-4fd6-8684-5eca5dc2770d'
+    };
+
     constructor(private mcpClient: MCPClient) {}
 
     /**
@@ -45,9 +54,9 @@ export class TestDataSeeder {
                 progress.report({ increment: 10, message: 'Alt görevler oluşturuluyor...' });
                 await this.createSubtasks(taskIds);
 
-                // 5. Template'lerden görevler oluştur
-                progress.report({ increment: 10, message: 'Template görevleri oluşturuluyor...' });
-                await this.createTasksFromTemplates(projectIds);
+                // 5. Extra template görevler oluştur (örnekler için)
+                progress.report({ increment: 10, message: 'Extra template örnekleri oluşturuluyor...' });
+                await this.createAdditionalTemplateExamples(projectIds);
 
                 // 6. Bazı görevleri tamamla ve AI interaksiyonları ekle
                 progress.report({ increment: 10, message: 'Görev durumları güncelleniyor...' });
@@ -125,231 +134,277 @@ export class TestDataSeeder {
     }
 
     /**
-     * Test görevleri oluştur
+     * Test görevleri oluştur - template-based approach
      */
     private async createTestTasks(projectIds: string[]): Promise<string[]> {
-        const taskTemplates = [
-            // Web Sitesi görevleri
-            {
-                baslik: 'Ana sayfa tasarımını tamamla',
-                aciklama: 'Modern ve responsive ana sayfa tasarımı yapılacak. Hero section, özellikler bölümü ve footer dahil.',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 0 ? projectIds[0] : undefined,
-                son_tarih: this.getDateString(2),
-                etiketler: 'design,frontend,urgent'
-            },
-            {
-                baslik: 'Kullanıcı giriş sistemi implement et',
-                aciklama: 'JWT tabanlı authentication sistemi kurulacak. Login, register, forgot password sayfaları dahil.',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 0 ? projectIds[0] : undefined,
-                son_tarih: this.getDateString(5),
-                etiketler: 'backend,security,feature'
-            },
-            {
-                baslik: 'Ürün kataloğu sayfası',
-                aciklama: 'Filtreleme, sıralama ve pagination özellikleri ile ürün listeleme sayfası',
-                oncelik: GorevOncelik.Orta,
-                proje_id: projectIds.length > 0 ? projectIds[0] : undefined,
-                son_tarih: this.getDateString(7),
-                etiketler: 'frontend,feature'
-            },
-            {
-                baslik: 'SEO optimizasyonu',
-                aciklama: 'Meta taglar, sitemap, robots.txt ve sayfa hızı optimizasyonu',
-                oncelik: GorevOncelik.Orta,
-                proje_id: projectIds.length > 0 ? projectIds[0] : undefined,
-                son_tarih: this.getDateString(14),
-                etiketler: 'seo,performance'
-            },
-            {
-                baslik: 'Contact form entegrasyonu',
-                aciklama: 'Email gönderimi ile iletişim formu. Spam koruması dahil.',
-                oncelik: GorevOncelik.Dusuk,
-                proje_id: projectIds.length > 0 ? projectIds[0] : undefined,
-                etiketler: 'frontend,feature'
-            },
+        const taskIds: string[] = [];
 
-            // Mobil Uygulama görevleri
+        // Create Bug Report tasks using template
+        const bugTasks = [
             {
-                baslik: 'Push notification sistemi',
-                aciklama: 'Firebase Cloud Messaging entegrasyonu ile bildirim sistemi',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 1 ? projectIds[1] : undefined,
-                son_tarih: this.getDateString(-2), // Gecikmiş
-                etiketler: 'mobile,feature,firebase'
+                templateId: this.TEMPLATE_IDS.BUG_RAPORU,
+                projectId: projectIds[0],
+                degerler: {
+                    baslik: 'Login sayfası 404 hatası veriyor',
+                    aciklama: 'Production ortamında /login URL\'ine gittiğimizde 404 hatası alıyoruz',
+                    modul: 'Authentication',
+                    ortam: 'production',
+                    adimlar: '1. Production URL\'ine git\n2. /login sayfasına git\n3. 404 hatası görünüyor',
+                    beklenen: 'Login sayfası açılmalı',
+                    mevcut: '404 Not Found hatası',
+                    cozum: 'Routing konfigürasyonu kontrol edilmeli',
+                    oncelik: 'yuksek',
+                    etiketler: 'bug,critical,production'
+                }
             },
             {
-                baslik: 'Offline mode desteği',
-                aciklama: 'SQLite ile local veri saklama ve senkronizasyon',
-                oncelik: GorevOncelik.Orta,
-                proje_id: projectIds.length > 1 ? projectIds[1] : undefined,
-                son_tarih: this.getDateString(10),
-                etiketler: 'mobile,feature,database'
+                templateId: this.TEMPLATE_IDS.BUG_RAPORU,
+                projectId: projectIds[1],
+                degerler: {
+                    baslik: 'Push notification Android\'de çalışmıyor',
+                    aciklama: 'Firebase Cloud Messaging entegrasyonu iOS\'ta çalışıyor ama Android\'de bildirimler gelmiyor',
+                    modul: 'Mobile/Notifications',
+                    ortam: 'production',
+                    adimlar: '1. Android cihazda uygulamayı aç\n2. Bildirim izni ver\n3. Test bildirimi gönder',
+                    beklenen: 'Push notification alınmalı',
+                    mevcut: 'Bildirimler Android\'de alınmıyor',
+                    oncelik: 'yuksek',
+                    etiketler: 'mobile,bug,firebase'
+                }
             },
             {
-                baslik: 'Dark mode tema',
-                aciklama: 'Sistem ayarlarına göre otomatik tema değişimi',
-                oncelik: GorevOncelik.Dusuk,
-                proje_id: projectIds.length > 1 ? projectIds[1] : undefined,
-                etiketler: 'mobile,ui,enhancement'
-            },
-            {
-                baslik: 'App Store deployment',
-                aciklama: 'iOS App Store submission hazırlıkları ve yayınlama',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 1 ? projectIds[1] : undefined,
-                son_tarih: this.getDateString(0), // Bugün
-                etiketler: 'deployment,ios,critical'
-            },
-
-            // Backend API görevleri
-            {
-                baslik: 'GraphQL endpoint ekle',
-                aciklama: 'REST API yanında GraphQL desteği eklenecek',
-                oncelik: GorevOncelik.Orta,
-                proje_id: projectIds.length > 2 ? projectIds[2] : undefined,
-                son_tarih: this.getDateString(21),
-                etiketler: 'backend,api,feature'
-            },
-            {
-                baslik: 'Rate limiting implement et',
-                aciklama: 'API güvenliği için rate limiting ve throttling',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 2 ? projectIds[2] : undefined,
-                son_tarih: this.getDateString(3),
-                etiketler: 'backend,security,performance'
-            },
-            {
-                baslik: 'Redis cache entegrasyonu',
-                aciklama: 'Performans artışı için Redis cache katmanı',
-                oncelik: GorevOncelik.Orta,
-                proje_id: projectIds.length > 2 ? projectIds[2] : undefined,
-                etiketler: 'backend,performance,redis'
-            },
-            {
-                baslik: 'API dokümantasyonu güncelle',
-                aciklama: 'Swagger/OpenAPI dokümantasyonu güncellenecek',
-                oncelik: GorevOncelik.Dusuk,
-                proje_id: projectIds.length > 2 ? projectIds[2] : undefined,
-                son_tarih: this.getDateString(30),
-                etiketler: 'documentation,api'
-            },
-
-            // Veri Analitiği görevleri
-            {
-                baslik: 'Dashboard prototype hazırla',
-                aciklama: 'Figma\'da interaktif dashboard prototipi',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 3 ? projectIds[3] : undefined,
-                son_tarih: this.getDateString(1),
-                etiketler: 'design,analytics,prototype'
-            },
-            {
-                baslik: 'ETL pipeline kurulumu',
-                aciklama: 'Apache Airflow ile veri pipeline\'ı kurulacak',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 3 ? projectIds[3] : undefined,
-                son_tarih: this.getDateString(7),
-                etiketler: 'data,backend,infrastructure'
-            },
-            {
-                baslik: 'Makine öğrenmesi modeli',
-                aciklama: 'Müşteri churn prediction modeli geliştirilecek',
-                oncelik: GorevOncelik.Orta,
-                proje_id: projectIds.length > 3 ? projectIds[3] : undefined,
-                etiketler: 'ml,data-science,python'
-            },
-
-            // Güvenlik görevleri
-            {
-                baslik: 'Penetrasyon testi yap',
-                aciklama: 'OWASP Top 10 güvenlik açıklarını test et',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 4 ? projectIds[4] : undefined,
-                son_tarih: this.getDateString(-5), // Gecikmiş
-                etiketler: 'security,testing,critical'
-            },
-            {
-                baslik: 'SSL sertifikası yenile',
-                aciklama: 'Tüm subdomain\'ler için wildcard SSL sertifikası',
-                oncelik: GorevOncelik.Yuksek,
-                proje_id: projectIds.length > 4 ? projectIds[4] : undefined,
-                son_tarih: this.getDateString(-1), // Gecikmiş
-                etiketler: 'security,infrastructure,urgent'
-            },
-            {
-                baslik: '2FA implementasyonu',
-                aciklama: 'Google Authenticator ile iki faktörlü doğrulama',
-                oncelik: GorevOncelik.Orta,
-                proje_id: projectIds.length > 4 ? projectIds[4] : undefined,
-                son_tarih: this.getDateString(14),
-                etiketler: 'security,feature,backend'
-            },
-
-            // Projesiz görevler
-            {
-                baslik: 'Team meeting hazırlığı',
-                aciklama: 'Haftalık geliştirici toplantısı için sunum hazırla',
-                oncelik: GorevOncelik.Orta,
-                son_tarih: this.getDateString(1),
-                etiketler: 'meeting,planning'
-            },
-            {
-                baslik: 'Code review yapılacak PR\'lar',
-                aciklama: '5 adet bekleyen pull request incelenecek',
-                oncelik: GorevOncelik.Yuksek,
-                son_tarih: this.getDateString(0), // Bugün
-                etiketler: 'review,git,urgent'
-            },
-            {
-                baslik: 'Teknik blog yazısı',
-                aciklama: 'Microservices best practices hakkında blog yazısı',
-                oncelik: GorevOncelik.Dusuk,
-                etiketler: 'writing,documentation'
-            },
-            {
-                baslik: 'Yeni developer onboarding',
-                aciklama: 'Yeni başlayan developer için environment setup',
-                oncelik: GorevOncelik.Orta,
-                son_tarih: this.getDateString(2),
-                etiketler: 'hr,setup,training'
+                templateId: this.TEMPLATE_IDS.BUG_RAPORU,
+                projectId: projectIds[4],
+                degerler: {
+                    baslik: 'SSL sertifikası expire olmuş',
+                    aciklama: 'Ana domain ve subdomain\'lerde SSL sertifikası süresi dolmuş',
+                    modul: 'Infrastructure',
+                    ortam: 'production',
+                    adimlar: '1. HTTPS ile siteye git\n2. Sertifika uyarısı görünüyor',
+                    beklenen: 'Valid SSL sertifikası',
+                    mevcut: 'NET::ERR_CERT_DATE_INVALID',
+                    oncelik: 'yuksek',
+                    etiketler: 'security,infrastructure,urgent'
+                }
             }
         ];
 
-        const taskIds: string[] = [];
+        // Create Feature Request tasks using template
+        const featureTasks = [
+            {
+                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                projectId: projectIds[0],
+                degerler: {
+                    baslik: 'Ana sayfa tasarımını tamamla',
+                    aciklama: 'Modern ve responsive ana sayfa tasarımı yapılacak',
+                    amac: 'Kullanıcı deneyimini iyileştirmek ve dönüşüm oranını artırmak',
+                    kullanicilar: 'Tüm web sitesi ziyaretçileri',
+                    kriterler: '1. Hero section\n2. Özellikler bölümü\n3. Footer\n4. Mobile responsive',
+                    ui_ux: 'Modern, minimal tasarım. Hızlı yükleme.',
+                    efor: 'orta',
+                    oncelik: 'yuksek',
+                    etiketler: 'design,frontend,urgent'
+                }
+            },
+            {
+                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                projectId: projectIds[0],
+                degerler: {
+                    baslik: 'Kullanıcı giriş sistemi',
+                    aciklama: 'JWT tabanlı authentication sistemi kurulacak',
+                    amac: 'Güvenli kullanıcı kimlik doğrulama sistemi',
+                    kullanicilar: 'Kayıtlı kullanıcılar',
+                    kriterler: '1. JWT token\n2. Login/Register/Forgot password\n3. Session management',
+                    ui_ux: 'Clean login forms, social login options',
+                    efor: 'büyük',
+                    oncelik: 'yuksek',
+                    etiketler: 'backend,security,feature'
+                }
+            },
+            {
+                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                projectId: projectIds[1],
+                degerler: {
+                    baslik: 'Dark mode tema',
+                    aciklama: 'Sistem ayarlarına göre otomatik tema değişimi',
+                    amac: 'Kullanıcı deneyimini iyileştirmek ve göz yorgunluğunu azaltmak',
+                    kullanicilar: 'Tüm mobil uygulama kullanıcıları',
+                    kriterler: '1. Sistem temasını takip et\n2. Manuel toggle\n3. Tercih kaydetme',
+                    ui_ux: 'Settings sayfasında toggle switch',
+                    efor: 'küçük',
+                    oncelik: 'dusuk',
+                    etiketler: 'mobile,ui,enhancement'
+                }
+            },
+            {
+                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                projectId: projectIds[3],
+                degerler: {
+                    baslik: 'Dashboard prototype',
+                    aciklama: 'Figma\'da interaktif dashboard prototipi',
+                    amac: 'Veri görselleştirme için kullanıcı dostu arayüz',
+                    kullanicilar: 'Data analysts, managers',
+                    kriterler: '1. Real-time updates\n2. Customizable widgets\n3. Export',
+                    ui_ux: 'Clean, modern dashboard with drag-drop',
+                    efor: 'büyük',
+                    oncelik: 'yuksek',
+                    etiketler: 'design,analytics,prototype'
+                }
+            }
+        ];
 
-        // Proje ID'lerini logla
-        Logger.info(`Available project IDs: ${projectIds.join(', ')}`);
+        // Create Technical Debt tasks using template
+        const techDebtTasks = [
+            {
+                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                projectId: projectIds[2],
+                degerler: {
+                    baslik: 'Redis cache entegrasyonu',
+                    aciklama: 'Performans artışı için Redis cache katmanı',
+                    alan: 'Backend/Performance',
+                    neden: 'API response time\'ları yüksek',
+                    analiz: 'Ortalama response time 800ms',
+                    cozum: 'Redis ile cache layer ekle',
+                    iyilestirmeler: '%70 performans artışı bekleniyor',
+                    sure: '1 hafta',
+                    oncelik: 'orta',
+                    etiketler: 'backend,performance,redis'
+                }
+            },
+            {
+                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                projectId: projectIds[2],
+                degerler: {
+                    baslik: 'API rate limiting',
+                    aciklama: 'API güvenliği için rate limiting',
+                    alan: 'Backend/Security',
+                    neden: 'DDoS ve abuse riski var',
+                    analiz: 'Rate limiting yok',
+                    cozum: 'Redis-based rate limiting ekle',
+                    iyilestirmeler: 'Güvenlik artışı',
+                    sure: '2-3 gün',
+                    oncelik: 'yuksek',
+                    etiketler: 'backend,security,performance'
+                }
+            },
+            {
+                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                projectId: projectIds[3],
+                degerler: {
+                    baslik: 'ETL pipeline modernizasyonu',
+                    aciklama: 'Apache Airflow ile veri pipeline',
+                    alan: 'Data Engineering',
+                    neden: 'Mevcut cron jobs unreliable',
+                    analiz: 'Manuel müdahale gerekiyor',
+                    cozum: 'Airflow DAGs ile otomatize et',
+                    iyilestirmeler: 'Better reliability ve monitoring',
+                    sure: '2+ hafta',
+                    oncelik: 'yuksek',
+                    etiketler: 'data,backend,infrastructure'
+                }
+            }
+        ];
 
-        for (const task of taskTemplates) {
-            try {
-                // Proje ID'sini kontrol et ve logla
-                if (task.proje_id) {
-                    if (!projectIds.includes(task.proje_id)) {
-                        Logger.warn(`Invalid project ID in task "${task.baslik}": ${task.proje_id}`);
-                        Logger.warn(`Available project IDs: ${projectIds.join(', ')}`);
-                    } else {
-                        Logger.debug(`Task "${task.baslik}" assigned to project ID: ${task.proje_id}`);
+        // Create Research tasks using template
+        const researchTasks = [
+            {
+                templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
+                projectId: projectIds[0],
+                degerler: {
+                    konu: 'SEO optimizasyonu',
+                    amac: 'Web sitesi SEO performansını artırmak',
+                    sorular: '1. Core Web Vitals?\n2. Meta tags?\n3. Sitemap?',
+                    kriterler: 'Google PageSpeed, Lighthouse scores',
+                    son_tarih: this.getDateString(14),
+                    oncelik: 'orta',
+                    etiketler: 'seo,performance,research'
+                }
+            },
+            {
+                templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
+                projectId: projectIds[4],
+                degerler: {
+                    konu: 'Penetrasyon testi metodolojisi',
+                    amac: 'OWASP Top 10 güvenlik testleri',
+                    sorular: '1. Hangi açıklar var?\n2. Risk seviyeleri?\n3. Çözüm önerileri?',
+                    kriterler: 'OWASP guidelines, security best practices',
+                    son_tarih: this.getDateString(7),
+                    oncelik: 'yuksek',
+                    etiketler: 'security,testing,critical'
+                }
+            }
+        ];
+
+        // Additional tasks using general templates
+        const additionalTasks = [
+            {
+                templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
+                projectId: projectIds[0],
+                degerler: {
+                    konu: 'Team meeting hazırlığı',
+                    amac: 'Haftalık geliştirici toplantısı için sunum hazırla',
+                    sorular: '1. Hangi konular ele alınacak?\n2. Sprint progress nasıl?\n3. Blockerlar neler?',
+                    kriterler: 'Toplantı sunumu hazır ve agenda belirlenmiş',
+                    son_tarih: this.getDateString(1),
+                    oncelik: 'orta',
+                    etiketler: 'meeting,planning'
+                }
+            },
+            {
+                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                projectId: projectIds[0],
+                degerler: {
+                    baslik: 'Code review yapılacak PR\'lar',
+                    aciklama: '5 adet bekleyen pull request incelenecek',
+                    alan: 'Code Quality',
+                    neden: 'Kod kalitesi ve takım standartları',
+                    analiz: 'Bekleyen PR\'ların durumu',
+                    cozum: 'Systematic code review process',
+                    iyilestirmeler: 'Better code quality and team alignment',
+                    sure: '1 gün',
+                    oncelik: 'yuksek',
+                    etiketler: 'review,git,urgent'
+                }
+            }
+        ];
+
+        // Process template-based tasks
+        for (const taskGroup of [bugTasks, featureTasks, techDebtTasks, researchTasks, additionalTasks]) {
+            for (const task of taskGroup) {
+                try {
+                    const result = await this.mcpClient.callTool('templateden_gorev_olustur', {
+                        template_id: task.templateId,
+                        degerler: task.degerler
+                    });
+                    
+                    const responseText = result.content[0].text;
+                    Logger.debug(`Template task creation response:`, responseText);
+                    
+                    const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+                    if (idMatch) {
+                        const taskId = idMatch[1];
+                        taskIds.push(taskId);
+                        
+                        // Assign to project if specified
+                        if (task.projectId) {
+                            try {
+                                await this.mcpClient.callTool('gorev_duzenle', {
+                                    id: taskId,
+                                    proje_id: task.projectId
+                                });
+                                Logger.info(`Assigned task to project: ${task.projectId}`);
+                            } catch (error) {
+                                Logger.error(`Failed to assign task to project:`, error);
+                            }
+                        }
                     }
-                } else {
-                    Logger.debug(`Task "${task.baslik}" has no project (projesiz)`);
+                } catch (error) {
+                    Logger.error(`Failed to create template task:`, error);
                 }
-                
-                const result = await this.mcpClient.callTool('gorev_olustur', task);
-                const responseText = result.content[0].text;
-                Logger.debug(`Task creation response for "${task.baslik}":`, responseText);
-                
-                // UUID formatında ID ara
-                const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
-                if (idMatch) {
-                    taskIds.push(idMatch[1]);
-                    Logger.info(`Created task: ${task.baslik} with project: ${task.proje_id || 'none'}`);
-                }
-            } catch (error) {
-                Logger.error(`Failed to create task "${task.baslik}":`, error);
             }
         }
+
+        // All tasks now use templates - no direct creation needed
 
         return taskIds;
     }
@@ -360,11 +415,9 @@ export class TestDataSeeder {
     private async createTestDependencies(taskIds: string[]): Promise<void> {
         // Örnek bağımlılıklar
         const dependencies = [
-            { kaynak: 0, hedef: 1, tip: 'blocks' }, // Ana sayfa tasarımı -> Login sistemi'ni bloklar
-            { kaynak: 1, hedef: 2, tip: 'blocks' }, // Login sistemi -> Ürün kataloğu'nu bloklar
-            { kaynak: 11, hedef: 12, tip: 'depends_on' }, // Redis cache -> Rate limiting'e bağlı
-            { kaynak: 5, hedef: 8, tip: 'blocks' }, // Push notification -> App Store deployment'ı bloklar
-            { kaynak: 14, hedef: 15, tip: 'depends_on' }, // ETL pipeline -> Dashboard prototype'a bağlı
+            { kaynak: 0, hedef: 4, tip: 'blocks' }, // Login bug -> User auth feature
+            { kaynak: 4, hedef: 5, tip: 'blocks' }, // User auth -> Other features
+            { kaynak: 7, hedef: 8, tip: 'depends_on' }, // Rate limiting depends on Redis
         ];
 
         for (const dep of dependencies) {
@@ -387,7 +440,7 @@ export class TestDataSeeder {
      */
     private async updateSomeTaskStatuses(taskIds: string[]): Promise<void> {
         // Bazı görevleri "devam ediyor" yap
-        const inProgressTasks = [1, 5, 9, 14, 20];
+        const inProgressTasks = [1, 4, 7];
         for (const index of inProgressTasks) {
             if (taskIds[index]) {
                 try {
@@ -402,7 +455,7 @@ export class TestDataSeeder {
         }
 
         // Bazı görevleri tamamla
-        const completedTasks = [4, 7, 12, 15];
+        const completedTasks = [2, 10];
         for (const index of completedTasks) {
             if (taskIds[index]) {
                 try {
@@ -421,25 +474,25 @@ export class TestDataSeeder {
      * Alt görevler oluştur
      */
     private async createSubtasks(parentTaskIds: string[]): Promise<void> {
-        // Ana sayfa tasarımı için alt görevler
-        if (parentTaskIds[0]) {
+        // Ana sayfa tasarımı için alt görevler (assuming it's the 3rd feature task)
+        if (parentTaskIds[3]) {
             const subtasks = [
                 {
-                    parent_id: parentTaskIds[0],
+                    parent_id: parentTaskIds[3],
                     baslik: 'Hero section mockup',
                     aciklama: 'Ana sayfa hero bölümü için Figma mockup hazırla',
                     oncelik: GorevOncelik.Yuksek,
                     etiketler: 'design,ui,mockup'
                 },
                 {
-                    parent_id: parentTaskIds[0],
+                    parent_id: parentTaskIds[3],
                     baslik: 'Responsive grid sistemi',
                     aciklama: 'Bootstrap 5 veya Tailwind CSS ile responsive grid',
                     oncelik: GorevOncelik.Orta,
                     etiketler: 'frontend,css,responsive'
                 },
                 {
-                    parent_id: parentTaskIds[0],
+                    parent_id: parentTaskIds[3],
                     baslik: 'Animation ve transitions',
                     aciklama: 'Smooth scroll ve hover effect animasyonları',
                     oncelik: GorevOncelik.Dusuk,
@@ -471,11 +524,11 @@ export class TestDataSeeder {
             }
         }
 
-        // Login sistemi için alt görevler
-        if (parentTaskIds[1]) {
+        // Login sistemi için alt görevler (assuming it's the 4th feature task)
+        if (parentTaskIds[4]) {
             const subtasks = [
                 {
-                    parent_id: parentTaskIds[1],
+                    parent_id: parentTaskIds[4],
                     baslik: 'JWT token implementasyonu',
                     aciklama: 'Access ve refresh token yönetimi',
                     oncelik: GorevOncelik.Yuksek,
@@ -483,7 +536,7 @@ export class TestDataSeeder {
                     etiketler: 'backend,security,jwt'
                 },
                 {
-                    parent_id: parentTaskIds[1],
+                    parent_id: parentTaskIds[4],
                     baslik: 'Password reset flow',
                     aciklama: 'Email ile şifre sıfırlama akışı',
                     oncelik: GorevOncelik.Orta,
@@ -499,113 +552,65 @@ export class TestDataSeeder {
                 }
             }
         }
-
-        // Dashboard prototype için alt görevler
-        if (parentTaskIds[13]) {
-            const subtasks = [
-                {
-                    parent_id: parentTaskIds[13],
-                    baslik: 'KPI cards tasarımı',
-                    aciklama: 'Ana metrikleri gösteren kart componentleri',
-                    oncelik: GorevOncelik.Yuksek,
-                    etiketler: 'design,dashboard,component'
-                },
-                {
-                    parent_id: parentTaskIds[13],
-                    baslik: 'Chart library araştırması',
-                    aciklama: 'Chart.js vs D3.js vs ApexCharts karşılaştırması',
-                    oncelik: GorevOncelik.Orta,
-                    etiketler: 'research,frontend,visualization'
-                },
-                {
-                    parent_id: parentTaskIds[13],
-                    baslik: 'Real-time data updates',
-                    aciklama: 'WebSocket ile canlı veri güncellemeleri',
-                    oncelik: GorevOncelik.Orta,
-                    etiketler: 'frontend,websocket,realtime'
-                }
-            ];
-
-            for (const subtask of subtasks) {
-                try {
-                    await this.mcpClient.callTool('gorev_altgorev_olustur', subtask);
-                } catch (error) {
-                    Logger.error('Failed to create subtask:', error);
-                }
-            }
-        }
     }
 
     /**
-     * Template'lerden görevler oluştur
+     * Template'lerden extra görevler oluştur
      */
-    private async createTasksFromTemplates(projectIds: string[]): Promise<void> {
+    private async createAdditionalTemplateExamples(projectIds: string[]): Promise<void> {
         try {
-            // Önce template'leri listele
-            const templatesResult = await this.mcpClient.callTool('template_listele', {});
-            Logger.debug('Available templates:', templatesResult.content[0].text);
-
-            // Bug raporu template'inden görev oluştur
-            try {
-                await this.mcpClient.callTool('templateden_gorev_olustur', {
-                    template_id: '311422f9-51ad-4678-8631-e0f7957aae47', // Bug Raporu template ID
+            // Example of using different template variations
+            const additionalTasks = [
+                {
+                    templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
                     degerler: {
-                        baslik: 'Login sayfası 404 hatası veriyor',
-                        aciklama: 'Production ortamında /login URL\'ine gittiğimizde 404 hatası alıyoruz',
-                        modul: 'Authentication',
-                        ortam: 'production',
-                        adimlar: '1. Production URL\'ine git\n2. /login sayfasına git\n3. 404 hatası görünüyor',
-                        beklenen: 'Login sayfası açılmalı',
-                        mevcut: '404 Not Found hatası',
-                        oncelik: 'yuksek',
-                        etiketler: 'bug,critical,production'
-                    }
-                });
-            } catch (error) {
-                Logger.error('Failed to create task from bug template:', error);
-            }
-
-            // Araştırma görevi template'inden oluştur
-            try {
-                await this.mcpClient.callTool('templateden_gorev_olustur', {
-                    template_id: '146837f2-bd50-4a88-9d93-38da1d7c09d6', // Araştırma Görevi template ID
-                    degerler: {
-                        konu: 'Next.js 14 App Router',
-                        amac: 'Yeni projede kullanmak için Next.js 14 App Router özelliklerini araştırmak',
-                        sorular: '1. Performance karşılaştırması?\n2. Migration süreci?\n3. Edge runtime desteği?',
-                        kaynaklar: 'Next.js dokümantasyonu, Vercel blog, YouTube tutorialları',
-                        alternatifler: 'Pages Router, Remix, SvelteKit',
-                        kriterler: 'Performance, Developer Experience, SEO, Bundle Size',
-                        son_tarih: this.getDateString(14),
+                        baslik: 'GraphQL API endpoint',
+                        aciklama: 'REST API yanında GraphQL desteği',
+                        amac: 'Flexible data fetching için GraphQL layer',
+                        kullanicilar: 'Frontend developers, API consumers',
+                        kriterler: '1. Schema definition\n2. Resolvers\n3. Subscriptions',
+                        efor: 'büyük',
                         oncelik: 'orta',
-                        etiketler: 'araştırma,nextjs,frontend'
+                        etiketler: 'backend,api,feature'
                     }
-                });
-            } catch (error) {
-                Logger.error('Failed to create task from research template:', error);
-            }
-
-            // Özellik isteği template'inden oluştur
-            try {
-                await this.mcpClient.callTool('templateden_gorev_olustur', {
-                    template_id: '430d308c-440d-49cd-a307-9db78f8608bf', // Özellik İsteği template ID
+                },
+                {
+                    templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
                     degerler: {
-                        baslik: 'Dark mode toggle özelliği',
-                        aciklama: 'Kullanıcılar tema tercihlerini kaydedebilmeli',
-                        amac: 'Kullanıcı deneyimini iyileştirmek ve göz yorgunluğunu azaltmak',
-                        kullanicilar: 'Tüm kullanıcılar, özellikle gece çalışanlar',
-                        kriterler: '1. Sistem temasına uyum\n2. Manuel toggle\n3. Tercih kaydetme\n4. Smooth transition',
-                        ui_ux: 'Header\'da toggle switch, sistem temasını takip et opsiyonu',
-                        efor: 'orta',
+                        konu: 'Makine öğrenmesi için framework',
+                        amac: 'Churn prediction modeli için ML framework seçimi',
+                        sorular: '1. TensorFlow vs PyTorch?\n2. Deployment options?\n3. Performance?',
+                        kriterler: 'Ease of use, community, deployment',
                         oncelik: 'orta',
-                        etiketler: 'özellik,ui,enhancement'
+                        etiketler: 'ml,data-science,research'
                     }
-                });
-            } catch (error) {
-                Logger.error('Failed to create task from feature template:', error);
+                }
+            ];
+
+            for (const task of additionalTasks) {
+                try {
+                    const result = await this.mcpClient.callTool('templateden_gorev_olustur', {
+                        template_id: task.templateId,
+                        degerler: task.degerler
+                    });
+                    
+                    // Assign to appropriate project if needed
+                    if (projectIds.length > 2) {
+                        const responseText = result.content[0].text;
+                        const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+                        if (idMatch) {
+                            await this.mcpClient.callTool('gorev_duzenle', {
+                                id: idMatch[1],
+                                proje_id: projectIds[2] // Backend API project
+                            });
+                        }
+                    }
+                } catch (error) {
+                    Logger.error('Failed to create additional template task:', error);
+                }
             }
         } catch (error) {
-            Logger.error('Failed to list templates:', error);
+            Logger.error('Failed in createAdditionalTemplateExamples:', error);
         }
     }
 
@@ -640,8 +645,7 @@ export class TestDataSeeder {
                     await this.mcpClient.callTool('gorev_batch_update', {
                         updates: [
                             { id: taskIds[2], updates: { durum: 'devam_ediyor' } },
-                            { id: taskIds[3], updates: { durum: 'devam_ediyor' } },
-                            { id: taskIds[4], updates: { durum: 'tamamlandi' } }
+                            { id: taskIds[3], updates: { durum: 'devam_ediyor' } }
                         ]
                     });
                     Logger.info('Performed batch update');

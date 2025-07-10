@@ -11,97 +11,19 @@ export function registerGorevCommands(
   mcpClient: MCPClient,
   providers: CommandContext
 ): void {
-  // Create Task
+  // Create Task - Now redirects to template wizard due to mandatory template requirement
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CREATE_TASK, async () => {
-      try {
-        const baslik = await vscode.window.showInputBox({
-          prompt: 'Task title',
-          placeHolder: 'Enter task title',
-          validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-              return 'Task title is required';
-            }
-            return null;
-          },
-        });
-
-        if (!baslik) return;
-
-        const aciklama = await vscode.window.showInputBox({
-          prompt: 'Task description (optional)',
-          placeHolder: 'Enter task description',
-        });
-
-        const oncelik = await vscode.window.showQuickPick(
-          [
-            { label: 'High', value: GorevOncelik.Yuksek },
-            { label: 'Medium', value: GorevOncelik.Orta },
-            { label: 'Low', value: GorevOncelik.Dusuk },
-          ],
-          {
-            placeHolder: 'Select priority',
-          }
-        );
-
-        if (!oncelik) return;
-
-        await mcpClient.callTool('gorev_olustur', {
-          baslik,
-          aciklama: aciklama || '',
-          oncelik: oncelik.value,
-        });
-
-        vscode.window.showInformationMessage('Task created successfully');
-        await providers.gorevTreeProvider.refresh();
-      } catch (error) {
-        vscode.window.showErrorMessage(`Failed to create task: ${error}`);
-      }
+      // Redirect to template wizard since direct task creation is no longer allowed
+      await vscode.commands.executeCommand(COMMANDS.OPEN_TEMPLATE_WIZARD);
     })
   );
 
-  // Quick Create Task
+  // Quick Create Task - Now uses quick template selection
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.QUICK_CREATE_TASK, async () => {
-      try {
-        const input = await vscode.window.showInputBox({
-          prompt: 'Quick create task',
-          placeHolder: 'e.g., Fix login bug (high priority)',
-          validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-              return 'Task description is required';
-            }
-            return null;
-          },
-        });
-
-        if (!input) return;
-
-        // Parse priority from input
-        let oncelik = GorevOncelik.Orta;
-        let baslik = input;
-
-        if (input.toLowerCase().includes('high') || input.toLowerCase().includes('urgent')) {
-          oncelik = GorevOncelik.Yuksek;
-        } else if (input.toLowerCase().includes('low')) {
-          oncelik = GorevOncelik.Dusuk;
-        }
-
-        // Remove priority indicators from title
-        baslik = baslik
-          .replace(/\s*\(?(high|medium|low|urgent|priority)\)?/gi, '')
-          .trim();
-
-        await mcpClient.callTool('gorev_olustur', {
-          baslik,
-          oncelik,
-        });
-
-        vscode.window.showInformationMessage('Task created successfully');
-        await providers.gorevTreeProvider.refresh();
-      } catch (error) {
-        vscode.window.showErrorMessage(`Failed to create task: ${error}`);
-      }
+      // Use the quick template selection command
+      await vscode.commands.executeCommand(COMMANDS.QUICK_CREATE_FROM_TEMPLATE);
     })
   );
 
