@@ -127,6 +127,11 @@
           "default": false,
           "description": "Show empty groups in the tree view"
         },
+        "gorev.treeView.showAllProjects": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show tasks from all projects by default (true) or only from active project (false)"
+        },
         "gorev.dragDrop.allowTaskMove": {
           "type": "boolean",
           "default": true,
@@ -498,6 +503,12 @@
         "icon": "$(clear-all)"
       },
       {
+        "command": "gorev.toggleAllProjects",
+        "title": "Tüm Projeler / Aktif Proje Arasında Geçiş",
+        "category": "Gorev",
+        "icon": "$(globe)"
+      },
+      {
         "command": "gorev.filterOverdue",
         "title": "Show Overdue Tasks",
         "category": "Gorev Filter"
@@ -820,6 +831,12 @@
         "command": "gorev.clearAllFilters",
         "key": "ctrl+alt+r",
         "mac": "cmd+alt+r",
+        "when": "focusedView == gorevTasks"
+      },
+      {
+        "command": "gorev.toggleAllProjects",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p",
         "when": "focusedView == gorevTasks"
       }
     ],

@@ -43,6 +43,24 @@ export function registerFilterCommands(
         })
     );
 
+    // Tüm projeler / Aktif proje toggle komutu
+    context.subscriptions.push(
+        vscode.commands.registerCommand('gorev.toggleAllProjects', () => {
+            const currentFilter = providers.gorevTreeProvider.getFilter();
+            const showingAllProjects = currentFilter?.showAllProjects !== false;
+            
+            providers.gorevTreeProvider.updateFilter({ 
+                ...currentFilter,
+                showAllProjects: !showingAllProjects 
+            });
+            
+            const message = showingAllProjects ? 
+                'Aktif proje görevleri gösteriliyor' : 
+                'Tüm projelerdeki görevler gösteriliyor';
+            vscode.window.showInformationMessage(message);
+        })
+    );
+
     // Önceden tanımlanmış filtreler için kısayol komutları
     
     // Gecikmiş görevler

@@ -90,6 +90,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         this.config.sortAscending = config.get('sortAscending', false);
         this.config.showCompleted = config.get('showCompleted', true);
         this.config.showEmptyGroups = config.get('showEmptyGroups', false);
+        
+        // Load showAllProjects from configuration
+        if (!this.config.filters) {
+            this.config.filters = {};
+        }
+        this.config.filters.showAllProjects = config.get('showAllProjects', true);
     }
 
     /**
@@ -226,7 +232,29 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         );
 
         // Sadece root level görevleri göster (parent_id olmayan)
-        const rootTasks = sortedTasks.filter(task => !task.parent_id);
+        const rootTasks = sortedTasks.filter(task => !task.parent_id || task.parent_id === '');
+        
+        Logger.debug(`[EnhancedGorevTreeProvider] Group ${group.groupKey} has ${sortedTasks.length} sorted tasks`);
+        Logger.debug(`[EnhancedGorevTreeProvider] After filtering for root tasks: ${rootTasks.length} tasks`);
+        if (sortedTasks.length > 0 && rootTasks.length === 0) {
+            Logger.warn(`[EnhancedGorevTreeProvider] All tasks in group ${group.groupKey} have parent_id set!`);
+            Logger.warn(`[EnhancedGorevTreeProvider] First few tasks:`, sortedTasks.slice(0, 3).map(t => ({
+                id: t.id,
+                baslik: t.baslik,
+                parent_id: t.parent_id,
+                seviye: t.seviye
+            })));
+            
+            // TEMPORARY FIX: If all tasks have parent_id but we don't have the parents in this group,
+            // treat them as root tasks
+            Logger.warn(`[EnhancedGorevTreeProvider] APPLYING TEMPORARY FIX: Showing all tasks as root tasks`);
+            return sortedTasks.map(task => {
+                const item = new TaskTreeViewItem(task, this.selection, group);
+                this.decorationProvider.updateTaskDecoration(task, item);
+                return item;
+            });
+        }
+        
         return rootTasks.map(task => {
             const item = new TaskTreeViewItem(task, this.selection, group);
             this.decorationProvider.updateTaskDecoration(task, item);
@@ -293,7 +321,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 100);
             
             // Check if we should show all projects or just active project
-            const showAllProjects = this.config.filters?.showAllProjects || true;
+            // Default to true to show all projects
+            const showAllProjects = this.config.filters?.showAllProjects !== false;
             
             // First get the active project to assign project_id to tasks
             let activeProjectId = '';
@@ -383,8 +412,19 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             
             if (this.tasks.length > 0) {
                 Logger.debug('[EnhancedGorevTreeProvider] First task:', JSON.stringify(this.tasks[0], null, 2));
-                Logger.debug('[EnhancedGorevTreeProvider] Tasks with project_id:', this.tasks.filter(t => t.proje_id).length);
-                Logger.debug('[EnhancedGorevTreeProvider] Tasks without project_id:', this.tasks.filter(t => !t.proje_id).length);
+                
+                const tasksWithProjectId = this.tasks.filter(t => t.proje_id);
+                const tasksWithoutProjectId = this.tasks.filter(t => !t.proje_id);
+                
+                Logger.debug('[EnhancedGorevTreeProvider] Tasks with project_id:', tasksWithProjectId.length);
+                Logger.debug('[EnhancedGorevTreeProvider] Tasks without project_id:', tasksWithoutProjectId.length);
+                
+                // Warn about tasks without project_id
+                if (tasksWithoutProjectId.length > 0) {
+                    Logger.warn('[EnhancedGorevTreeProvider] Found tasks without project_id:', 
+                        tasksWithoutProjectId.map(t => ({ id: t.id, baslik: t.baslik })));
+                    Logger.warn('[EnhancedGorevTreeProvider] These tasks may not appear when filtering by project');
+                }
             } else {
                 Logger.warn('[EnhancedGorevTreeProvider] No tasks parsed from response');
             }
@@ -436,6 +476,13 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         this.config.filters = {};
         this.events.onFilterChanged?.(this.config.filters);
         this._onDidChangeTreeData.fire();
+    }
+
+    /**
+     * Mevcut filtreyi döndürür
+     */
+    getFilter(): TaskFilter {
+        return this.config.filters || {};
     }
 
     /**

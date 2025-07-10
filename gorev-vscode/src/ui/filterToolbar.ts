@@ -64,6 +64,16 @@ export class FilterToolbar {
         profileItem.tooltip = 'Filtre profilleri';
         profileItem.command = 'gorev.showFilterProfiles';
         this.statusBarItems.push(profileItem);
+
+        // Tüm projeler toggle
+        const allProjectsItem = vscode.window.createStatusBarItem(
+            vscode.StatusBarAlignment.Left,
+            96
+        );
+        allProjectsItem.text = '$(globe) Tüm Projeler';
+        allProjectsItem.tooltip = 'Tüm projeler/Aktif proje arasında geçiş yap';
+        allProjectsItem.command = 'gorev.toggleAllProjects';
+        this.statusBarItems.push(allProjectsItem);
     }
 
     /**
@@ -71,6 +81,7 @@ export class FilterToolbar {
      */
     show(): void {
         this.statusBarItems.forEach(item => item.show());
+        this.updateAllProjectsIndicator();
     }
 
     /**
@@ -125,6 +136,13 @@ export class FilterToolbar {
             })),
             
             // Özel filtreler
+            {
+                label: '$(globe) Tüm Projeler',
+                description: 'Tüm projelerdeki görevleri göster',
+                value: { showAllProjects: true },
+                filterType: 'special' as const,
+                picked: this.activeFilters.showAllProjects !== false
+            },
             {
                 label: '$(warning) Gecikmiş Görevler',
                 description: 'Son tarihi geçmiş görevler',
@@ -291,6 +309,7 @@ export class FilterToolbar {
     private updateFilter(filter: TaskFilter): void {
         this.activeFilters = filter;
         this.updateActiveFilterDisplay();
+        this.updateAllProjectsIndicator();
         this.onFilterChange(filter);
     }
 
@@ -379,6 +398,18 @@ export class FilterToolbar {
             [GorevOncelik.Yuksek]: 'Yüksek'
         };
         return labels[oncelik];
+    }
+
+    /**
+     * Tüm projeler göstergesini güncelle
+     */
+    private updateAllProjectsIndicator(): void {
+        const allProjectsItem = this.statusBarItems[4]; // 5th item (index 4)
+        if (allProjectsItem) {
+            const showingAllProjects = this.activeFilters.showAllProjects !== false;
+            allProjectsItem.text = showingAllProjects ? '$(globe) Tüm Projeler' : '$(folder) Aktif Proje';
+            allProjectsItem.backgroundColor = showingAllProjects ? undefined : new vscode.ThemeColor('statusBarItem.warningBackground');
+        }
     }
 
     /**
