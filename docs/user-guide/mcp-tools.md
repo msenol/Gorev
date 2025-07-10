@@ -2,12 +2,14 @@
 
 Gorev'in sağladığı 25 MCP tool'unun detaylı açıklaması.
 
+> ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` artık kullanılamaz! Template kullanımı zorunludur. Detaylar için [templateden_gorev_olustur](#templateden_gorev_olustur) bölümüne bakın.
+
 > **Not**: AI Context Management araçları için [AI MCP Araçları Dokümantasyonu](../mcp-araclari-ai.md)'na bakın.
 
 ## 📋 Araç Listesi
 
 ### Görev Yönetimi
-1. [gorev_olustur](#gorev_olustur) - Yeni görev oluşturma
+1. [gorev_olustur](#gorev_olustur) - ⚠️ **DEPRECATED (v0.10.0)** - Template kullanımı zorunlu
 2. [gorev_listele](#gorev_listele) - Görevleri listeleme
 3. [gorev_detay](#gorev_detay) - Görev detaylarını görüntüleme (markdown)
 4. [gorev_guncelle](#gorev_guncelle) - Görev durumu güncelleme
@@ -49,69 +51,57 @@ Gorev'in sağladığı 25 MCP tool'unun detaylı açıklaması.
 
 ## gorev_olustur
 
-Yeni bir görev oluşturur.
+⚠️ **DEPRECATED (v0.10.0)**: Bu araç artık kullanılamaz! Template kullanımı zorunludur.
 
-### Parametreler
+### Migration
+`gorev_olustur` yerine artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanılmalıdır.
 
-| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
-|-----------|-----|---------|----------|------------|
-| `baslik` | string | ✅ | Görev başlığı | - |
-| `aciklama` | string | ❌ | Detaylı görev açıklaması | "" |
-| `oncelik` | string | ❌ | Öncelik seviyesi: `dusuk`, `orta`, `yuksek` | `orta` |
-| `proje_id` | string | ❌ | Projeye bağlamak için proje ID'si | Aktif proje |
-| `son_tarih` | string | ❌ | Son teslim tarihi (YYYY-AA-GG formatında) | - |
-| `etiketler` | string | ❌ | Virgülle ayrılmış etiketler | - |
-
-### Örnek Kullanım
-
-**Basit görev:**
+**Eski Kullanım:**
 ```json
 {
   "name": "gorev_olustur",
   "arguments": {
-    "baslik": "README dosyasını güncelle"
-  }
-}
-```
-
-**Detaylı görev:**
-```json
-{
-  "name": "gorev_olustur",
-  "arguments": {
-    "baslik": "API authentication implementasyonu",
-    "aciklama": "JWT tabanlı authentication sistemi kur. Refresh token desteği olmalı.",
+    "baslik": "Bug fix",
+    "aciklama": "Login sorunu",
     "oncelik": "yuksek"
   }
 }
 ```
 
-**Projeye bağlı görev:**
+**Yeni Kullanım:**
 ```json
 {
-  "name": "gorev_olustur",
+  "name": "templateden_gorev_olustur", 
   "arguments": {
-    "baslik": "Kullanıcı profil sayfası",
-    "proje_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+    "template_id": "bug_raporu_id",
+    "degerler": {
+      "baslik": "Bug fix",
+      "aciklama": "Login sorunu", 
+      "modul": "Authentication",
+      "ortam": "production",
+      "oncelik": "yuksek"
+    }
   }
 }
 ```
 
-**Son tarihli ve etiketli görev:**
-```json
-{
-  "name": "gorev_olustur",
-  "arguments": {
-    "baslik": "Güvenlik denetimi",
-    "aciklama": "Tüm API endpoint'lerinin güvenlik testlerini yap",
-    "oncelik": "yuksek",
-    "son_tarih": "2025-07-15",
-    "etiketler": "güvenlik, test, acil"
-  }
-}
-```
+### Error Message
+Bu araç çağrıldığında aşağıdaki hata mesajı döner:
 
-**Not:** `proje_id` parametresi verilmezse ve aktif proje ayarlanmışsa, görev otomatik olarak aktif projeye eklenir.
+> ❌ gorev_olustur artık kullanılmıyor!
+> 
+> Template kullanımı zorunludur. Önce kullanılabilir template'leri görmek için:
+> template_listele
+> 
+> Sonra template kullanarak görev oluşturmak için:
+> templateden_gorev_olustur template_id='...' degerler={...}
+
+### ✅ Çözüm
+Artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanın. Bu daha iyi çünkü:
+- **Tutarlılık**: Her görev belirli standartlara uygun
+- **Kalite**: Zorunlu alanlar eksik bilgi girişini engeller  
+- **Otomasyon**: Template tipine göre otomatik workflow
+- **Raporlama**: Görev tipine göre detaylı metrikler
 
 ### Yanıt
 
@@ -572,7 +562,7 @@ Bu araç parametre almaz.
 
 ## proje_aktif_yap
 
-Bir projeyi aktif proje olarak ayarlar. Aktif proje ayarlandığında, `gorev_olustur` ve `gorev_listele` komutları varsayılan olarak bu projeyi kullanır.
+Bir projeyi aktif proje olarak ayarlar. Aktif proje ayarlandığında, `templateden_gorev_olustur` ve `gorev_listele` komutları varsayılan olarak bu projeyi kullanır.
 
 ### Parametreler
 

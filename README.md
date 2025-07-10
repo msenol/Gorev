@@ -2,7 +2,9 @@
 
 <div align="center">
 
-**Last Updated:** July 9, 2025 | **Version:** v0.9.1-dev
+**Last Updated:** July 11, 2025 | **Version:** v0.10.0
+
+> ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
@@ -76,7 +78,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 
 # Specific version
-curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.7.0-dev bash
+curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.10.0 bash
 ```
 
 > **Not**: Kurulum sonrası eğer "unable to open database file" hatası alırsanız, GOREV_ROOT environment variable'ını ayarlayın:
@@ -96,7 +98,7 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERS
 irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 
 # Veya belirli versiyon için:
-$env:VERSION="v0.7.2-dev"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+$env:VERSION="v0.10.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 **Manuel Kurulum:**
@@ -394,7 +396,7 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/gelistirme.md)'ne bakın.
 
 ## 📊 Proje Durumu
 
-- **Versiyon**: v0.7.0-beta.1
+- **Versiyon**: v0.10.0
 - **Test Coverage**: %88.2
 - **Go Version**: 1.22+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
@@ -406,6 +408,45 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/gelistirme.md)'ne bakın.
 - 🐛 [Issue Tracker](https://github.com/msenol/gorev/issues)
 - 💬 [Discussions](https://github.com/msenol/gorev/discussions)
 - 📖 [Wiki](https://github.com/msenol/gorev/wiki)
+
+## ⚠️ BREAKING CHANGE: Template Zorunluluğu
+
+### v0.10.0'dan İtibaren Template Kullanımı Zorunludur!
+
+`gorev_olustur` tool artık kullanılamaz. Tüm görevler template kullanılarak oluşturulmalıdır.
+
+#### 🔄 Eski Kullanım (Artık Çalışmaz):
+```bash
+gorev_olustur baslik="Bug fix" aciklama="..." oncelik="yuksek"
+```
+
+#### ✅ Yeni Kullanım (Zorunlu):
+```bash
+# 1. Önce template listesini görün
+template_listele
+
+# 2. Template kullanarak görev oluşturun
+templateden_gorev_olustur template_id='bug_report_v2' degerler={
+  'baslik': 'Login bug',
+  'aciklama': 'Kullanıcı giriş yapamıyor',
+  'modul': 'auth',
+  'severity': 'high',
+  ...
+}
+```
+
+#### 🆕 Yeni Template'ler:
+- **bug_report_v2** - Gelişmiş bug raporu (severity, steps, environment)
+- **spike_research** - Time-boxed araştırma görevleri
+- **performance_issue** - Performans sorunları (metrics, targets)
+- **security_fix** - Güvenlik düzeltmeleri (CVSS, components)
+- **refactoring** - Kod iyileştirme (code smell, strategy)
+
+#### 🎯 Neden Template Zorunlu?
+- **Tutarlılık**: Her görev belirli standartlara uygun
+- **Kalite**: Zorunlu alanlar eksik bilgi girişini engeller
+- **Otomasyon**: Template tipine göre otomatik workflow
+- **Raporlama**: Görev tipine göre detaylı metrikler
 
 ## 📄 Lisans
 

@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## MCP Server
 
+### [0.10.0] - 2025-07-11
+
+#### ⚠️ BREAKING CHANGES
+
+- **Template Usage Now Mandatory**: Direct task creation via `gorev_olustur` is no longer supported
+  - `gorev_olustur` handler now returns error message with migration instructions
+  - All tasks must be created using `templateden_gorev_olustur` with appropriate templates
+  - This ensures consistency, quality, and better structured task management
+
+#### Added
+
+- **5 New Enhanced Templates** for better task categorization:
+  - `Bug Raporu v2` - Advanced bug reports with severity, steps, environment details
+  - `Spike Araştırma` - Time-boxed research tasks with clear deliverables  
+  - `Performans Sorunu` - Performance optimization tasks with metrics and targets
+  - `Güvenlik Düzeltmesi` - Security vulnerability fixes with CVSS scoring
+  - `Refactoring` - Code quality improvements with complexity metrics
+- **Enhanced Template Validation**: Detailed error messages show missing required fields and examples
+- **Comprehensive Test Coverage**: Added tests for deprecated handler and template workflow
+
+#### Changed
+
+- **GorevOlustur Handler**: Now deprecated with helpful error message guiding users to templates
+- **Template System**: Enhanced with better validation and user-friendly error messages
+
+#### Migration Guide
+
+**Old Usage (No Longer Works):**
+```bash
+gorev_olustur baslik="Bug fix" aciklama="..." oncelik="yuksek"
+```
+
+**New Usage (Required):**
+```bash
+# 1. List available templates
+template_listele
+
+# 2. Create task from template  
+templateden_gorev_olustur template_id='bug_report_v2' degerler={
+  'baslik': 'Login bug',
+  'aciklama': 'User cannot login',
+  'modul': 'auth',
+  'severity': 'high',
+  ...
+}
+```
+
 ### [0.9.2] - 2025-07-10
 
 #### Fixed
@@ -95,6 +142,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated MCP tool schemas for `gorev_listele` and `proje_gorevleri` to include pagination parameters
 
 ## VS Code Extension
+
+### [0.4.0] - 2025-07-11
+
+#### ⚠️ BREAKING CHANGES
+
+- **Template Usage Now Mandatory**: Task creation commands now redirect to template wizard
+  - `gorev.createTask` (Ctrl+Shift+G) now opens Template Wizard instead of direct creation dialog
+  - `gorev.quickCreateTask` now opens Quick Template Selection instead of simple input
+  - Direct task creation via deprecated `gorev_olustur` is no longer supported
+
+#### Changed
+
+- **Updated Task Creation Flow**: All task creation now uses template system for better consistency
+- **Enhanced Error Handling**: Better user guidance when attempting deprecated operations
+- **TestDataSeeder Modernization**: Development test data now uses template-based creation
+
+#### Added
+
+- **Breaking Change Documentation**: Comprehensive migration guide in README and CHANGELOG
+- **Template System Integration**: Seamless integration with MCP server v0.10.0 template requirement
+
+#### Migration Guide
+
+**Old Workflow:**
+1. Press `Ctrl+Shift+G` → Simple task creation dialog
+2. Fill basic fields (title, description, priority)
+3. Task created directly
+
+**New Workflow:**
+1. Press `Ctrl+Shift+G` → Template Wizard opens
+2. Select appropriate template (Bug Report, Feature Request, etc.)
+3. Fill template-specific required fields
+4. Task created with consistent structure and quality
+
+**Benefits:**
+- **Better Quality**: Required fields prevent incomplete tasks
+- **Consistency**: All tasks follow established patterns
+- **Automation**: Template-based workflow automation
+- **Reporting**: Better metrics and categorization
 
 ### [0.3.9] - 2025-07-10
 

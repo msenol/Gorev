@@ -8,6 +8,25 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 ### Recent Changes
 
+#### MCP Server (v0.10.0) - Template Usage Now Mandatory
+- **BREAKING CHANGE: `gorev_olustur` Deprecated** (10 July 2025):
+  - Direct task creation without templates is no longer allowed
+  - All tasks must be created using `templateden_gorev_olustur`
+  - Added comprehensive error message guiding users to template usage
+  - **New Templates Added**:
+    - `bug_report_v2` - Enhanced bug reporting with severity and environment
+    - `spike_research` - Time-boxed technical research tasks
+    - `performance_issue` - Performance problems with metrics
+    - `security_fix` - Security vulnerabilities with CVSS scoring
+    - `refactoring` - Code quality improvements with risk assessment
+  - **Enhanced Validation**:
+    - Strict enforcement of required fields
+    - Select field value validation
+    - Detailed error messages with examples
+  - **Helper Functions**:
+    - `templateZorunluAlanlariListele` - Lists required fields
+    - `templateOrnekDegerler` - Generates example values
+
 #### MCP Server (v0.9.2) - Enhanced Pagination & Debug Tools
 - **Fixed Pagination to Show ALL Descendants** (10 July 2025):
   - Fixed critical issue where subtasks weren't shown if parent wasn't in paginated set
