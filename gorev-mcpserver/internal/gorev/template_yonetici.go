@@ -185,11 +185,17 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 	}
 
 	// ProjeID'yi ayarla
-	if val, ok := degerler["proje_id"]; ok {
+	if val, ok := degerler["proje_id"]; ok && val != "" {
 		gorev.ProjeID = val
 	} else {
 		// Aktif projeyi kullan
-		aktifProjeID, _ := vy.AktifProjeGetir()
+		aktifProjeID, err := vy.AktifProjeGetir()
+		if err != nil {
+			return nil, fmt.Errorf("aktif proje alınamadı: %w", err)
+		}
+		if aktifProjeID == "" {
+			return nil, fmt.Errorf("proje_id belirtilmedi ve aktif proje ayarlanmamış")
+		}
 		gorev.ProjeID = aktifProjeID
 	}
 
