@@ -150,10 +150,12 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 	details := []string{}
 
 	if gorev.Aciklama != "" {
-		// Açıklamayı kısalt - maksimum 100 karakter
+		// Template sistemi için açıklama limiti büyük ölçüde artırıldı
+		// Sadece gerçekten çok uzun açıklamaları kısalt (2000+ karakter)
 		aciklama := gorev.Aciklama
-		if len(aciklama) > 100 {
-			aciklama = aciklama[:97] + "..."
+		if len(aciklama) > 2000 {
+			// İlk 1997 karakteri al ve ... ekle
+			aciklama = aciklama[:1997] + "..."
 		}
 		details = append(details, aciklama)
 	}
@@ -255,10 +257,12 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 	details := []string{}
 
 	if gorev.Aciklama != "" {
-		// Açıklamayı kısalt - maksimum 100 karakter
+		// Template sistemi için açıklama limiti büyük ölçüde artırıldı
+		// Sadece gerçekten çok uzun açıklamaları kısalt (2000+ karakter)
 		aciklama := gorev.Aciklama
-		if len(aciklama) > 100 {
-			aciklama = aciklama[:97] + "..."
+		if len(aciklama) > 2000 {
+			// İlk 1997 karakteri al ve ... ekle
+			aciklama = aciklama[:1997] + "..."
 		}
 		details = append(details, aciklama)
 	}
@@ -391,7 +395,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	}
 
 	// DEBUG: Log parametreleri
-	// fmt.Fprintf(os.Stderr, "GorevListele called - durum: %s, limit: %d, offset: %d\n", durum, limit, offset)
+	// fmt.Fprintf(os.Stderr, "[GorevListele] Called - durum: %s, limit: %d, offset: %d\n", durum, limit, offset)
 
 	gorevler, err := h.isYonetici.GorevListele(durum, sirala, filtre)
 	if err != nil {
@@ -399,7 +403,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	}
 
 	// DEBUG: Log görev sayısı
-	// fmt.Fprintf(os.Stderr, "GorevListele fetched %d tasks\n", len(gorevler))
+	// fmt.Fprintf(os.Stderr, "[GorevListele] Fetched %d tasks total\n", len(gorevler))
 
 	// Etikete göre filtrele
 	if etiket != "" {
@@ -442,23 +446,6 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		return mcp.NewToolResultText(mesaj), nil
 	}
 
-	metin := ""
-
-	// Kompakt başlık ve pagination bilgisi
-	if toplamGorevSayisi > limit || offset > 0 {
-		metin = fmt.Sprintf("Görevler (%d-%d / %d)\n",
-			offset+1,
-			min(offset+limit, toplamGorevSayisi),
-			toplamGorevSayisi)
-	} else {
-		metin = fmt.Sprintf("Görevler (%d)\n", toplamGorevSayisi)
-	}
-
-	if aktifProje != nil && !tumProjeler {
-		metin += fmt.Sprintf("Proje: %s\n", aktifProje.Isim)
-	}
-	metin += "\n"
-
 	// Görevleri hiyerarşik olarak organize et
 	gorevMap := make(map[string]*gorev.Gorev)
 	kokGorevler := []*gorev.Gorev{}
@@ -470,27 +457,36 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		}
 	}
 
-	// Pagination uygula - TÜM görevlere (hem root hem subtask)
-	paginatedGorevler := gorevler
-	if offset < len(gorevler) {
-		end := offset + limit
-		if end > len(gorevler) {
-			end = len(gorevler)
-		}
-		paginatedGorevler = gorevler[offset:end]
+	metin := ""
+
+	// Kompakt başlık ve pagination bilgisi
+	// NOT: Artık sadece root görev sayısını gösteriyoruz
+	toplamRootGorevSayisi := len(kokGorevler)
+	if toplamRootGorevSayisi > limit || offset > 0 {
+		metin = fmt.Sprintf("Görevler (%d-%d / %d)\n",
+			offset+1,
+			min(offset+limit, toplamRootGorevSayisi),
+			toplamRootGorevSayisi)
 	} else {
-		paginatedGorevler = []*gorev.Gorev{}
+		metin = fmt.Sprintf("Görevler (%d)\n", toplamRootGorevSayisi)
 	}
 
-	// Paginated görevlerden root olanları bul
-	paginatedKokGorevler := []*gorev.Gorev{}
-	paginatedGorevMap := make(map[string]*gorev.Gorev)
+	if aktifProje != nil && !tumProjeler {
+		metin += fmt.Sprintf("Proje: %s\n", aktifProje.Isim)
+	}
+	metin += "\n"
 
-	for _, g := range paginatedGorevler {
-		paginatedGorevMap[g.ID] = g
-		if g.ParentID == "" {
-			paginatedKokGorevler = append(paginatedKokGorevler, g)
+	// Pagination uygula - SADECE ROOT görevlere
+	// Subtask'lar parent'larıyla birlikte gösterilecek
+	var paginatedKokGorevler []*gorev.Gorev
+	if offset < len(kokGorevler) {
+		end := offset + limit
+		if end > len(kokGorevler) {
+			end = len(kokGorevler)
 		}
+		paginatedKokGorevler = kokGorevler[offset:end]
+	} else {
+		paginatedKokGorevler = []*gorev.Gorev{}
 	}
 
 	// Response boyutunu tahmin et ve gerekirse daha az görev göster
@@ -525,21 +521,10 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	for _, kokGorev := range gorevlerToShow {
 		metin += h.gorevHiyerarsiYazdirVeIsaretle(kokGorev, gorevMap, 0, tumProjeler || aktifProje == nil, shownGorevIDs)
 	}
-
-	// Paginated listede olup henüz gösterilmemiş görevleri bul
-	// (Parent'ları paginated listede olmayan veya daha önce gösterilmiş görevler)
-	for _, g := range paginatedGorevler {
-		if !shownGorevIDs[g.ID] {
-			// Bu görev henüz gösterilmemiş, root olarak göster
-			gorevSize := h.gorevResponseSizeEstimate(g)
-			if estimatedSize+gorevSize > maxResponseSize && len(shownGorevIDs) > 0 {
-				metin += fmt.Sprintf("\n*Not: Response boyut limiti nedeniyle daha fazla görev gösterilemiyor. 'offset' parametresi ile devam edebilirsiniz.*\n")
-				break
-			}
-			metin += h.gorevHiyerarsiYazdirVeIsaretle(g, gorevMap, 0, tumProjeler || aktifProje == nil, shownGorevIDs)
-			estimatedSize += gorevSize
-		}
-	}
+	
+	// REMOVED: Orphan checking logic
+	// Artık sadece root görevleri paginate ediyoruz
+	// Alt görevler her zaman parent'larıyla birlikte gösterilecek
 
 	return mcp.NewToolResultText(metin), nil
 }
