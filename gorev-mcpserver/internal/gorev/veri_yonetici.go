@@ -689,9 +689,9 @@ func (vy *VeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, er
 		)
 		SELECT 
 			COUNT(*) as toplam,
-			SUM(CASE WHEN durum = 'tamamlandi' THEN 1 ELSE 0 END) as tamamlanan,
-			SUM(CASE WHEN durum = 'devam_ediyor' THEN 1 ELSE 0 END) as devam_eden,
-			SUM(CASE WHEN durum = 'beklemede' THEN 1 ELSE 0 END) as beklemede
+			COALESCE(SUM(CASE WHEN durum = 'tamamlandi' THEN 1 ELSE 0 END), 0) as tamamlanan,
+			COALESCE(SUM(CASE WHEN durum = 'devam_ediyor' THEN 1 ELSE 0 END), 0) as devam_eden,
+			COALESCE(SUM(CASE WHEN durum = 'beklemede' THEN 1 ELSE 0 END), 0) as beklemede
 		FROM alt_gorevler`
 
 	var toplam, tamamlanan, devamEden, beklemede int
