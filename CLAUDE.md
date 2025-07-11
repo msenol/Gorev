@@ -2,11 +2,25 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 10 July 2025
+## Last Updated: 11 July 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
 ### Recent Changes
+
+#### MCP Server (v0.10.1) - Critical Pagination Fix
+- **Fixed Duplicate Task Display Issue** (11 July 2025):
+  - Fixed critical bug where subtasks appeared twice: once as independent tasks and again under their parent
+  - Root cause: Pagination was applied to all tasks (root + subtasks) instead of just root tasks
+  - **Solution**: Changed pagination logic to only paginate root-level tasks
+  - Subtasks now always appear with their parent, regardless of pagination window
+  - Fixed infinite loop issue in VS Code when requesting pages beyond available data
+  - **Technical Details**:
+    - Modified `GorevListele` handler to use `kokGorevler` (root tasks) for pagination
+    - Removed orphan task checking logic that caused duplicates
+    - Fixed task count display to show root task count instead of total
+  - **Files Updated**:
+    - `internal/mcp/handlers.go` - Pagination logic rewrite
 
 #### MCP Server (v0.10.0) - Template Usage Now Mandatory
 - **BREAKING CHANGE: `gorev_olustur` Deprecated** (10 July 2025):
@@ -55,6 +69,14 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
     - Added `BulkBagimlilikSayilariGetir` method for N+1 query optimization
     - Added `BulkTamamlanmamiaBagimlilikSayilariGetir` method
     - Added database indexes migration (000007)
+
+#### VS Code Extension (v0.4.6) - Enhanced Duplicate Detection
+- **Enhanced Markdown Parser Logging** (11 July 2025):
+  - Added detailed duplicate detection logging with context
+  - Logs now include parent ID, project ID, and duplicate count
+  - Improved debugging capabilities for server-side issues
+  - **Files Updated**:
+    - `src/utils/markdownParser.ts` - Enhanced duplicate detection logging
 
 #### VS Code Extension (v0.3.9) - All Projects Toggle & Parser Improvements
 - **Added "Show All Projects" Toggle** (10 July 2025):

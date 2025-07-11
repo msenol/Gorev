@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## MCP Server
 
+### [0.10.1] - 2025-07-11
+
+#### Fixed
+
+- **Critical Pagination Bug**: Fixed duplicate task display issue where subtasks appeared both independently and under their parent
+  - Changed pagination to only apply to root-level tasks
+  - Subtasks now always appear with their parent task
+  - Fixed infinite loop in VS Code when offset exceeded available tasks
+  - Fixed task count display to show root tasks count instead of total
+
+#### Changed
+
+- **GorevListele Handler**: Completely rewritten pagination logic
+  - Removed `paginatedGorevler` processing for all tasks
+  - Now uses `kokGorevler` (root tasks only) for pagination
+  - Removed orphan task checking that caused duplicates
+
 ### [0.10.0] - 2025-07-11
 
 #### ⚠️ BREAKING CHANGES

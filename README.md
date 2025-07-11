@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** July 11, 2025 | **Version:** v0.10.0
+**Last Updated:** July 11, 2025 | **Version:** v0.10.1
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
 
