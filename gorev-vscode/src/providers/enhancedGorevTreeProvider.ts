@@ -176,8 +176,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 this.config.sorting, 
                 this.config.sortAscending
             );
-            // Sadece root level görevleri göster (parent_id olmayan)
-            const rootTasks = sortedTasks.filter(task => !task.parent_id);
+            // Show all tasks (temporarily disable root filtering due to subtask hierarchy issues)
+            const rootTasks = sortedTasks; // TODO: Fix subtask hierarchy display
             return rootTasks.map(task => new TaskTreeViewItem(task, this.selection));
         }
 
@@ -231,8 +231,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             this.config.sortAscending
         );
 
-        // Sadece root level görevleri göster (parent_id olmayan)
-        const rootTasks = sortedTasks.filter(task => !task.parent_id || task.parent_id === '');
+        // Show all tasks (temporarily disable root filtering due to subtask hierarchy issues)
+        const rootTasks = sortedTasks; // TODO: Fix subtask hierarchy display
         
         Logger.debug(`[EnhancedGorevTreeProvider] Group ${group.groupKey} has ${sortedTasks.length} sorted tasks`);
         Logger.debug(`[EnhancedGorevTreeProvider] After filtering for root tasks: ${rootTasks.length} tasks`);
@@ -318,7 +318,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             }
             
             // Get page size from configuration
-            const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 100);
+            const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 10);
             
             // Check if we should show all projects or just active project
             // Default to true to show all projects
@@ -372,24 +372,28 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                     totalTaskCount = parseInt(total);
                     Logger.info(`[EnhancedGorevTreeProvider] Pagination: ${start}-${end} / ${total}`);
                     
+                    // Parse the markdown content to extract tasks
+                    const pageTasks = MarkdownParser.parseGorevListesi(responseText);
+                    Logger.info('[EnhancedGorevTreeProvider] Parsed tasks from page:', pageTasks.length);
+                    
+                    // Add to our task list
+                    this.tasks.push(...pageTasks);
+                    
+                    // Update offset for next page based on server response, not pageSize
+                    // This handles server-side response limits correctly
+                    offset = parseInt(end);
+                    
                     // Check if we need to fetch more
-                    if (parseInt(end) >= totalTaskCount) {
+                    if (offset >= totalTaskCount) {
                         hasMoreTasks = false;
                     }
                 } else {
-                    // No pagination info, assume this is the last page
+                    // No pagination info, parse and assume this is the last page
+                    const pageTasks = MarkdownParser.parseGorevListesi(responseText);
+                    Logger.info('[EnhancedGorevTreeProvider] Parsed tasks from page:', pageTasks.length);
+                    this.tasks.push(...pageTasks);
                     hasMoreTasks = false;
                 }
-                
-                // Parse the markdown content to extract tasks
-                const pageTasks = MarkdownParser.parseGorevListesi(responseText);
-                Logger.info('[EnhancedGorevTreeProvider] Parsed tasks from page:', pageTasks.length);
-                
-                // Add to our task list
-                this.tasks.push(...pageTasks);
-                
-                // Update offset for next page
-                offset += pageSize;
                 
                 // Safety check to prevent infinite loop
                 if (offset > 1000 || this.tasks.length > 1000) {

@@ -51,6 +51,34 @@ suite('MarkdownParser Test Suite', () => {
       assert.strictEqual(tasks[1].baslik, 'Second task');
       assert.strictEqual(tasks[1].aciklama, 'Description line 1 Description line 2');
     });
+
+    test('should parse compact format with pipe in description (regression test)', () => {
+      const markdown = `Görevler (1-3 / 3)
+
+[🔄] 🐛 [MCP Task System] Quick Task Template - Time-boxed Atomic Tasks (Y)
+  ## 🐛 Hata Açıklaması | MCP görev sistemine 1-2 saatlik atomik görevler için özel template | Proje: TMS Development | Etiket: 5 adet | ID:a88c824d-f898-4142-8612-5a016299f7a5
+
+[⏳] Simple Task with | pipe in description (O)
+  Description with | multiple | pipe | characters | Proje: Test Project | Etiket: test,regression | ID:12345678-1234-1234-1234-123456789012`;
+
+      const tasks = MarkdownParser.parseGorevListesi(markdown);
+      
+      assert.strictEqual(tasks.length, 2);
+      
+      // Test first task - the bug case
+      assert.strictEqual(tasks[0].baslik, '🐛 [MCP Task System] Quick Task Template - Time-boxed Atomic Tasks');
+      assert.strictEqual(tasks[0].aciklama, '## 🐛 Hata Açıklaması | MCP görev sistemine 1-2 saatlik atomik görevler için özel template');
+      assert.strictEqual(tasks[0].id, 'a88c824d-f898-4142-8612-5a016299f7a5');
+      assert.strictEqual(tasks[0].durum, 'devam_ediyor');
+      assert.strictEqual(tasks[0].oncelik, 'yuksek');
+      
+      // Test second task - multiple pipes in description
+      assert.strictEqual(tasks[1].baslik, 'Simple Task with | pipe in description');
+      assert.strictEqual(tasks[1].aciklama, 'Description with | multiple | pipe | characters');
+      assert.strictEqual(tasks[1].id, '12345678-1234-1234-1234-123456789012');
+      assert.strictEqual(tasks[1].durum, 'beklemede');
+      assert.strictEqual(tasks[1].oncelik, 'orta');
+    });
   });
 
   suite('parseProjeListesi', () => {
