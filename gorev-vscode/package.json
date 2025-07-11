@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "Gorev",
   "description": "Powerful task management with unlimited subtask hierarchy, dependency visualization, and smart progress tracking for VS Code powered by MCP protocol",
-  "version": "0.4.0",
+  "version": "0.4.6",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -228,7 +228,7 @@
         },
         "gorev.pagination.pageSize": {
           "type": "number",
-          "default": 100,
+          "default": 10,
           "minimum": 10,
           "maximum": 500,
           "description": "Number of tasks to load per page (to prevent token limit errors)"

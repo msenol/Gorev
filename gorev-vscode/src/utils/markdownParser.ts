@@ -135,6 +135,7 @@ export class MarkdownParser {
         // Legacy parsing logic
         const gorevler: Gorev[] = [];
         const gorevMap: Map<string, Gorev> = new Map();
+        const seenTaskIds = new Set<string>(); // Track seen task IDs to prevent duplicates
         const parentStack: { id: string, level: number }[] = [];
         let currentGorev: Partial<Gorev> | null = null;
         let descriptionLines: string[] = [];
@@ -191,8 +192,20 @@ export class MarkdownParser {
                     }
                     
                     // Add ALL tasks to the main array, regardless of hierarchy
-                    gorevler.push(gorev);
-                    Logger.debug(`[MarkdownParser] Added ${gorev.baslik} as task with proje_id: ${gorev.proje_id || 'NONE'}`); 
+                    // Check for duplicates before adding
+                    if (!seenTaskIds.has(gorev.id!)) {
+                        gorevler.push(gorev);
+                        seenTaskIds.add(gorev.id!);
+                        Logger.debug(`[MarkdownParser] Added ${gorev.baslik} as task with proje_id: ${gorev.proje_id || 'NONE'}`); 
+                    } else {
+                        Logger.warn(`[MarkdownParser] Duplicate task detected and skipped: ${gorev.baslik} (ID: ${gorev.id})`, {
+                            taskTitle: gorev.baslik,
+                            taskId: gorev.id,
+                            parentId: gorev.parent_id,
+                            projectId: gorev.proje_id,
+                            duplicateCount: gorevler.filter(g => g.id === gorev.id).length + 1
+                        });
+                    }
                     
                     gorevMap.set(gorev.id!, gorev);
                     parentStack.push({ id: gorev.id!, level: gorev.seviye });
@@ -322,7 +335,19 @@ export class MarkdownParser {
             }
             
             // Add ALL tasks to the main array, regardless of hierarchy
-            gorevler.push(gorev);
+            // Check for duplicates before adding
+            if (!seenTaskIds.has(gorev.id)) {
+                gorevler.push(gorev);
+                seenTaskIds.add(gorev.id);
+            } else {
+                Logger.warn(`[MarkdownParser] Duplicate task detected and skipped: ${gorev.baslik} (ID: ${gorev.id})`, {
+                    taskTitle: gorev.baslik,
+                    taskId: gorev.id,
+                    parentId: gorev.parent_id,
+                    projectId: gorev.proje_id,
+                    duplicateCount: gorevler.filter(g => g.id === gorev.id).length + 1
+                });
+            }
             
             gorevMap.set(gorev.id, gorev);
         }
@@ -343,6 +368,7 @@ export class MarkdownParser {
         const lines = markdown.split('\n');
         const gorevler: Gorev[] = [];
         const gorevMap = new Map<string, Gorev>(); // ID to Gorev mapping
+        const seenTaskIds = new Set<string>(); // Track seen task IDs to prevent duplicates
         const parentStack: { id: string, indentLevel: number }[] = []; // Track parent hierarchy
         let i = 0;
         
@@ -411,8 +437,8 @@ export class MarkdownParser {
                                 fullDetails += ' ' + continuationLine;
                                 i++;
                             } else {
-                                // No ID found, this might not be a valid task
-                                Logger.warn(`[MarkdownParser] No ID found for task: ${title}`);
+                                // No ID found in subsequent lines, break and continue
+                                Logger.debug(`[MarkdownParser] No ID found for task: ${title}, will generate fallback ID`);
                                 break;
                             }
                         }
@@ -435,112 +461,232 @@ export class MarkdownParser {
                     // Format 3: Description | Proje: Name | ID:uuid
                     // Format 4: - Description | ID:uuid (for subtasks)
                     
-                    // Extract ID first (always at the end)
-                    const idMatch = detailsLine.match(/ID:([a-f0-9-]+)$/);
+                    // Extract ID first (try multiple patterns)
+                    let idMatch = detailsLine.match(/ID:([a-f0-9-]+)$/);
+                    if (!idMatch) {
+                        // Try finding ID anywhere in the line
+                        idMatch = detailsLine.match(/ID:([a-f0-9-]+)/);
+                    }
+                    
+                    let remainingContent = detailsLine;
+                    
                     if (idMatch) {
                         id = idMatch[1];
-                        const detailsWithoutId = detailsLine.substring(0, detailsLine.lastIndexOf('|')).trim();
+                        // Remove ID from the content for further parsing
+                        remainingContent = detailsLine.replace(/\s*\|\s*ID:[a-f0-9-]+\s*$/, '').trim();
+                    } else {
+                        // Generate fallback ID based on title hash
+                        const hash = title.split('').reduce((a, b) => {
+                            a = ((a << 5) - a) + b.charCodeAt(0);
+                            return a & a;
+                        }, 0);
+                        id = `fallback-${Math.abs(hash).toString(16)}-${Date.now().toString(36)}`;
+                        Logger.debug(`[MarkdownParser] Generated fallback ID for task "${title}": ${id}`);
                         
-                        // Extract description (everything before first |)
-                        // Remove leading dash if present
-                        const cleanDetails = detailsWithoutId.startsWith('- ') ? detailsWithoutId.substring(2) : detailsWithoutId;
-                        description = cleanDetails.split('|')[0].trim();
-                        
-                        // Extract other fields
-                        const parts = detailsWithoutId.split('|').slice(1);
-                        for (const part of parts) {
-                            const trimmedPart = part.trim();
-                            if (trimmedPart.startsWith('Tarih:')) {
-                                dueDate = trimmedPart.substring(6).trim();
-                            } else if (trimmedPart.startsWith('Etiket:')) {
-                                const etiketPart = trimmedPart.substring(7).trim();
-                                // Handle "X adet" format
-                                const adetMatch = etiketPart.match(/(\d+)\s+adet/);
-                                if (adetMatch) {
-                                    // Don't parse tags if it's just a count
-                                    tags = [];
-                                } else {
-                                    tags = etiketPart.split(',').map(t => t.trim());
-                                }
-                            } else if (trimmedPart.startsWith('Proje:')) {
-                                projectName = trimmedPart.substring(6).trim();
-                                // Try to extract project ID from the project name if it contains ID
-                                const projIdMatch = projectName.match(/\(ID:\s*([a-f0-9-]+)\)/);
-                                if (projIdMatch) {
-                                    projectId = projIdMatch[1];
-                                    projectName = projectName.replace(/\s*\(ID:[^)]+\)/, '').trim();
+                        // Use the entire details line as description if no structured format
+                        description = detailsLine.trim();
+                        remainingContent = '';
+                    }
+                    
+                    // Only extract structured fields if we found a real ID (not fallback)
+                    if (!id.startsWith('fallback-') && remainingContent) {
+                        // Extract structured fields from right to left by removing them from the end
+                        const extractFieldFromEnd = (content: string, pattern: RegExp): [string, string] => {
+                            const parts = content.split(' | ');
+                            for (let i = parts.length - 1; i >= 0; i--) {
+                                const part = parts[i].trim();
+                                if (pattern.test(part)) {
+                                    const fieldValue = part;
+                                    // Remove this part and return remaining content
+                                    parts.splice(i, 1);
+                                    return [parts.join(' | '), fieldValue];
                                 }
                             }
+                            return [content, ''];
+                        };
+                        
+                        // Extract Project field
+                        const [afterProject, projectField] = extractFieldFromEnd(remainingContent, /^Proje:/);
+                        if (projectField) {
+                            remainingContent = afterProject;
+                            projectName = projectField.substring(6).trim();
+                            const projIdMatch = projectName.match(/\(ID:\s*([a-f0-9-]+)\)/);
+                            if (projIdMatch) {
+                                projectId = projIdMatch[1];
+                                projectName = projectName.replace(/\s*\(ID:[^)]+\)/, '').trim();
+                            }
+                        }
+                        
+                        // Extract Tags field
+                        const [afterTags, tagsField] = extractFieldFromEnd(remainingContent, /^Etiket:/);
+                        if (tagsField) {
+                            remainingContent = afterTags;
+                            const etiketPart = tagsField.substring(7).trim();
+                            const adetMatch = etiketPart.match(/(\d+)\s+adet/);
+                            if (adetMatch) {
+                                tags = [];
+                            } else {
+                                tags = etiketPart.split(',').map(t => t.trim());
+                            }
+                        }
+                        
+                        // Extract Date field
+                        const [afterDate, dateField] = extractFieldFromEnd(remainingContent, /^Tarih:/);
+                        if (dateField) {
+                            remainingContent = afterDate;
+                            dueDate = dateField.substring(6).trim();
+                        }
+                        
+                        // Extract Waiting/Bekleyen field
+                        const [afterWaiting] = extractFieldFromEnd(remainingContent, /^Bekleyen:/);
+                        remainingContent = afterWaiting;
+                        
+                        // Everything remaining is the description (remove leading dash if present)
+                        if (remainingContent && !description) {
+                            const cleanDetails = remainingContent.startsWith('- ') ? remainingContent.substring(2) : remainingContent;
+                            description = cleanDetails.trim();
                         }
                     }
                     
-                    if (id) {
-                        Logger.debug(`[MarkdownParser] Parsed details - ID: ${id}, Description: ${description}, ProjectID: ${projectId}, ProjectName: ${projectName}`);
-                        
-                        // Convert date from DD/MM to YYYY-MM-DD (assuming current year) if date exists
-                        let formattedDate = '';
-                        if (dueDate) {
-                            const currentYear = new Date().getFullYear();
-                            const [day, month] = dueDate.split('/');
-                            if (day && month) {
-                                formattedDate = `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                            }
+                    // Always process task since we generate fallback IDs when needed
+                    Logger.debug(`[MarkdownParser] Parsed details - ID: ${id}, Description: ${description}, ProjectID: ${projectId}, ProjectName: ${projectName}`);
+                    
+                    // Convert date from DD/MM to YYYY-MM-DD (assuming current year) if date exists
+                    let formattedDate = '';
+                    if (dueDate) {
+                        const currentYear = new Date().getFullYear();
+                        const [day, month] = dueDate.split('/');
+                        if (day && month) {
+                            formattedDate = `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                         }
-                        
-                        const gorev: Gorev = {
-                            id: id.trim(),
-                            baslik: title,
-                            aciklama: description ? description.trim() : '',
-                            durum,
-                            oncelik,
-                            proje_id: projectId || '', // Use extracted project ID if available
-                            son_tarih: formattedDate || '',
-                            etiketler: tags || [],
-                            olusturma_tarih: new Date().toISOString(), // Not provided in compact format
-                            guncelleme_tarih: new Date().toISOString(), // Not provided in compact format
-                            alt_gorevler: [],
-                            seviye: indentLevel,
-                            parent_id: '' // Will be set based on hierarchy
-                        };
-                        
-                        // Update parent stack based on indent level
-                        while (parentStack.length > 0 && parentStack[parentStack.length - 1].indentLevel >= indentLevel) {
-                            parentStack.pop();
-                        }
-                        
-                        // Set parent_id if this is a subtask
-                        if (parentStack.length > 0 && indentLevel > 0) {
-                            const parent = parentStack[parentStack.length - 1];
-                            gorev.parent_id = parent.id;
-                            // Add to parent's alt_gorevler
-                            const parentGorev = gorevMap.get(parent.id);
-                            if (parentGorev) {
-                                parentGorev.alt_gorevler = parentGorev.alt_gorevler || [];
-                                parentGorev.alt_gorevler.push(gorev);
-                                Logger.debug(`[MarkdownParser] Added ${title} as child of ${parentGorev.baslik}`);
-                            }
-                        } else {
-                            // Ensure root tasks have empty parent_id
-                            gorev.parent_id = '';
-                        }
-                        
-                        // Add to map and stack
-                        gorevMap.set(gorev.id, gorev);
-                        // Add ALL tasks to the main array, not just root tasks
-                        gorevler.push(gorev);
-                        
-                        // Push to parent stack for potential children
-                        // Only push if this task could potentially have children (not at max depth, etc.)
-                        if (indentLevel === 0 || parentStack.some(p => p.indentLevel < indentLevel)) {
-                            parentStack.push({ id: gorev.id, indentLevel });
-                        }
-                        
-                        Logger.debug(`[MarkdownParser] Successfully parsed task: ${title} (${id}) at level ${indentLevel}, parent_id: ${gorev.parent_id || 'NONE'}`);
-                    } else {
-                        Logger.warn(`[MarkdownParser] Failed to parse details line: ${detailsLine}`);
                     }
+                    
+                    const gorev: Gorev = {
+                        id: id.trim(),
+                        baslik: title,
+                        aciklama: description ? description.trim() : '',
+                        durum,
+                        oncelik,
+                        proje_id: projectId || '', // Use extracted project ID if available
+                        son_tarih: formattedDate || '',
+                        etiketler: tags || [],
+                        olusturma_tarih: new Date().toISOString(), // Not provided in compact format
+                        guncelleme_tarih: new Date().toISOString(), // Not provided in compact format
+                        alt_gorevler: [],
+                        seviye: indentLevel,
+                        parent_id: '' // Will be set based on hierarchy
+                    };
+                    
+                    // Update parent stack based on indent level
+                    while (parentStack.length > 0 && parentStack[parentStack.length - 1].indentLevel >= indentLevel) {
+                        parentStack.pop();
+                    }
+                    
+                    // Set parent_id if this is a subtask
+                    if (parentStack.length > 0 && indentLevel > 0) {
+                        const parent = parentStack[parentStack.length - 1];
+                        gorev.parent_id = parent.id;
+                        // Add to parent's alt_gorevler
+                        const parentGorev = gorevMap.get(parent.id);
+                        if (parentGorev) {
+                            parentGorev.alt_gorevler = parentGorev.alt_gorevler || [];
+                            parentGorev.alt_gorevler.push(gorev);
+                            Logger.debug(`[MarkdownParser] Added ${title} as child of ${parentGorev.baslik}`);
+                        }
+                    } else {
+                        // Ensure root tasks have empty parent_id
+                        gorev.parent_id = '';
+                    }
+                    
+                    // Add to map and stack
+                    gorevMap.set(gorev.id, gorev);
+                    // Add ALL tasks to the main array, not just root tasks
+                    // Check for duplicates before adding
+                    if (!seenTaskIds.has(gorev.id)) {
+                        gorevler.push(gorev);
+                        seenTaskIds.add(gorev.id);
+                    } else {
+                        Logger.warn(`[MarkdownParser] Duplicate task detected and skipped: ${title} (ID: ${gorev.id})`, {
+                            taskTitle: title,
+                            taskId: gorev.id,
+                            parentId: gorev.parent_id || 'none',
+                            projectId: gorev.proje_id || 'none',
+                            indentLevel,
+                            duplicateCount: gorevler.filter(g => g.id === gorev.id).length + 1
+                        });
+                    }
+                    
+                    // Push to parent stack for potential children
+                    // Only push if this task could potentially have children (not at max depth, etc.)
+                    if (indentLevel === 0 || parentStack.some(p => p.indentLevel < indentLevel)) {
+                        parentStack.push({ id: gorev.id, indentLevel });
+                    }
+                    
+                    Logger.debug(`[MarkdownParser] Successfully parsed task: ${title} (${id}) at level ${indentLevel}, parent_id: ${gorev.parent_id || 'NONE'}`);
                 } else {
-                    Logger.warn(`[MarkdownParser] No details line found for task: ${title}`);
+                    // No details line found - create task with fallback ID and empty description
+                    Logger.debug(`[MarkdownParser] No details line found for task: ${title}, creating with fallback ID`);
+                    
+                    // Generate fallback ID based on title hash
+                    const hash = title.split('').reduce((a, b) => {
+                        a = ((a << 5) - a) + b.charCodeAt(0);
+                        return a & a;
+                    }, 0);
+                    const fallbackId = `fallback-${Math.abs(hash).toString(16)}-${Date.now().toString(36)}`;
+                    
+                    const gorev: Gorev = {
+                        id: fallbackId,
+                        baslik: title,
+                        aciklama: '', // No description available
+                        durum,
+                        oncelik,
+                        proje_id: '', // No project info available
+                        son_tarih: '',
+                        etiketler: [],
+                        olusturma_tarih: new Date().toISOString(),
+                        guncelleme_tarih: new Date().toISOString(),
+                        alt_gorevler: [],
+                        seviye: indentLevel,
+                        parent_id: ''
+                    };
+                    
+                    // Update parent stack based on indent level
+                    while (parentStack.length > 0 && parentStack[parentStack.length - 1].indentLevel >= indentLevel) {
+                        parentStack.pop();
+                    }
+                    
+                    // Set parent_id if this is a subtask
+                    if (parentStack.length > 0 && indentLevel > 0) {
+                        const parent = parentStack[parentStack.length - 1];
+                        gorev.parent_id = parent.id;
+                        const parentGorev = gorevMap.get(parent.id);
+                        if (parentGorev) {
+                            parentGorev.alt_gorevler = parentGorev.alt_gorevler || [];
+                            parentGorev.alt_gorevler.push(gorev);
+                        }
+                    }
+                    
+                    gorevMap.set(gorev.id, gorev);
+                    // Check for duplicates before adding
+                    if (!seenTaskIds.has(gorev.id)) {
+                        gorevler.push(gorev);
+                        seenTaskIds.add(gorev.id);
+                    } else {
+                        Logger.warn(`[MarkdownParser] Duplicate task detected and skipped: ${title} (ID: ${gorev.id})`, {
+                            taskTitle: title,
+                            taskId: gorev.id,
+                            parentId: gorev.parent_id || 'none',
+                            projectId: gorev.proje_id || 'none',
+                            indentLevel,
+                            duplicateCount: gorevler.filter(g => g.id === gorev.id).length + 1
+                        });
+                    }
+                    
+                    if (indentLevel === 0 || parentStack.some(p => p.indentLevel < indentLevel)) {
+                        parentStack.push({ id: gorev.id, indentLevel });
+                    }
+                    
+                    Logger.debug(`[MarkdownParser] Created fallback task: ${title} (${fallbackId})`);
                 }
             } else if (trimmedLine.includes('[') && trimmedLine.includes(']')) {
                 Logger.debug(`[MarkdownParser] Line ${i} contains brackets but didn't match pattern: "${trimmedLine}"`);
