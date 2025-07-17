@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "Gorev",
   "description": "Powerful task management with unlimited subtask hierarchy, dependency visualization, and smart progress tracking for VS Code powered by MCP protocol",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {

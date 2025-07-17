@@ -5,30 +5,45 @@ All notable changes to the Gorev project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - Test Infrastructure Enhancement
-
-### Added
-- **Comprehensive Test Infrastructure Enhancement** across both modules
-- **MCP Server**: 3 new test files (2,334 lines) - coverage improved 66.0% → 81.3%
-  - `handlers_coverage_test.go` (1,525 lines) - comprehensive MCP handler testing
-  - `handlers_hierarchy_test.go` (523 lines) - subtask hierarchy and pagination testing  
-  - `server_coverage_test.go` (286 lines) - MCP server infrastructure testing
-- **VS Code Extension**: 15 new unit test files (~3,000 lines) - coverage improved 55.6% → 100.0%
-  - Complete test coverage for all 36 source files
-  - Command testing, UI component testing, provider testing, debug utility testing
-- Comprehensive edge case testing: SQL injection, Unicode, concurrent access, performance benchmarks
-- Mock integration for VS Code APIs and MCP client interactions
+## [Unreleased]
 
 ### Changed
-- All tests migrated from deprecated `gorev_olustur` to template-based creation
-- Enhanced status validation with proper Turkish error messages
-- Template system validation improvements with required field enforcement
+- Preparing for next release
 
-### Technical
+## [0.11.0] - 2025-07-18 - Test Infrastructure & Stability Release
+
+### 🚀 Major Features
+- **Circular Dependency Detection**: Added comprehensive task hierarchy circular dependency prevention
+- **Enhanced Task Detail Display**: Parent task information now visible in task details (`GorevDetay`)
+- **Active Project Auto-Setup**: Template-based task creation now automatically handles project context
+- **Enterprise-Level Test Infrastructure**: Massive test coverage improvements across both modules
+
+### 📊 Test Infrastructure Enhancement
+- **MCP Server**: Coverage improved 66.0% → 84.6% (+18.6 percentage points)
+  - 3 new comprehensive test files (2,334 lines)
+  - `handlers_coverage_test.go` (1,525 lines) - complete MCP handler coverage
+  - `handlers_hierarchy_test.go` (523 lines) - task hierarchy and pagination testing
+  - `server_coverage_test.go` (286 lines) - MCP server infrastructure testing
+- **VS Code Extension**: Coverage improved 55.6% → 100.0% (+44.4 percentage points)
+  - 15 new unit test files (~3,000 lines)
+  - Complete test coverage for all 36 source files
+  - Advanced mock implementations for VS Code APIs
+
+### 🔧 Bug Fixes & Enhancements
+- Fixed circular dependency validation in task hierarchy operations
+- Enhanced `GorevUstDegistir` with proper dependency checking
+- Added "Üst Görev" field display in task detail view
+- Improved test isolation to prevent cross-test interference
+- Fixed template validation error messages
+- Enhanced error handling with contextual Turkish messages
+
+### 🛠️ Technical Improvements
+- All tests migrated from deprecated `gorev_olustur` to template-based creation
 - Table-driven tests following Go best practices
 - Jest/Mocha patterns for TypeScript testing
-- Real-world scenario testing with actual user workflows
-- Production-ready test infrastructure for both modules
+- Comprehensive edge case testing: SQL injection, Unicode, concurrent access
+- Performance benchmarking for bulk operations
+- Production-ready test infrastructure
 
 ## MCP Server
 
