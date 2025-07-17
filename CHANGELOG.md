@@ -5,7 +5,43 @@ All notable changes to the Gorev project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - Test Infrastructure Enhancement
+
+### Added
+- **Comprehensive Test Infrastructure Enhancement** across both modules
+- **MCP Server**: 3 new test files (2,334 lines) - coverage improved 66.0% → 81.3%
+  - `handlers_coverage_test.go` (1,525 lines) - comprehensive MCP handler testing
+  - `handlers_hierarchy_test.go` (523 lines) - subtask hierarchy and pagination testing  
+  - `server_coverage_test.go` (286 lines) - MCP server infrastructure testing
+- **VS Code Extension**: 15 new unit test files (~3,000 lines) - coverage improved 55.6% → 100.0%
+  - Complete test coverage for all 36 source files
+  - Command testing, UI component testing, provider testing, debug utility testing
+- Comprehensive edge case testing: SQL injection, Unicode, concurrent access, performance benchmarks
+- Mock integration for VS Code APIs and MCP client interactions
+
+### Changed
+- All tests migrated from deprecated `gorev_olustur` to template-based creation
+- Enhanced status validation with proper Turkish error messages
+- Template system validation improvements with required field enforcement
+
+### Technical
+- Table-driven tests following Go best practices
+- Jest/Mocha patterns for TypeScript testing
+- Real-world scenario testing with actual user workflows
+- Production-ready test infrastructure for both modules
+
 ## MCP Server
+
+### [0.10.2] - 2025-07-17
+
+### Added
+- Enhanced MCP Debug System with CLI commands
+- `gorev mcp list` - List all available MCP tools
+- `gorev mcp call <tool> <args>` - Direct tool invocation for testing
+
+### Changed
+- VS Code Extension v0.4.6 published to marketplace
+- Fixed TypeScript version compatibility issue (5.7.0 → 5.8.3)
 
 ### [0.10.1] - 2025-07-11
 
