@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** July 11, 2025 | **Version:** v0.10.1
+**Last Updated:** July 17, 2025 | **Version:** v0.10.2
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
 
@@ -396,7 +396,7 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/gelistirme.md)'ne bakın.
 
 ## 📊 Proje Durumu
 
-- **Versiyon**: v0.10.0
+- **Versiyon**: v0.10.2
 - **Test Coverage**: %88.2
 - **Go Version**: 1.22+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
