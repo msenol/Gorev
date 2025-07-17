@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# GitHub Release Creation Script for Gorev v0.9.0
+# GitHub Release Creation Script for Gorev v0.10.2
 # This script creates a GitHub release with all attachments
 
 set -e
 
-VERSION="v0.9.0"
+VERSION="v0.10.2"
 RELEASE_DIR="release-${VERSION}"
 GITHUB_REPO="msenol/Gorev"
 
@@ -34,8 +34,8 @@ fi
 echo "📝 Creating release..."
 gh release create "${VERSION}" \
     --repo "${GITHUB_REPO}" \
-    --title "Gorev ${VERSION} - AI Context Management & Automation" \
-    --notes-file "RELEASE_NOTES_v0.9.0.md" \
+    --title "Gorev ${VERSION} - Enhanced MCP Debug System & Pagination Fixes" \
+    --notes-file "RELEASE_NOTES_v0.10.2.md" \
     --draft
 
 # Upload binaries

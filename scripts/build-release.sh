@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Build script for Gorev v0.9.0 release
+# Build script for Gorev v0.10.2 release
 # This script builds binaries for all supported platforms
 
 set -e
 
-VERSION="v0.9.0"
+VERSION="v0.10.2"
 BUILD_DIR="release-${VERSION}"
 
 echo "🚀 Building Gorev ${VERSION} for all platforms..."
@@ -31,19 +31,19 @@ echo "🔨 Building binaries..."
 
 # Linux AMD64
 echo "  → Linux AMD64"
-GOOS=linux GOARCH=amd64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-linux-amd64 cmd/gorev/main.go
+GOOS=linux GOARCH=amd64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-linux-amd64 ./cmd/gorev
 
 # Darwin AMD64 (Intel Mac)
 echo "  → Darwin AMD64"
-GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-darwin-amd64 cmd/gorev/main.go
+GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-darwin-amd64 ./cmd/gorev
 
 # Darwin ARM64 (M1/M2 Mac)
 echo "  → Darwin ARM64"
-GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-darwin-arm64 cmd/gorev/main.go
+GOOS=darwin GOARCH=arm64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-darwin-arm64 ./cmd/gorev
 
 # Windows AMD64
 echo "  → Windows AMD64"
-GOOS=windows GOARCH=amd64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-windows-amd64.exe cmd/gorev/main.go
+GOOS=windows GOARCH=amd64 go build -ldflags "-X main.version=${VERSION} -X main.buildTime=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\") -X main.gitCommit=$(git rev-parse --short HEAD)" -o ../${BUILD_DIR}/gorev-windows-amd64.exe ./cmd/gorev
 
 cd ..
 
@@ -69,7 +69,7 @@ cd ..
 
 # Copy release notes
 echo "📝 Copying release notes..."
-cp RELEASE_NOTES_v0.9.0.md ${BUILD_DIR}/
+cp RELEASE_NOTES_v0.10.2.md ${BUILD_DIR}/
 
 echo "✅ Build complete! Release artifacts in ${BUILD_DIR}/"
 echo ""
