@@ -95,6 +95,25 @@ func (iy *IsYonetici) GorevListele(durum, sirala, filtre string) ([]*Gorev, erro
 	// TODO: Bu göreve bağımlı olanları hesaplamak için de bulk query eklenebilir
 	// Şimdilik bu kısmı basitleştirip performans sorununu çözmek öncelikli
 
+	// BuGoreveBagimliSayisi hesaplaması için tüm görevleri kontrol et
+	buGoreveBagimliSayilari := make(map[string]int)
+	for _, gorev := range gorevler {
+		buGoreveBagimliSayilari[gorev.ID] = 0
+	}
+
+	// Her görev için bu göreve bağımlı olan görevleri say
+	for _, gorev := range gorevler {
+		baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorev.ID)
+		if err == nil {
+			for _, baglanti := range baglantilar {
+				// Eğer bu görev kaynak ise (başka görevler buna bağımlı)
+				if baglanti.KaynakID == gorev.ID {
+					buGoreveBagimliSayilari[gorev.ID]++
+				}
+			}
+		}
+	}
+
 	// Her görev için hesaplanan değerleri ata
 	for _, gorev := range gorevler {
 		if count, exists := bagimliSayilari[gorev.ID]; exists {
@@ -105,15 +124,28 @@ func (iy *IsYonetici) GorevListele(durum, sirala, filtre string) ([]*Gorev, erro
 			gorev.TamamlanmamisBagimlilikSayisi = count
 		}
 
-		// BuGoreveBagimliSayisi hesaplaması şimdilik 0 olarak bırakılıyor
-		// Gerçek kullanımda bu önemli değilse, performans için skip edilebilir
-		gorev.BuGoreveBagimliSayisi = 0
+		if count, exists := buGoreveBagimliSayilari[gorev.ID]; exists {
+			gorev.BuGoreveBagimliSayisi = count
+		}
 	}
 
 	return gorevler, nil
 }
 
 func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
+	// Validate status values
+	validStatuses := []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"}
+	isValidStatus := false
+	for _, validStatus := range validStatuses {
+		if durum == validStatus {
+			isValidStatus = true
+			break
+		}
+	}
+	if !isValidStatus {
+		return fmt.Errorf("geçersiz durum: %s. Geçerli durumlar: %v", durum, validStatuses)
+	}
+
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
 		return fmt.Errorf("görev bulunamadı: %w", err)

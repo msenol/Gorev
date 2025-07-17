@@ -59,12 +59,12 @@ func TestTemplateOperations(t *testing.T) {
 		// List all templates
 		allTemplates, err := veriYonetici.TemplateListele("")
 		require.NoError(t, err)
-		assert.GreaterOrEqual(t, len(allTemplates), 4) // At least 4 default templates
+		assert.GreaterOrEqual(t, len(allTemplates), 9) // At least 9 default templates
 
 		// List by category
 		teknikTemplates, err := veriYonetici.TemplateListele("Teknik")
 		require.NoError(t, err)
-		assert.GreaterOrEqual(t, len(teknikTemplates), 2) // Bug Report and Technical Debt
+		assert.GreaterOrEqual(t, len(teknikTemplates), 4) // Bug Report, Technical Debt, Performance, Refactoring
 
 		// Verify all templates in Teknik category
 		for _, tmpl := range teknikTemplates {
@@ -89,6 +89,19 @@ func TestTemplateOperations(t *testing.T) {
 		}
 
 		err := veriYonetici.TemplateOlustur(template)
+		require.NoError(t, err)
+
+		// Create a test project
+		proje := &Proje{
+			ID:    "test-project",
+			Isim:  "Test Project",
+			Tanim: "Test project description",
+		}
+		err = veriYonetici.ProjeKaydet(proje)
+		require.NoError(t, err)
+
+		// Set as active project
+		err = veriYonetici.AktifProjeAyarla(proje.ID)
 		require.NoError(t, err)
 
 		// Create task from template
@@ -168,6 +181,19 @@ func TestTemplateOperations(t *testing.T) {
 		err := veriYonetici.TemplateOlustur(template)
 		require.NoError(t, err)
 
+		// Create a test project
+		proje := &Proje{
+			ID:    "test-project-all-fields",
+			Isim:  "Test Project All Fields",
+			Tanim: "Test project for all field types",
+		}
+		err = veriYonetici.ProjeKaydet(proje)
+		require.NoError(t, err)
+
+		// Set as active project
+		err = veriYonetici.AktifProjeAyarla(proje.ID)
+		require.NoError(t, err)
+
 		// Create task with all field types
 		degerler := map[string]string{
 			"title":        "Test Task",
@@ -205,7 +231,7 @@ func TestDefaultTemplates(t *testing.T) {
 	// Verify all default templates exist
 	templates, err := veriYonetici.TemplateListele("")
 	require.NoError(t, err)
-	assert.Len(t, templates, 4)
+	assert.Len(t, templates, 9)
 
 	// Check each template
 	templateNames := make(map[string]bool)
@@ -217,6 +243,11 @@ func TestDefaultTemplates(t *testing.T) {
 	assert.True(t, templateNames["Özellik İsteği"])
 	assert.True(t, templateNames["Teknik Borç"])
 	assert.True(t, templateNames["Araştırma Görevi"])
+	assert.True(t, templateNames["Bug Raporu v2"])
+	assert.True(t, templateNames["Spike Araştırma"])
+	assert.True(t, templateNames["Performans Sorunu"])
+	assert.True(t, templateNames["Güvenlik Düzeltmesi"])
+	assert.True(t, templateNames["Refactoring"])
 
 	// Verify template categories
 	categories := make(map[string]int)
@@ -224,9 +255,11 @@ func TestDefaultTemplates(t *testing.T) {
 		categories[tmpl.Kategori]++
 	}
 
-	assert.Equal(t, 2, categories["Teknik"])
-	assert.Equal(t, 1, categories["Özellik"])
-	assert.Equal(t, 1, categories["Araştırma"])
+	assert.Equal(t, 4, categories["Teknik"])    // Bug Raporu, Teknik Borç, Performans Sorunu, Refactoring
+	assert.Equal(t, 1, categories["Özellik"])   // Özellik İsteği
+	assert.Equal(t, 2, categories["Araştırma"]) // Araştırma Görevi, Spike Araştırma
+	assert.Equal(t, 1, categories["Bug"])       // Bug Raporu v2
+	assert.Equal(t, 1, categories["Güvenlik"])  // Güvenlik Düzeltmesi
 
 	// Test creating duplicate templates (should not error due to UNIQUE constraint handling)
 	err = veriYonetici.VarsayilanTemplateleriOlustur()
@@ -235,5 +268,5 @@ func TestDefaultTemplates(t *testing.T) {
 	// Verify no duplicates were created
 	templates, err = veriYonetici.TemplateListele("")
 	require.NoError(t, err)
-	assert.Len(t, templates, 4) // Still only 4 templates
+	assert.Len(t, templates, 9) // Still only 9 templates
 }
