@@ -75,3 +75,5 @@ gorev-test
 temp/
 # Release artifacts
 gorev-mcpserver/release-*/
+*.sha256
+*.vsix
