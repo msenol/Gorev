@@ -2,11 +2,28 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 11 July 2025
+## Last Updated: 17 July 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
 ### Recent Changes
+
+#### MCP Server (v0.10.2) - MCP Debug System & TypeScript Fix (17 July 2025)
+- **Enhanced MCP Debug System**: Added comprehensive CLI commands for debugging MCP server functionality
+  - `gorev mcp list` - List all available MCP tools
+  - `gorev mcp call <tool> <args>` - Direct tool invocation for testing
+  - Enhanced debugging capabilities with detailed MCP communication logging
+- **VS Code Extension v0.4.6**: Published to marketplace with TypeScript dependency fixes
+  - Fixed TypeScript version compatibility issue (5.7.0 → 5.8.3)
+  - Fixed npm compilation paths and dependencies
+  - Resolved WSL symlink permission errors with `--no-bin-links` flag
+  - Enhanced duplicate detection logging with context
+  - Added toggle for "Show All Projects" feature
+- **Release Management**: Complete v0.10.2 release with all platform binaries
+  - Updated installation scripts to default to v0.10.2
+  - Created comprehensive release notes with all changes
+  - Published GitHub release with checksums and binaries
+  - Updated README.md and version references across all files
 
 #### MCP Server (v0.10.1) - Critical Pagination Fix
 - **Fixed Duplicate Task Display Issue** (11 July 2025):
@@ -466,6 +483,8 @@ The server implements 25 MCP tools:
 All tools follow the pattern in `internal/mcp/handlers.go` and are registered in `RegisterTools()`. Task descriptions support full markdown formatting.
 
 **Auto-State Management**: When `gorev_detay` is called, tasks automatically transition from "beklemede" to "devam_ediyor" status to reflect AI interaction.
+
+**Template System**: As of v0.10.0, the `gorev_olustur` tool is deprecated. All task creation must use templates via `templateden_gorev_olustur`.
 
 ## Testing Strategy
 
