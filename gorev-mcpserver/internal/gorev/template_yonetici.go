@@ -311,6 +311,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "ui_ux", Tip: "text", Zorunlu: false},
 				{Isim: "ilgili", Tip: "text", Zorunlu: false},
 				{Isim: "efor", Tip: "select", Zorunlu: false, Secenekler: []string{"küçük", "orta", "büyük"}},
+				{Isim: "son_tarih", Tip: "date", Zorunlu: false},
 				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "orta", Secenekler: []string{"dusuk", "orta", "yuksek"}},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "özellik"},
 			},

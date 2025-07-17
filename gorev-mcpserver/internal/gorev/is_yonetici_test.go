@@ -156,6 +156,42 @@ func (m *MockVeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error)
 	return result, nil
 }
 
+func (m *MockVeriYonetici) BulkBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	// Simple mock implementation
+	result := make(map[string]int)
+	for _, id := range gorevIDs {
+		// Count total dependencies - tasks that this task depends on
+		count := 0
+		for _, b := range m.baglantilar {
+			if b.HedefID == id && b.BaglantiTip == "onceki" { // This task depends on the source task
+				count++
+			}
+		}
+		result[id] = count
+	}
+	return result, nil
+}
+
+func (m *MockVeriYonetici) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	// Simple mock implementation
+	result := make(map[string]int)
+	for _, id := range gorevIDs {
+		// Count uncompleted dependencies - tasks that this task depends on
+		count := 0
+		for _, b := range m.baglantilar {
+			if b.HedefID == id && b.BaglantiTip == "onceki" { // This task depends on the source task
+				if kaynakGorev, exists := m.gorevler[b.KaynakID]; exists {
+					if kaynakGorev.Durum != "tamamlandi" {
+						count++
+					}
+				}
+			}
+		}
+		result[id] = count
+	}
+	return result, nil
+}
+
 func (m *MockVeriYonetici) Kapat() error {
 	return nil
 }
@@ -181,7 +217,7 @@ func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
 func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 	var result []*Baglanti
 	for _, b := range m.baglantilar {
-		if b.KaynakID == gorevID {
+		if b.KaynakID == gorevID || b.HedefID == gorevID {
 			result = append(result, b)
 		}
 	}
@@ -444,7 +480,7 @@ func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
 		{
 			name:      "update existing task",
 			gorevID:   "existing-task",
-			yeniDurum: "devam-ediyor",
+			yeniDurum: "devam_ediyor",
 			wantErr:   false,
 		},
 		{
@@ -1041,17 +1077,17 @@ func TestIsYonetici_GorevListele_WithDependencyCounts(t *testing.T) {
 	// task1 depends on task2 (completed)
 	mockVeri.baglantilar = append(mockVeri.baglantilar, &Baglanti{
 		ID:          "dep1",
-		KaynakID:    "task1",
-		HedefID:     "task2",
-		BaglantiTip: "bagimli",
+		KaynakID:    "task2",
+		HedefID:     "task1",
+		BaglantiTip: "onceki",
 	})
 
 	// task3 depends on task1 (not completed)
 	mockVeri.baglantilar = append(mockVeri.baglantilar, &Baglanti{
 		ID:          "dep2",
-		KaynakID:    "task3",
-		HedefID:     "task1",
-		BaglantiTip: "bagimli",
+		KaynakID:    "task1",
+		HedefID:     "task3",
+		BaglantiTip: "onceki",
 	})
 
 	// Get tasks with dependency counts

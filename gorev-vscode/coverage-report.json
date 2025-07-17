@@ -1,0 +1,153 @@
+{
+  "timestamp": "2025-07-17T20:50:44.055Z",
+  "coverage": 100,
+  "total": 36,
+  "tested": 36,
+  "untested": [],
+  "tests": [
+    {
+      "source": "commands/debugCommands.ts",
+      "test": "unit/debugCommands.test.js"
+    },
+    {
+      "source": "commands/enhancedGorevCommands.ts",
+      "test": "unit/enhancedGorevCommands.test.js"
+    },
+    {
+      "source": "commands/filterCommands.ts",
+      "test": "unit/filterCommands.test.js"
+    },
+    {
+      "source": "commands/gorevCommands.ts",
+      "test": "integration/extension.test.js"
+    },
+    {
+      "source": "commands/index.ts",
+      "test": "runTest.js"
+    },
+    {
+      "source": "commands/inlineEditCommands.ts",
+      "test": "unit/inlineEditCommands.test.js"
+    },
+    {
+      "source": "commands/mcpDebugCommands.ts",
+      "test": "unit/mcpDebugCommands.test.js"
+    },
+    {
+      "source": "commands/projeCommands.ts",
+      "test": "unit/projeCommands.test.js"
+    },
+    {
+      "source": "commands/templateCommands.ts",
+      "test": "unit/templateCommands.test.js"
+    },
+    {
+      "source": "debug/debugConfig.ts",
+      "test": "unit/debugConfig.test.js"
+    },
+    {
+      "source": "debug/testDataSeeder.ts",
+      "test": "unit/debugCommands.test.js"
+    },
+    {
+      "source": "debug/testDataSeederWithTemplates.ts",
+      "test": "unit/testDataSeederWithTemplates.test.js"
+    },
+    {
+      "source": "extension.ts",
+      "test": "fixtures/createTestData.js"
+    },
+    {
+      "source": "mcp/client.ts",
+      "test": "unit/debugCommands.test.js"
+    },
+    {
+      "source": "models/common.ts",
+      "test": "unit/dragDropController.test.js"
+    },
+    {
+      "source": "models/gorev.ts",
+      "test": "e2e/workflow.test.js"
+    },
+    {
+      "source": "models/proje.ts",
+      "test": "e2e/workflow.test.js"
+    },
+    {
+      "source": "models/template.ts",
+      "test": "e2e/workflow.test.js"
+    },
+    {
+      "source": "models/treeModels.ts",
+      "test": "unit/dragDropController.test.js"
+    },
+    {
+      "source": "providers/decorationProvider.ts",
+      "test": "unit/decorationProvider.test.js"
+    },
+    {
+      "source": "providers/dragDropController.ts",
+      "test": "unit/dragDropController.test.js"
+    },
+    {
+      "source": "providers/enhancedGorevTreeProvider.ts",
+      "test": "unit/enhancedGorevTreeProvider.test.js"
+    },
+    {
+      "source": "providers/gorevTreeProvider.ts",
+      "test": "integration/extension.test.js"
+    },
+    {
+      "source": "providers/groupingStrategy.ts",
+      "test": "unit/groupingStrategy.test.js"
+    },
+    {
+      "source": "providers/inlineEditProvider.ts",
+      "test": "unit/inlineEditCommands.test.js"
+    },
+    {
+      "source": "providers/projeTreeProvider.ts",
+      "test": "unit/debugCommands.test.js"
+    },
+    {
+      "source": "providers/templateTreeProvider.ts",
+      "test": "unit/debugCommands.test.js"
+    },
+    {
+      "source": "ui/filterToolbar.ts",
+      "test": "unit/filterCommands.test.js"
+    },
+    {
+      "source": "ui/statusBar.ts",
+      "test": "unit/debugCommands.test.js"
+    },
+    {
+      "source": "ui/taskDetailPanel.ts",
+      "test": "unit/taskDetailPanel.test.js"
+    },
+    {
+      "source": "ui/templateWizard.ts",
+      "test": "unit/templateCommands.test.js"
+    },
+    {
+      "source": "utils/config.ts",
+      "test": "integration/extension.test.js"
+    },
+    {
+      "source": "utils/constants.ts",
+      "test": "unit/inlineEditCommands.test.js"
+    },
+    {
+      "source": "utils/dragDropTypes.ts",
+      "test": "unit/utils.test.js"
+    },
+    {
+      "source": "utils/logger.ts",
+      "test": "unit/debugCommands.test.js"
+    },
+    {
+      "source": "utils/markdownParser.ts",
+      "test": "unit/markdownParser.test.js"
+    }
+  ]
+}

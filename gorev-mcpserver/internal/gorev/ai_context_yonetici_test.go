@@ -215,6 +215,22 @@ func (m *MockVeriYoneticiAI) VarsayilanTemplateleriOlustur() error {
 	return args.Error(0)
 }
 
+func (m *MockVeriYoneticiAI) BulkBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	args := m.Called(gorevIDs)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]int), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	args := m.Called(gorevIDs)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]int), args.Error(1)
+}
+
 func (m *MockVeriYoneticiAI) Kapat() error {
 	args := m.Called()
 	return args.Error(0)

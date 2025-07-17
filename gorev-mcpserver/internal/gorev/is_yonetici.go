@@ -532,6 +532,15 @@ func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
 			return fmt.Errorf("yeni üst görev bulunamadı: %w", err)
 		}
 
+		// Circular dependency kontrolü
+		circular, err := iy.veriYonetici.DaireBagimliligiKontrolEt(gorevID, yeniParentID)
+		if err != nil {
+			return fmt.Errorf("dairesel bağımlılık kontrolü başarısız: %w", err)
+		}
+		if circular {
+			return fmt.Errorf("dairesel bağımlılık tespit edildi")
+		}
+
 		// Alt görev ve üst görev aynı projede olmalı
 		if gorev.ProjeID != parent.ProjeID {
 			return fmt.Errorf("alt görev ve üst görev aynı projede olmalı")

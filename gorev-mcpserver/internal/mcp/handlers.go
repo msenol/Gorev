@@ -23,8 +23,12 @@ type Handlers struct {
 }
 
 func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
-	// Create AI context manager using the same data manager
-	aiContextYonetici := gorev.YeniAIContextYonetici(isYonetici.VeriYonetici())
+	var aiContextYonetici *gorev.AIContextYonetici
+
+	// Create AI context manager using the same data manager if isYonetici is not nil
+	if isYonetici != nil {
+		aiContextYonetici = gorev.YeniAIContextYonetici(isYonetici.VeriYonetici())
+	}
 
 	return &Handlers{
 		isYonetici:        isYonetici,
@@ -521,7 +525,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	for _, kokGorev := range gorevlerToShow {
 		metin += h.gorevHiyerarsiYazdirVeIsaretle(kokGorev, gorevMap, 0, tumProjeler || aktifProje == nil, shownGorevIDs)
 	}
-	
+
 	// REMOVED: Orphan checking logic
 	// Artık sadece root görevleri paginate ediyoruz
 	// Alt görevler her zaman parent'larıyla birlikte gösterilecek
@@ -613,7 +617,7 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 // ProjeOlustur yeni bir proje oluşturur
 func (h *Handlers) ProjeOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	isim, ok := params["isim"].(string)
-	if !ok || isim == "" {
+	if !ok || strings.TrimSpace(isim) == "" {
 		return mcp.NewToolResultError("isim parametresi gerekli"), nil
 	}
 
@@ -668,6 +672,12 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		proje, err := h.isYonetici.ProjeGetir(gorev.ProjeID)
 		if err == nil {
 			metin += fmt.Sprintf("\n- **Proje:** %s", proje.Isim)
+		}
+	}
+	if gorev.ParentID != "" {
+		parent, err := h.isYonetici.GorevGetir(gorev.ParentID)
+		if err == nil {
+			metin += fmt.Sprintf("\n- **Üst Görev:** %s", parent.Baslik)
 		}
 	}
 	if gorev.SonTarih != nil {
@@ -1172,7 +1182,7 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 	// Interface{} map'i string map'e çevir ve validation yap
 	degerler := make(map[string]string)
 	eksikAlanlar := []string{}
-	
+
 	// Tüm zorunlu alanları kontrol et
 	for _, alan := range template.Alanlar {
 		if val, exists := degerlerRaw[alan.Isim]; exists {
@@ -1223,7 +1233,7 @@ templateden_gorev_olustur template_id='%s' degerler={%s}`,
 					}
 				}
 				if !gecerli {
-					return mcp.NewToolResultError(fmt.Sprintf("'%s' alanı için geçersiz değer: '%s'. Geçerli değerler: %s", 
+					return mcp.NewToolResultError(fmt.Sprintf("'%s' alanı için geçersiz değer: '%s'. Geçerli değerler: %s",
 						alan.Isim, deger, strings.Join(alan.Secenekler, ", "))), nil
 				}
 			}
@@ -1242,7 +1252,7 @@ Başlık: %s
 ID: %s
 Öncelik: %s
 
-Detaylar için: gorev_detay id='%s'`, 
+Detaylar için: gorev_detay id='%s'`,
 		template.Isim, gorev.Baslik, gorev.ID, gorev.Oncelik, gorev.ID)), nil
 }
 

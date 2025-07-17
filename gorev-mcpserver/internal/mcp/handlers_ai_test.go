@@ -82,7 +82,7 @@ func TestGorevGetActive(t *testing.T) {
 	assert.False(t, result.IsError)
 
 	// Since we're using mock context, it will return nil active task
-	assert.Contains(t, getResultText(result), "Aktif görev yok")
+	assert.Contains(t, getResultText(result), "Şu anda aktif görev yok")
 }
 
 // TestGorevRecent tests the gorev_recent handler

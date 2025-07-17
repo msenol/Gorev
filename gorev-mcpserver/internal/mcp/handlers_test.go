@@ -63,12 +63,20 @@ func getResultText(result *mcp.CallToolResult) string {
 
 // extractIDFromText extracts IDs from result text using regex
 func extractTaskIDFromText(text string) string {
-	// Pattern: "✓ Görev oluşturuldu: Title (ID: task-id)"
-	re := regexp.MustCompile(`\(ID: ([^)]+)\)`)
-	matches := re.FindStringSubmatch(text)
+	// Pattern 1: "✓ Görev oluşturuldu: Title (ID: task-id)" (old format)
+	re1 := regexp.MustCompile(`\(ID: ([^)]+)\)`)
+	matches := re1.FindStringSubmatch(text)
 	if len(matches) > 1 {
 		return matches[1]
 	}
+
+	// Pattern 2: "ID: task-id" (template format)
+	re2 := regexp.MustCompile(`(?m)^ID: ([^\s]+)`)
+	matches = re2.FindStringSubmatch(text)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+
 	return ""
 }
 
@@ -128,8 +136,28 @@ func callTool(t *testing.T, handlers *Handlers, toolName string, params map[stri
 // Test cases for all 16 MCP tools
 
 func TestMCPHandlers_Integration(t *testing.T) {
-	_, handlers, cleanup := setupTestEnvironment(t)
+	// Setup test environment with templates
+	tempDB := "test_mcp_integration_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
+	cleanup := func() {
+		os.Remove(tempDB)
+	}
 	defer cleanup()
+
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+
+	// Initialize default templates
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := YeniHandlers(isYonetici)
+
+	// Get the first available template
+	templates, err := veriYonetici.TemplateListele("")
+	require.NoError(t, err)
+	require.NotEmpty(t, templates)
+	templateID := templates[0].ID
 
 	t.Run("Complete Task Lifecycle", func(t *testing.T) {
 		// 1. Create a project first
@@ -157,25 +185,38 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		assert.False(t, result.IsError)
 		assert.Contains(t, getResultText(result), "Test Projesi")
 
-		// 4. Create tasks with various parameters
+		// 4. Create tasks with various parameters (using templates)
 		taskParams := []map[string]interface{}{
 			{
 				"baslik":    "İlk Görev",
-				"aciklama":  "Test açıklaması",
+				"konu":      "Integration Testing",
+				"amac":      "Test the integration workflow",
+				"sorular":   "Does the integration work correctly?",
+				"kriterler": "All tests must pass",
 				"oncelik":   "yuksek",
 				"son_tarih": "2025-12-31",
 				"etiketler": "test,integration",
 			},
 			{
-				"baslik":   "İkinci Görev",
-				"oncelik":  "dusuk",
-				"proje_id": projectID,
+				"baslik":    "İkinci Görev",
+				"konu":      "Secondary Testing",
+				"amac":      "Test secondary functionality",
+				"sorular":   "Does secondary functionality work?",
+				"kriterler": "Secondary tests must pass",
+				"oncelik":   "dusuk",
+				"etiketler": "test,secondary",
 			},
 		}
 
 		var taskIDs []string
 		for i, params := range taskParams {
-			result = callTool(t, handlers, "gorev_olustur", params)
+			result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+				"template_id": templateID,
+				"degerler":    params,
+			})
+			if result.IsError {
+				t.Logf("Task %d creation failed: %v", i+1, getResultText(result))
+			}
 			assert.False(t, result.IsError, "Task %d creation failed", i+1)
 
 			// Extract task ID from text content
@@ -189,8 +230,8 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		result = callTool(t, handlers, "gorev_listele", map[string]interface{}{})
 		assert.False(t, result.IsError)
 		listContentText := getResultText(result)
-		assert.Contains(t, listContentText, "İlk Görev")
-		assert.Contains(t, listContentText, "İkinci Görev")
+		assert.Contains(t, listContentText, "Integration Testing")
+		assert.Contains(t, listContentText, "Secondary Testing")
 
 		// 6. List tasks by status
 		result = callTool(t, handlers, "gorev_listele", map[string]interface{}{
@@ -209,7 +250,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 			"id": taskIDs[0],
 		})
 		assert.False(t, result.IsError)
-		assert.Contains(t, getResultText(result), "İlk Görev")
+		assert.Contains(t, getResultText(result), "Integration Testing")
 
 		// 9. Update task status
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
@@ -221,7 +262,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		// 10. Edit task properties
 		result = callTool(t, handlers, "gorev_duzenle", map[string]interface{}{
 			"id":      taskIDs[1],
-			"baslik":  "İkinci Görev (Güncellendi)",
+			"baslik":  "Secondary Testing (Updated)",
 			"oncelik": "yuksek",
 		})
 		assert.False(t, result.IsError)
@@ -239,7 +280,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 			"proje_id": projectID,
 		})
 		assert.False(t, result.IsError)
-		assert.Contains(t, getResultText(result), "İlk Görev")
+		assert.Contains(t, getResultText(result), "Integration Testing")
 
 		// 13. List all projects
 		result = callTool(t, handlers, "proje_listele", map[string]interface{}{})
@@ -379,8 +420,28 @@ func TestMCPHandlers_TemplateIntegration(t *testing.T) {
 }
 
 func TestMCPHandlers_ProjectManagement(t *testing.T) {
-	_, handlers, cleanup := setupTestEnvironment(t)
+	// Setup test environment with templates
+	tempDB := "test_mcp_proj_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
+	cleanup := func() {
+		os.Remove(tempDB)
+	}
 	defer cleanup()
+
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+
+	// Initialize default templates
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := YeniHandlers(isYonetici)
+
+	// Get the first available template
+	templates, err := veriYonetici.TemplateListele("")
+	require.NoError(t, err)
+	require.NotEmpty(t, templates)
+	templateID := templates[0].ID
 
 	t.Run("Project Lifecycle", func(t *testing.T) {
 		// Create multiple projects
@@ -414,8 +475,16 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 		assert.False(t, result.IsError)
 
 		// Create tasks in the active project
-		result = callTool(t, handlers, "gorev_olustur", map[string]interface{}{
-			"baslik": "Proje A Görevi",
+		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+			"template_id": templateID,
+			"degerler": map[string]interface{}{
+				"baslik":    "Proje A Görevi",
+				"konu":      "Project A Research",
+				"amac":      "Test project A functionality",
+				"sorular":   "Does project A work correctly?",
+				"kriterler": "All project A tests must pass",
+				"oncelik":   "orta",
+			},
 		})
 		assert.False(t, result.IsError)
 
@@ -424,7 +493,7 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 			"proje_id": projectIDs[0],
 		})
 		assert.False(t, result.IsError)
-		assert.Contains(t, getResultText(result), "Proje A Görevi")
+		assert.Contains(t, getResultText(result), "Project A Research")
 
 		// Switch active project
 		result = callTool(t, handlers, "proje_aktif_yap", map[string]interface{}{
@@ -449,17 +518,74 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 }
 
 func TestMCPHandlers_TaskDependencies(t *testing.T) {
-	_, handlers, cleanup := setupTestEnvironment(t)
+	// Setup test environment with templates
+	tempDB := "test_mcp_dep_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
+	cleanup := func() {
+		os.Remove(tempDB)
+	}
 	defer cleanup()
+
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+
+	// Initialize default templates
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	// Create and set active project
+	proje := &gorev.Proje{
+		ID:    "test-dep-project",
+		Isim:  "Test Dependency Project",
+		Tanim: "Test project for dependencies",
+	}
+	err = veriYonetici.ProjeKaydet(proje)
+	require.NoError(t, err)
+	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	require.NoError(t, err)
+
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := YeniHandlers(isYonetici)
+
+	// Get the first available template
+	templates, err := veriYonetici.TemplateListele("")
+	require.NoError(t, err)
+	require.NotEmpty(t, templates)
+	templateID := templates[0].ID
 
 	t.Run("Task Dependencies", func(t *testing.T) {
 		// Create tasks
-		tasks := []string{"Görev 1", "Görev 2", "Görev 3"}
+		tasks := []map[string]interface{}{
+			{
+				"baslik":    "Görev 1",
+				"konu":      "Task 1 Research",
+				"amac":      "Complete task 1",
+				"sorular":   "Is task 1 complete?",
+				"kriterler": "Task 1 criteria",
+				"oncelik":   "yuksek",
+			},
+			{
+				"baslik":    "Görev 2",
+				"konu":      "Task 2 Research",
+				"amac":      "Complete task 2",
+				"sorular":   "Is task 2 complete?",
+				"kriterler": "Task 2 criteria",
+				"oncelik":   "orta",
+			},
+			{
+				"baslik":    "Görev 3",
+				"konu":      "Task 3 Research",
+				"amac":      "Complete task 3",
+				"sorular":   "Is task 3 complete?",
+				"kriterler": "Task 3 criteria",
+				"oncelik":   "dusuk",
+			},
+		}
 		var taskIDs []string
 
-		for _, baslik := range tasks {
-			result := callTool(t, handlers, "gorev_olustur", map[string]interface{}{
-				"baslik": baslik,
+		for _, taskData := range tasks {
+			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+				"template_id": templateID,
+				"degerler":    taskData,
 			})
 			assert.False(t, result.IsError)
 
@@ -548,8 +674,39 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		t.Skip("Skipping performance test in short mode")
 	}
 
-	_, handlers, cleanup := setupTestEnvironment(t)
+	// Setup test environment with templates
+	tempDB := "test_mcp_perf_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
+	cleanup := func() {
+		os.Remove(tempDB)
+	}
 	defer cleanup()
+
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	require.NoError(t, err)
+
+	// Initialize default templates
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	// Create and set active project
+	proje := &gorev.Proje{
+		ID:    "test-perf-project",
+		Isim:  "Test Performance Project",
+		Tanim: "Test project for performance testing",
+	}
+	err = veriYonetici.ProjeKaydet(proje)
+	require.NoError(t, err)
+	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	require.NoError(t, err)
+
+	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	handlers := YeniHandlers(isYonetici)
+
+	// Get the first available template
+	templates, err := veriYonetici.TemplateListele("")
+	require.NoError(t, err)
+	require.NotEmpty(t, templates)
+	templateID := templates[0].ID
 
 	t.Run("Bulk Operations", func(t *testing.T) {
 		// Create multiple tasks quickly
@@ -557,9 +714,20 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		start := time.Now()
 
 		for i := 0; i < taskCount; i++ {
-			result := callTool(t, handlers, "gorev_olustur", map[string]interface{}{
-				"baslik": fmt.Sprintf("Performance Test Task %d", i),
+			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
+				"template_id": templateID,
+				"degerler": map[string]interface{}{
+					"baslik":    fmt.Sprintf("Performance Test Task %d", i),
+					"konu":      "Performance Testing",
+					"amac":      "Test system performance",
+					"sorular":   "How fast can we create tasks?",
+					"kriterler": "Speed and accuracy",
+					"oncelik":   "orta",
+				},
 			})
+			if result.IsError {
+				t.Logf("Task creation failed: %v", getResultText(result))
+			}
 			assert.False(t, result.IsError)
 		}
 
@@ -663,6 +831,17 @@ func TestTemplateHandlers(t *testing.T) {
 		defer os.Remove("test_template_bug.db")
 
 		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		// Create and set active project
+		proje := &gorev.Proje{
+			ID:    "test-bug-project",
+			Isim:  "Test Bug Project",
+			Tanim: "Test project for bug reports",
+		}
+		err = veriYonetici.ProjeKaydet(proje)
+		require.NoError(t, err)
+		err = veriYonetici.AktifProjeAyarla(proje.ID)
 		require.NoError(t, err)
 
 		// Get bug report template ID
@@ -772,7 +951,7 @@ func TestTemplateHandlers(t *testing.T) {
 		assert.True(t, result.IsError)
 
 		text := getResultText(result)
-		assert.Contains(t, text, "zorunlu alan eksik")
+		assert.Contains(t, text, "Zorunlu alanlar eksik")
 	})
 
 	t.Run("Create Task From Template - Invalid Template ID", func(t *testing.T) {
@@ -824,7 +1003,15 @@ func TestTemplateHandlers(t *testing.T) {
 			"tanim": "Mobile application project",
 		})
 		assert.False(t, projectResult.IsError)
+
+		// Get project ID and set as active
 		projectID := extractProjectIDFromText(getResultText(projectResult))
+		require.NotEmpty(t, projectID)
+
+		activeResult := callTool(t, handlers, "proje_aktif_yap", map[string]interface{}{
+			"proje_id": projectID,
+		})
+		assert.False(t, activeResult.IsError)
 
 		// Create task from feature request template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
@@ -868,6 +1055,17 @@ func TestTemplateHandlers(t *testing.T) {
 		defer os.Remove("test_template_tech_debt.db")
 
 		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		require.NoError(t, err)
+
+		// Create and set active project
+		proje := &gorev.Proje{
+			ID:    "test-tech-debt-project",
+			Isim:  "Test Tech Debt Project",
+			Tanim: "Test project for technical debt",
+		}
+		err = veriYonetici.ProjeKaydet(proje)
+		require.NoError(t, err)
+		err = veriYonetici.AktifProjeAyarla(proje.ID)
 		require.NoError(t, err)
 
 		// Get technical debt template ID
@@ -994,6 +1192,17 @@ func TestTemplateConcurrency(t *testing.T) {
 	err = veriYonetici.VarsayilanTemplateleriOlustur()
 	require.NoError(t, err)
 
+	// Create and set active project for template tests
+	proje := &gorev.Proje{
+		ID:    "test-concurrent-project",
+		Isim:  "Test Concurrent Project",
+		Tanim: "Test project for concurrent operations",
+	}
+	err = veriYonetici.ProjeKaydet(proje)
+	require.NoError(t, err)
+	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	require.NoError(t, err)
+
 	// Get bug report template ID
 	templates, err := veriYonetici.TemplateListele("Teknik")
 	require.NoError(t, err)
@@ -1069,7 +1278,7 @@ func TestGorevOlusturDeprecated(t *testing.T) {
 		// Should not return a Go error, but should return an MCP error result
 		assert.NoError(t, err)
 		assert.True(t, result.IsError)
-		
+
 		// Verify the error message contains template requirement information
 		assert.Contains(t, getResultText(result), "gorev_olustur artık kullanılmıyor")
 		assert.Contains(t, getResultText(result), "Template kullanımı zorunludur")
@@ -1126,7 +1335,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		// 1. List available templates
 		templatesResult := callTool(t, handlers, "template_listele", map[string]interface{}{})
 		assert.False(t, templatesResult.IsError)
-		
+
 		templatesText := getResultText(templatesResult)
 		assert.Contains(t, templatesText, "Bug Raporu")
 		assert.Contains(t, templatesText, "Özellik İsteği")
@@ -1149,7 +1358,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		projectText := getResultText(projectResult)
 		projectID := extractProjectIDFromText(projectText)
 		require.NotEmpty(t, projectID)
-		
+
 		setActiveResult := callTool(t, handlers, "proje_aktif_yap", map[string]interface{}{
 			"proje_id": projectID,
 		})
@@ -1159,19 +1368,19 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		taskResult := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			"template_id": bugTemplateID,
 			"degerler": map[string]interface{}{
-				"baslik":   "Login API fails with 500 error",
-				"aciklama": "Users cannot login due to server error",
-				"modul":    "Authentication",
-				"ortam":    "production",
-				"adimlar":  "1. Go to login page\n2. Enter valid credentials\n3. Click login",
-				"beklenen": "User should be logged in successfully",
-				"mevcut":   "Server returns 500 internal server error",
-				"oncelik":  "yuksek",
+				"baslik":    "Login API fails with 500 error",
+				"aciklama":  "Users cannot login due to server error",
+				"modul":     "Authentication",
+				"ortam":     "production",
+				"adimlar":   "1. Go to login page\n2. Enter valid credentials\n3. Click login",
+				"beklenen":  "User should be logged in successfully",
+				"mevcut":    "Server returns 500 internal server error",
+				"oncelik":   "yuksek",
 				"etiketler": "bug,login,critical",
 			},
 		})
 		assert.False(t, taskResult.IsError)
-		
+
 		taskText := getResultText(taskResult)
 		assert.Contains(t, taskText, "Login API fails with 500 error")
 		assert.Contains(t, taskText, "ID:")

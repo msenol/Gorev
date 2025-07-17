@@ -341,8 +341,22 @@ func TestGorevUstDegistir(t *testing.T) {
 	_, handlers, cleanup := setupTestEnvironment(t)
 	defer cleanup()
 
+	// Create test project
+	projectResult, err := handlers.ProjeOlustur(map[string]interface{}{
+		"isim":  "Test Project",
+		"tanim": "Test project for hierarchy tests",
+	})
+	require.NoError(t, err)
+	projectID := extractProjectIDFromText(getResultText(projectResult))
+
+	// Set as active project
+	_, err = handlers.AktifProjeAyarla(map[string]interface{}{
+		"proje_id": projectID,
+	})
+	require.NoError(t, err)
+
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
 	require.NoError(t, err)
 
 	// Get template IDs
@@ -361,6 +375,9 @@ func TestGorevUstDegistir(t *testing.T) {
 		},
 	})
 	parent1ID := extractTaskIDFromText(getResultText(parent1Result))
+	if parent1ID == "" {
+		t.Fatalf("Failed to extract parent1 ID from: %s", getResultText(parent1Result))
+	}
 
 	parent2Result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		"template_id": featureTemplateID,
@@ -374,6 +391,9 @@ func TestGorevUstDegistir(t *testing.T) {
 		},
 	})
 	parent2ID := extractTaskIDFromText(getResultText(parent2Result))
+	if parent2ID == "" {
+		t.Fatalf("Failed to extract parent2 ID from: %s", getResultText(parent2Result))
+	}
 
 	// Create a subtask under parent1
 	subtaskResult, _ := handlers.GorevAltGorevOlustur(map[string]interface{}{
@@ -382,6 +402,9 @@ func TestGorevUstDegistir(t *testing.T) {
 		"aciklama":  "This will be moved",
 	})
 	subtaskID := extractTaskIDFromText(getResultText(subtaskResult))
+	if subtaskID == "" {
+		t.Fatalf("Failed to extract subtask ID from: %s", getResultText(subtaskResult))
+	}
 
 	// Create a deep subtask for circular dependency test
 	deepSubtaskResult, _ := handlers.GorevAltGorevOlustur(map[string]interface{}{
@@ -389,6 +412,12 @@ func TestGorevUstDegistir(t *testing.T) {
 		"baslik":    "Deep subtask",
 	})
 	deepSubtaskID := extractTaskIDFromText(getResultText(deepSubtaskResult))
+	if deepSubtaskID == "" {
+		t.Fatalf("Failed to extract deep subtask ID from: %s", getResultText(deepSubtaskResult))
+	}
+
+	// Debug: Print hierarchy for verification
+	t.Logf("Test hierarchy: parent1ID=%s, subtaskID=%s, deepSubtaskID=%s", parent1ID, subtaskID, deepSubtaskID)
 
 	tests := []struct {
 		name        string
@@ -397,18 +426,18 @@ func TestGorevUstDegistir(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "move to different parent",
-			params: map[string]interface{}{
-				"gorev_id":       subtaskID,
-				"yeni_parent_id": parent2ID,
-			},
-			expectError: false,
-		},
-		{
 			name: "move to root level",
 			params: map[string]interface{}{
 				"gorev_id":       subtaskID,
 				"yeni_parent_id": "",
+			},
+			expectError: false,
+		},
+		{
+			name: "move to different parent",
+			params: map[string]interface{}{
+				"gorev_id":       subtaskID,
+				"yeni_parent_id": parent2ID,
 			},
 			expectError: false,
 		},
@@ -439,13 +468,21 @@ func TestGorevUstDegistir(t *testing.T) {
 			errorMsg:    "görev bulunamadı",
 		},
 		{
+			name: "move back to original parent",
+			params: map[string]interface{}{
+				"gorev_id":       subtaskID,
+				"yeni_parent_id": parent1ID,
+			},
+			expectError: false,
+		},
+		{
 			name: "circular dependency - parent to its child",
 			params: map[string]interface{}{
 				"gorev_id":       parent1ID,
 				"yeni_parent_id": deepSubtaskID,
 			},
 			expectError: true,
-			errorMsg:    "dairesel bağımlılık",
+			errorMsg:    "dairesel bağımlılık tespit edildi",
 		},
 		{
 			name: "self as parent",
@@ -454,15 +491,7 @@ func TestGorevUstDegistir(t *testing.T) {
 				"yeni_parent_id": subtaskID,
 			},
 			expectError: true,
-			errorMsg:    "kendisinin alt görevi olamaz",
-		},
-		{
-			name: "move back to original parent",
-			params: map[string]interface{}{
-				"gorev_id":       subtaskID,
-				"yeni_parent_id": parent1ID,
-			},
-			expectError: false,
+			errorMsg:    "dairesel bağımlılık tespit edildi",
 		},
 	}
 
@@ -497,8 +526,22 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 	_, handlers, cleanup := setupTestEnvironment(t)
 	defer cleanup()
 
+	// Create test project
+	projectResult, err := handlers.ProjeOlustur(map[string]interface{}{
+		"isim":  "Test Project",
+		"tanim": "Test project for hierarchy tests",
+	})
+	require.NoError(t, err)
+	projectID := extractProjectIDFromText(getResultText(projectResult))
+
+	// Set as active project
+	_, err = handlers.AktifProjeAyarla(map[string]interface{}{
+		"proje_id": projectID,
+	})
+	require.NoError(t, err)
+
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
 	require.NoError(t, err)
 
 	// Get template ID
@@ -517,6 +560,9 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 		},
 	})
 	rootID := extractTaskIDFromText(getResultText(rootResult))
+	if rootID == "" {
+		t.Fatalf("Failed to extract root ID from: %s", getResultText(rootResult))
+	}
 
 	// Create subtasks
 	sub1Result, _ := handlers.GorevAltGorevOlustur(map[string]interface{}{
@@ -960,38 +1006,56 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 	_, handlers, cleanup := setupTestEnvironment(t)
 	defer cleanup()
 
+	// Create test project
+	projectResult, err := handlers.ProjeOlustur(map[string]interface{}{
+		"isim":  "Test Project",
+		"tanim": "Test project for active task tests",
+	})
+	require.NoError(t, err)
+	projectID := extractProjectIDFromText(getResultText(projectResult))
+
+	// Set as active project
+	_, err = handlers.AktifProjeAyarla(map[string]interface{}{
+		"proje_id": projectID,
+	})
+	require.NoError(t, err)
+
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
 	require.NoError(t, err)
 
 	// Test when no active task is set
 	result, err := handlers.GorevGetActive(map[string]interface{}{})
 	require.NoError(t, err)
 	text := getResultText(result)
-	assert.Contains(t, text, "Aktif görev yok")
+	assert.Contains(t, text, "Şu anda aktif görev yok")
 
-	// Get template ID
-	bugTemplateID := getTemplateIDByName(t, handlers, "Bug Raporu")
+	// Get template ID (use simple research template)
+	researchTemplateID := getTemplateIDByName(t, handlers, "Araştırma Görevi")
 
 	// Create and set an active task
 	taskResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": bugTemplateID,
+		"template_id": researchTemplateID,
 		"degerler": map[string]interface{}{
-			"baslik":   "Active Bug",
-			"aciklama": "Test",
-			"oncelik":  "yuksek",
-			"modul":    "core",
-			"ortam":    "production",
-			"adimlar":  "steps",
-			"beklenen": "expected",
-			"mevcut":   "actual",
+			"baslik":     "Active Bug",
+			"aciklama":   "Test research task for active testing",
+			"oncelik":    "yuksek",
+			"konu":       "testing",
+			"amac":       "test research",
+			"sorular":    "how to test?",
+			"kriterler":  "success criteria",
 		},
 	})
 	taskID := extractTaskIDFromText(getResultText(taskResult))
+	if taskID == "" {
+		t.Fatalf("Failed to extract task ID from: %s", getResultText(taskResult))
+	}
+	t.Logf("Created task with ID: %s", taskID)
 
 	// Set as active
-	_, err = handlers.GorevSetActive(map[string]interface{}{"task_id": taskID})
+	setActiveResult, err := handlers.GorevSetActive(map[string]interface{}{"task_id": taskID})
 	require.NoError(t, err)
+	t.Logf("Set active result: %s", getResultText(setActiveResult))
 
 	// Test with active task
 	result, err = handlers.GorevGetActive(map[string]interface{}{})

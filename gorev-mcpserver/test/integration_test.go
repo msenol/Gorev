@@ -40,19 +40,45 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 
-	// Test: Görev oluştur
-	params := map[string]interface{}{
-		"baslik":    "Test görevi",
-		"aciklama":  "Bu bir test görevidir",
-		"oncelik":   "yuksek",
-		"son_tarih": "2025-07-15",
+	// Varsayılan template'leri oluştur
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	// Test projesi oluştur
+	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Test açıklaması")
+	require.NoError(t, err)
+
+	// Projeyi aktif yap
+	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	require.NoError(t, err)
+
+	// Test: Template listesini kontrol et
+	templates, err := veriYonetici.TemplateListele("")
+	require.NoError(t, err)
+	t.Logf("Available templates: %d", len(templates))
+	for _, tmpl := range templates {
+		t.Logf("Template: %s", tmpl.ID)
 	}
 
-	result, err := handlers.GorevOlustur(params)
+	// Test: Template ile görev oluştur (gorev_olustur artık deprecated)
+	// İlk template'i kullan (research template)
+	templateID := templates[0].ID
+	params := map[string]interface{}{
+		"template_id": templateID,
+		"degerler": map[string]interface{}{
+			"konu":      "Test görevi",
+			"amac":      "Bu bir test görevidir",
+			"sorular":   "Test soruları",
+			"kriterler": "Test kriterleri",
+			"oncelik":   "yuksek",
+		},
+	}
+
+	result, err := handlers.TemplatedenGorevOlustur(params)
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
 	text := extractText(t, result)
-	assert.Contains(t, text, "✓ Görev oluşturuldu")
+	assert.Contains(t, text, "✓ Template kullanılarak görev oluşturuldu")
 	assert.Contains(t, text, "Test görevi")
 
 	// Test: Görevleri listele (sıralama ve filtreleme ile)
@@ -64,7 +90,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	assert.False(t, listResult.IsError)
 	listText := extractText(t, listResult)
 	assert.Contains(t, listText, "Test görevi")
-	assert.Contains(t, listText, "yuksek öncelik")
+	assert.Contains(t, listText, "Y") // Compact format for "yuksek" priority
 }
 
 func TestGorevDurumGuncelle(t *testing.T) {
@@ -172,7 +198,7 @@ func TestHataYonetimi(t *testing.T) {
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 
-	// Test: Başlıksız görev oluşturma
+	// Test: Deprecated GorevOlustur method
 	params := map[string]interface{}{
 		"aciklama": "Başlıksız görev",
 	}
@@ -181,7 +207,7 @@ func TestHataYonetimi(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, result.IsError)
 	text := extractText(t, result)
-	assert.Contains(t, text, "başlık parametresi gerekli")
+	assert.Contains(t, text, "gorev_olustur artık kullanılmıyor")
 
 	// Test: Geçersiz ID ile güncelleme
 	updateParams := map[string]interface{}{
@@ -403,13 +429,13 @@ func TestProjeGorevleri(t *testing.T) {
 	assert.False(t, result.IsError)
 
 	gorevlerText := extractText(t, result)
-	assert.Contains(t, gorevlerText, "## Test Projesi - Görevler")
-	assert.Contains(t, gorevlerText, "### 🔵 Devam Ediyor")
-	assert.Contains(t, gorevlerText, "**Devam Eden Görev** (yuksek öncelik)")
-	assert.Contains(t, gorevlerText, "### ⚪ Beklemede")
-	assert.Contains(t, gorevlerText, "**Bekleyen Görev** (orta öncelik)")
-	assert.Contains(t, gorevlerText, "### ✅ Tamamlandı")
-	assert.Contains(t, gorevlerText, "~~Tamamlanan Görev~~ (dusuk öncelik)")
+	assert.Contains(t, gorevlerText, "Test Projesi (3 görev)")
+	assert.Contains(t, gorevlerText, "🔵 Devam Ediyor")
+	assert.Contains(t, gorevlerText, "**Devam Eden Görev** (Y)")
+	assert.Contains(t, gorevlerText, "⚪ Beklemede")
+	assert.Contains(t, gorevlerText, "**Bekleyen Görev** (O)")
+	assert.Contains(t, gorevlerText, "✅ Tamamlandı")
+	assert.Contains(t, gorevlerText, "~~Tamamlanan Görev~~")
 }
 
 func TestGorevBagimlilikEkle(t *testing.T) {
