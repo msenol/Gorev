@@ -2,7 +2,7 @@
 
 Bu dokümanda Gorev MCP Server'ın sunduğu tüm araçların detaylı açıklamaları bulunmaktadır.
 
-## 📋 Araç Listesi (Toplam: 19)
+## 📋 Araç Listesi (Toplam: 25)
 
 ### Görev Yönetimi
 
