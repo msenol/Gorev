@@ -73,3 +73,5 @@ gorev-test
 # Local Claude configuration
 .claude/
 temp/
+# Release artifacts
+gorev-mcpserver/release-*/
