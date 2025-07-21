@@ -336,6 +336,12 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 - 🎨 [VS Code Extension](docs/user-guide/vscode-extension.md) - Extension documentation
 - 🚀 **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** - Extension'ı indir
 
+### AI Assistant Documentation
+- 🤖 [CLAUDE.md](CLAUDE.md) - Turkish AI assistant guidance
+- 🌍 [CLAUDE.en.md](CLAUDE.en.md) - English AI assistant guidance
+- 📋 [MCP Tools Reference](docs/MCP_TOOLS_REFERENCE.md) - Detailed MCP tool documentation
+- 📚 [Development History](docs/DEVELOPMENT_HISTORY.md) - Complete project history
+
 ## 🏗 Mimari
 
 ### Proje Yapısı

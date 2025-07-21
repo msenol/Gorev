@@ -191,6 +191,12 @@ For detailed documentation, see the [docs/](docs/) folder:
 - 💻 [Contributing Guide](docs/development/contributing.md) - How to contribute
 - 🎨 [VS Code Extension](docs/user-guide/vscode-extension.md) - Extension documentation
 
+### AI Assistant Documentation
+- 🌍 [CLAUDE.en.md](CLAUDE.en.md) - English AI assistant guidance
+- 🤖 [CLAUDE.md](CLAUDE.md) - Turkish AI assistant guidance
+- 📋 [MCP Tools Reference](docs/MCP_TOOLS_REFERENCE.md) - Detailed MCP tool documentation
+- 📚 [Development History](docs/DEVELOPMENT_HISTORY.md) - Complete project history
+
 ## 🏗 Architecture
 
 ### Project Structure
