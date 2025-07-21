@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2025-07-21 - Documentation Optimization Release
+
+### Added
+- **📚 Enhanced Documentation Structure**
+  - Added `CLAUDE.en.md` - English version for international developers
+  - Added `docs/DEVELOPMENT_HISTORY.md` - Complete project history archive
+  - Added `docs/MCP_TOOLS_REFERENCE.md` - Detailed MCP tools documentation
+  - Added "AI Assistant Documentation" section to README files
+
+### Changed
+- **🎯 CLAUDE.md Token Optimization**
+  - Reduced from ~40KB to 8KB for Claude Code token efficiency
+  - Restructured to focus on essential development guidance only
+  - Moved detailed history and tool documentation to separate files
+- **📖 Improved Cross-References**
+  - Enhanced README.md and README.en.md with proper documentation links
+  - Better navigation between Turkish and English documentation
+  - Modular documentation structure for improved maintainability
+
+### Technical Details
+- Documentation restructuring improves Claude Code performance by reducing token usage
+- Maintains complete information in separate, focused files
+- No functional changes to codebase - documentation-only release
+
 ## [0.11.0] - 2025-07-21 - Full Internationalization Release
 
 ### Added
