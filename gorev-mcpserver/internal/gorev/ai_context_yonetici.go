@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // AIInteraction represents a single AI interaction with a task
@@ -55,7 +57,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	// Validate task exists
 	gorev, err := acy.veriYonetici.GorevGetir(taskID)
 	if err != nil {
-		return fmt.Errorf("görev bulunamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.taskNotFoundAi", map[string]interface{}{"Error": err}))
 	}
 
 	// Get current context
@@ -82,19 +84,19 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 
 	// Save context
 	if err := acy.saveContext(context); err != nil {
-		return fmt.Errorf("context kaydetme hatası: %w", err)
+		return fmt.Errorf(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Record interaction
 	if err := acy.recordInteraction(taskID, "set_active", nil); err != nil {
-		return fmt.Errorf("interaction kaydetme hatası: %w", err)
+		return fmt.Errorf(i18n.T("error.interactionSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Auto-transition to "devam_ediyor" if task is in "beklemede"
 	if gorev.Durum == "beklemede" {
 		gorev.Durum = "devam_ediyor"
 		if err := acy.veriYonetici.GorevGuncelle(gorev); err != nil {
-			return fmt.Errorf("durum güncelleme hatası: %w", err)
+			return fmt.Errorf(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
 
@@ -212,7 +214,7 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 	if gorev.Durum == "beklemede" {
 		gorev.Durum = "devam_ediyor"
 		if err := acy.veriYonetici.GorevGuncelle(gorev); err != nil {
-			return fmt.Errorf("otomatik durum güncelleme hatası: %w", err)
+			return fmt.Errorf(i18n.T("error.autoStatusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 		// Record the state change
 		if err := acy.recordInteraction(taskID, "updated", map[string]interface{}{

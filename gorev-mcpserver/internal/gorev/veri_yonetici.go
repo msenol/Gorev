@@ -12,6 +12,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 type VeriYonetici struct {
@@ -35,7 +36,7 @@ func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, erro
 func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	driver, err := sqlite3.WithInstance(vy.db, &sqlite3.Config{})
 	if err != nil {
-		return fmt.Errorf("migration driver oluşturulamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.migrationDriverFailed", map[string]interface{}{"Error": err}))
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
@@ -44,7 +45,7 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 		driver,
 	)
 	if err != nil {
-		return fmt.Errorf("migration instance oluşturulamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.migrationInstanceFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Hata ayıklama için versiyonları logla
@@ -278,10 +279,10 @@ func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket,
 			// Etiket yok, oluştur
 			etiket.ID = uuid.New().String()
 			if _, err := stmtInsert.Exec(etiket.ID, etiket.Isim); err != nil {
-				return nil, fmt.Errorf("yeni etiket oluşturulamadı '%s': %w", etiket.Isim, err)
+				return nil, fmt.Errorf(i18n.T("error.tagCreateFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
 			}
 		} else if err != nil {
-			return nil, fmt.Errorf("etiket sorgulanamadı '%s': %w", etiket.Isim, err)
+			return nil, fmt.Errorf(i18n.T("error.tagQueryFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
 		}
 		etiketler = append(etiketler, etiket)
 	}
@@ -310,7 +311,7 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 
 	for _, etiket := range etiketler {
 		if _, err := stmt.Exec(gorevID, etiket.ID); err != nil {
-			return fmt.Errorf("görev etiketi eklenemedi '%s': %w", etiket.Isim, err)
+			return fmt.Errorf(i18n.T("error.taskTagAddFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
 		}
 	}
 
@@ -413,7 +414,7 @@ func (vy *VeriYonetici) GorevSil(id string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("görev bulunamadı")
+		return fmt.Errorf(i18n.T("error.taskNotFound"))
 	}
 
 	return nil

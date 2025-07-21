@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 	"github.com/msenol/gorev/internal/mcp"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +15,7 @@ var (
 	version   = "dev"
 	buildTime = "unknown"
 	gitCommit = "unknown"
+	langFlag  string
 )
 
 // getMigrationsPath returns the correct path to migrations folder
@@ -167,25 +169,66 @@ func getDatabasePath() string {
 	return "gorev.db"
 }
 
+// detectLanguage detects the language preference from environment variables and CLI flags
+func detectLanguage() string {
+	// Priority 1: CLI flag (if we're processing it)
+	if langFlag != "" {
+		return langFlag
+	}
+
+	// Priority 2: GOREV_LANG environment variable
+	if lang := os.Getenv("GOREV_LANG"); lang != "" {
+		if lang == "en" || lang == "tr" {
+			return lang
+		}
+	}
+
+	// Priority 3: LANG environment variable (partial detection)
+	if lang := os.Getenv("LANG"); lang != "" {
+		if lang[:2] == "tr" {
+			return "tr"
+		}
+		if lang[:2] == "en" {
+			return "en"
+		}
+	}
+
+	// Default to Turkish
+	return "tr"
+}
+
 func main() {
+	// Initialize i18n system
+	lang := detectLanguage()
+	if err := i18n.Initialize(lang); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to initialize i18n: %v\n", err)
+	}
+
 	rootCmd := &cobra.Command{
 		Use:   "gorev",
-		Short: "Güçlü ve esnek görev yönetimi MCP sunucusu",
+		Short: i18n.T("cli.appDescription"),
 		Long: `Gorev, Model Context Protocol (MCP) üzerinden AI asistanlarına
 görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 	}
 
 	serveCmd := &cobra.Command{
 		Use:   "serve",
-		Short: "MCP sunucusunu başlat",
+		Short: i18n.T("cli.serve"),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Re-initialize i18n if language flag was provided
+			if langFlag != "" {
+				if err := i18n.SetLanguage(langFlag); err != nil {
+					return fmt.Errorf("failed to set language to %s: %w", langFlag, err)
+				}
+			}
 			return runServer()
 		},
 	}
+	serveCmd.PersistentFlags().StringVar(&langFlag, "lang", "", "Language preference (tr, en)")
 
 	versionCmd := &cobra.Command{
 		Use:   "version",
-		Short: "Versiyon bilgisini göster",
+		Short: i18n.T("cli.version"),
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("Gorev %s\n", version)
 			fmt.Printf("Build Time: %s\n", buildTime)
@@ -196,13 +239,13 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 	// Template komutları
 	templateCmd := &cobra.Command{
 		Use:   "template",
-		Short: "Görev template'leri yönetimi",
-		Long:  "Görev oluşturmak için kullanılabilecek template'leri listele ve yönet",
+		Short: i18n.T("cli.template"),
+		Long:  i18n.T("cli.templateDescription"),
 	}
 
 	templateListCmd := &cobra.Command{
 		Use:   "list [kategori]",
-		Short: "Kullanılabilir template'leri listele",
+		Short: i18n.T("cli.templateList"),
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var kategori string
@@ -215,7 +258,7 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 
 	templateShowCmd := &cobra.Command{
 		Use:   "show <template-id>",
-		Short: "Template detaylarını göster",
+		Short: i18n.T("cli.templateShow"),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showTemplate(args[0])
@@ -224,7 +267,7 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 
 	templateInitCmd := &cobra.Command{
 		Use:   "init",
-		Short: "Varsayılan template'leri yeniden oluştur",
+		Short: i18n.T("cli.templateInit"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return initTemplates()
 		},
@@ -247,7 +290,7 @@ func runServer() error {
 	// Veritabanını başlat
 	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
 	if err != nil {
-		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.dataManagerInit", map[string]interface{}{"Error": err}))
 	}
 	defer veriYonetici.Kapat()
 
@@ -257,13 +300,13 @@ func runServer() error {
 	// MCP sunucusunu başlat
 	sunucu, err := mcp.YeniMCPSunucu(isYonetici)
 	if err != nil {
-		return fmt.Errorf("MCP sunucusu oluşturulamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.mcpServerCreate", map[string]interface{}{"Error": err}))
 	}
 
 	// Sunucuyu çalıştır
 	// fmt.Fprintln(os.Stderr, "Gorev MCP sunucusu başlatılıyor...")
 	if err := mcp.ServeSunucu(sunucu); err != nil {
-		return fmt.Errorf("sunucu başlatılamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.serverStart", map[string]interface{}{"Error": err}))
 	}
 
 	return nil

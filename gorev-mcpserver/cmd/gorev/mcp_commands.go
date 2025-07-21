@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 	"github.com/msenol/gorev/internal/mcp"
 	"github.com/spf13/cobra"
 )
@@ -18,12 +19,12 @@ var debugMode bool
 func createMCPCommand() *cobra.Command {
 	mcpCmd := &cobra.Command{
 		Use:   "mcp",
-		Short: "MCP araçlarını test et",
-		Long:  "MCP (Model Context Protocol) araçlarını doğrudan komut satırından test etmek için kullanılır.",
+		Short: i18n.T("cli.mcpTest"),
+		Long:  i18n.T("cli.mcpDescription"),
 	}
 
 	// Global debug flag
-	mcpCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Debug modunu etkinleştir")
+	mcpCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, i18n.T("cli.debug"))
 
 	// Add subcommands
 	mcpCmd.AddCommand(
@@ -42,7 +43,7 @@ func createMCPCommand() *cobra.Command {
 func createMCPListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "Kullanılabilir MCP araçlarını listele",
+		Short: i18n.T("cli.list"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get database and migrations paths
 			dbPath := getDatabasePath()
@@ -56,19 +57,19 @@ func createMCPListCommand() *cobra.Command {
 			// Initialize managers
 			veriYonetici, err := gorev.YeniVeriYonetici(dbPath, migrationsPath)
 			if err != nil {
-				return fmt.Errorf("veri yönetici oluşturulamadı: %w", err)
+				return fmt.Errorf(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
 			}
 			defer veriYonetici.Kapat()
 
 			// Get registered tools
 			tools := mcp.ListTools()
 
-			fmt.Println("Kullanılabilir MCP Araçları:")
+			fmt.Println(i18n.T("display.availableTools"))
 			fmt.Println("=" + strings.Repeat("=", 50))
 
 			for _, tool := range tools {
 				fmt.Printf("\n%s\n", tool.Name)
-				fmt.Printf("  Açıklama: %s\n", tool.Description)
+				fmt.Printf("  %s\n", i18n.T("display.toolDescription", map[string]interface{}{"Description": tool.Description}))
 
 				if tool.InputSchema != nil {
 					// Parse schema to show parameters
@@ -107,7 +108,7 @@ func createMCPCallCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "call <tool> [param=value...]",
-		Short: "Belirli bir MCP aracını çağır",
+		Short: i18n.T("cli.call"),
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			toolName := args[0]
@@ -141,7 +142,7 @@ func createMCPCallCommand() *cobra.Command {
 			// Initialize managers
 			veriYonetici, err := gorev.YeniVeriYonetici(dbPath, migrationsPath)
 			if err != nil {
-				return fmt.Errorf("veri yönetici oluşturulamadı: %w", err)
+				return fmt.Errorf(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
 			}
 			defer veriYonetici.Kapat()
 
@@ -151,14 +152,14 @@ func createMCPCallCommand() *cobra.Command {
 			// Call the tool
 			result, err := handlers.CallTool(toolName, params)
 			if err != nil {
-				return fmt.Errorf("araç çağrısı başarısız: %w", err)
+				return fmt.Errorf(i18n.T("error.toolCallFailed", map[string]interface{}{"Error": err}))
 			}
 
 			// Display result
 			if jsonOutput {
 				jsonData, err := json.MarshalIndent(result, "", "  ")
 				if err != nil {
-					return fmt.Errorf("JSON çıktı oluşturulamadı: %w", err)
+					return fmt.Errorf(i18n.T("error.jsonOutputFailed", map[string]interface{}{"Error": err}))
 				}
 				fmt.Println(string(jsonData))
 			} else {
@@ -183,7 +184,7 @@ func createMCPCallCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&jsonOutput, "json", false, "JSON formatında çıktı")
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, i18n.T("flags.jsonOutput"))
 	return cmd
 }
 
@@ -197,7 +198,7 @@ func createMCPListTasksCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list-tasks",
-		Short: "Görevleri listele (gorev_listele kısayolu)",
+		Short: i18n.T("cli.listTasks"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			params := make(map[string]interface{})
 			params["tum_projeler"] = allProjects
@@ -211,10 +212,10 @@ func createMCPListTasksCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&allProjects, "all-projects", true, "Tüm projelerdeki görevleri göster")
+	cmd.Flags().BoolVar(&allProjects, "all-projects", true, i18n.T("flags.allProjects"))
 	cmd.Flags().StringVar(&status, "status", "", "Durum filtresi (beklemede, devam_ediyor, tamamlandi)")
-	cmd.Flags().IntVar(&limit, "limit", 50, "Maksimum görev sayısı")
-	cmd.Flags().IntVar(&offset, "offset", 0, "Başlangıç ofseti")
+	cmd.Flags().IntVar(&limit, "limit", 50, i18n.T("flags.maxTasks"))
+	cmd.Flags().IntVar(&offset, "offset", 0, i18n.T("flags.offset"))
 
 	return cmd
 }
@@ -227,10 +228,10 @@ func createMCPCreateTaskCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create-task",
-		Short: "Yeni görev oluştur (gorev_olustur kısayolu)",
+		Short: i18n.T("cli.createTask"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if title == "" {
-				return fmt.Errorf("başlık zorunludur")
+				return fmt.Errorf(i18n.T("error.titleRequired"))
 			}
 
 			params := map[string]interface{}{
@@ -246,10 +247,10 @@ func createMCPCreateTaskCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&title, "title", "", "Görev başlığı (zorunlu)")
-	cmd.Flags().StringVar(&description, "description", "", "Görev açıklaması")
-	cmd.Flags().StringVar(&priority, "priority", "orta", "Öncelik (yuksek, orta, dusuk)")
-	cmd.Flags().StringVar(&projectID, "project", "", "Proje ID")
+	cmd.Flags().StringVar(&title, "title", "", i18n.T("flags.title"))
+	cmd.Flags().StringVar(&description, "description", "", i18n.T("flags.taskDescription"))
+	cmd.Flags().StringVar(&priority, "priority", "orta", i18n.T("flags.priority"))
+	cmd.Flags().StringVar(&projectID, "project", "", i18n.T("flags.projectId"))
 
 	return cmd
 }
@@ -257,7 +258,7 @@ func createMCPCreateTaskCommand() *cobra.Command {
 func createMCPTaskDetailCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "task-detail <task-id>",
-		Short: "Görev detayını göster (gorev_detay kısayolu)",
+		Short: i18n.T("cli.showTask"),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			params := map[string]interface{}{
@@ -271,7 +272,7 @@ func createMCPTaskDetailCommand() *cobra.Command {
 func createMCPProjectsCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "projects",
-		Short: "Projeleri listele (proje_listele kısayolu)",
+		Short: i18n.T("cli.listProjects"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return callMCPTool("proje_listele", map[string]interface{}{})
 		},

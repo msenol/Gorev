@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 type IsYonetici struct {
@@ -27,7 +28,7 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 	if sonTarihStr != "" {
 		t, err := time.Parse("2006-01-02", sonTarihStr)
 		if err != nil {
-			return nil, fmt.Errorf("geçersiz son tarih formatı (YYYY-AA-GG olmalı): %w", err)
+			return nil, fmt.Errorf(i18n.T("error.invalidDateFormat", map[string]interface{}{"Error": err}))
 		}
 		sonTarih = &t
 	}
@@ -45,16 +46,16 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf("görev kaydedilemedi: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.taskSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	if len(etiketIsimleri) > 0 {
 		etiketler, err := iy.veriYonetici.EtiketleriGetirVeyaOlustur(etiketIsimleri)
 		if err != nil {
-			return nil, fmt.Errorf("etiketler işlenemedi: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
 		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
-			return nil, fmt.Errorf("görev etiketleri ayarlanamadı: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.taskTagsSetFailed", map[string]interface{}{"Error": err}))
 		}
 		gorev.Etiketler = etiketler
 	}
@@ -143,23 +144,23 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 		}
 	}
 	if !isValidStatus {
-		return fmt.Errorf("geçersiz durum: %s. Geçerli durumlar: %v", durum, validStatuses)
+		return fmt.Errorf(i18n.T("error.invalidStatus", map[string]interface{}{"Status": durum, "ValidStatuses": validStatuses}))
 	}
 
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf("görev bulunamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	// Eğer görev "devam_ediyor" durumuna geçiyorsa, bağımlılıkları kontrol et
 	if durum == "devam_ediyor" && gorev.Durum == "beklemede" {
 		bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(id)
 		if err != nil {
-			return fmt.Errorf("bağımlılık kontrolü başarısız: %w", err)
+			return fmt.Errorf(i18n.T("error.dependencyCheckFailed", map[string]interface{}{"Error": err}))
 		}
 
 		if !bagimli {
-			return fmt.Errorf("bu görev başlatılamaz, önce şu görevler tamamlanmalı: %v", tamamlanmamislar)
+			return fmt.Errorf(i18n.T("error.taskCannotStartDependencies", map[string]interface{}{"Dependencies": tamamlanmamislar}))
 		}
 	}
 
@@ -167,12 +168,12 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	if durum == "tamamlandi" && gorev.Durum != "tamamlandi" {
 		altGorevler, err := iy.veriYonetici.AltGorevleriGetir(id)
 		if err != nil {
-			return fmt.Errorf("alt görevler kontrol edilemedi: %w", err)
+			return fmt.Errorf(i18n.T("error.subtasksCheckFailed", map[string]interface{}{"Error": err}))
 		}
 
 		for _, altGorev := range altGorevler {
 			if altGorev.Durum != "tamamlandi" {
-				return fmt.Errorf("bu görev tamamlanamaz, önce tüm alt görevler tamamlanmalı")
+				return fmt.Errorf(i18n.T("error.taskCannotCompleteSubtasks"))
 			}
 		}
 	}
@@ -202,7 +203,7 @@ func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 func (iy *IsYonetici) GorevGetir(id string) (*Gorev, error) {
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return nil, fmt.Errorf("görev bulunamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
 	}
 	return gorev, nil
 }
@@ -210,7 +211,7 @@ func (iy *IsYonetici) GorevGetir(id string) (*Gorev, error) {
 func (iy *IsYonetici) ProjeGetir(id string) (*Proje, error) {
 	proje, err := iy.veriYonetici.ProjeGetir(id)
 	if err != nil {
-		return nil, fmt.Errorf("proje bulunamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.projectNotFound", map[string]interface{}{"Error": err}))
 	}
 	return proje, nil
 }
@@ -219,7 +220,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 	// Önce mevcut görevi al
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf("görev bulunamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	// Sadece belirtilen alanları güncelle
@@ -237,7 +238,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 		if gorev.ProjeID != projeID {
 			altGorevler, err := iy.veriYonetici.TumAltGorevleriGetir(id)
 			if err != nil {
-				return fmt.Errorf("alt görevler alınamadı: %w", err)
+				return fmt.Errorf(i18n.T("error.subtasksFetchFailed", map[string]interface{}{"Error": err}))
 			}
 
 			// Tüm alt görevlerin projesini güncelle
@@ -245,7 +246,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 				altGorev.ProjeID = projeID
 				altGorev.GuncellemeTarih = time.Now()
 				if err := iy.veriYonetici.GorevGuncelle(altGorev); err != nil {
-					return fmt.Errorf("alt görev güncellenemedi: %w", err)
+					return fmt.Errorf(i18n.T("error.subtaskUpdateFailed", map[string]interface{}{"Error": err}))
 				}
 			}
 		}
@@ -272,7 +273,7 @@ func (iy *IsYonetici) GorevSil(id string) error {
 	// Önce görevin var olduğunu kontrol et
 	_, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf("görev bulunamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	// Alt görevleri kontrol et
@@ -282,7 +283,7 @@ func (iy *IsYonetici) GorevSil(id string) error {
 	}
 
 	if len(altGorevler) > 0 {
-		return fmt.Errorf("bu görev silinemez, önce %d alt görev silinmeli", len(altGorevler))
+		return fmt.Errorf(i18n.T("error.taskHasSubtasksCannotDelete", map[string]interface{}{"Count": len(altGorevler)}))
 	}
 
 	return iy.veriYonetici.GorevSil(id)
@@ -481,7 +482,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	if sonTarihStr != "" {
 		t, err := time.Parse("2006-01-02", sonTarihStr)
 		if err != nil {
-			return nil, fmt.Errorf("geçersiz son tarih formatı (YYYY-AA-GG olmalı): %w", err)
+			return nil, fmt.Errorf(i18n.T("error.invalidDateFormat", map[string]interface{}{"Error": err}))
 		}
 		sonTarih = &t
 	}
@@ -506,7 +507,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	if len(etiketIsimleri) > 0 {
 		etiketler, err := iy.veriYonetici.EtiketleriGetirVeyaOlustur(etiketIsimleri)
 		if err != nil {
-			return nil, fmt.Errorf("etiketler işlenemedi: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
 		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
 			return nil, fmt.Errorf("etiketler ayarlanamadı: %w", err)
@@ -522,7 +523,7 @@ func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
 	// Görevi kontrol et
 	gorev, err := iy.veriYonetici.GorevGetir(gorevID)
 	if err != nil {
-		return fmt.Errorf("görev bulunamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	// Yeni parent varsa kontrol et

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // TemplateOlustur yeni bir görev template'i oluşturur
@@ -17,13 +18,13 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 	// Alanları JSON'a çevir
 	alanlarJSON, err := json.Marshal(template.Alanlar)
 	if err != nil {
-		return fmt.Errorf("alanlar JSON'a çevrilemedi: %w", err)
+		return fmt.Errorf(i18n.T("error.fieldsJsonFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Örnek değerleri JSON'a çevir
 	ornekDegerlerJSON, err := json.Marshal(template.OrnekDegerler)
 	if err != nil {
-		return fmt.Errorf("örnek değerler JSON'a çevrilemedi: %w", err)
+		return fmt.Errorf(i18n.T("error.exampleValuesJsonFailed", map[string]interface{}{"Error": err}))
 	}
 
 	sorgu := `INSERT INTO gorev_templateleri 
@@ -35,7 +36,7 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 		string(alanlarJSON), string(ornekDegerlerJSON), template.Kategori, template.Aktif)
 
 	if err != nil {
-		return fmt.Errorf("template oluşturulamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.templateCreateFailed", map[string]interface{}{"Error": err}))
 	}
 
 	return nil
@@ -72,7 +73,7 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 			&template.VarsayilanBaslik, &template.AciklamaTemplate,
 			&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
 		if err != nil {
-			return nil, fmt.Errorf("template okunamadı: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.templateReadFailed", map[string]interface{}{"Error": err}))
 		}
 
 		// Alanları parse et
@@ -82,7 +83,7 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 
 		// Örnek değerleri parse et
 		if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
-			return nil, fmt.Errorf("örnek değerler parse edilemedi: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.exampleValuesParseFailed", map[string]interface{}{"Error": err}))
 		}
 
 		templates = append(templates, template)
@@ -107,7 +108,7 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("template bulunamadı: %s", templateID)
+			return nil, fmt.Errorf(i18n.T("error.templateNotFoundId", map[string]interface{}{"Id": templateID}))
 		}
 		return nil, fmt.Errorf("template getirilemedi: %w", err)
 	}
@@ -119,7 +120,7 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 
 	// Örnek değerleri parse et
 	if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
-		return nil, fmt.Errorf("örnek değerler parse edilemedi: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.exampleValuesParseFailed", map[string]interface{}{"Error": err}))
 	}
 
 	return template, nil
@@ -137,7 +138,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 	for _, alan := range template.Alanlar {
 		if alan.Zorunlu {
 			if _, ok := degerler[alan.Isim]; !ok {
-				return nil, fmt.Errorf("zorunlu alan eksik: %s", alan.Isim)
+				return nil, fmt.Errorf(i18n.T("error.requiredFieldMissing", map[string]interface{}{"Field": alan.Isim}))
 			}
 		}
 	}
@@ -208,19 +209,19 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 	// Görevi kaydet
 	err = vy.GorevKaydet(gorev)
 	if err != nil {
-		return nil, fmt.Errorf("görev kaydedilemedi: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.taskSaveFromTemplateFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Etiketleri ayarla
 	if len(etiketler) > 0 {
 		etiketNesneleri, err := vy.EtiketleriGetirVeyaOlustur(etiketler)
 		if err != nil {
-			return nil, fmt.Errorf("etiketler oluşturulamadı: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.tagsCreateFromTemplateFailed", map[string]interface{}{"Error": err}))
 		}
 
 		err = vy.GorevEtiketleriniAyarla(gorev.ID, etiketNesneleri)
 		if err != nil {
-			return nil, fmt.Errorf("görev etiketleri ayarlanamadı: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.taskTagsSetFromTemplateFailed", map[string]interface{}{"Error": err}))
 		}
 
 		gorev.Etiketler = etiketNesneleri
@@ -650,7 +651,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		if err := vy.TemplateOlustur(template); err != nil {
 			// Template zaten varsa hata verme
 			if !strings.Contains(err.Error(), "UNIQUE constraint") {
-				return fmt.Errorf("varsayılan template oluşturulamadı (%s): %w", template.Isim, err)
+				return fmt.Errorf(i18n.T("error.defaultTemplateCreateFailed", map[string]interface{}{"Template": template.Isim, "Error": err}))
 			}
 		}
 	}

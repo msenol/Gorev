@@ -7,6 +7,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // min returns the minimum of two integers
@@ -93,7 +94,7 @@ func (h *Handlers) gorevOzetYazdir(g *gorev.Gorev) string {
 		}
 		details = append(details, strings.Join(etiketler, ","))
 	} else if len(g.Etiketler) > 2 {
-		details = append(details, fmt.Sprintf("%d etiket", len(g.Etiketler)))
+		details = append(details, i18n.T("messages.tagCount", map[string]interface{}{"Count": len(g.Etiketler)}))
 	}
 
 	if g.TamamlanmamisBagimlilikSayisi > 0 {
@@ -167,12 +168,12 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 	if projeGoster && gorev.ProjeID != "" {
 		proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
 		if proje != nil {
-			details = append(details, fmt.Sprintf("Proje: %s", proje.Isim))
+			details = append(details, i18n.T("messages.projectLabel", map[string]interface{}{"Name": proje.Isim}))
 		}
 	}
 
 	if gorev.SonTarih != nil {
-		details = append(details, fmt.Sprintf("Tarih: %s", gorev.SonTarih.Format("02/01")))
+		details = append(details, i18n.T("messages.dateLabel", map[string]interface{}{"Date": gorev.SonTarih.Format("02/01")}))
 	}
 
 	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= 3 {
@@ -180,9 +181,9 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 		for i, etiket := range gorev.Etiketler {
 			etiketIsimleri[i] = etiket.Isim
 		}
-		details = append(details, fmt.Sprintf("Etiket: %s", strings.Join(etiketIsimleri, ",")))
+		details = append(details, i18n.T("messages.tagLabel", map[string]interface{}{"Tags": strings.Join(etiketIsimleri, ",")}))
 	} else if len(gorev.Etiketler) > 3 {
-		details = append(details, fmt.Sprintf("Etiket: %d adet", len(gorev.Etiketler)))
+		details = append(details, i18n.T("messages.tagCountLabel", map[string]interface{}{"Count": len(gorev.Etiketler)}))
 	}
 
 	// Bağımlılık bilgileri - sadece varsa ve sıfırdan büyükse
@@ -274,12 +275,12 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 	if projeGoster && gorev.ProjeID != "" {
 		proje, _ := h.isYonetici.ProjeGetir(gorev.ProjeID)
 		if proje != nil {
-			details = append(details, fmt.Sprintf("Proje: %s", proje.Isim))
+			details = append(details, i18n.T("messages.projectLabel", map[string]interface{}{"Name": proje.Isim}))
 		}
 	}
 
 	if gorev.SonTarih != nil {
-		details = append(details, fmt.Sprintf("Tarih: %s", gorev.SonTarih.Format("02/01")))
+		details = append(details, i18n.T("messages.dateLabel", map[string]interface{}{"Date": gorev.SonTarih.Format("02/01")}))
 	}
 
 	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= 3 {
@@ -289,7 +290,7 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 		}
 		details = append(details, fmt.Sprintf("Etiket: %s", strings.Join(etiketIsimleri, ", ")))
 	} else if len(gorev.Etiketler) > 3 {
-		details = append(details, fmt.Sprintf("Etiket: %d adet", len(gorev.Etiketler)))
+		details = append(details, i18n.T("messages.tagCountLabel", map[string]interface{}{"Count": len(gorev.Etiketler)}))
 	}
 
 	// Bağımlılık bilgileri - sadece varsa ve sıfırdan büyükse
@@ -403,7 +404,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 
 	gorevler, err := h.isYonetici.GorevListele(durum, sirala, filtre)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("görevler listelenemedi: %v", err)), nil
+		return mcp.NewToolResultError(i18n.T("error.taskListFailed", map[string]interface{}{"Error": err})), nil
 	}
 
 	// DEBUG: Log görev sayısı
@@ -443,9 +444,9 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	toplamGorevSayisi := len(gorevler)
 
 	if toplamGorevSayisi == 0 {
-		mesaj := "Henüz görev bulunmuyor."
+		mesaj := i18n.T("messages.noTasks")
 		if aktifProje != nil {
-			mesaj = fmt.Sprintf("%s projesinde henüz görev bulunmuyor.", aktifProje.Isim)
+			mesaj = i18n.T("messages.noTasksInProject", map[string]interface{}{"Project": aktifProje.Isim})
 		}
 		return mcp.NewToolResultText(mesaj), nil
 	}
@@ -472,11 +473,11 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 			min(offset+limit, toplamRootGorevSayisi),
 			toplamRootGorevSayisi)
 	} else {
-		metin = fmt.Sprintf("Görevler (%d)\n", toplamRootGorevSayisi)
+		metin = i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi}) + "\n"
 	}
 
 	if aktifProje != nil && !tumProjeler {
-		metin += fmt.Sprintf("Proje: %s\n", aktifProje.Isim)
+		metin += i18n.T("messages.projectHeader", map[string]interface{}{"Name": aktifProje.Isim}) + "\n"
 	}
 	metin += "\n"
 
@@ -509,8 +510,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 
 		if estimatedSize+gorevSize > maxResponseSize && len(gorevlerToShow) > 0 {
 			// Boyut aşılacak, daha fazla görev ekleme
-			metin += fmt.Sprintf("\n*Not: Response boyut limiti nedeniyle %d görev daha var. 'offset' parametresi ile devam edebilirsiniz.*\n",
-				len(paginatedKokGorevler)-len(gorevlerToShow))
+			metin += "\n" + i18n.T("messages.sizeWarning", map[string]interface{}{"Count": len(paginatedKokGorevler) - len(gorevlerToShow)}) + "\n"
 			break
 		}
 		estimatedSize += gorevSize
@@ -537,21 +537,21 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 func (h *Handlers) AktifProjeAyarla(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	projeID, ok := params["proje_id"].(string)
 	if !ok || projeID == "" {
-		return mcp.NewToolResultError("proje_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.T("error.projectIdRequired")), nil
 	}
 
 	if err := h.isYonetici.AktifProjeAyarla(projeID); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("aktif proje ayarlanamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.T("error.activeProjectSetFailed", map[string]interface{}{"Error": err})), nil
 	}
 
 	proje, _ := h.isYonetici.ProjeGetir(projeID)
 	if proje != nil {
 		return mcp.NewToolResultText(
-			fmt.Sprintf("✓ Aktif proje ayarlandı: %s", proje.Isim),
+			i18n.T("success.activeProjectSet", map[string]interface{}{"Project": proje.Isim}),
 		), nil
 	}
 	return mcp.NewToolResultText(
-		fmt.Sprintf("✓ Aktif proje ayarlandı: %s", projeID),
+		i18n.T("success.activeProjectSet", map[string]interface{}{"Project": projeID}),
 	), nil
 }
 
@@ -822,14 +822,14 @@ func (h *Handlers) GorevSil(params map[string]interface{}) (*mcp.CallToolResult,
 func (h *Handlers) ProjeListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	projeler, err := h.isYonetici.ProjeListele()
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("projeler listelenemedi: %v", err)), nil
+		return mcp.NewToolResultError(i18n.T("error.projectListFailed", map[string]interface{}{"Error": err})), nil
 	}
 
 	if len(projeler) == 0 {
-		return mcp.NewToolResultText("Henüz proje bulunmuyor."), nil
+		return mcp.NewToolResultText(i18n.T("messages.noProjects")), nil
 	}
 
-	metin := "## Proje Listesi\n\n"
+	metin := i18n.T("headers.projectList") + "\n\n"
 	for _, proje := range projeler {
 		metin += fmt.Sprintf("### %s\n", proje.Isim)
 		metin += fmt.Sprintf("- **ID:** %s\n", proje.ID)
@@ -1109,11 +1109,11 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 
 	templates, err := h.isYonetici.TemplateListele(kategori)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("template'ler listelenemedi: %v", err)), nil
+		return mcp.NewToolResultError(i18n.T("error.templateList", map[string]interface{}{"Error": err})), nil
 	}
 
 	if len(templates) == 0 {
-		return mcp.NewToolResultText("Henüz template bulunmuyor."), nil
+		return mcp.NewToolResultText(i18n.T("messages.noTemplates")), nil
 	}
 
 	metin := "## 📋 Görev Template'leri\n\n"
