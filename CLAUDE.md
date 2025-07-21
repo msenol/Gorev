@@ -8,6 +8,38 @@ This file provides guidance to AI assistants using MCP (Model Context Protocol) 
 
 ### Recent Changes
 
+#### MCP Server (v0.11.0) - Complete Internationalization Support (21 July 2025)
+- **Full Bilingual MCP Server**: Implemented complete i18n system for Gorev MCP server
+  - Added `go-i18n/v2` library for professional internationalization support
+  - Created comprehensive translation system with Turkish (default) and English support
+  - **270+ strings converted** from hardcoded Turkish to i18n.T() function calls
+  - Language detection hierarchy: CLI flag → GOREV_LANG env → LANG env → Turkish default
+  - Dynamic language switching without server restart
+- **New Translation Infrastructure**:
+  - `internal/i18n/manager.go` - Complete translation management system
+  - `locales/tr.json` - 270+ Turkish translation keys with organized structure
+  - `locales/en.json` - Complete English translations matching Turkish functionality
+  - Template data support for dynamic values using {{.Variable}} syntax
+- **Files Internationalized**:
+  - `internal/mcp/handlers.go` - All 25 MCP tools with error messages and descriptions
+  - `internal/gorev/is_yonetici.go` - Business logic error messages
+  - `internal/gorev/template_yonetici.go` - Template system messages
+  - `internal/gorev/veri_yonetici.go` - Database operation errors
+  - `internal/gorev/ai_context_yonetici.go` - AI context management messages
+  - `cmd/gorev/main.go` - CLI command descriptions and help text
+  - `cmd/gorev/mcp_commands.go` - Debug command interfaces
+- **Language Features**:
+  - Automatic language detection from environment
+  - `--lang` CLI flag for explicit language selection (tr, en)
+  - `GOREV_LANG` environment variable support
+  - Fallback to system `LANG` environment variable
+  - All error messages, success messages, and UI text translated
+- **Compatibility**:
+  - Maintains 100% backward compatibility with existing Turkish interfaces
+  - No breaking changes to MCP tool APIs
+  - Seamless integration with existing VS Code extension
+  - Ready for international user adoption
+
 #### VS Code Extension (v0.5.0) - Complete Bilingual Support (21 July 2025)
 - **English/Turkish Localization**: Complete bilingual support for international users
   - Automatic language detection using `vscode.env.language`

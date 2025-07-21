@@ -7,7 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2025-07-21 - Full Internationalization Release
+
 ### Added
+- **🌍 Complete MCP Server Internationalization** 
+  - Added `go-i18n/v2` library for professional internationalization support
+  - **270+ strings converted** from hardcoded Turkish to internationalization system
+  - Full Turkish (default) and English language support
+  - Dynamic language switching without server restart
+  - Language detection hierarchy: CLI flag → GOREV_LANG env → LANG env → Turkish default
+
+### New Translation Infrastructure
+- **`internal/i18n/manager.go`** - Complete translation management system
+- **`locales/tr.json`** - 270+ Turkish translation keys with organized structure
+- **`locales/en.json`** - Complete English translations matching Turkish functionality
+- Template data support for dynamic values using {{.Variable}} syntax
+
+### Files Internationalized
+- **`internal/mcp/handlers.go`** - All 25 MCP tools with error messages and descriptions
+- **`internal/gorev/is_yonetici.go`** - Business logic error messages (25+ strings)
+- **`internal/gorev/template_yonetici.go`** - Template system messages (15+ strings)
+- **`internal/gorev/veri_yonetici.go`** - Database operation errors (8+ strings)
+- **`internal/gorev/ai_context_yonetici.go`** - AI context management messages (5+ strings)
+- **`cmd/gorev/main.go`** - CLI command descriptions and help text
+- **`cmd/gorev/mcp_commands.go`** - Debug command interfaces (10+ strings)
+
+### Language Features
+- **`--lang` CLI flag** for explicit language selection (tr, en)
+- **`GOREV_LANG` environment variable** support for configuration
+- **Automatic fallback** to system `LANG` environment variable
+- All error messages, success messages, and UI text translated
+- **Backward compatibility** - No breaking changes to existing Turkish interfaces
+
+### VS Code Extension Updates (from previous release)
 - **Bilingual Support (English/Turkish)** for VS Code Extension
   - Automatic language detection based on VS Code language setting
   - Complete localization of all UI strings (500+ translations)
@@ -16,10 +48,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Package.nls files for marketplace localization
 
 ### Changed
+- **MCP Server** now fully internationalized with professional i18n system
+- **Language preference** can be set via environment variables or CLI flags
+- **User experience** enhanced for international users
 - VS Code extension now supports both English and Turkish interfaces
 - All hardcoded strings replaced with localized versions using vscode.l10n.t() API
 
-## [0.11.0] - 2025-07-18 - Test Infrastructure & Stability Release
+### Technical Details
+- Added dependencies: `go-i18n/v2 v2.6.0`, `golang.org/x/text v0.23.0`
+- Maintains 100% backward compatibility
+- No breaking changes to MCP tool APIs
+- Ready for easy addition of more languages in the future
+
+## [0.10.3] - 2025-07-18 - Test Infrastructure & Stability Release
 
 ### 🚀 Major Features
 - **Circular Dependency Detection**: Added comprehensive task hierarchy circular dependency prevention

@@ -70,6 +70,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **Çoklu editör desteği** - Claude, VS Code, Windsurf, Cursor, Zed
 - **Bağlamsal anlama** - Akıllı komut yorumlama
 - **MCP standardı** - Tüm MCP uyumlu araçlarla uyumluluk
+- **🌍 Uluslararası Destek** - Türkçe ve İngilizce tam dil desteği (v0.11.0+)
 
 ### 🎨 VS Code Extension Özellikleri (Opsiyonel)
 - **İki Dil Desteği** - Türkçe ve İngilizce arayüz (v0.5.0+) 🌍
@@ -92,7 +93,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 
 # Specific version
-curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.10.0 bash
+curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.11.0 bash
 ```
 
 > **Not**: Kurulum sonrası eğer "unable to open database file" hatası alırsanız, GOREV_ROOT environment variable'ını ayarlayın:
@@ -186,12 +187,19 @@ Konfigürasyon dosyası konumları:
       "command": "/path/to/gorev-mcpserver/gorev",
       "args": ["serve"],
       "env": {
-        "GOREV_DATA_DIR": "~/.gorev"
+        "GOREV_DATA_DIR": "~/.gorev",
+        "GOREV_LANG": "tr"
       }
     }
   }
 }
 ```
+
+> **🌍 Dil Desteği**: `GOREV_LANG` environment variable ile dil seçimi:
+> - `tr` (varsayılan) - Türkçe
+> - `en` - English
+> 
+> Alternatif olarak `--lang` parametresi: `gorev serve --lang=en`
 
 </details>
 
