@@ -1037,13 +1037,13 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 	taskResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		"template_id": researchTemplateID,
 		"degerler": map[string]interface{}{
-			"baslik":     "Active Bug",
-			"aciklama":   "Test research task for active testing",
-			"oncelik":    "yuksek",
-			"konu":       "testing",
-			"amac":       "test research",
-			"sorular":    "how to test?",
-			"kriterler":  "success criteria",
+			"baslik":    "Active Bug",
+			"aciklama":  "Test research task for active testing",
+			"oncelik":   "yuksek",
+			"konu":      "testing",
+			"amac":      "test research",
+			"sorular":   "how to test?",
+			"kriterler": "success criteria",
 		},
 	})
 	taskID := extractTaskIDFromText(getResultText(taskResult))
