@@ -199,12 +199,12 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             // UI'da başarı göstergesi
             if (this.config.animateOnDrop) {
                 vscode.window.showInformationMessage(
-                    `✅ ${task.baslik} başarıyla taşındı`
+                    vscode.l10n.t('dragDrop.taskMoved', task.baslik)
                 );
             }
         } catch (error) {
             Logger.error('Drop operation failed:', error);
-            vscode.window.showErrorMessage(`Drop işlemi başarısız: ${error}`);
+            vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.dropFailed', error));
         }
     }
 
@@ -259,7 +259,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
                 await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Notification,
-                        title: `${tasks.length} görev taşınıyor...`,
+                        title: vscode.l10n.t('dragDrop.movingTasks', tasks.length.toString()),
                         cancellable: false
                     },
                     async (progress) => {
@@ -275,11 +275,11 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
                 );
 
                 vscode.window.showInformationMessage(
-                    `✅ ${tasks.length} görev başarıyla taşındı`
+                    vscode.l10n.t('dragDrop.tasksMoved', tasks.length.toString())
                 );
             } catch (error) {
                 Logger.error('Multiple drop operation failed:', error);
-                vscode.window.showErrorMessage(`İşlem başarısız: ${error}`);
+                vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.operationFailed', error));
             }
         }
     }
@@ -338,7 +338,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
      */
     private async handleTaskOnTaskDrop(sourceTask: Gorev, targetTask: Gorev): Promise<void> {
         if (sourceTask.id === targetTask.id) {
-            vscode.window.showWarningMessage('Bir görev kendisine bağımlı olamaz');
+            vscode.window.showWarningMessage(vscode.l10n.t('dragDrop.cannotSelfDepend'));
             return;
         }
 
@@ -347,17 +347,17 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
         
         if (this.config.allowParentChange) {
             options.push({ 
-                label: '$(type-hierarchy) Alt Görev Yap', 
+                label: vscode.l10n.t('dragDrop.makeSubtask'), 
                 value: 'make_subtask', 
-                description: `"${sourceTask.baslik}" görevini "${targetTask.baslik}" görevinin altına taşı` 
+                description: vscode.l10n.t('dragDrop.makeSubtaskDesc', sourceTask.baslik, targetTask.baslik) 
             });
         }
         
         if (this.config.allowDependencyCreate) {
             options.push({ 
-                label: '$(link) Bağımlılık Oluştur', 
+                label: vscode.l10n.t('dragDrop.createDependency'), 
                 value: 'create_dependency', 
-                description: `"${sourceTask.baslik}" ile "${targetTask.baslik}" arasında bağımlılık oluştur` 
+                description: vscode.l10n.t('dragDrop.createDependencyDesc', sourceTask.baslik, targetTask.baslik) 
             });
         }
 
@@ -377,7 +377,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
 
         // Birden fazla seçenek varsa kullanıcıya sor
         const action = await vscode.window.showQuickPick(options, {
-            placeHolder: 'Ne yapmak istiyorsunuz?'
+            placeHolder: vscode.l10n.t('dragDrop.whatToDo')
         });
 
         if (!action) return;
@@ -401,17 +401,17 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             });
 
             vscode.window.showInformationMessage(
-                `✅ "${task.baslik}" artık "${newParent.baslik}" görevinin alt görevi`
+                vscode.l10n.t('dragDrop.nowSubtaskOf', task.baslik, newParent.baslik)
             );
 
             Logger.info(`Task ${task.id} parent changed to ${newParent.id}`);
         } catch (error: any) {
             if (error.message?.includes('dairesel bağımlılık')) {
-                vscode.window.showErrorMessage('Bu işlem dairesel bağımlılık oluşturur!');
+                vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.circularDependency'));
             } else if (error.message?.includes('aynı projede olmalı')) {
-                vscode.window.showErrorMessage('Alt görev ve üst görev aynı projede olmalı!');
+                vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.sameProjectRequired'));
             } else {
-                vscode.window.showErrorMessage(`Parent değiştirme başarısız: ${error.message || error}`);
+                vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.parentChangeFailed', error.message || error));
             }
             throw error;
         }
@@ -428,12 +428,12 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             });
 
             vscode.window.showInformationMessage(
-                `✅ "${task.baslik}" artık bir kök görev`
+                vscode.l10n.t('dragDrop.nowRootTask', task.baslik)
             );
 
             Logger.info(`Task ${task.id} parent removed, now a root task`);
         } catch (error: any) {
-            vscode.window.showErrorMessage(`Parent kaldırma başarısız: ${error.message || error}`);
+            vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.parentRemoveFailed', error.message || error));
             throw error;
         }
     }
@@ -446,12 +446,12 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
         
         const result = await vscode.window.showQuickPick(
             [
-                { label: 'Blocks', value: 'blocks', description: `"${sourceTask.baslik}" blocks "${targetTask.baslik}"` },
-                { label: 'Depends on', value: 'depends_on', description: `"${sourceTask.baslik}" depends on "${targetTask.baslik}"` },
-                { label: 'Related to', value: 'related', description: `"${sourceTask.baslik}" is related to "${targetTask.baslik}"` }
+                { label: vscode.l10n.t('dragDrop.dependencyType.blocks'), value: 'blocks', description: vscode.l10n.t('dragDrop.dependencyType.blocksDesc', sourceTask.baslik, targetTask.baslik) },
+                { label: vscode.l10n.t('dragDrop.dependencyType.dependsOn'), value: 'depends_on', description: vscode.l10n.t('dragDrop.dependencyType.dependsOnDesc', sourceTask.baslik, targetTask.baslik) },
+                { label: vscode.l10n.t('dragDrop.dependencyType.relatedTo'), value: 'related', description: vscode.l10n.t('dragDrop.dependencyType.relatedDesc', sourceTask.baslik, targetTask.baslik) }
             ],
             {
-                placeHolder: 'Select dependency type'
+                placeHolder: vscode.l10n.t('dragDrop.selectDependencyType')
             }
         );
 
@@ -463,7 +463,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             });
 
             vscode.window.showInformationMessage(
-                `✅ Bağımlılık oluşturuldu: ${sourceTask.baslik} ${result.value} ${targetTask.baslik}`
+                vscode.l10n.t('dragDrop.dependencyCreated', sourceTask.baslik, result.value, targetTask.baslik)
             );
         }
     }

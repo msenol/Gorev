@@ -115,7 +115,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         
         if (!this.mcpClient.isConnected()) {
             Logger.warn('[EnhancedGorevTreeProvider] MCP client not connected');
-            return [new EmptyTreeViewItem('MCP sunucusuna bağlı değil')];
+            return [new EmptyTreeViewItem(vscode.l10n.t('enhancedTree.notConnected'))];
         }
 
         // Root level
@@ -128,7 +128,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 return items;
             } catch (error) {
                 Logger.error('Failed to load tasks:', error);
-                return [new EmptyTreeViewItem('Görevler yüklenemedi')];
+                return [new EmptyTreeViewItem(vscode.l10n.t('enhancedTree.loadFailed'))];
             }
         }
 
@@ -289,12 +289,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      */
     private getEmptyMessage(): string {
         if (this.config.filters.searchQuery) {
-            return `"${this.config.filters.searchQuery}" için sonuç bulunamadı`;
+            return vscode.l10n.t('enhancedTree.searchNoResults', this.config.filters.searchQuery);
         }
         if (Object.keys(this.config.filters).length > 0) {
-            return 'Filtrelere uygun görev bulunamadı';
+            return vscode.l10n.t('enhancedTree.filterNoResults');
         }
-        return 'Henüz görev yok';
+        return vscode.l10n.t('enhancedTree.noTasks');
     }
 
     /**
@@ -679,20 +679,20 @@ export class GroupTreeViewItem extends vscode.TreeItem {
     private createTooltip(completedCount: number, overdueCount: number): string {
         const lines = [
             `${this.label}`,
-            `Toplam: ${this.tasks.length} görev`,
+            vscode.l10n.t('enhancedTree.totalTasks', this.tasks.length.toString()),
         ];
 
         if (completedCount > 0) {
-            lines.push(`Tamamlanan: ${completedCount}`);
+            lines.push(vscode.l10n.t('enhancedTree.completedTasks', completedCount.toString()));
         }
 
         if (overdueCount > 0) {
-            lines.push(`Gecikmiş: ${overdueCount}`);
+            lines.push(vscode.l10n.t('enhancedTree.overdueTasks', overdueCount.toString()));
         }
 
         const highPriorityCount = this.tasks.filter(t => t.oncelik === GorevOncelik.Yuksek).length;
         if (highPriorityCount > 0) {
-            lines.push(`Yüksek öncelik: ${highPriorityCount}`);
+            lines.push(vscode.l10n.t('enhancedTree.highPriorityTasks', highPriorityCount.toString()));
         }
 
         return lines.join('\n');
@@ -919,7 +919,7 @@ export class TaskTreeViewItem extends vscode.TreeItem {
                 priorityColor = 'blue';
                 break;
         }
-        md.appendMarkdown(`**Öncelik:** ${priorityBadge} <span style="color: ${priorityColor}">${this.task.oncelik}</span>\n\n`);
+        md.appendMarkdown(`**${vscode.l10n.t('enhancedTree.priority')}** ${priorityBadge} <span style="color: ${priorityColor}">${this.task.oncelik}</span>\n\n`);
 
         // Due date with smart formatting
         if (this.task.son_tarih) {
@@ -938,13 +938,13 @@ export class TaskTreeViewItem extends vscode.TreeItem {
             
             if (this.task.durum !== GorevDurum.Tamamlandi) {
                 if (diffDays < 0) {
-                    dueDateText = `⚠️ <span style="color: red">${Math.abs(diffDays)} gün gecikmiş!</span>`;
+                    dueDateText = `⚠️ <span style="color: red">${vscode.l10n.t('enhancedTree.daysOverdue', Math.abs(diffDays).toString())}</span>`;
                 } else if (diffDays === 0) {
-                    dueDateText = `📅 <span style="color: orange">Bugün!</span>`;
+                    dueDateText = `📅 <span style="color: orange">${vscode.l10n.t('enhancedTree.today')}</span>`;
                 } else if (diffDays === 1) {
-                    dueDateText = `📅 <span style="color: orange">Yarın</span>`;
+                    dueDateText = `📅 <span style="color: orange">${vscode.l10n.t('enhancedTree.tomorrow')}</span>`;
                 } else if (diffDays <= 7) {
-                    dueDateText = `📅 ${diffDays} gün kaldı`;
+                    dueDateText = `📅 ${vscode.l10n.t('enhancedTree.daysLeft', diffDays.toString())}`;
                 }
             }
             

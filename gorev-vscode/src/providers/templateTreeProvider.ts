@@ -97,7 +97,7 @@ export class TemplateCategoryItem extends vscode.TreeItem {
   ) {
     super(category, vscode.TreeItemCollapsibleState.Expanded);
     
-    this.description = `${count} templates`;
+    this.description = vscode.l10n.t('templateTree.templates', count.toString());
     this.iconPath = new vscode.ThemeIcon(ICONS.PROJECT);
   }
 }
@@ -120,16 +120,16 @@ export class TemplateTreeItem extends vscode.TreeItem {
       this.template.isim,
       this.template.tanim,
       '',
-      'Fields:',
+      vscode.l10n.t('templateTree.fields'),
     ];
     
     this.template.alanlar.forEach((field) => {
-      const required = field.zorunlu ? ' (required)' : '';
+      const required = field.zorunlu ? ` ${vscode.l10n.t('templateTree.required')}` : '';
       lines.push(`  • ${field.isim}: ${field.tur}${required}`);
     });
     
     if (this.template.ornek_degerler && Object.keys(this.template.ornek_degerler).length > 0) {
-      lines.push('', 'Example values:');
+      lines.push('', vscode.l10n.t('templateTree.exampleValues'));
       Object.entries(this.template.ornek_degerler).forEach(([key, value]) => {
         lines.push(`  • ${key}: ${value}`);
       });

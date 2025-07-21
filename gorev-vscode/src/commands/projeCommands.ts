@@ -11,7 +11,7 @@ async function getProjectList(mcpClient: MCPClient): Promise<Proje[]> {
     const result = await mcpClient.callTool('proje_listele');
     return MarkdownParser.parseProjeListesi(result.content[0].text);
   } catch (error) {
-    console.error('Failed to get project list:', error);
+    console.error(vscode.l10n.t('project.getListFailed', error.toString()));
     return [];
   }
 }
@@ -26,11 +26,11 @@ export function registerProjeCommands(
     vscode.commands.registerCommand(COMMANDS.CREATE_PROJECT, async () => {
       try {
         const isim = await vscode.window.showInputBox({
-          prompt: 'Project name',
-          placeHolder: 'Enter project name',
+          prompt: vscode.l10n.t('project.namePrompt'),
+          placeHolder: vscode.l10n.t('project.namePlaceholder'),
           validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-              return 'Project name is required';
+              return vscode.l10n.t('project.nameRequired');
             }
             return null;
           },
@@ -39,8 +39,8 @@ export function registerProjeCommands(
         if (!isim) return;
 
         const tanim = await vscode.window.showInputBox({
-          prompt: 'Project description (optional)',
-          placeHolder: 'Enter project description',
+          prompt: vscode.l10n.t('project.descriptionPrompt'),
+          placeHolder: vscode.l10n.t('project.descriptionPlaceholder'),
         });
 
         await mcpClient.callTool('proje_olustur', {
@@ -48,10 +48,10 @@ export function registerProjeCommands(
           tanim: tanim || '',
         });
 
-        vscode.window.showInformationMessage('Project created successfully');
+        vscode.window.showInformationMessage(vscode.l10n.t('project.createdSuccess'));
         await providers.projeTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to create project: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('project.createFailed', error.toString()));
       }
     })
   );
@@ -64,18 +64,18 @@ export function registerProjeCommands(
         if (!item) {
           const projects = await getProjectList(mcpClient);
           if (projects.length === 0) {
-            vscode.window.showWarningMessage('No projects found. Create a project first.');
+            vscode.window.showWarningMessage(vscode.l10n.t('project.noProjectsFound'));
             return;
           }
 
           const selected = await vscode.window.showQuickPick(
             projects.map(p => ({
               label: p.isim,
-              description: `${p.gorev_sayisi || 0} tasks`,
+              description: vscode.l10n.t('project.taskCount', (p.gorev_sayisi || 0).toString()),
               project: p
             })),
             {
-              placeHolder: 'Select a project to activate'
+              placeHolder: vscode.l10n.t('project.selectToActivate')
             }
           );
 
@@ -84,26 +84,26 @@ export function registerProjeCommands(
           await mcpClient.callTool('proje_aktif_yap', {
             proje_id: selected.project.id,
           });
-          vscode.window.showInformationMessage(`"${selected.project.isim}" is now the active project`);
+          vscode.window.showInformationMessage(vscode.l10n.t('project.nowActive', selected.project.isim));
         } else {
           // Item provided from tree view
           if (item.isActive) {
             const deactivate = await vscode.window.showQuickPick(
-              ['Deactivate', 'Cancel'],
+              [vscode.l10n.t('project.deactivateOption'), vscode.l10n.t('project.cancelOption')],
               {
-                placeHolder: 'This project is already active. Do you want to deactivate it?',
+                placeHolder: vscode.l10n.t('project.alreadyActivePrompt'),
               }
             );
 
-            if (deactivate === 'Deactivate') {
+            if (deactivate === vscode.l10n.t('project.deactivateOption')) {
               await mcpClient.callTool('aktif_proje_kaldir');
-              vscode.window.showInformationMessage('Project deactivated');
+              vscode.window.showInformationMessage(vscode.l10n.t('project.deactivated'));
             }
           } else {
             await mcpClient.callTool('proje_aktif_yap', {
               proje_id: item.project.id,
             });
-            vscode.window.showInformationMessage(`"${item.project.isim}" is now the active project`);
+            vscode.window.showInformationMessage(vscode.l10n.t('project.nowActive', item.project.isim));
           }
         }
 
@@ -111,7 +111,7 @@ export function registerProjeCommands(
         await providers.gorevTreeProvider.refresh();
         providers.statusBarManager.update();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to update active project: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('project.updateActiveFailed', error.toString()));
       }
     })
   );

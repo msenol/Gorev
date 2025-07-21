@@ -24,7 +24,7 @@ export function registerDebugCommands(
                 ].filter(Boolean));
             } catch (error) {
                 Logger.error('Failed to seed test data:', error);
-                vscode.window.showErrorMessage(`Test data seeding failed: ${error}`);
+                vscode.window.showErrorMessage(vscode.l10n.t('debug.seedingFailed', error.toString()));
             }
         })
     );
@@ -42,7 +42,7 @@ export function registerDebugCommands(
                 ].filter(Boolean));
             } catch (error) {
                 Logger.error('Failed to clear test data:', error);
-                vscode.window.showErrorMessage(`Test data clearing failed: ${error}`);
+                vscode.window.showErrorMessage(vscode.l10n.t('debug.clearingFailed', error.toString()));
             }
         })
     );
@@ -52,13 +52,13 @@ export function registerDebugCommands(
     
     // Status bar'a debug göstergesi ekle
     const debugStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1000);
-    debugStatusBar.text = '$(beaker) Debug Mode';
-    debugStatusBar.tooltip = 'Gorev Debug Mode Active\nClick to seed test data';
+    debugStatusBar.text = vscode.l10n.t('debug.modeLabel');
+    debugStatusBar.tooltip = vscode.l10n.t('debug.modeTooltip');
     debugStatusBar.command = 'gorev.debug.seedTestData';
     debugStatusBar.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
     debugStatusBar.show();
     
     context.subscriptions.push(debugStatusBar);
 
-    Logger.info('Debug commands registered - Test data seeding available');
+    Logger.info(vscode.l10n.t('debug.commandsRegistered'));
 }

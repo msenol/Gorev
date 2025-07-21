@@ -33,7 +33,7 @@ export function registerGorevCommands(
       try {
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to refresh tasks: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.refreshTasks') + `: ${error}`);
       }
     })
   );
@@ -49,7 +49,7 @@ export function registerGorevCommands(
           context.extensionUri
         );
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to show task details: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.showTaskDetail') + `: ${error}`);
       }
     })
   );
@@ -60,12 +60,12 @@ export function registerGorevCommands(
       try {
         const newStatus = await vscode.window.showQuickPick(
           [
-            { label: 'Pending', value: GorevDurum.Beklemede },
-            { label: 'In Progress', value: GorevDurum.DevamEdiyor },
-            { label: 'Completed', value: GorevDurum.Tamamlandi },
+            { label: vscode.l10n.t('status.pending'), value: GorevDurum.Beklemede },
+            { label: vscode.l10n.t('status.inProgress'), value: GorevDurum.DevamEdiyor },
+            { label: vscode.l10n.t('status.completed'), value: GorevDurum.Tamamlandi },
           ],
           {
-            placeHolder: 'Select new status',
+            placeHolder: vscode.l10n.t('input.selectStatus'),
           }
         );
 
@@ -76,10 +76,10 @@ export function registerGorevCommands(
           durum: newStatus.value,
         });
 
-        vscode.window.showInformationMessage('Task status updated');
+        vscode.window.showInformationMessage(vscode.l10n.t('success.taskStatusUpdated'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to update task status: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.updateTaskStatus') + `: ${error}`);
       }
     })
   );
@@ -89,22 +89,22 @@ export function registerGorevCommands(
     vscode.commands.registerCommand(COMMANDS.DELETE_TASK, async (item: any) => {
       try {
         const confirm = await vscode.window.showWarningMessage(
-          `Are you sure you want to delete "${item.task.baslik}"?`,
-          'Yes',
-          'No'
+          vscode.l10n.t('confirm.deleteTask', item.task.baslik),
+          vscode.l10n.t('confirm.yes'),
+          vscode.l10n.t('confirm.no')
         );
 
-        if (confirm !== 'Yes') return;
+        if (confirm !== vscode.l10n.t('confirm.yes')) return;
 
         await mcpClient.callTool('gorev_sil', {
           id: item.task.id,
           onay: true,
         });
 
-        vscode.window.showInformationMessage('Task deleted');
+        vscode.window.showInformationMessage(vscode.l10n.t('success.taskDeleted'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to delete task: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.deleteTask') + `: ${error}`);
       }
     })
   );
@@ -114,11 +114,11 @@ export function registerGorevCommands(
     vscode.commands.registerCommand(COMMANDS.CREATE_SUBTASK, async (item: any) => {
       try {
         const baslik = await vscode.window.showInputBox({
-          prompt: 'Subtask title',
-          placeHolder: `Create subtask for "${item.task.baslik}"`,
+          prompt: vscode.l10n.t('input.subtaskTitle'),
+          placeHolder: vscode.l10n.t('placeholder.createSubtask', item.task.baslik),
           validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-              return 'Subtask title is required';
+              return vscode.l10n.t('validation.subtaskTitleRequired');
             }
             return null;
           },
@@ -127,18 +127,18 @@ export function registerGorevCommands(
         if (!baslik) return;
 
         const aciklama = await vscode.window.showInputBox({
-          prompt: 'Subtask description (optional)',
-          placeHolder: 'Enter subtask description',
+          prompt: vscode.l10n.t('input.subtaskDescription'),
+          placeHolder: vscode.l10n.t('placeholder.subtaskDescription'),
         });
 
         const oncelik = await vscode.window.showQuickPick(
           [
-            { label: 'High', value: GorevOncelik.Yuksek },
-            { label: 'Medium', value: GorevOncelik.Orta },
-            { label: 'Low', value: GorevOncelik.Dusuk },
+            { label: vscode.l10n.t('priority.high'), value: GorevOncelik.Yuksek },
+            { label: vscode.l10n.t('priority.medium'), value: GorevOncelik.Orta },
+            { label: vscode.l10n.t('priority.low'), value: GorevOncelik.Dusuk },
           ],
           {
-            placeHolder: 'Select priority',
+            placeHolder: vscode.l10n.t('input.selectPriority'),
           }
         );
 
@@ -151,10 +151,10 @@ export function registerGorevCommands(
           oncelik: oncelik.value,
         });
 
-        vscode.window.showInformationMessage('Subtask created successfully');
+        vscode.window.showInformationMessage(vscode.l10n.t('success.subtaskCreated'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to create subtask: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.createSubtask') + `: ${error}`);
       }
     })
   );
@@ -169,7 +169,7 @@ export function registerGorevCommands(
         });
         
         if (!result || !result.content || !result.content[0]) {
-          throw new Error('Failed to fetch tasks');
+          throw new Error(vscode.l10n.t('error.fetchTasks'));
         }
 
         const tasks = result.content[0].text
@@ -184,11 +184,11 @@ export function registerGorevCommands(
 
         const parentChoice = await vscode.window.showQuickPick(
           [
-            { label: 'No parent (make root task)', value: null },
+            { label: vscode.l10n.t('parent.noParent'), value: null },
             ...tasks.map((t: any) => ({ label: t.baslik, value: t.id }))
           ],
           {
-            placeHolder: 'Select new parent task',
+            placeHolder: vscode.l10n.t('input.selectParentTask'),
           }
         );
 
@@ -199,10 +199,10 @@ export function registerGorevCommands(
           yeni_parent_id: parentChoice.value || '',
         });
 
-        vscode.window.showInformationMessage('Parent changed successfully');
+        vscode.window.showInformationMessage(vscode.l10n.t('success.parentChanged'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to change parent: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.changeParent') + `: ${error}`);
       }
     })
   );
@@ -216,10 +216,10 @@ export function registerGorevCommands(
           yeni_parent_id: '',
         });
 
-        vscode.window.showInformationMessage('Task is now a root task');
+        vscode.window.showInformationMessage(vscode.l10n.t('success.taskIsRootNow'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to remove parent: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.removeParent') + `: ${error}`);
       }
     })
   );
@@ -234,7 +234,7 @@ export function registerGorevCommands(
         });
         
         if (!result || !result.content || !result.content[0]) {
-          throw new Error('Failed to fetch tasks');
+          throw new Error(vscode.l10n.t('error.fetchTasks'));
         }
 
         // Parse tasks from the result
@@ -254,21 +254,21 @@ export function registerGorevCommands(
           .filter((task: any) => task && task.id !== item.task.id);
 
         if (tasks.length === 0) {
-          vscode.window.showInformationMessage('No other tasks available to add as dependency');
+          vscode.window.showInformationMessage(vscode.l10n.t('info.noTasksForDependency'));
           return;
         }
 
         // Create quick pick items with status icons
         const quickPickItems = tasks.map((t: any) => ({
           label: `${t.durum === 'tamamlandi' ? '✓' : t.durum === 'devam_ediyor' ? '▶' : '○'} ${t.baslik}`,
-          description: t.durum === 'tamamlandi' ? 'Completed' : t.durum === 'devam_ediyor' ? 'In Progress' : 'Pending',
+          description: t.durum === 'tamamlandi' ? vscode.l10n.t('status.completed') : t.durum === 'devam_ediyor' ? vscode.l10n.t('status.inProgress') : vscode.l10n.t('status.pending'),
           value: t.id
         }));
 
         const selectedTask = await vscode.window.showQuickPick(
           quickPickItems,
           {
-            placeHolder: `Select a task that "${item.task.baslik}" depends on`,
+            placeHolder: vscode.l10n.t('input.selectDependency', item.task.baslik),
           }
         );
 
@@ -281,10 +281,10 @@ export function registerGorevCommands(
           baglanti_tipi: 'bagimli', // depends on
         });
 
-        vscode.window.showInformationMessage('Dependency added successfully');
+        vscode.window.showInformationMessage(vscode.l10n.t('success.dependencyAdded'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to add dependency: ${error}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('error.addDependency') + `: ${error}`);
       }
     })
   );

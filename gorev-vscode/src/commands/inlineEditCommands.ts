@@ -23,7 +23,7 @@ export function registerInlineEditCommands(
                 if (selectedTasks.length === 1) {
                     item = { task: selectedTasks[0] };
                 } else {
-                    vscode.window.showWarningMessage('Lütfen düzenlemek için bir görev seçin');
+                    vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTaskToEdit'));
                     return;
                 }
             }
@@ -36,28 +36,28 @@ export function registerInlineEditCommands(
     // Quick Status Change
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.QUICK_STATUS_CHANGE, async (item: any) => {
-            Logger.info('[QuickStatusChange Command] Called');
-            Logger.info('[QuickStatusChange Command] Item type:', item?.constructor?.name);
-            Logger.info('[QuickStatusChange Command] Has task property:', !!item?.task);
+            Logger.info(vscode.l10n.t('inlineEdit.quickStatusStartLog'));
+            Logger.info(vscode.l10n.t('inlineEdit.quickStatusItemTypeLog'), item?.constructor?.name);
+            Logger.info(vscode.l10n.t('inlineEdit.quickStatusHasTaskLog'), !!item?.task);
             
             if (item?.task) {
-                Logger.info('[QuickStatusChange Command] Task ID:', item.task.id);
-                Logger.info('[QuickStatusChange Command] Task title:', item.task.baslik);
-                Logger.info('[QuickStatusChange Command] Current status:', item.task.durum);
+                Logger.info(vscode.l10n.t('inlineEdit.quickStatusTaskIdLog'), item.task.id);
+                Logger.info(vscode.l10n.t('inlineEdit.quickStatusTaskTitleLog'), item.task.baslik);
+                Logger.info(vscode.l10n.t('inlineEdit.quickStatusCurrentStatusLog'), item.task.durum);
             }
             
             if (!item || !item.task) {
-                Logger.warn('[QuickStatusChange Command] No task found in item');
-                vscode.window.showWarningMessage('Lütfen bir görev seçin');
+                Logger.warn(vscode.l10n.t('inlineEdit.quickStatusNoTaskLog'));
+                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
                 return;
             }
 
             try {
-                Logger.info('[QuickStatusChange Command] Calling editProvider.quickStatusChange');
+                Logger.info(vscode.l10n.t('inlineEdit.quickStatusCallingEditLog'));
                 await editProvider.quickStatusChange(item.task);
                 // Add a small delay to ensure the backend has processed the update
                 await new Promise(resolve => setTimeout(resolve, 100));
-                Logger.info('[QuickStatusChange Command] Refreshing tree view');
+                Logger.info(vscode.l10n.t('inlineEdit.quickStatusRefreshingLog'));
                 await treeProvider.refresh();
                 
                 // Also refresh the project tree if it exists
@@ -66,7 +66,7 @@ export function registerInlineEditCommands(
                     await projeTreeProvider.refresh();
                 }
             } catch (error) {
-                Logger.error('Quick status change failed:', error);
+                Logger.error(vscode.l10n.t('inlineEdit.quickStatusFailed'), error);
             }
         })
     );
@@ -75,7 +75,7 @@ export function registerInlineEditCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.QUICK_PRIORITY_CHANGE, async (item: any) => {
             if (!item || !item.task) {
-                vscode.window.showWarningMessage('Lütfen bir görev seçin');
+                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
                 return;
             }
 
@@ -88,7 +88,7 @@ export function registerInlineEditCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.QUICK_DATE_CHANGE, async (item: any) => {
             if (!item || !item.task) {
-                vscode.window.showWarningMessage('Lütfen bir görev seçin');
+                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
                 return;
             }
 
@@ -101,7 +101,7 @@ export function registerInlineEditCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.DETAILED_EDIT, async (item: any) => {
             if (!item || !item.task) {
-                vscode.window.showWarningMessage('Lütfen bir görev seçin');
+                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
                 return;
             }
 
@@ -125,7 +125,7 @@ export function registerInlineEditCommands(
         vscode.commands.registerCommand('gorev.cancelEdit', () => {
             if (editProvider.isEditing()) {
                 editProvider.cancelEdit();
-                vscode.window.showInformationMessage('Düzenleme iptal edildi');
+                vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.editCancelled'));
             }
         })
     );

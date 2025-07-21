@@ -21,7 +21,7 @@ let context: vscode.ExtensionContext;
 
 export async function activate(extensionContext: vscode.ExtensionContext) {
   context = extensionContext;
-  Logger.info('Gorev extension is starting...');
+  Logger.info(vscode.l10n.t('extension.starting'));
   
   // Set debug logging
   Logger.setLogLevel(LogLevel.Debug);
@@ -106,12 +106,12 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
           
           if (hasNoTasks) {
             const answer = await vscode.window.showInformationMessage(
-              '🧪 Debug Mode: Görev bulunamadı. Test verileri oluşturmak ister misiniz?',
-              'Evet, Oluştur',
-              'Hayır'
+              vscode.l10n.t('debug.noTasksFound'),
+              vscode.l10n.t('debug.yesCreate'),
+              vscode.l10n.t('debug.no')
             );
             
-            if (answer === 'Evet, Oluştur') {
+            if (answer === vscode.l10n.t('debug.yesCreate')) {
               await vscode.commands.executeCommand('gorev.debug.seedTestData');
             }
           }
@@ -130,7 +130,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
         try {
           await refreshAllViews();
         } catch (error) {
-          Logger.error('Failed to refresh views:', error);
+          Logger.error(vscode.l10n.t('log.failedRefreshViews'), error);
         }
       }
     }, refreshInterval * 1000);
@@ -159,11 +159,11 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     })
   );
 
-  Logger.info('Gorev extension activated successfully');
+  Logger.info(vscode.l10n.t('extension.activated'));
 }
 
 export function deactivate() {
-  Logger.info('Gorev extension is deactivating...');
+  Logger.info(vscode.l10n.t('extension.deactivated'));
   
   if (mcpClient) {
     mcpClient.disconnect();
@@ -173,13 +173,13 @@ export function deactivate() {
     statusBarManager.dispose();
   }
 
-  Logger.info('Gorev extension deactivated');
+  Logger.info(vscode.l10n.t('extension.deactivated'));
 }
 
 
 async function refreshAllViews(): Promise<void> {
   if (!mcpClient.isConnected()) {
-    Logger.warn('Cannot refresh views: not connected to MCP server');
+    Logger.warn(vscode.l10n.t('log.cannotRefreshViews'));
     return;
   }
   
@@ -191,7 +191,7 @@ async function refreshAllViews(): Promise<void> {
     
     statusBarManager.update();
   } catch (error) {
-    Logger.error('Error refreshing views:', error);
+    Logger.error(vscode.l10n.t('log.errorRefreshingViews'), error);
     throw error;
   }
 }

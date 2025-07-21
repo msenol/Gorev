@@ -79,7 +79,7 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
       const content = result.content[0].text;
       
       // Check if no active project
-      if (content.includes('Henüz aktif proje ayarlanmamış')) {
+      if (content.includes(vscode.l10n.t('projectTree.noActiveProject'))) {
         this.activeProjectId = null;
         return;
       }
@@ -118,23 +118,23 @@ export class ProjeTreeItem extends vscode.TreeItem {
   private getTooltip(): string {
     const lines = [
       this.project.isim,
-      this.project.tanim || 'No description',
+      this.project.tanim || vscode.l10n.t('projectTree.noDescription'),
       '',
-      `Total tasks: ${this.project.gorev_sayisi || 0}`,
+      vscode.l10n.t('projectTree.totalTasks', (this.project.gorev_sayisi || 0).toString()),
     ];
     
     if (this.project.tamamlanan_sayisi !== undefined) {
-      lines.push(`Completed: ${this.project.tamamlanan_sayisi}`);
+      lines.push(vscode.l10n.t('projectTree.completed', this.project.tamamlanan_sayisi.toString()));
     }
     if (this.project.devam_eden_sayisi !== undefined) {
-      lines.push(`In progress: ${this.project.devam_eden_sayisi}`);
+      lines.push(vscode.l10n.t('projectTree.inProgress', this.project.devam_eden_sayisi.toString()));
     }
     if (this.project.bekleyen_sayisi !== undefined) {
-      lines.push(`Pending: ${this.project.bekleyen_sayisi}`);
+      lines.push(vscode.l10n.t('projectTree.pending', this.project.bekleyen_sayisi.toString()));
     }
     
     if (this.isActive) {
-      lines.push('', '✓ Active project');
+      lines.push('', vscode.l10n.t('projectTree.activeProject'));
     }
     
     return lines.join('\n');
@@ -144,15 +144,15 @@ export class ProjeTreeItem extends vscode.TreeItem {
     const parts = [];
     
     if (this.isActive) {
-      parts.push('(active)');
+      parts.push(vscode.l10n.t('projectTree.active'));
     }
     
     const taskCount = this.project.gorev_sayisi || 0;
-    parts.push(`${taskCount} tasks`);
+    parts.push(vscode.l10n.t('projectTree.tasks', taskCount.toString()));
     
     if (this.project.tamamlanan_sayisi !== undefined && taskCount > 0) {
       const percentage = Math.round((this.project.tamamlanan_sayisi / taskCount) * 100);
-      parts.push(`${percentage}% done`);
+      parts.push(vscode.l10n.t('projectTree.percentDone', percentage.toString()));
     }
     
     return parts.join(' • ');

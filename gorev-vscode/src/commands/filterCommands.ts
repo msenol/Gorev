@@ -11,7 +11,7 @@ export function registerFilterCommands(
     const { filterToolbar } = providers;
     
     if (!filterToolbar) {
-        Logger.warn('Filter toolbar not initialized');
+        Logger.warn(vscode.l10n.t('filter.toolbarNotInitialized'));
         return;
     }
 
@@ -55,8 +55,8 @@ export function registerFilterCommands(
             });
             
             const message = showingAllProjects ? 
-                'Aktif proje görevleri gösteriliyor' : 
-                'Tüm projelerdeki görevler gösteriliyor';
+                vscode.l10n.t('filter.showingActiveProject') : 
+                vscode.l10n.t('filter.showingAllProjects');
             vscode.window.showInformationMessage(message);
         })
     );
@@ -67,7 +67,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterOverdue', () => {
             providers.gorevTreeProvider.updateFilter({ overdue: true });
-            vscode.window.showInformationMessage('Gecikmiş görevler gösteriliyor');
+            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingOverdue'));
         })
     );
 
@@ -75,7 +75,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterDueToday', () => {
             providers.gorevTreeProvider.updateFilter({ dueToday: true });
-            vscode.window.showInformationMessage('Bugün biten görevler gösteriliyor');
+            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingDueToday'));
         })
     );
 
@@ -83,7 +83,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterDueThisWeek', () => {
             providers.gorevTreeProvider.updateFilter({ dueThisWeek: true });
-            vscode.window.showInformationMessage('Bu hafta biten görevler gösteriliyor');
+            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingDueThisWeek'));
         })
     );
 
@@ -91,7 +91,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterHighPriority', () => {
             providers.gorevTreeProvider.updateFilter({ oncelik: 'yuksek' as any });
-            vscode.window.showInformationMessage('Yüksek öncelikli görevler gösteriliyor');
+            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingHighPriority'));
         })
     );
 
@@ -106,12 +106,12 @@ export function registerFilterCommands(
                 const match = content.match(/ID: ([a-f0-9-]+)/);
                 if (match) {
                     providers.gorevTreeProvider.updateFilter({ projeId: match[1] });
-                    vscode.window.showInformationMessage('Aktif proje görevleri gösteriliyor');
+                    vscode.window.showInformationMessage(vscode.l10n.t('filter.showingActiveProject'));
                 } else {
-                    vscode.window.showWarningMessage('Aktif proje bulunamadı');
+                    vscode.window.showWarningMessage(vscode.l10n.t('filter.activeProjectNotFound'));
                 }
             } catch (error) {
-                vscode.window.showErrorMessage('Aktif proje alınamadı');
+                vscode.window.showErrorMessage(vscode.l10n.t('filter.activeProjectFetchFailed'));
             }
         })
     );
@@ -120,13 +120,13 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterByTag', async () => {
             const tag = await vscode.window.showInputBox({
-                prompt: 'Filtrelemek istediğiniz etiketi girin',
-                placeHolder: 'örn: urgent, frontend, bug'
+                prompt: vscode.l10n.t('filter.tagPromptMessage'),
+                placeHolder: vscode.l10n.t('filter.tagPlaceholderExample')
             });
 
             if (tag) {
                 providers.gorevTreeProvider.updateFilter({ tags: [tag] });
-                vscode.window.showInformationMessage(`"${tag}" etiketli görevler gösteriliyor`);
+                vscode.window.showInformationMessage(vscode.l10n.t('filter.showingTagged', tag));
             }
         })
     );

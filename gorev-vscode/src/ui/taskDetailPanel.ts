@@ -66,7 +66,7 @@ export class TaskDetailPanel {
         // Otherwise, create a new panel
         const panel = vscode.window.createWebviewPanel(
             'gorevTaskDetail',
-            `Görev: ${task.baslik}`,
+            vscode.l10n.t('taskDetail.taskTitle', task.baslik),
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -109,11 +109,11 @@ export class TaskDetailPanel {
             // Update webview content
             Logger.info('[TaskDetailPanel] Setting new HTML content with breadcrumb navigation');
             this.panel.webview.html = this.getHtmlContent();
-            this.panel.title = `Görev: ${this.task.baslik}`;
+            this.panel.title = vscode.l10n.t('taskDetail.taskTitle', this.task.baslik);
             Logger.info('[TaskDetailPanel] HTML content updated successfully');
         } catch (error) {
             Logger.error('Failed to update task details:', error);
-            vscode.window.showErrorMessage('Görev detayları yüklenemedi');
+            vscode.window.showErrorMessage(vscode.l10n.t('taskDetail.loadFailed'));
         }
     }
     
@@ -251,7 +251,7 @@ export class TaskDetailPanel {
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this.panel.webview.cspSource} 'unsafe-inline' https://microsoft.github.io; script-src 'nonce-${nonce}'; font-src ${this.panel.webview.cspSource} https://microsoft.github.io;">
     <link href="${vscodeIconsUri}" rel="stylesheet" />
     <link href="${styleUri}" rel="stylesheet">
-    <title>Görev Detayı</title>
+    <title>${vscode.l10n.t('taskDetail.title')}</title>
     <script nonce="${nonce}">
         console.log('TaskDetail CSS loaded:', '${styleUri}');
         console.log('Page loaded at:', new Date().toISOString());
@@ -294,7 +294,7 @@ export class TaskDetailPanel {
                             ` : ''}
                             ${this.task.proje_id ? `
                                 <span class="project-badge">
-                                    <i class="codicon codicon-folder"></i> <span id="projectName">Proje</span>
+                                    <i class="codicon codicon-folder"></i> <span id="projectName">${vscode.l10n.t('taskDetail.project')}</span>
                                 </span>
                             ` : ''}
                         </div>
@@ -304,88 +304,88 @@ export class TaskDetailPanel {
                 <!-- Description Section -->
                 <div class="description-section card">
                     <div class="section-header">
-                        <h3><i class="codicon codicon-note"></i> Açıklama</h3>
+                        <h3><i class="codicon codicon-note"></i> ${vscode.l10n.t('taskDetail.description')}</h3>
                         <div class="editor-mode-toggle">
                             <button class="mode-btn active" data-mode="edit">
-                                <i class="codicon codicon-edit"></i> Düzenle
+                                <i class="codicon codicon-edit"></i> ${vscode.l10n.t('taskDetail.edit')}
                             </button>
                             <button class="mode-btn" data-mode="preview">
-                                <i class="codicon codicon-eye"></i> Önizle
+                                <i class="codicon codicon-eye"></i> ${vscode.l10n.t('taskDetail.preview')}
                             </button>
                             <button class="mode-btn" data-mode="split">
-                                <i class="codicon codicon-split-horizontal"></i> Böl
+                                <i class="codicon codicon-split-horizontal"></i> ${vscode.l10n.t('taskDetail.split')}
                             </button>
                         </div>
                     </div>
                     <div class="markdown-editor enhanced">
                         <div class="editor-toolbar">
                             <div class="toolbar-group">
-                                <button id="boldBtn" title="Kalın (Ctrl+B)">
+                                <button id="boldBtn" title="${vscode.l10n.t('taskDetail.bold')}">
                                     <i class="codicon codicon-bold"></i>
                                 </button>
-                                <button id="italicBtn" title="İtalik (Ctrl+I)">
+                                <button id="italicBtn" title="${vscode.l10n.t('taskDetail.italic')}">
                                     <i class="codicon codicon-italic"></i>
                                 </button>
-                                <button id="strikeBtn" title="Üstü Çizili">
+                                <button id="strikeBtn" title="${vscode.l10n.t('taskDetail.strikethrough')}">
                                     <i class="codicon codicon-text-strikethrough"></i>
                                     <span style="font-size: 11px; margin-left: 2px;">S</span>
                                 </button>
                             </div>
                             <div class="toolbar-separator"></div>
                             <div class="toolbar-group">
-                                <button id="h1Btn" title="Başlık 1">H1</button>
-                                <button id="h2Btn" title="Başlık 2">H2</button>
-                                <button id="h3Btn" title="Başlık 3">H3</button>
+                                <button id="h1Btn" title="${vscode.l10n.t('taskDetail.heading1')}">H1</button>
+                                <button id="h2Btn" title="${vscode.l10n.t('taskDetail.heading2')}">H2</button>
+                                <button id="h3Btn" title="${vscode.l10n.t('taskDetail.heading3')}">H3</button>
                             </div>
                             <div class="toolbar-separator"></div>
                             <div class="toolbar-group">
-                                <button id="linkBtn" title="Link Ekle (Ctrl+K)">
+                                <button id="linkBtn" title="${vscode.l10n.t('taskDetail.link')}">
                                     <i class="codicon codicon-link"></i>
                                 </button>
-                                <button id="imageBtn" title="Resim Ekle">
+                                <button id="imageBtn" title="${vscode.l10n.t('taskDetail.image')}">
                                     <i class="codicon codicon-file-media"></i>
                                 </button>
-                                <button id="codeBtn" title="Kod">
+                                <button id="codeBtn" title="${vscode.l10n.t('taskDetail.code')}">
                                     <i class="codicon codicon-code"></i>
                                 </button>
-                                <button id="codeBlockBtn" title="Kod Bloğu">
+                                <button id="codeBlockBtn" title="${vscode.l10n.t('taskDetail.codeBlock')}">
                                     <i class="codicon codicon-symbol-namespace"></i>
                                 </button>
                             </div>
                             <div class="toolbar-separator"></div>
                             <div class="toolbar-group">
-                                <button id="listBtn" title="Liste">
+                                <button id="listBtn" title="${vscode.l10n.t('taskDetail.bulletList')}">
                                     <i class="codicon codicon-list-unordered"></i>
                                 </button>
-                                <button id="orderedListBtn" title="Numaralı Liste">
+                                <button id="orderedListBtn" title="${vscode.l10n.t('taskDetail.numberedList')}">
                                     <i class="codicon codicon-list-ordered"></i>
                                 </button>
-                                <button id="checklistBtn" title="Checkbox">
+                                <button id="checklistBtn" title="${vscode.l10n.t('taskDetail.taskList')}">
                                     <i class="codicon codicon-checklist"></i>
                                 </button>
-                                <button id="tableBtn" title="Tablo Ekle">
+                                <button id="tableBtn" title="${vscode.l10n.t('taskDetail.table')}">
                                     <i class="codicon codicon-table"></i>
                                 </button>
                             </div>
                             <div class="toolbar-separator"></div>
                             <div class="toolbar-group">
-                                <button id="undoBtn" title="Geri Al (Ctrl+Z)">
+                                <button id="undoBtn" title="${vscode.l10n.t('taskDetail.undo')}">
                                     <i class="codicon codicon-discard"></i>
                                 </button>
-                                <button id="redoBtn" title="İleri Al (Ctrl+Y)">
+                                <button id="redoBtn" title="${vscode.l10n.t('taskDetail.redo')}">
                                     <i class="codicon codicon-redo"></i>
                                 </button>
                             </div>
                             <div class="toolbar-spacer"></div>
                             <div class="toolbar-status">
                                 <span id="saveStatus" class="save-status">
-                                    <i class="codicon codicon-check"></i> Kaydedildi
+                                    <i class="codicon codicon-check"></i> ${vscode.l10n.t('taskDetail.saved')}
                                 </span>
                             </div>
                         </div>
                         <div class="editor-container" id="editorContainer">
                             <div class="editor-pane">
-                                <textarea id="descriptionEditor" class="editor-content" placeholder="Görev açıklamasını buraya yazın...">${this.escapeHtml(this.task.aciklama || '')}</textarea>
+                                <textarea id="descriptionEditor" class="editor-content" placeholder="${vscode.l10n.t('taskDetail.writeSomething')}">${this.escapeHtml(this.task.aciklama || '')}</textarea>
                             </div>
                             <div class="preview-pane" id="previewPane" style="display: none;">
                                 <div id="descriptionPreview" class="preview-content"></div>
@@ -396,7 +396,7 @@ export class TaskDetailPanel {
                 
                 <!-- Tags Section -->
                 <div class="tags-section card">
-                    <h3><i class="codicon codicon-tag"></i> Etiketler</h3>
+                    <h3><i class="codicon codicon-tag"></i> ${vscode.l10n.t('taskDetail.tags')}</h3>
                     <div class="tags-container">
                         ${this.task.etiketler && this.task.etiketler.length > 0 ? 
                             this.task.etiketler.map((tag: string) => `
@@ -407,10 +407,10 @@ export class TaskDetailPanel {
                                     </button>
                                 </span>
                             `).join('') : 
-                            '<span class="empty-state">Henüz etiket yok</span>'
+                            '<span class="empty-state">' + vscode.l10n.t('taskDetail.noTags') + '</span>'
                         }
                         <button class="tag-add" id="addTagBtn">
-                            <i class="codicon codicon-add"></i> Etiket Ekle
+                            <i class="codicon codicon-add"></i> ${vscode.l10n.t('taskDetail.tags')}
                         </button>
                     </div>
                 </div>
@@ -420,23 +420,23 @@ export class TaskDetailPanel {
             <div class="sidebar">
                 <!-- Quick Actions -->
                 <div class="quick-actions card">
-                    <h3>Hızlı İşlemler</h3>
+                    <h3>${vscode.l10n.t('taskDetail.actions')}</h3>
                     <div class="actions-grid">
-                        <button class="quick-action-btn" id="updateStatusBtn" title="Durum Güncelle">
+                        <button class="quick-action-btn" id="updateStatusBtn" title="${vscode.l10n.t('taskDetail.updateStatus')}">
                             <i class="codicon codicon-check"></i>
-                            <span>Durum</span>
+                            <span>${vscode.l10n.t('taskDetail.updateStatus')}</span>
                         </button>
-                        <button class="quick-action-btn" id="editTaskBtn" title="Düzenle">
+                        <button class="quick-action-btn" id="editTaskBtn" title="${vscode.l10n.t('taskDetail.edit')}">
                             <i class="codicon codicon-edit"></i>
-                            <span>Düzenle</span>
+                            <span>${vscode.l10n.t('taskDetail.edit')}</span>
                         </button>
-                        <button class="quick-action-btn" id="duplicateBtn" title="Kopyala">
+                        <button class="quick-action-btn" id="duplicateBtn" title="${vscode.l10n.t('taskDetail.duplicateTask')}">
                             <i class="codicon codicon-files"></i>
-                            <span>Kopyala</span>
+                            <span>${vscode.l10n.t('taskDetail.duplicateTask')}</span>
                         </button>
-                        <button class="quick-action-btn danger" id="deleteTaskBtn" title="Sil">
+                        <button class="quick-action-btn danger" id="deleteTaskBtn" title="${vscode.l10n.t('taskDetail.deleteTask')}">
                             <i class="codicon codicon-trash"></i>
-                            <span>Sil</span>
+                            <span>${vscode.l10n.t('taskDetail.deleteTask')}</span>
                         </button>
                     </div>
                 </div>
@@ -449,7 +449,7 @@ export class TaskDetailPanel {
                 
                 <!-- Activity Section -->
                 <div class="activity-section card">
-                    <h3><i class="codicon codicon-history"></i> Aktivite</h3>
+                    <h3><i class="codicon codicon-history"></i> ${vscode.l10n.t('taskDetail.activity')}</h3>
                     <div class="activity-timeline compact">
                         ${this.renderActivityTimeline()}
                     </div>
@@ -959,7 +959,7 @@ export class TaskDetailPanel {
         
         return `
             <div class="hierarchy-section card">
-                <h3><i class="codicon codicon-type-hierarchy"></i> Hiyerarşi</h3>
+                <h3><i class="codicon codicon-type-hierarchy"></i> ${vscode.l10n.t('taskDetail.hierarchy')}</h3>
                 
                 ${hasHierarchy ? `
                     <!-- Progress Overview -->
@@ -1160,7 +1160,7 @@ export class TaskDetailPanel {
         
         let html = `
             <div class="dependencies-section card">
-                <h3><i class="codicon codicon-link"></i> Bağımlılıklar</h3>
+                <h3><i class="codicon codicon-link"></i> ${vscode.l10n.t('taskDetail.dependencies')}</h3>
         `;
         
         // Summary stats or empty state
@@ -1170,19 +1170,19 @@ export class TaskDetailPanel {
                     ${this.task.bagimli_gorev_sayisi ? `
                         <div class="stat-item">
                             <i class="codicon codicon-arrow-right"></i>
-                            <span class="stat-label">Bu görev bağımlı:</span>
-                            <span class="stat-value">${this.task.bagimli_gorev_sayisi} görev</span>
+                            <span class="stat-label">${vscode.l10n.t('taskDetail.thisDependsOn')}</span>
+                            <span class="stat-value">${vscode.l10n.t('taskDetail.dependentTasks', this.task.bagimli_gorev_sayisi.toString())}</span>
                             ${this.task.tamamlanmamis_bagimlilik_sayisi ? `
-                                <span class="stat-warning">⚠️ ${this.task.tamamlanmamis_bagimlilik_sayisi} tamamlanmamış</span>
-                            ` : '<span class="stat-success">✓ Tümü tamamlanmış</span>'}
+                                <span class="stat-warning">⚠️ ${vscode.l10n.t('taskDetail.incompleteCount', this.task.tamamlanmamis_bagimlilik_sayisi.toString())}</span>
+                            ` : '<span class="stat-success">✓ ' + vscode.l10n.t('taskDetail.allCompleted') + '</span>'}
                         </div>
                     ` : ''}
                     
                     ${this.task.bu_goreve_bagimli_sayisi ? `
                         <div class="stat-item">
                             <i class="codicon codicon-arrow-left"></i>
-                            <span class="stat-label">Bu göreve bağımlı:</span>
-                            <span class="stat-value">${this.task.bu_goreve_bagimli_sayisi} görev</span>
+                            <span class="stat-label">${vscode.l10n.t('taskDetail.dependsOnThis')}</span>
+                            <span class="stat-value">${vscode.l10n.t('taskDetail.dependentTasks', this.task.bu_goreve_bagimli_sayisi.toString())}</span>
                         </div>
                     ` : ''}
                 </div>
@@ -1192,7 +1192,7 @@ export class TaskDetailPanel {
             html += `
                 <div class="empty-state">
                     <i class="codicon codicon-link"></i>
-                    <p>Bu görev henüz hiçbir göreve bağımlı değil</p>
+                    <p>${vscode.l10n.t('taskDetail.noDependenciesYet')}</p>
                 </div>
             `;
         }
@@ -1593,9 +1593,9 @@ export class TaskDetailPanel {
     
     private getStatusLabel(): string {
         switch (this.task.durum) {
-            case GorevDurum.Tamamlandi: return 'Tamamlandı';
-            case GorevDurum.DevamEdiyor: return 'Devam Ediyor';
-            default: return 'Beklemede';
+            case GorevDurum.Tamamlandi: return vscode.l10n.t('taskDetail.status.completed');
+            case GorevDurum.DevamEdiyor: return vscode.l10n.t('taskDetail.status.inProgress');
+            default: return vscode.l10n.t('taskDetail.status.pending');
         }
     }
     
@@ -1607,10 +1607,10 @@ export class TaskDetailPanel {
     
     private getPriorityLabel(): string {
         switch (this.task.oncelik) {
-            case GorevOncelik.Yuksek: return 'Yüksek';
-            case GorevOncelik.Orta: return 'Orta';
-            case GorevOncelik.Dusuk: return 'Düşük';
-            default: return 'Orta';
+            case GorevOncelik.Yuksek: return vscode.l10n.t('taskDetail.priority.high');
+            case GorevOncelik.Orta: return vscode.l10n.t('taskDetail.priority.medium');
+            case GorevOncelik.Dusuk: return vscode.l10n.t('taskDetail.priority.low');
+            default: return vscode.l10n.t('taskDetail.priority.medium');
         }
     }
     

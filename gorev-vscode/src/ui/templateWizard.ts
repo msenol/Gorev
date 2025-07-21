@@ -20,7 +20,7 @@ export class TemplateWizard {
     ) {
         this.panel = vscode.window.createWebviewPanel(
             'gorevTemplateWizard',
-            'Şablondan Görev Oluştur',
+            vscode.l10n.t('templateWizard.title'),
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -111,7 +111,7 @@ export class TemplateWizard {
             });
         } catch (error) {
             Logger.error('Failed to load templates:', error);
-            vscode.window.showErrorMessage('Şablonlar yüklenemedi');
+            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.loadFailed'));
         }
     }
 
@@ -144,7 +144,7 @@ export class TemplateWizard {
             
             this.template = templates.find(t => t.id === templateId);
             if (!this.template) {
-                throw new Error('Şablon bulunamadı');
+                throw new Error(vscode.l10n.t('templateWizard.notFound'));
             }
 
             // Send template details to webview
@@ -154,13 +154,13 @@ export class TemplateWizard {
             });
         } catch (error) {
             Logger.error('Failed to load template:', error);
-            vscode.window.showErrorMessage('Şablon yüklenemedi');
+            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.loadTemplateFailed'));
         }
     }
 
     private async createTaskFromTemplate(values: Record<string, any>): Promise<void> {
         if (!this.template) {
-            vscode.window.showErrorMessage('Şablon seçilmedi');
+            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.notSelected'));
             return;
         }
 
@@ -185,7 +185,7 @@ export class TemplateWizard {
             });
 
             // Show success message
-            vscode.window.showInformationMessage('Görev başarıyla oluşturuldu!');
+            vscode.window.showInformationMessage(vscode.l10n.t('templateWizard.taskCreated'));
 
             // Close wizard
             this.panel.dispose();
@@ -194,7 +194,7 @@ export class TemplateWizard {
             await vscode.commands.executeCommand('gorev.refreshTasks');
         } catch (error) {
             Logger.error('Failed to create task from template:', error);
-            vscode.window.showErrorMessage('Görev oluşturulamadı');
+            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.createFailed'));
         }
     }
 
@@ -211,19 +211,19 @@ export class TemplateWizard {
     }
 
     private generateTaskPreview(template: GorevTemplate, values: Record<string, any>): string {
-        let preview = `# ${values.baslik || template.varsayilan_baslik || 'Yeni Görev'}\n\n`;
+        let preview = `# ${values.baslik || template.varsayilan_baslik || vscode.l10n.t('templateWizard.newTask')}\n\n`;
         
         if (values.aciklama || template.aciklama_template) {
-            preview += `## Açıklama\n${values.aciklama || template.aciklama_template}\n\n`;
+            preview += `## ${vscode.l10n.t('templateWizard.description')}\n${values.aciklama || template.aciklama_template}\n\n`;
         }
 
-        preview += `## Detaylar\n`;
-        preview += `- **Öncelik:** ${values.oncelik || 'orta'}\n`;
+        preview += `## ${vscode.l10n.t('templateWizard.details')}\n`;
+        preview += `- **${vscode.l10n.t('templateWizard.priorityLabel')}** ${values.oncelik || vscode.l10n.t('templateWizard.mediumPriority')}\n`;
         if (values.son_tarih) {
-            preview += `- **Son Tarih:** ${values.son_tarih}\n`;
+            preview += `- **${vscode.l10n.t('templateWizard.dueDateLabel')}** ${values.son_tarih}\n`;
         }
         if (values.etiketler) {
-            preview += `- **Etiketler:** ${values.etiketler}\n`;
+            preview += `- **${vscode.l10n.t('templateWizard.tagsLabel')}** ${values.etiketler}\n`;
         }
 
         // Add custom fields
@@ -242,7 +242,7 @@ export class TemplateWizard {
             favorites.push(templateId);
             await this.saveFavorites(favorites);
             
-            vscode.window.showInformationMessage('Şablon favorilere eklendi');
+            vscode.window.showInformationMessage(vscode.l10n.t('templateWizard.addedToFavorites'));
             
             // Update UI
             this.panel.webview.postMessage({
@@ -290,30 +290,30 @@ export class TemplateWizard {
         );
 
         return `<!DOCTYPE html>
-        <html lang="tr">
+        <html lang="${vscode.env.language}">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Şablondan Görev Oluştur</title>
+            <title>${vscode.l10n.t('templateWizard.title')}</title>
             <link href="${styleUri}" rel="stylesheet">
         </head>
         <body>
             <div class="wizard-container">
                 <!-- Step 1: Template Selection -->
                 <div id="step-template-selection" class="wizard-step active">
-                    <h2>Şablon Seç</h2>
+                    <h2>${vscode.l10n.t('templateWizard.selectTemplate')}</h2>
                     
                     <div class="search-container">
-                        <input type="text" id="template-search" placeholder="Şablon ara..." />
+                        <input type="text" id="template-search" placeholder="${vscode.l10n.t('templateWizard.searchPlaceholder')}" />
                     </div>
 
                     <div class="category-tabs">
-                        <button class="category-tab active" data-category="">Tümü</button>
-                        <button class="category-tab" data-category="Genel">Genel</button>
-                        <button class="category-tab" data-category="Teknik">Teknik</button>
-                        <button class="category-tab" data-category="Özellik">Özellik</button>
-                        <button class="category-tab" data-category="Bug">Bug</button>
-                        <button class="category-tab" data-category="favorites">⭐ Favoriler</button>
+                        <button class="category-tab active" data-category="">${vscode.l10n.t('templateWizard.categoryAll')}</button>
+                        <button class="category-tab" data-category="Genel">${vscode.l10n.t('templateWizard.categoryGeneral')}</button>
+                        <button class="category-tab" data-category="Teknik">${vscode.l10n.t('templateWizard.categoryTechnical')}</button>
+                        <button class="category-tab" data-category="Özellik">${vscode.l10n.t('templateWizard.categoryFeature')}</button>
+                        <button class="category-tab" data-category="Bug">${vscode.l10n.t('templateWizard.categoryBug')}</button>
+                        <button class="category-tab" data-category="favorites">${vscode.l10n.t('templateWizard.categoryFavorites')}</button>
                     </div>
 
                     <div id="template-grid" class="template-grid">
@@ -323,7 +323,7 @@ export class TemplateWizard {
 
                 <!-- Step 2: Form Fields -->
                 <div id="step-form-fields" class="wizard-step">
-                    <h2 id="template-name">Şablon Adı</h2>
+                    <h2 id="template-name">${vscode.l10n.t('templateWizard.title')}</h2>
                     <p id="template-description" class="template-description"></p>
 
                     <form id="template-form">
@@ -333,23 +333,23 @@ export class TemplateWizard {
                     </form>
 
                     <div class="form-actions">
-                        <button id="btn-back" class="btn-secondary">Geri</button>
-                        <button id="btn-preview" class="btn-secondary">Önizle</button>
-                        <button id="btn-create" class="btn-primary">Görev Oluştur</button>
+                        <button id="btn-back" class="btn-secondary">${vscode.l10n.t('templateWizard.back')}</button>
+                        <button id="btn-preview" class="btn-secondary">${vscode.l10n.t('templateWizard.preview')}</button>
+                        <button id="btn-create" class="btn-primary">${vscode.l10n.t('templateWizard.create')}</button>
                     </div>
                 </div>
 
                 <!-- Step 3: Preview -->
                 <div id="step-preview" class="wizard-step">
-                    <h2>Görev Önizleme</h2>
+                    <h2>${vscode.l10n.t('templateWizard.taskPreview')}</h2>
                     
                     <div id="task-preview" class="task-preview">
                         <!-- Preview content will be shown here -->
                     </div>
 
                     <div class="form-actions">
-                        <button id="btn-back-to-form" class="btn-secondary">Düzenle</button>
-                        <button id="btn-confirm-create" class="btn-primary">Onayla ve Oluştur</button>
+                        <button id="btn-back-to-form" class="btn-secondary">${vscode.l10n.t('templateWizard.edit')}</button>
+                        <button id="btn-confirm-create" class="btn-primary">${vscode.l10n.t('templateWizard.confirmCreate')}</button>
                     </div>
                 </div>
             </div>

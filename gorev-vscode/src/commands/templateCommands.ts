@@ -20,7 +20,7 @@ export function registerTemplateCommands(
         await TemplateWizard.show(mcpClient, context.extensionUri, templateId);
       } catch (error) {
         Logger.error('Failed to open template wizard:', error);
-        vscode.window.showErrorMessage('Şablon sihirbazı açılamadı');
+        vscode.window.showErrorMessage(vscode.l10n.t('template.wizardOpenFailed'));
       }
     })
   );
@@ -39,7 +39,7 @@ export function registerTemplateCommands(
         await TemplateWizard.show(mcpClient, context.extensionUri, item.template.id);
       } catch (error) {
         Logger.error('Failed to create task from template:', error);
-        vscode.window.showErrorMessage('Şablondan görev oluşturulamadı');
+        vscode.window.showErrorMessage(vscode.l10n.t('template.createFromFailed'));
       }
     })
   );
@@ -53,7 +53,7 @@ export function registerTemplateCommands(
         const templates = MarkdownParser.parseTemplateListesi(result.content[0].text);
 
         if (templates.length === 0) {
-          vscode.window.showInformationMessage('Henüz şablon tanımlanmamış');
+          vscode.window.showInformationMessage(vscode.l10n.t('template.noTemplatesDefined'));
           return;
         }
 
@@ -66,7 +66,7 @@ export function registerTemplateCommands(
         }));
 
         const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: 'Bir şablon seçin',
+          placeHolder: vscode.l10n.t('template.selectTemplate'),
           matchOnDescription: true,
           matchOnDetail: true
         });
@@ -76,7 +76,7 @@ export function registerTemplateCommands(
         }
       } catch (error) {
         Logger.error('Failed to show template quick pick:', error);
-        vscode.window.showErrorMessage('Şablon listesi yüklenemedi');
+        vscode.window.showErrorMessage(vscode.l10n.t('template.listLoadFailed'));
       }
     })
   );
@@ -86,10 +86,10 @@ export function registerTemplateCommands(
     vscode.commands.registerCommand(COMMANDS.REFRESH_TEMPLATES, async () => {
       try {
         await providers.templateTreeProvider.refresh();
-        vscode.window.showInformationMessage('Şablonlar yenilendi');
+        vscode.window.showInformationMessage(vscode.l10n.t('template.refreshed'));
       } catch (error) {
         Logger.error('Failed to refresh templates:', error);
-        vscode.window.showErrorMessage('Şablonlar yenilenemedi');
+        vscode.window.showErrorMessage(vscode.l10n.t('template.refreshFailed'));
       }
     })
   );
@@ -99,12 +99,12 @@ export function registerTemplateCommands(
     vscode.commands.registerCommand(COMMANDS.INIT_DEFAULT_TEMPLATES, async () => {
       try {
         const answer = await vscode.window.showWarningMessage(
-          'Varsayılan şablonları yüklemek istediğinizden emin misiniz?',
+          vscode.l10n.t('template.initConfirm'),
           { modal: true },
-          'Evet, Yükle'
+          vscode.l10n.t('template.initConfirmYes')
         );
 
-        if (answer !== 'Evet, Yükle') {
+        if (answer !== vscode.l10n.t('template.initConfirmYes')) {
           return;
         }
 
@@ -112,7 +112,7 @@ export function registerTemplateCommands(
         const serverPath = vscode.workspace.getConfiguration('gorev').get<string>('serverPath');
         
         if (!serverPath) {
-          vscode.window.showErrorMessage('Gorev server yolu yapılandırılmamış. Lütfen ayarlardan gorev.serverPath değerini belirtin.');
+          vscode.window.showErrorMessage(vscode.l10n.t('template.serverPathNotConfigured'));
           return;
         }
         
@@ -124,11 +124,11 @@ export function registerTemplateCommands(
         // Wait a bit and refresh
         setTimeout(async () => {
           await providers.templateTreeProvider.refresh();
-          vscode.window.showInformationMessage('Varsayılan şablonlar yüklendi');
+          vscode.window.showInformationMessage(vscode.l10n.t('template.defaultsLoaded'));
         }, 2000);
       } catch (error) {
         Logger.error('Failed to initialize templates:', error);
-        vscode.window.showErrorMessage('Şablonlar başlatılamadı');
+        vscode.window.showErrorMessage(vscode.l10n.t('template.initFailed'));
       }
     })
   );
@@ -163,14 +163,14 @@ export function registerTemplateCommands(
       const uri = await vscode.window.showSaveDialog({
         defaultUri: vscode.Uri.file(`${template.isim.replace(/\s+/g, '_')}.json`),
         filters: {
-          'JSON files': ['json']
+          [vscode.l10n.t('template.jsonFilter')]: ['json']
         }
       });
 
       if (uri) {
         const content = JSON.stringify(template, null, 2);
         await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
-        vscode.window.showInformationMessage('Şablon dışa aktarıldı');
+        vscode.window.showInformationMessage(vscode.l10n.t('template.exported'));
       }
     })
   );
@@ -242,28 +242,28 @@ function getTemplateDetailsHtml(template: GorevTemplate): string {
   </head>
   <body>
       <h1>${template.isim}</h1>
-      <div class="category">${template.kategori || 'Genel'}</div>
+      <div class="category">${template.kategori || vscode.l10n.t('template.general')}</div>
       ${template.tanim ? `<div class="description">${template.tanim}</div>` : ''}
       
-      <h2>Alanlar</h2>
+      <h2>${vscode.l10n.t('template.fields')}</h2>
       ${template.alanlar.map(field => `
           <div class="field">
               <div>
                   <span class="field-name">${field.isim}</span>
                   <span class="field-type">(${field.tur})</span>
-                  ${field.zorunlu ? '<span class="field-required">*zorunlu</span>' : ''}
+                  ${field.zorunlu ? `<span class="field-required">${vscode.l10n.t('template.fieldRequired')}</span>` : ''}
               </div>
-              ${field.varsayilan ? `<div class="field-description">Varsayılan: <code>${field.varsayilan}</code></div>` : ''}
+              ${field.varsayilan ? `<div class="field-description">${vscode.l10n.t('template.fieldDefault')}: <code>${field.varsayilan}</code></div>` : ''}
           </div>
       `).join('')}
       
       ${template.varsayilan_baslik ? `
-          <h2>Varsayılan Başlık</h2>
+          <h2>${vscode.l10n.t('template.defaultTitle')}</h2>
           <p><code>${template.varsayilan_baslik}</code></p>
       ` : ''}
       
       ${template.aciklama_template ? `
-          <h2>Açıklama Şablonu</h2>
+          <h2>${vscode.l10n.t('template.descriptionTemplate')}</h2>
           <pre>${template.aciklama_template}</pre>
       ` : ''}
   </body>

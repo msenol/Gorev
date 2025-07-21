@@ -1,7 +1,7 @@
 {
   "name": "gorev-vscode",
-  "displayName": "Gorev",
-  "description": "Powerful task management with unlimited subtask hierarchy, dependency visualization, and smart progress tracking for VS Code powered by MCP protocol",
+  "displayName": "%displayName%",
+  "description": "%description%",
   "version": "0.5.0",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
@@ -10,7 +10,7 @@
   },
   "categories": [
     "Other",
-    "Programming Languages"
+    "Productivity"
   ],
   "keywords": [
     "task",
@@ -22,13 +22,18 @@
     "subtask",
     "hierarchy",
     "workflow",
-    "productivity"
+    "productivity",
+    "ai assistant",
+    "claude",
+    "turkish",
+    "template",
+    "progress tracking"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/msenol/Gorev.git"
   },
-  "homepage": "https://github.com/msenol/Gorev#readme",
+  "homepage": "https://github.com/msenol/Gorev/blob/main/README.en.md",
   "bugs": {
     "url": "https://github.com/msenol/Gorev/issues"
   },
@@ -61,29 +66,30 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "contributes": {
     "configuration": {
       "title": "Gorev",
       "properties": {
         "gorev.serverPath": {
           "type": "string",
-          "default": "/mnt/f/Development/Projects/Gorev/gorev-mcpserver/build/gorev",
-          "description": "Full path to the Gorev MCP server executable (e.g., /path/to/gorev or C:\\path\\to\\gorev.exe)"
+          "default": "",
+          "description": "%config.serverPath%"
         },
         "gorev.autoConnect": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically connect to Gorev server on startup"
+          "description": "%config.autoConnect%"
         },
         "gorev.showStatusBar": {
           "type": "boolean",
           "default": true,
-          "description": "Show Gorev status in the status bar"
+          "description": "%config.showStatusBar%"
         },
         "gorev.refreshInterval": {
           "type": "number",
           "default": 30,
-          "description": "Refresh interval in seconds (0 to disable auto-refresh)"
+          "description": "%config.refreshInterval%"
         },
         "gorev.treeView.grouping": {
           "type": "string",
@@ -97,7 +103,7 @@
             "Group by tags",
             "Group by due date (Overdue, Today, This Week, Later)"
           ],
-          "description": "How to group tasks in the tree view"
+          "description": "%config.treeView.grouping%"
         },
         "gorev.treeView.sorting": {
           "type": "string",
@@ -228,7 +234,7 @@
         },
         "gorev.pagination.pageSize": {
           "type": "number",
-          "default": 10,
+          "default": 100,
           "minimum": 10,
           "maximum": 500,
           "description": "Number of tasks to load per page (to prevent token limit errors)"
@@ -277,35 +283,35 @@
     "commands": [
       {
         "command": "gorev.createTask",
-        "title": "Create Task",
+        "title": "%command.createTask%",
         "category": "Gorev",
         "icon": "$(add)"
       },
       {
         "command": "gorev.refreshTasks",
-        "title": "Refresh Tasks",
+        "title": "%command.refreshTasks%",
         "category": "Gorev",
         "icon": "$(refresh)"
       },
       {
         "command": "gorev.createProject",
-        "title": "Create Project",
+        "title": "%command.createProject%",
         "category": "Gorev",
         "icon": "$(folder-opened)"
       },
       {
         "command": "gorev.setActiveProject",
-        "title": "Set Active Project",
+        "title": "%command.setActiveProject%",
         "category": "Gorev"
       },
       {
         "command": "gorev.showTaskDetail",
-        "title": "Show Task Details",
+        "title": "%command.showTaskDetail%",
         "category": "Gorev"
       },
       {
         "command": "gorev.updateTaskStatus",
-        "title": "Update Task Status",
+        "title": "%command.updateTaskStatus%",
         "category": "Gorev"
       },
       {
@@ -592,32 +598,32 @@
       "gorev": [
         {
           "id": "gorevTasks",
-          "name": "Tasks",
+          "name": "%view.tasks%",
           "icon": "$(checklist)",
-          "contextualTitle": "Gorev Tasks"
+          "contextualTitle": "%view.tasks.contextualTitle%"
         },
         {
           "id": "gorevProjects",
-          "name": "Projects",
+          "name": "%view.projects%",
           "icon": "$(folder-library)",
-          "contextualTitle": "Gorev Projects"
+          "contextualTitle": "%view.projects.contextualTitle%"
         },
         {
           "id": "gorevTemplates",
-          "name": "Templates",
+          "name": "%view.templates%",
           "icon": "$(file-code)",
-          "contextualTitle": "Task Templates"
+          "contextualTitle": "%view.templates.contextualTitle%"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "gorevTasks",
-        "contents": "No tasks found.\n[Create Task](command:gorev.createTask)\n[Create Project First](command:gorev.createProject)"
+        "contents": "%welcome.tasks.noTasks%"
       },
       {
         "view": "gorevProjects",
-        "contents": "No projects found.\n[Create Project](command:gorev.createProject)"
+        "contents": "%welcome.projects.noProjects%"
       }
     ],
     "menus": {
