@@ -1,7 +1,13 @@
 # 📋 Gorev Dokümantasyonu
 
-> **Versiyon**: Bu dokümantasyon v0.7.0-beta.1 için geçerlidir.  
-> **Son Güncelleme**: 29 June 2025
+[🇺🇸 English](../README.en.md) | [🇹🇷 Türkçe](../README.md)
+
+> **Versiyon**: Bu dokümantasyon v0.11.0 için geçerlidir.  
+> **Son Güncelleme**: 18 July 2025
+
+## 🌍 Language Support
+- **English Documentation**: [README.en.md](../README.en.md) - Comprehensive English guide
+- **Turkish Documentation**: [README.md](../README.md) - Detaylı Türkçe dokümantasyon
 
 <div align="center">
 

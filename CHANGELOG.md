@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Bilingual Support (English/Turkish)** for VS Code Extension
+  - Automatic language detection based on VS Code language setting
+  - Complete localization of all UI strings (500+ translations)
+  - Localized command palette, menus, and notifications
+  - English and Turkish README files
+  - Package.nls files for marketplace localization
+
 ### Changed
-- Preparing for next release
+- VS Code extension now supports both English and Turkish interfaces
+- All hardcoded strings replaced with localized versions using vscode.l10n.t() API
 
 ## [0.11.0] - 2025-07-18 - Test Infrastructure & Stability Release
 

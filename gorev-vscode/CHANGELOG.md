@@ -2,6 +2,35 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.5.0] - 2025-07-21
+
+### Added
+- **Complete Bilingual Support (English/Turkish)**
+  - Automatic language detection based on VS Code language settings (vscode.env.language)
+  - Localized all UI strings across 36 source files (500+ translations)
+  - Added bundle.l10n.json for runtime localization
+  - Added package.nls.json files for VS Code marketplace metadata
+  - Turkish README.tr.md for Turkish users
+  - All commands, notifications, error messages, and UI elements now support both languages
+
+### Changed
+- Migrated from hardcoded strings to VS Code's modern l10n API
+- Updated all user-facing strings to use vscode.l10n.t() for dynamic translation
+- Enhanced user experience for international users
+
+### Technical Details
+- Localized components:
+  - Commands (21 commands with localized titles and descriptions)
+  - TreeView providers (tasks, projects, templates)
+  - UI components (filter toolbar, status bar, task detail panel)
+  - Inline editing and drag-drop operations
+  - Debug tools and test data seeders
+- Translation files:
+  - `l10n/bundle.l10n.json` - English base strings
+  - `l10n/bundle.l10n.tr.json` - Turkish translations
+  - `package.nls.json` - English package metadata
+  - `package.nls.tr.json` - Turkish package metadata
+
 ## [0.4.0] - 2025-07-10
 
 ### ⚠️ BREAKING CHANGES

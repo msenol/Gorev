@@ -4,6 +4,8 @@
 
 **Last Updated:** July 18, 2025 | **Version:** v0.11.0
 
+[🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
+
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
@@ -12,11 +14,21 @@
 ![Test Coverage](https://img.shields.io/badge/Coverage-84.6%25-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20|%20macOS%20|%20Windows-blue?style=flat-square)
 
-**MCP uyumlu AI editörlerle (Claude, VS Code, Windsurf, Cursor) entegre çalışan, Türkçe destekli modern görev yönetim sistemi**
+**Modern task management system with Turkish support, designed for MCP-compatible AI assistants (Claude, VS Code, Windsurf, Cursor)**
 
 [Özellikler](#-özellikler) • [Kurulum](#-kurulum) • [Kullanım](#-kullanım) • [Dokümantasyon](#-dokümantasyon) • [Katkıda Bulunma](#-katkıda-bulunma)
 
 </div>
+
+## 🌍 English Summary
+
+**Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation. 
+
+**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, 25 MCP tools, and optional VS Code extension with rich visual interface.
+
+**Quick Start**: [Installation Guide](README.en.md#-installation) | [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+
+---
 
 ## 🎯 Gorev Nedir?
 
@@ -60,12 +72,14 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **MCP standardı** - Tüm MCP uyumlu araçlarla uyumluluk
 
 ### 🎨 VS Code Extension Özellikleri (Opsiyonel)
+- **İki Dil Desteği** - Türkçe ve İngilizce arayüz (v0.5.0+) 🌍
 - **TreeView Panelleri** - Görev, proje ve şablon listeleri
 - **Görsel Arayüz** - Tıkla ve kullan deneyimi
 - **Status Bar** - Anlık durum bilgisi
 - **Komut Paleti** - Hızlı erişim (Ctrl+Shift+G)
 - **Renk Kodlaması** - Öncelik bazlı görsel ayırt etme
 - **Context Menüler** - Sağ tık işlemleri
+- **Otomatik Dil Algılama** - VS Code diline göre otomatik arayüz dili
 - **[Marketplace'den İndir](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** 🚀
 - **[Diğer IDE'lere Kurulum](docs/vscode-extension-kurulum.md)** (Cursor, Windsurf, VSCodium vb.)
 

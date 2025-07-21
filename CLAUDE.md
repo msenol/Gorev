@@ -2,11 +2,38 @@
 
 This file provides guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-## Last Updated: 17 July 2025
+## Last Updated: 21 July 2025
 
 > 🤖 **Documentation Note**: This comprehensive technical guide was enhanced and structured with the assistance of Claude (Anthropic), demonstrating the power of AI-assisted documentation in modern software development.
 
 ### Recent Changes
+
+#### VS Code Extension (v0.5.0) - Complete Bilingual Support (21 July 2025)
+- **English/Turkish Localization**: Complete bilingual support for international users
+  - Automatic language detection using `vscode.env.language`
+  - 500+ UI strings localized across all 36 source files
+  - Modern VS Code l10n API implementation with `vscode.l10n.t()`
+  - Bundle-based localization structure (`l10n/bundle.l10n.json`)
+  - Marketplace metadata localization (`package.nls.json`)
+- **Localized Components**:
+  - All 21 VS Code commands with titles and descriptions
+  - TreeView providers: task tree, project tree, template tree
+  - UI components: filter toolbar, status bar, task detail panel, template wizard
+  - Drag-drop controller with operation feedback messages
+  - Inline edit provider with validation messages
+  - Debug tools and test data seeders
+- **Files Added**:
+  - `l10n/bundle.l10n.json` - English runtime strings
+  - `l10n/bundle.l10n.tr.json` - Turkish translations
+  - `package.nls.json` - English VS Code marketplace metadata
+  - `package.nls.tr.json` - Turkish VS Code marketplace metadata
+  - `README.tr.md` - Turkish README for Turkish users
+- **Technical Implementation**:
+  - Replaced all hardcoded strings with l10n.t() calls
+  - Maintained icon codes and formatting in translations
+  - Used placeholder syntax {0}, {1} for dynamic values
+  - Consistent key naming pattern (component.key)
+  - Preserved all special characters and escape sequences
 
 #### Comprehensive Test Infrastructure Enhancement (17 July 2025)
 - **Massive Test Coverage Improvement**: Systematic test development across both modules
