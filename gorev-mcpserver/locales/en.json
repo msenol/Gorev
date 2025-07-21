@@ -130,7 +130,13 @@
     "requiredFieldMissing": "required field missing: {{.Field}}",
     "taskSaveFromTemplateFailed": "failed to save task: {{.Error}}",
     "tagsCreateFromTemplateFailed": "failed to create tags: {{.Error}}",
-    "taskTagsSetFromTemplateFailed": "failed to set task tags: {{.Error}}"
+    "taskTagsSetFromTemplateFailed": "failed to set task tags: {{.Error}}",
+    "contextInitializationFailed": "failed to initialize AI context: {{.Error}}",
+    "contextRetrievalFailed": "failed to retrieve AI context: {{.Error}}",
+    "jsonMarshalFailed": "JSON marshalling error ({{.Field}}): {{.Error}}",
+    "interactionQueryFailed": "AI interaction query failed: {{.Error}}",
+    "todayInteractionQueryFailed": "today's interaction query failed: {{.Error}}",
+    "lastInteractionUpdateFailed": "last interaction update failed ({{.TaskID}}): {{.Error}}"
   },
   "success": {
     "activeProjectSet": "✓ Active project set: {{.Project}}",

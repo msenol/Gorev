@@ -2,10 +2,12 @@ package gorev
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	// "log"
 	"strings"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
@@ -858,4 +860,189 @@ func (vy *VeriYonetici) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []stri
 	}
 
 	return result, nil
+}
+
+// AI Context Management Methods
+
+// AIContextGetir retrieves the current AI context from the database
+func (vy *VeriYonetici) AIContextGetir() (*AIContext, error) {
+	var activeTaskID sql.NullString
+	var recentTasksJSON, sessionDataJSON string
+	var lastUpdated time.Time
+
+	sorgu := `SELECT active_task_id, recent_tasks, session_data, last_updated FROM ai_context WHERE id = 1`
+	err := vy.db.QueryRow(sorgu).Scan(&activeTaskID, &recentTasksJSON, &sessionDataJSON, &lastUpdated)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Initialize default context if not exists
+			defaultContext := &AIContext{
+				RecentTasks: []string{},
+				SessionData: make(map[string]interface{}),
+				LastUpdated: time.Now(),
+			}
+			// Save the default context
+			if err := vy.AIContextKaydet(defaultContext); err != nil {
+				return nil, fmt.Errorf(i18n.T("error.contextInitializationFailed", map[string]interface{}{"Error": err}))
+			}
+			return defaultContext, nil
+		}
+		return nil, fmt.Errorf(i18n.T("error.contextRetrievalFailed", map[string]interface{}{"Error": err}))
+	}
+
+	// Parse JSON fields
+	var recentTasks []string
+	if err := json.Unmarshal([]byte(recentTasksJSON), &recentTasks); err != nil {
+		recentTasks = []string{}
+	}
+
+	var sessionData map[string]interface{}
+	if err := json.Unmarshal([]byte(sessionDataJSON), &sessionData); err != nil {
+		sessionData = make(map[string]interface{})
+	}
+
+	context := &AIContext{
+		RecentTasks: recentTasks,
+		SessionData: sessionData,
+		LastUpdated: lastUpdated,
+	}
+
+	if activeTaskID.Valid {
+		context.ActiveTaskID = activeTaskID.String
+	}
+
+	return context, nil
+}
+
+// AIContextKaydet saves the AI context to the database
+func (vy *VeriYonetici) AIContextKaydet(context *AIContext) error {
+	recentTasksJSON, err := json.Marshal(context.RecentTasks)
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.jsonMarshalFailed", map[string]interface{}{"Field": "recent_tasks", "Error": err}))
+	}
+
+	sessionDataJSON, err := json.Marshal(context.SessionData)
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.jsonMarshalFailed", map[string]interface{}{"Field": "session_data", "Error": err}))
+	}
+
+	var activeTaskID *string
+	if context.ActiveTaskID != "" {
+		activeTaskID = &context.ActiveTaskID
+	}
+
+	sorgu := `
+		INSERT OR REPLACE INTO ai_context (id, active_task_id, recent_tasks, session_data, last_updated)
+		VALUES (1, ?, ?, ?, ?)`
+	
+	_, err = vy.db.Exec(sorgu, activeTaskID, string(recentTasksJSON), string(sessionDataJSON), time.Now())
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
+	}
+
+	return nil
+}
+
+// AIInteractionKaydet records an AI interaction
+func (vy *VeriYonetici) AIInteractionKaydet(interaction *AIInteraction) error {
+	contextJSON := ""
+	if interaction.Context != "" {
+		contextJSON = interaction.Context
+	}
+
+	sorgu := `
+		INSERT INTO ai_interactions (gorev_id, action_type, context, timestamp)
+		VALUES (?, ?, ?, ?)`
+	
+	_, err := vy.db.Exec(sorgu, interaction.GorevID, interaction.ActionType, contextJSON, time.Now())
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.interactionSaveFailed", map[string]interface{}{"Error": err}))
+	}
+
+	return nil
+}
+
+// AIInteractionlariGetir retrieves recent AI interactions
+func (vy *VeriYonetici) AIInteractionlariGetir(limit int) ([]*AIInteraction, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	sorgu := `
+		SELECT id, gorev_id, action_type, context, timestamp
+		FROM ai_interactions
+		ORDER BY timestamp DESC
+		LIMIT ?`
+	
+	rows, err := vy.db.Query(sorgu, limit)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("error.interactionQueryFailed", map[string]interface{}{"Error": err}))
+	}
+	defer rows.Close()
+
+	var interactions []*AIInteraction
+	for rows.Next() {
+		var interaction AIInteraction
+		var contextStr sql.NullString
+		err := rows.Scan(&interaction.ID, &interaction.GorevID, &interaction.ActionType, &contextStr, &interaction.Timestamp)
+		if err != nil {
+			return nil, err
+		}
+		
+		if contextStr.Valid {
+			interaction.Context = contextStr.String
+		}
+		
+		interactions = append(interactions, &interaction)
+	}
+
+	return interactions, nil
+}
+
+// AITodayInteractionlariGetir retrieves today's AI interactions
+func (vy *VeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) {
+	today := time.Now().Truncate(24 * time.Hour)
+	tomorrow := today.Add(24 * time.Hour)
+
+	sorgu := `
+		SELECT id, gorev_id, action_type, context, timestamp
+		FROM ai_interactions
+		WHERE timestamp >= ? AND timestamp < ?
+		ORDER BY timestamp DESC`
+	
+	rows, err := vy.db.Query(sorgu, today, tomorrow)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("error.todayInteractionQueryFailed", map[string]interface{}{"Error": err}))
+	}
+	defer rows.Close()
+
+	var interactions []*AIInteraction
+	for rows.Next() {
+		var interaction AIInteraction
+		var contextStr sql.NullString
+		err := rows.Scan(&interaction.ID, &interaction.GorevID, &interaction.ActionType, &contextStr, &interaction.Timestamp)
+		if err != nil {
+			return nil, err
+		}
+		
+		if contextStr.Valid {
+			interaction.Context = contextStr.String
+		}
+		
+		interactions = append(interactions, &interaction)
+	}
+
+	return interactions, nil
+}
+
+// AILastInteractionGuncelle updates the last AI interaction timestamp for a task
+func (vy *VeriYonetici) AILastInteractionGuncelle(taskID string, timestamp time.Time) error {
+	sorgu := `UPDATE gorevler SET last_ai_interaction = ? WHERE id = ?`
+	
+	_, err := vy.db.Exec(sorgu, timestamp, taskID)
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.lastInteractionUpdateFailed", map[string]interface{}{"TaskID": taskID, "Error": err}))
+	}
+
+	return nil
 }

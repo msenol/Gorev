@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 )
 
 // MockVeriYonetici is a mock implementation of VeriYonetici for testing
@@ -303,6 +304,35 @@ func (m *MockVeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error 
 func (m *MockVeriYonetici) DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error) {
 	// Simple check for testing - just check if they're the same
 	return gorevID == hedefParentID, nil
+}
+
+// AI Context Management methods
+func (m *MockVeriYonetici) AIContextGetir() (*AIContext, error) {
+	return &AIContext{
+		RecentTasks: []string{},
+		SessionData: make(map[string]interface{}),
+		LastUpdated: time.Now(),
+	}, nil
+}
+
+func (m *MockVeriYonetici) AIContextKaydet(context *AIContext) error {
+	return nil
+}
+
+func (m *MockVeriYonetici) AIInteractionKaydet(interaction *AIInteraction) error {
+	return nil
+}
+
+func (m *MockVeriYonetici) AIInteractionlariGetir(limit int) ([]*AIInteraction, error) {
+	return []*AIInteraction{}, nil
+}
+
+func (m *MockVeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) {
+	return []*AIInteraction{}, nil
+}
+
+func (m *MockVeriYonetici) AILastInteractionGuncelle(taskID string, timestamp time.Time) error {
+	return nil
 }
 
 // Tests

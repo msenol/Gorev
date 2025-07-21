@@ -1,5 +1,7 @@
 package gorev
 
+import "time"
+
 // VeriYoneticiInterface defines the data access interface
 type VeriYoneticiInterface interface {
 	GorevKaydet(gorev *Gorev) error
@@ -31,5 +33,14 @@ type VeriYoneticiInterface interface {
 	GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error)
 	ParentIDGuncelle(gorevID, yeniParentID string) error
 	DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error)
+	
+	// AI Context Management methods
+	AIContextGetir() (*AIContext, error)
+	AIContextKaydet(context *AIContext) error
+	AIInteractionKaydet(interaction *AIInteraction) error
+	AIInteractionlariGetir(limit int) ([]*AIInteraction, error)
+	AITodayInteractionlariGetir() ([]*AIInteraction, error)
+	AILastInteractionGuncelle(taskID string, timestamp time.Time) error
+	
 	Kapat() error
 }

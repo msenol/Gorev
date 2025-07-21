@@ -14,6 +14,32 @@ type MockVeriYoneticiAI struct {
 	mock.Mock
 }
 
+// setupBasicAIContextMocks sets up the common mock expectations for AI context operations
+func setupBasicAIContextMocks(mockVY *MockVeriYoneticiAI) {
+	// Mock AIContextGetir to return a default context
+	mockContext := &AIContext{
+		RecentTasks: []string{},
+		SessionData: make(map[string]interface{}),
+		LastUpdated: time.Now(),
+	}
+	mockVY.On("AIContextGetir").Return(mockContext, nil).Maybe()
+	
+	// Mock AIContextKaydet
+	mockVY.On("AIContextKaydet", mock.AnythingOfType("*gorev.AIContext")).Return(nil).Maybe()
+	
+	// Mock AIInteractionKaydet
+	mockVY.On("AIInteractionKaydet", mock.AnythingOfType("*gorev.AIInteraction")).Return(nil).Maybe()
+	
+	// Mock AIInteractionlariGetir
+	mockVY.On("AIInteractionlariGetir", mock.AnythingOfType("int")).Return([]*AIInteraction{}, nil).Maybe()
+	
+	// Mock AITodayInteractionlariGetir
+	mockVY.On("AITodayInteractionlariGetir").Return([]*AIInteraction{}, nil).Maybe()
+	
+	// Mock AILastInteractionGuncelle
+	mockVY.On("AILastInteractionGuncelle", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(nil).Maybe()
+}
+
 func (m *MockVeriYoneticiAI) GorevKaydet(gorev *Gorev) error {
 	args := m.Called(gorev)
 	return args.Error(0)
@@ -231,6 +257,46 @@ func (m *MockVeriYoneticiAI) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs [
 	return args.Get(0).(map[string]int), args.Error(1)
 }
 
+// AI Context Management methods
+func (m *MockVeriYoneticiAI) AIContextGetir() (*AIContext, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*AIContext), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) AIContextKaydet(context *AIContext) error {
+	args := m.Called(context)
+	return args.Error(0)
+}
+
+func (m *MockVeriYoneticiAI) AIInteractionKaydet(interaction *AIInteraction) error {
+	args := m.Called(interaction)
+	return args.Error(0)
+}
+
+func (m *MockVeriYoneticiAI) AIInteractionlariGetir(limit int) ([]*AIInteraction, error) {
+	args := m.Called(limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*AIInteraction), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) AITodayInteractionlariGetir() ([]*AIInteraction, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*AIInteraction), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) AILastInteractionGuncelle(taskID string, timestamp time.Time) error {
+	args := m.Called(taskID, timestamp)
+	return args.Error(0)
+}
+
 func (m *MockVeriYoneticiAI) Kapat() error {
 	args := m.Called()
 	return args.Error(0)
@@ -282,6 +348,9 @@ func TestSetActiveTask(t *testing.T) {
 			mockVeriYonetici := new(MockVeriYoneticiAI)
 			acy := YeniAIContextYonetici(mockVeriYonetici)
 
+			// Setup basic AI context mock expectations
+			setupBasicAIContextMocks(mockVeriYonetici)
+
 			// Setup mock expectations
 			mockVeriYonetici.On("GorevGetir", tt.taskID).Return(tt.mockTask, tt.mockError)
 
@@ -312,6 +381,9 @@ func TestGetActiveTask(t *testing.T) {
 	mockVeriYonetici := new(MockVeriYoneticiAI)
 	acy := YeniAIContextYonetici(mockVeriYonetici)
 
+	// Setup basic AI context mock expectations
+	setupBasicAIContextMocks(mockVeriYonetici)
+
 	// Since GetContext returns a mock implementation, we test the basic flow
 	task, err := acy.GetActiveTask()
 	assert.NoError(t, err)
@@ -322,6 +394,9 @@ func TestGetActiveTask(t *testing.T) {
 func TestGetRecentTasks(t *testing.T) {
 	mockVeriYonetici := new(MockVeriYoneticiAI)
 	acy := YeniAIContextYonetici(mockVeriYonetici)
+
+	// Setup basic AI context mock expectations
+	setupBasicAIContextMocks(mockVeriYonetici)
 
 	// Test with empty recent tasks
 	tasks, err := acy.GetRecentTasks(5)
@@ -375,6 +450,9 @@ func TestRecordTaskView(t *testing.T) {
 			mockVeriYonetici := new(MockVeriYoneticiAI)
 			acy := YeniAIContextYonetici(mockVeriYonetici)
 
+			// Setup basic AI context mock expectations
+			setupBasicAIContextMocks(mockVeriYonetici)
+
 			// Setup mock expectations
 			mockVeriYonetici.On("GorevGetir", tt.taskID).Return(tt.mockTask, tt.mockError)
 
@@ -403,6 +481,9 @@ func TestRecordTaskView(t *testing.T) {
 func TestBatchUpdate(t *testing.T) {
 	mockVeriYonetici := new(MockVeriYoneticiAI)
 	acy := YeniAIContextYonetici(mockVeriYonetici)
+
+	// Setup basic AI context mock expectations
+	setupBasicAIContextMocks(mockVeriYonetici)
 
 	updates := []BatchUpdate{
 		{
@@ -515,6 +596,9 @@ func TestNLPQuery(t *testing.T) {
 			mockVeriYonetici := new(MockVeriYoneticiAI)
 			acy := YeniAIContextYonetici(mockVeriYonetici)
 
+			// Setup basic AI context mock expectations
+			setupBasicAIContextMocks(mockVeriYonetici)
+
 			// Setup mock based on query type
 			if strings.Contains(tt.query, "yüksek öncelik") {
 				mockVeriYonetici.On("GorevleriGetir", "beklemede", "", "").Return(tt.mockTasks, nil)
@@ -546,6 +630,9 @@ func TestNLPQuery(t *testing.T) {
 func TestGetContextSummary(t *testing.T) {
 	mockVeriYonetici := new(MockVeriYoneticiAI)
 	acy := YeniAIContextYonetici(mockVeriYonetici)
+
+	// Setup basic AI context mock expectations
+	setupBasicAIContextMocks(mockVeriYonetici)
 
 	// Setup mock data
 	allTasks := []*Gorev{

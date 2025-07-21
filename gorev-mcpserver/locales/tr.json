@@ -130,7 +130,13 @@
     "requiredFieldMissing": "zorunlu alan eksik: {{.Field}}",
     "taskSaveFromTemplateFailed": "görev kaydedilemedi: {{.Error}}",
     "tagsCreateFromTemplateFailed": "etiketler oluşturulamadı: {{.Error}}",
-    "taskTagsSetFromTemplateFailed": "görev etiketleri ayarlanamadı: {{.Error}}"
+    "taskTagsSetFromTemplateFailed": "görev etiketleri ayarlanamadı: {{.Error}}",
+    "contextInitializationFailed": "AI context başlatılamadı: {{.Error}}",
+    "contextRetrievalFailed": "AI context alınamadı: {{.Error}}",
+    "jsonMarshalFailed": "JSON serileştirme hatası ({{.Field}}): {{.Error}}",
+    "interactionQueryFailed": "AI interaction sorgusu başarısız: {{.Error}}",
+    "todayInteractionQueryFailed": "bugünkü interaction sorgusu başarısız: {{.Error}}",
+    "lastInteractionUpdateFailed": "son interaction güncelleme hatası ({{.TaskID}}): {{.Error}}"
   },
   "success": {
     "activeProjectSet": "✓ Aktif proje ayarlandı: {{.Project}}",
