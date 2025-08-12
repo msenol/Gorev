@@ -228,7 +228,12 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 	}
 
 	// Update last AI interaction time
-	return acy.updateLastInteraction(taskID)
+	if err := acy.updateLastInteraction(taskID); err != nil {
+		return err
+	}
+	
+	// Add task to recent tasks
+	return acy.addToRecentTasks(taskID)
 }
 
 // Helper functions
@@ -267,6 +272,36 @@ func (acy *AIContextYonetici) getSessionInteractions() ([]*AIInteraction, error)
 
 func (acy *AIContextYonetici) updateLastInteraction(taskID string) error {
 	return acy.veriYonetici.AILastInteractionGuncelle(taskID, time.Now())
+}
+
+func (acy *AIContextYonetici) addToRecentTasks(taskID string) error {
+	// Get current AI context
+	context, err := acy.GetContext()
+	if err != nil {
+		// If no context exists, create new one
+		context = &AIContext{
+			RecentTasks: []string{},
+		}
+	}
+	
+	// Remove taskID if it already exists (to move it to front)
+	newRecentTasks := []string{}
+	for _, id := range context.RecentTasks {
+		if id != taskID {
+			newRecentTasks = append(newRecentTasks, id)
+		}
+	}
+	
+	// Add taskID to front
+	context.RecentTasks = append([]string{taskID}, newRecentTasks...)
+	
+	// Keep only last 10 tasks
+	if len(context.RecentTasks) > 10 {
+		context.RecentTasks = context.RecentTasks[:10]
+	}
+	
+	// Save updated context
+	return acy.saveContext(context)
 }
 
 func contains(slice []string, item string) bool {
