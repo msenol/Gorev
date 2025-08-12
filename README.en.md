@@ -6,6 +6,8 @@
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
+> ⚠️ **BREAKING CHANGE (v0.10.0)**: The `gorev_olustur` tool is no longer available! Template usage is now mandatory. [Details](#breaking-change-template-requirement)
+
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
@@ -265,6 +267,31 @@ make docker-build
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## 🚨 Breaking Change: Template Requirement
+
+**Starting from v0.10.0**, the `gorev_olustur` tool has been removed. All task creation must now use the template system for better structure and consistency.
+
+### Migration Guide
+
+**Before (v0.9.x and earlier):**
+```
+Create a new task: Fix login bug
+```
+
+**After (v0.10.0+):**
+```
+Use bug-report template to create: Fix login bug
+```
+
+Available templates:
+- `bug-report` - Bug reports and fixes
+- `feature` - New features and enhancements  
+- `task` - General tasks and activities
+- `meeting` - Meeting planning and notes
+- `research` - Research and investigation tasks
+
+For more details, see [MCP Tools Documentation](docs/user-guide/mcp-tools.md#gorev_template_olustur).
 
 ---
 
