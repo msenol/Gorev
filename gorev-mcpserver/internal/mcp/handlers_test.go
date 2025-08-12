@@ -11,6 +11,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,6 +20,14 @@ import (
 
 // setupTestEnvironment creates a test MCP server with in-memory database
 func setupTestEnvironment(t *testing.T) (*server.MCPServer, *Handlers, func()) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
+
 	// Use temporary file database for testing
 	tempDB := "test_mcp_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
 	cleanup := func() {
@@ -136,6 +145,14 @@ func callTool(t *testing.T, handlers *Handlers, toolName string, params map[stri
 // Test cases for all 16 MCP tools
 
 func TestMCPHandlers_Integration(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
+
 	// Setup test environment with templates
 	tempDB := "test_mcp_integration_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
 	cleanup := func() {
@@ -420,6 +437,14 @@ func TestMCPHandlers_TemplateIntegration(t *testing.T) {
 }
 
 func TestMCPHandlers_ProjectManagement(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
+
 	// Setup test environment with templates
 	tempDB := "test_mcp_proj_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
 	cleanup := func() {
@@ -518,6 +543,14 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 }
 
 func TestMCPHandlers_TaskDependencies(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
+
 	// Setup test environment with templates
 	tempDB := "test_mcp_dep_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
 	cleanup := func() {
@@ -674,6 +707,14 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		t.Skip("Skipping performance test in short mode")
 	}
 
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
+
 	// Setup test environment with templates
 	tempDB := "test_mcp_perf_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
 	cleanup := func() {
@@ -749,6 +790,13 @@ func TestMCPHandlers_Performance(t *testing.T) {
 
 // TestTemplateHandlers tests all template-related MCP handlers
 func TestTemplateHandlers(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
 	t.Run("List Templates Empty", func(t *testing.T) {
 		// Create fresh database without templates
 		veriYonetici, err := gorev.YeniVeriYonetici("test_template_empty.db", "file://../../internal/veri/migrations")
@@ -1184,6 +1232,13 @@ func TestTemplateHandlers(t *testing.T) {
 
 // TestTemplateConcurrency tests template operations under concurrent access
 func TestTemplateConcurrency(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
 	// Setup with default templates
 	veriYonetici, err := gorev.YeniVeriYonetici("test_template_concurrent.db", "file://../../internal/veri/migrations")
 	require.NoError(t, err)
@@ -1261,6 +1316,13 @@ func TestTemplateConcurrency(t *testing.T) {
 
 // TestGorevOlusturDeprecated tests that the deprecated gorev_olustur handler returns proper error
 func TestGorevOlusturDeprecated(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
 	veriYonetici, err := gorev.YeniVeriYonetici("test_deprecated_gorev.db", "file://../../internal/veri/migrations")
 	require.NoError(t, err)
 	defer os.Remove("test_deprecated_gorev.db")
@@ -1313,6 +1375,13 @@ func TestGorevOlusturDeprecated(t *testing.T) {
 
 // TestTemplateMandatoryWorkflow tests the complete workflow with mandatory templates
 func TestTemplateMandatoryWorkflow(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
 	// Setup with default templates
 	veriYonetici, err := gorev.YeniVeriYonetici("test_template_mandatory.db", "file://../../internal/veri/migrations")
 	require.NoError(t, err)

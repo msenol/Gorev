@@ -5,7 +5,15 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/msenol/gorev/internal/i18n"
 )
+
+// setupTestI18n initializes the i18n system for tests
+func setupTestI18n() {
+	// Initialize i18n with Turkish (default) for tests
+	i18n.Initialize("tr")
+}
 
 // MockVeriYonetici is a mock implementation of VeriYonetici for testing
 type MockVeriYonetici struct {
@@ -77,7 +85,7 @@ func (m *MockVeriYonetici) GorevGetir(id string) (*Gorev, error) {
 	}
 	gorev, ok := m.gorevler[id]
 	if !ok {
-		return nil, errors.New("görev bulunamadı")
+		return nil, errors.New(i18n.T("error.taskNotFound"))
 	}
 	return gorev, nil
 }
@@ -498,6 +506,7 @@ func TestIsYonetici_GorevListele(t *testing.T) {
 }
 
 func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
+	setupTestI18n() // Initialize i18n for tests
 	testCases := []struct {
 		name             string
 		gorevID          string
@@ -518,7 +527,7 @@ func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
 			gorevID:       "non-existing",
 			yeniDurum:     "tamamlandi",
 			wantErr:       true,
-			expectedError: "görev bulunamadı",
+			expectedError: "error.taskNotFound", // Will be compared after i18n initialization
 		},
 		{
 			name:            "database getir error",
@@ -558,8 +567,11 @@ func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
-				} else if tc.expectedError != "" && !strings.Contains(err.Error(), tc.expectedError) {
-					t.Errorf("expected error containing '%s', got '%s'", tc.expectedError, err.Error())
+				} else if tc.expectedError != "" {
+					expectedTranslated := i18n.T(tc.expectedError)
+					if !strings.Contains(err.Error(), expectedTranslated) {
+						t.Errorf("expected error containing '%s', got '%s'", expectedTranslated, err.Error())
+					}
 				}
 				return
 			}
@@ -1011,6 +1023,7 @@ func TestIsYonetici_GorevBagimliMi(t *testing.T) {
 }
 
 func TestIsYonetici_GorevDurumGuncelle_WithDependencies(t *testing.T) {
+	setupTestI18n() // Initialize i18n for tests
 	mockVY := NewMockVeriYonetici()
 	iy := YeniIsYonetici(mockVY)
 
@@ -1028,7 +1041,9 @@ func TestIsYonetici_GorevDurumGuncelle_WithDependencies(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when trying to start task with incomplete dependencies")
 	}
-	if !strings.Contains(err.Error(), "önce şu görevler tamamlanmalı") {
+	// Check for the translated error message about dependencies
+	expectedMsg := "önce şu görevler tamamlanmalı" // Part of the Turkish translation
+	if !strings.Contains(err.Error(), expectedMsg) {
 		t.Errorf("unexpected error message: %v", err)
 	}
 

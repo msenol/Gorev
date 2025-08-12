@@ -11,6 +11,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -593,6 +594,14 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 
 // TestTemplatedenGorevOlustur_EdgeCases tests edge cases for template-based task creation
 func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
+	// Initialize i18n system for tests
+	if !i18n.IsInitialized() {
+		err := i18n.Initialize("tr")
+		if err != nil {
+			t.Logf("Warning: i18n initialization failed: %v", err)
+		}
+	}
+
 	// Setup with default templates
 	veriYonetici, err := gorev.YeniVeriYonetici("test_template_edge.db", "file://../../internal/veri/migrations")
 	require.NoError(t, err)

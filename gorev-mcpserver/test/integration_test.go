@@ -5,10 +5,17 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 	mcphandlers "github.com/msenol/gorev/internal/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// setupIntegrationTestI18n initializes the i18n system for integration tests
+func setupIntegrationTestI18n() {
+	// Initialize i18n with Turkish (default) for tests
+	i18n.Initialize("tr")
+}
 
 // Helper function to extract text from MCP result
 func extractText(t *testing.T, result *mcp.CallToolResult) string {
@@ -29,6 +36,7 @@ func extractText(t *testing.T, result *mcp.CallToolResult) string {
 }
 
 func TestGorevOlusturVeListele(t *testing.T) {
+	setupIntegrationTestI18n() // Initialize i18n for tests
 	// Test veritabanı oluştur
 	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)
@@ -344,6 +352,7 @@ func TestGorevSil(t *testing.T) {
 }
 
 func TestProjeListele(t *testing.T) {
+	setupIntegrationTestI18n() // Initialize i18n for tests
 	// Test veritabanı oluştur
 	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
 	require.NoError(t, err)

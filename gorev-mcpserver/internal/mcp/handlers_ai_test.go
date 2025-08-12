@@ -71,18 +71,35 @@ func TestGorevSetActive(t *testing.T) {
 func TestGorevGetActive(t *testing.T) {
 	h := setupTestHandlers(t)
 
-	// Create and set active task
-	proje, _ := h.isYonetici.ProjeOlustur("Test Project", "Test Description")
-	gorevTest, _ := h.isYonetici.GorevOlustur("Active Task", "Description", "yuksek", proje.ID, "", nil)
-	h.GorevSetActive(map[string]interface{}{"task_id": gorevTest.ID})
+	t.Run("Get active task when one exists", func(t *testing.T) {
+		// Create and set active task
+		proje, _ := h.isYonetici.ProjeOlustur("Test Project", "Test Description")
+		gorevTest, _ := h.isYonetici.GorevOlustur("Active Task", "Description", "yuksek", proje.ID, "", nil)
+		h.GorevSetActive(map[string]interface{}{"task_id": gorevTest.ID})
 
-	result, _ := h.GorevGetActive(map[string]interface{}{})
+		result, _ := h.GorevGetActive(map[string]interface{}{})
 
-	assert.NotNil(t, result)
-	assert.False(t, result.IsError)
+		assert.NotNil(t, result)
+		assert.False(t, result.IsError)
 
-	// Since we're using mock context, it will return nil active task
-	assert.Contains(t, getResultText(result), "Şu anda aktif görev yok")
+		// Should contain the active task details
+		resultText := getResultText(result)
+		assert.Contains(t, resultText, "Aktif Görev: Active Task")
+		assert.Contains(t, resultText, gorevTest.ID)
+	})
+
+	t.Run("Get active task when none exists", func(t *testing.T) {
+		// Create a fresh handler without active task
+		h2 := setupTestHandlers(t)
+		
+		result, _ := h2.GorevGetActive(map[string]interface{}{})
+
+		assert.NotNil(t, result)
+		assert.False(t, result.IsError)
+
+		// Should indicate no active task
+		assert.Contains(t, getResultText(result), "Şu anda aktif görev yok")
+	})
 }
 
 // TestGorevRecent tests the gorev_recent handler
