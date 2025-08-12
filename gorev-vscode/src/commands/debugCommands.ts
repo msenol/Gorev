@@ -24,7 +24,8 @@ export function registerDebugCommands(
                 ].filter(Boolean));
             } catch (error) {
                 Logger.error('Failed to seed test data:', error);
-                vscode.window.showErrorMessage(vscode.l10n.t('debug.seedingFailed', error.toString()));
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(vscode.l10n.t('debug.seedingFailed', errorMessage));
             }
         })
     );
@@ -42,7 +43,8 @@ export function registerDebugCommands(
                 ].filter(Boolean));
             } catch (error) {
                 Logger.error('Failed to clear test data:', error);
-                vscode.window.showErrorMessage(vscode.l10n.t('debug.clearingFailed', error.toString()));
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(vscode.l10n.t('debug.clearingFailed', errorMessage));
             }
         })
     );

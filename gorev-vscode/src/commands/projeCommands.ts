@@ -11,7 +11,8 @@ async function getProjectList(mcpClient: MCPClient): Promise<Proje[]> {
     const result = await mcpClient.callTool('proje_listele');
     return MarkdownParser.parseProjeListesi(result.content[0].text);
   } catch (error) {
-    console.error(vscode.l10n.t('project.getListFailed', error.toString()));
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(vscode.l10n.t('project.getListFailed', errorMessage));
     return [];
   }
 }
@@ -51,7 +52,8 @@ export function registerProjeCommands(
         vscode.window.showInformationMessage(vscode.l10n.t('project.createdSuccess'));
         await providers.projeTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('project.createFailed', error.toString()));
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(vscode.l10n.t('project.createFailed', errorMessage));
       }
     })
   );
@@ -111,7 +113,8 @@ export function registerProjeCommands(
         await providers.gorevTreeProvider.refresh();
         providers.statusBarManager.update();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('project.updateActiveFailed', error.toString()));
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(vscode.l10n.t('project.updateActiveFailed', errorMessage));
       }
     })
   );

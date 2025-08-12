@@ -60,7 +60,8 @@ export class InlineEditProvider {
             vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.taskTitleUpdated'));
             Logger.info(`Task ${task.id} title updated to: ${newTitle}`);
         } catch (error) {
-            vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.updateFailed', error));
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.updateFailed', errorMessage));
             Logger.error('Failed to update task title:', error);
         }
     }
@@ -109,7 +110,8 @@ export class InlineEditProvider {
                 // Force a command execution to refresh all trees
                 await vscode.commands.executeCommand('gorev.refreshTasks');
             } catch (error) {
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.statusUpdateFailed', error));
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.statusUpdateFailed', errorMessage));
                 Logger.error('[QuickStatusChange] Failed to update task status:', error);
             }
         }
@@ -152,7 +154,8 @@ export class InlineEditProvider {
                 vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.taskPriorityUpdated'));
                 Logger.info(`Task ${task.id} priority updated to: ${selected.value}`);
             } catch (error) {
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.priorityUpdateFailed', error));
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.priorityUpdateFailed', errorMessage));
                 Logger.error('Failed to update task priority:', error);
             }
         }
@@ -196,7 +199,8 @@ export class InlineEditProvider {
                 );
                 Logger.info(`Task ${task.id} due date updated to: ${newDate || 'none'}`);
             } catch (error) {
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.dateUpdateFailed', error));
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.dateUpdateFailed', errorMessage));
                 Logger.error('Failed to update task due date:', error);
             }
         }
@@ -263,7 +267,8 @@ export class InlineEditProvider {
                 vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.descriptionUpdated'));
                 Logger.info(`Task ${task.id} description updated`);
             } catch (error) {
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.descriptionUpdateFailed', error));
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.descriptionUpdateFailed', errorMessage));
                 Logger.error('Failed to update task description:', error);
             }
         }

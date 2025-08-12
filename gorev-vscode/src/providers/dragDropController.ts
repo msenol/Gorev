@@ -204,7 +204,8 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             }
         } catch (error) {
             Logger.error('Drop operation failed:', error);
-            vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.dropFailed', error));
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.dropFailed', errorMessage));
         }
     }
 
@@ -279,7 +280,8 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
                 );
             } catch (error) {
                 Logger.error('Multiple drop operation failed:', error);
-                vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.operationFailed', error));
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(vscode.l10n.t('dragDrop.operationFailed', errorMessage));
             }
         }
     }

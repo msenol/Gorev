@@ -335,7 +335,8 @@ export function registerEnhancedGorevCommands(
         );
         await treeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('bulk.failedToUpdate', error.toString()));
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(vscode.l10n.t('bulk.failedToUpdate', errorMessage));
       }
     })
   );
@@ -386,7 +387,8 @@ export function registerEnhancedGorevCommands(
         );
         await treeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('bulk.failedToDelete', error.toString()));
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(vscode.l10n.t('bulk.failedToDelete', errorMessage));
       }
     })
   );

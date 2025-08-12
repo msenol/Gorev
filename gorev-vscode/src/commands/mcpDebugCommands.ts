@@ -56,7 +56,8 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                     await vscode.commands.executeCommand('vscode.open', uri);
                 }
             } catch (e) {
-                vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.readLogsFailed', e.toString()));
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.readLogsFailed', errorMessage));
             }
         })
     );
@@ -84,7 +85,8 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                     
                     vscode.window.showInformationMessage(vscode.l10n.t('mcpDebug.clearedLogs', files.length.toString()));
                 } catch (e) {
-                    vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.clearLogsFailed', e.toString()));
+                    const errorMessage = e instanceof Error ? e.message : String(e);
+                    vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.clearLogsFailed', errorMessage));
                 }
             }
         })
@@ -171,7 +173,8 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                 }
                 
             } catch (e) {
-                outputChannel.appendLine(vscode.l10n.t('mcpDebug.error', e.toString()));
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                outputChannel.appendLine(vscode.l10n.t('mcpDebug.error', errorMessage));
             }
             
             outputChannel.appendLine(vscode.l10n.t('mcpDebug.testComplete'));

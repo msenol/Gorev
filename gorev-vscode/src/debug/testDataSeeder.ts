@@ -71,7 +71,8 @@ export class TestDataSeeder {
 
             vscode.window.showInformationMessage(vscode.l10n.t('testData.success'));
         } catch (error) {
-            vscode.window.showErrorMessage(vscode.l10n.t('testData.failed', error));
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(vscode.l10n.t('testData.failed', errorMessage));
             Logger.error('Test data seeding failed:', error);
         }
     }
@@ -702,7 +703,8 @@ export class TestDataSeeder {
 
             vscode.window.showInformationMessage(vscode.l10n.t('testData.cleared'));
         } catch (error) {
-            vscode.window.showErrorMessage(vscode.l10n.t('testData.clearFailed', error));
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(vscode.l10n.t('testData.clearFailed', errorMessage));
             Logger.error('Failed to clear test data:', error);
         }
     }
