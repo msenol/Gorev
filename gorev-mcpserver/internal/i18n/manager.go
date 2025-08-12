@@ -129,7 +129,20 @@ func getLocaleFilePath(filename string) string {
 		}
 	}
 
-	// Fallback to relative path from working directory
+	// Try multiple relative paths for different execution contexts
+	possiblePaths := []string{
+		filepath.Join("locales", filename),           // Direct execution from root
+		filepath.Join("..", "..", "locales", filename), // Test execution from internal/mcp/
+		filepath.Join("..", "locales", filename),     // Test execution from internal/
+	}
+
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+
+	// Final fallback to relative path from working directory
 	return filepath.Join("locales", filename)
 }
 
