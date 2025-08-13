@@ -43,7 +43,8 @@ type AIContextSummary struct {
 
 // AIContextYonetici manages AI context and interactions
 type AIContextYonetici struct {
-	veriYonetici VeriYoneticiInterface
+	veriYonetici       VeriYoneticiInterface
+	autoStateManager   *AutoStateManager
 }
 
 // YeniAIContextYonetici creates a new AI context manager
@@ -51,6 +52,11 @@ func YeniAIContextYonetici(vy VeriYoneticiInterface) *AIContextYonetici {
 	return &AIContextYonetici{
 		veriYonetici: vy,
 	}
+}
+
+// SetAutoStateManager sets the auto state manager for enhanced integration
+func (acy *AIContextYonetici) SetAutoStateManager(asm *AutoStateManager) {
+	acy.autoStateManager = asm
 }
 
 // SetActiveTask sets the active task for the AI session
@@ -96,7 +102,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	// Auto-transition to "devam_ediyor" if task is in "beklemede"
 	if gorev.Durum == "beklemede" {
 		gorev.Durum = "devam_ediyor"
-		if err := acy.veriYonetici.GorevGuncelle(gorev); err != nil {
+		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": "devam_ediyor"}); err != nil {
 			return fmt.Errorf(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
@@ -214,7 +220,7 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 	// Auto-transition to "devam_ediyor" if in "beklemede"
 	if gorev.Durum == "beklemede" {
 		gorev.Durum = "devam_ediyor"
-		if err := acy.veriYonetici.GorevGuncelle(gorev); err != nil {
+		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": "devam_ediyor"}); err != nil {
 			return fmt.Errorf(i18n.T("error.autoStatusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 		// Record the state change
@@ -246,6 +252,11 @@ func (acy *AIContextYonetici) saveContext(context *AIContext) error {
 	return acy.veriYonetici.AIContextKaydet(context)
 }
 
+func (acy *AIContextYonetici) RecordInteraction(taskID, actionType string, context interface{}) error {
+	return acy.recordInteraction(taskID, actionType, context)
+}
+
+// recordInteraction is the internal method for recording interactions
 func (acy *AIContextYonetici) recordInteraction(taskID, actionType string, context interface{}) error {
 	// Convert context to JSON string if provided
 	contextJSON := ""
@@ -304,14 +315,7 @@ func (acy *AIContextYonetici) addToRecentTasks(taskID string) error {
 	return acy.saveContext(context)
 }
 
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
+
 
 // BatchUpdate represents a single update in a batch operation
 type BatchUpdate struct {
@@ -319,35 +323,21 @@ type BatchUpdate struct {
 	Updates map[string]interface{} `json:"updates"`
 }
 
-// BatchUpdateResult represents the result of a batch update operation
-type BatchUpdateResult struct {
-	Successful []string `json:"successful"`
-	Failed     []struct {
-		ID    string `json:"id"`
-		Error string `json:"error"`
-	} `json:"failed"`
-	TotalProcessed int `json:"total_processed"`
-}
+
 
 // BatchUpdate performs multiple task updates in a single operation
 func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateResult, error) {
 	result := &BatchUpdateResult{
 		Successful: []string{},
-		Failed: []struct {
-			ID    string `json:"id"`
-			Error string `json:"error"`
-		}{},
+		Failed: []BatchUpdateError{},
 	}
 
 	for _, update := range updates {
 		// Validate task exists
 		_, err := acy.veriYonetici.GorevGetir(update.ID)
 		if err != nil {
-			result.Failed = append(result.Failed, struct {
-				ID    string `json:"id"`
-				Error string `json:"error"`
-			}{
-				ID:    update.ID,
+			result.Failed = append(result.Failed, BatchUpdateError{
+				TaskID: update.ID,
 				Error: fmt.Sprintf("görev bulunamadı: %v", err),
 			})
 			continue
@@ -355,14 +345,9 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 
 		// Apply updates based on fields
 		if durum, ok := update.Updates["durum"].(string); ok {
-			gorev, _ := acy.veriYonetici.GorevGetir(update.ID)
-			gorev.Durum = durum
-			if err := acy.veriYonetici.GorevGuncelle(gorev); err != nil {
-				result.Failed = append(result.Failed, struct {
-					ID    string `json:"id"`
-					Error string `json:"error"`
-				}{
-					ID:    update.ID,
+			if err := acy.veriYonetici.GorevGuncelle(update.ID, map[string]interface{}{"durum": durum}); err != nil {
+				result.Failed = append(result.Failed, BatchUpdateError{
+					TaskID: update.ID,
 					Error: fmt.Sprintf("durum güncelleme hatası: %v", err),
 				})
 				continue
@@ -386,6 +371,30 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 
 // NLPQuery performs natural language query on tasks
 func (acy *AIContextYonetici) NLPQuery(query string) ([]*Gorev, error) {
+	// Use enhanced NLP processing if auto state manager is available
+	if acy.autoStateManager != nil {
+		result, err := acy.autoStateManager.ProcessNaturalLanguageQuery(query, "")
+		if err != nil {
+			// Fallback to basic NLP processing
+			return acy.basicNLPQuery(query)
+		}
+		
+		// Extract tasks from the structured result
+		if resultMap, ok := result.(map[string]interface{}); ok {
+			if tasksResult, ok := resultMap["result"]; ok {
+				if tasks, ok := tasksResult.([]*Gorev); ok {
+					return tasks, nil
+				}
+			}
+		}
+	}
+	
+	// Fallback to basic NLP processing
+	return acy.basicNLPQuery(query)
+}
+
+// basicNLPQuery performs basic natural language query processing
+func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 	// Normalize the query to lowercase for easier matching
 	normalizedQuery := strings.ToLower(query)
 

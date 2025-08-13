@@ -7,7 +7,7 @@ type VeriYoneticiInterface interface {
 	GorevKaydet(gorev *Gorev) error
 	GorevGetir(id string) (*Gorev, error)
 	GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, error)
-	GorevGuncelle(gorev *Gorev) error
+	GorevGuncelle(taskID string, params interface{}) error
 	GorevSil(id string) error
 	ProjeKaydet(proje *Proje) error
 	ProjeGetir(id string) (*Proje, error)
@@ -41,6 +41,12 @@ type VeriYoneticiInterface interface {
 	AIInteractionlariGetir(limit int) ([]*AIInteraction, error)
 	AITodayInteractionlariGetir() ([]*AIInteraction, error)
 	AILastInteractionGuncelle(taskID string, timestamp time.Time) error
+	
+	// Additional methods for NLP and auto state management
+	GorevDetay(taskID string) (*Gorev, error)
+	GorevListele(filters map[string]interface{}) ([]*Gorev, error)
+	GorevOlustur(params map[string]interface{}) (string, error)
+	GorevBagimlilikGetir(taskID string) ([]*Gorev, error)
 	
 	Kapat() error
 }
