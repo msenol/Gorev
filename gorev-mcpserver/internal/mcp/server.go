@@ -66,5 +66,6 @@ func ListTools() []Tool {
 		{Name: "gorev_context_summary", Description: "AI bağlam özetini göster"},
 		{Name: "gorev_batch_update", Description: "Toplu görev güncelleme"},
 		{Name: "gorev_nlp_query", Description: "Doğal dil sorgusu ile görev ara"},
+		{Name: "gorev_intelligent_create", Description: "AI destekli akıllı görev oluşturma"},
 	}
 }
