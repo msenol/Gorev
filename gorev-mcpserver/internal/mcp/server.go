@@ -67,5 +67,9 @@ func ListTools() []Tool {
 		{Name: "gorev_batch_update", Description: "Toplu görev güncelleme"},
 		{Name: "gorev_nlp_query", Description: "Doğal dil sorgusu ile görev ara"},
 		{Name: "gorev_intelligent_create", Description: "AI destekli akıllı görev oluşturma"},
+		{Name: "gorev_file_watch_add", Description: "Dosya izleme ekle"},
+		{Name: "gorev_file_watch_remove", Description: "Dosya izlemeyi kaldır"},
+		{Name: "gorev_file_watch_list", Description: "Dosya izleme durumunu listele"},
+		{Name: "gorev_file_watch_stats", Description: "Dosya izleme istatistikleri"},
 	}
 }

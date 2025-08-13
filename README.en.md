@@ -54,6 +54,9 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **🔍 Advanced filtering** - Status, tag, date-based queries
 - **🌳 Subtask hierarchy** - Unlimited depth task tree structure
 - **📊 Progress tracking** - Subtask completion percentage in parent tasks
+- **📁 File System Watcher** - Monitor file changes and automatic task status transitions
+- **🔔 Automatic Status Updates** - "pending" → "in_progress" automation on file changes
+- **⚙️ Configuration Management** - Customizable ignore patterns and watch rules
 
 ### 🤖 AI Integration
 - **Natural language processing** - Task management by talking to AI assistants
@@ -154,6 +157,10 @@ Install MCP extension and add to `settings.json`:
 "Create new project for sprint planning"
 "Mark task #5 as completed"
 "Create new task from feature request template"
+"Start watching project files"
+"Enable automatic status transitions on file changes"
+"Show watch list"
+"Add git ignore rules to file watcher"
 ```
 
 > 💡 **Tip**: These commands work with Claude, VS Code Copilot, Windsurf AI, Cursor, and other MCP-compatible AI assistants.
@@ -186,7 +193,7 @@ For detailed documentation, see the [docs/](docs/) folder:
 
 - 📦 [Installation Guide](docs/getting-started/installation.md) - Platform-specific installation instructions
 - 📖 [Usage Guide](docs/user-guide/usage.md) - Detailed usage examples
-- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 25 MCP tools
+- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 29 MCP tools
 - 🤖 [AI MCP Tools](docs/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
 - 🏗 [System Architecture](docs/development/architecture.md) - Technical details
 - 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans

@@ -21,15 +21,25 @@ func min(a, b int) int {
 type Handlers struct {
 	isYonetici        *gorev.IsYonetici
 	aiContextYonetici *gorev.AIContextYonetici
+	fileWatcher       *gorev.FileWatcher
 	toolHelpers       *ToolHelpers
 }
 
 func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 	var aiContextYonetici *gorev.AIContextYonetici
+	var fileWatcher *gorev.FileWatcher
 
 	// Create AI context manager using the same data manager if isYonetici is not nil
 	if isYonetici != nil {
 		aiContextYonetici = gorev.YeniAIContextYonetici(isYonetici.VeriYonetici())
+		
+		// Initialize file watcher with default configuration
+		if fw, err := gorev.NewFileWatcher(isYonetici.VeriYonetici(), gorev.DefaultFileWatcherConfig()); err == nil {
+			fileWatcher = fw
+		} else {
+			// Log error but continue without file watcher
+			fmt.Printf("Warning: Failed to initialize file watcher: %v\n", err)
+		}
 	}
 
 	// Initialize tool helpers with shared utilities
@@ -38,6 +48,7 @@ func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 	return &Handlers{
 		isYonetici:        isYonetici,
 		aiContextYonetici: aiContextYonetici,
+		fileWatcher:       fileWatcher,
 		toolHelpers:       toolHelpers,
 	}
 }
@@ -1891,6 +1902,14 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.GorevSuggestions(params)
 	case "gorev_nlp_query":
 		return h.GorevNLPQuery(params)
+	case "gorev_file_watch_add":
+		return h.GorevFileWatchAdd(params)
+	case "gorev_file_watch_remove":
+		return h.GorevFileWatchRemove(params)
+	case "gorev_file_watch_list":
+		return h.GorevFileWatchList(params)
+	case "gorev_file_watch_stats":
+		return h.GorevFileWatchStats(params)
 	default:
 		return mcp.NewToolResultError(fmt.Sprintf("bilinmeyen araç: %s", toolName)), nil
 	}
@@ -2536,6 +2555,68 @@ func (h *Handlers) RegisterTools(s *server.MCPServer) {
 			Required: []string{"baslik"},
 		},
 	}, h.GorevIntelligentCreate)
+
+	// File Watcher Tools
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_file_watch_add",
+		Description: "Bir göreve dosya yolu ekleyerek, dosya değişikliklerini otomatik olarak izlemeye başlar.",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"task_id": map[string]interface{}{
+					"type":        "string",
+					"description": "İzlenecek görevin ID'si",
+				},
+				"file_path": map[string]interface{}{
+					"type":        "string",
+					"description": "İzlenecek dosya veya klasör yolu (mutlak veya göreceli)",
+				},
+			},
+			Required: []string{"task_id", "file_path"},
+		},
+	}, h.GorevFileWatchAdd)
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_file_watch_remove",
+		Description: "Bir görevin dosya yolu izlemesini kaldırır.",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"task_id": map[string]interface{}{
+					"type":        "string",
+					"description": "İzlemesi kaldırılacak görevin ID'si",
+				},
+				"file_path": map[string]interface{}{
+					"type":        "string",
+					"description": "İzlemesi kaldırılacak dosya veya klasör yolu",
+				},
+			},
+			Required: []string{"task_id", "file_path"},
+		},
+	}, h.GorevFileWatchRemove)
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_file_watch_list",
+		Description: "Dosya izleme durumunu listeler. Hangi görevlerin hangi dosyaları izlediğini gösterir.",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"task_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Belirli bir görevin izlediği dosyaları göster (isteğe bağlı)",
+				},
+			},
+		},
+	}, h.GorevFileWatchList)
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_file_watch_stats",
+		Description: "Dosya izleme sistemi istatistiklerini gösterir.",
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{},
+		},
+	}, h.GorevFileWatchStats)
 }
 
 // AI Context Management Handlers
@@ -2807,5 +2888,157 @@ func (h *Handlers) GorevNLPQuery(params map[string]interface{}) (*mcp.CallToolRe
 		result.WriteString("\n")
 	}
 
+	return mcp.NewToolResultText(result.String()), nil
+}
+
+// File Watcher Handlers
+
+// GorevFileWatchAdd adds a file path to be watched for a specific task
+func (h *Handlers) GorevFileWatchAdd(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	if h.fileWatcher == nil {
+		return mcp.NewToolResultError("Dosya izleme sistemi başlatılamadı"), nil
+	}
+
+	// Validate task_id
+	taskID, exists := params["task_id"].(string)
+	if !exists || taskID == "" {
+		return mcp.NewToolResultError("task_id gerekli"), nil
+	}
+
+	// Validate file_path
+	filePath, exists := params["file_path"].(string)
+	if !exists || filePath == "" {
+		return mcp.NewToolResultError("file_path gerekli"), nil
+	}
+
+	// Verify task exists
+	task, err := h.isYonetici.VeriYonetici().GorevGetir(taskID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Görev bulunamadı: %v", err)), nil
+	}
+
+	// Add file path to watcher
+	if err := h.fileWatcher.AddTaskPath(taskID, filePath); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Dosya izleme eklenemedi: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("✅ Görev '%s' için '%s' dosya yolu izlemeye eklendi.\n\nDosya değişiklikleri otomatik olarak takip edilecek ve görev durumu gerektiğinde güncellenecek.", task.Baslik, filePath)), nil
+}
+
+// GorevFileWatchRemove removes a file path from being watched for a specific task
+func (h *Handlers) GorevFileWatchRemove(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	if h.fileWatcher == nil {
+		return mcp.NewToolResultError("Dosya izleme sistemi başlatılamadı"), nil
+	}
+
+	// Validate task_id
+	taskID, exists := params["task_id"].(string)
+	if !exists || taskID == "" {
+		return mcp.NewToolResultError("task_id gerekli"), nil
+	}
+
+	// Validate file_path
+	filePath, exists := params["file_path"].(string)
+	if !exists || filePath == "" {
+		return mcp.NewToolResultError("file_path gerekli"), nil
+	}
+
+	// Remove file path from watcher
+	if err := h.fileWatcher.RemoveTaskPath(taskID, filePath); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Dosya izleme kaldırılamadı: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("✅ Görev ID %s için '%s' dosya yolu izlemeden kaldırıldı.", taskID, filePath)), nil
+}
+
+// GorevFileWatchList lists all watched file paths and their associated tasks
+func (h *Handlers) GorevFileWatchList(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	if h.fileWatcher == nil {
+		return mcp.NewToolResultError("Dosya izleme sistemi başlatılamadı"), nil
+	}
+
+	var result strings.Builder
+	result.WriteString("## 📁 Dosya İzleme Durumu\n\n")
+
+	// Check if filtering by specific task
+	if taskID, exists := params["task_id"].(string); exists && taskID != "" {
+		paths := h.fileWatcher.GetTaskPaths(taskID)
+		if len(paths) == 0 {
+			result.WriteString(fmt.Sprintf("ℹ️ Görev ID %s için izlenen dosya yolu bulunamadı.\n", taskID))
+		} else {
+			// Get task info for display
+			if task, err := h.isYonetici.VeriYonetici().GorevGetir(taskID); err == nil {
+				result.WriteString(fmt.Sprintf("### Görev: %s (ID: %s)\n\n", task.Baslik, taskID))
+			} else {
+				result.WriteString(fmt.Sprintf("### Görev ID: %s\n\n", taskID))
+			}
+			
+			result.WriteString("İzlenen dosya yolları:\n")
+			for _, path := range paths {
+				result.WriteString(fmt.Sprintf("- `%s`\n", path))
+			}
+		}
+	} else {
+		// List all watched paths
+		watchedPaths := h.fileWatcher.GetWatchedPaths()
+		if len(watchedPaths) == 0 {
+			result.WriteString("ℹ️ Şu anda hiçbir dosya yolu izlenmiyor.\n")
+		} else {
+			result.WriteString(fmt.Sprintf("**%d dosya yolu izleniyor:**\n\n", len(watchedPaths)))
+			
+			for path, taskIDs := range watchedPaths {
+				result.WriteString(fmt.Sprintf("📁 `%s`\n", path))
+				result.WriteString("   İlişkili görevler: ")
+				
+				taskNames := make([]string, 0, len(taskIDs))
+				for _, taskID := range taskIDs {
+					if task, err := h.isYonetici.VeriYonetici().GorevGetir(taskID); err == nil {
+						taskNames = append(taskNames, fmt.Sprintf("%s (ID: %s)", task.Baslik, taskID))
+					} else {
+						taskNames = append(taskNames, fmt.Sprintf("ID: %s", taskID))
+					}
+				}
+				result.WriteString(strings.Join(taskNames, ", "))
+				result.WriteString("\n\n")
+			}
+		}
+	}
+
+	return mcp.NewToolResultText(result.String()), nil
+}
+
+// GorevFileWatchStats shows file watcher system statistics
+func (h *Handlers) GorevFileWatchStats(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	if h.fileWatcher == nil {
+		return mcp.NewToolResultError("Dosya izleme sistemi başlatılamadı"), nil
+	}
+
+	stats := h.fileWatcher.GetStats()
+	
+	var result strings.Builder
+	result.WriteString("## 📊 Dosya İzleme Sistemi İstatistikleri\n\n")
+	
+	result.WriteString(fmt.Sprintf("**İzlenen dosya yolu sayısı:** %v\n", stats["watched_paths_count"]))
+	result.WriteString(fmt.Sprintf("**İzlenen görev sayısı:** %v\n", stats["watched_tasks_count"]))
+	
+	if config, exists := stats["config"].(gorev.FileWatcherConfig); exists {
+		result.WriteString("\n### Sistem Konfigürasyonu\n\n")
+		result.WriteString(fmt.Sprintf("**Otomatik durum güncellemesi:** %v\n", config.AutoUpdateStatus))
+		result.WriteString(fmt.Sprintf("**Debounce süresi:** %v\n", config.DebounceDuration))
+		result.WriteString(fmt.Sprintf("**Max dosya boyutu:** %d bytes\n", config.MaxFileSize))
+		
+		result.WriteString("\n**İzlenen dosya uzantıları:**\n")
+		for _, ext := range config.WatchedExtensions {
+			result.WriteString(fmt.Sprintf("- %s\n", ext))
+		}
+		
+		result.WriteString("\n**Yoksayılan desenler:**\n")
+		for _, pattern := range config.IgnorePatterns {
+			result.WriteString(fmt.Sprintf("- %s\n", pattern))
+		}
+	}
+	
+	result.WriteString("\n💡 **İpucu:** Dosya izleme sistemi, ilişkili dosyalarda değişiklik olduğunda görev durumunu otomatik olarak 'devam_ediyor' durumuna geçirir.")
+	
 	return mcp.NewToolResultText(result.String()), nil
 }

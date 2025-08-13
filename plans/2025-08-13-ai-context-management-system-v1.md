@@ -121,8 +121,8 @@ Transform Gorev into an AI-optimized task management system that solves critical
 - [x] Similar task detection and template recommendation
 - [x] Smart priority assignment based on keywords
 
-#### Task 3.2: Integration Hooks
-- [ ] File system watcher for project files
+#### Task 3.2: Integration Hooks [~] IN PROGRESS
+- [x] File system watcher for project files
 - [ ] Git commit hook integration
 - [ ] VS Code workspace integration
 - [ ] Automatic task updates based on code changes

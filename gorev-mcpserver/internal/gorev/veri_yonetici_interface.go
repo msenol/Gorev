@@ -42,6 +42,14 @@ type VeriYoneticiInterface interface {
 	AITodayInteractionlariGetir() ([]*AIInteraction, error)
 	AILastInteractionGuncelle(taskID string, timestamp time.Time) error
 	
+	// File Watcher Integration methods (using string IDs to match existing interface)
+	GorevDosyaYoluEkle(taskID string, path string) error
+	GorevDosyaYoluSil(taskID string, path string) error
+	GorevDosyaYollariGetir(taskID string) ([]string, error)
+	DosyaYoluGorevleriGetir(path string) ([]string, error)
+	AIEtkilemasimKaydet(taskID string, interactionType, data, sessionID string) error
+	GorevSonAIEtkilesiminiGuncelle(taskID string, timestamp time.Time) error
+	
 	// Additional methods for NLP and auto state management
 	GorevDetay(taskID string) (*Gorev, error)
 	GorevListele(filters map[string]interface{}) ([]*Gorev, error)

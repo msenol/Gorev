@@ -24,7 +24,7 @@
 
 **Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation. 
 
-**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, 25 MCP tools, and optional VS Code extension with rich visual interface.
+**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, 29 MCP tools, and optional VS Code extension with rich visual interface.
 
 **Quick Start**: [Installation Guide](README.en.md#-installation) | [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
@@ -64,6 +64,9 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **🔍 Gelişmiş filtreleme** - Durum, etiket, tarih bazlı sorgulama
 - **🌳 Alt görev hiyerarşisi** - Sınırsız derinlikte görev ağacı yapısı
 - **📊 İlerleme takibi** - Ana görevde alt görev tamamlanma yüzdesi
+- **📁 File System Watcher** - Dosya değişikliklerini izleme ve otomatik görev durum geçişleri
+- **🔔 Otomatik Durum Güncelleme** - Dosya değişikliklerinde "beklemede" → "devam_ediyor" otomasyonu
+- **⚙️ Konfigürasyon Yönetimi** - Ignore patterns ve izleme kuralları özelleştirmesi
 
 ### 🤖 AI Entegrasyonu
 - **Doğal dil işleme** - AI asistanlarla konuşarak görev yönetimi
@@ -296,6 +299,10 @@ Cursor'da MCP entegrasyonu için:
 "Sprint planlaması için yeni proje oluştur"
 "Görev #5'i tamamlandı olarak işaretle"
 "Feature request şablonundan yeni görev oluştur"
+"Proje dosyalarını izlemeye başla"
+"Dosya değişikliklerinde otomatik durum geçişi yap"
+"Watch listesini göster"
+"Git ignore kurallarını file watcher'a ekle"
 ```
 
 > 💡 **İpucu**: Bu komutlar Claude, VS Code Copilot, Windsurf AI, Cursor ve diğer MCP uyumlu AI asistanlarla kullanılabilir.
@@ -328,7 +335,7 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 
 - 📦 [Installation Guide](docs/getting-started/installation.md) - Platform-specific installation instructions
 - 📖 [Usage Guide](docs/user-guide/usage.md) - Detailed usage examples
-- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 25 MCP tools
+- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 29 MCP tools
 - 🤖 [AI MCP Tools](docs/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
 - 🏗 [System Architecture](docs/development/architecture.md) - Technical details
 - 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
