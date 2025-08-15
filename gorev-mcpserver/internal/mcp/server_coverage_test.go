@@ -94,6 +94,11 @@ func TestListTools(t *testing.T) {
 		"gorev_context_summary",
 		"gorev_batch_update",
 		"gorev_nlp_query",
+		"gorev_intelligent_create",
+		"gorev_file_watch_add",
+		"gorev_file_watch_remove",
+		"gorev_file_watch_list",
+		"gorev_file_watch_stats",
 	}
 
 	// Create a map for easier lookup

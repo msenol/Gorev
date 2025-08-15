@@ -32,6 +32,7 @@ type MockVeriYonetici struct {
 	shouldFailProjeGetir     bool
 	shouldFailGorevleriGetir bool
 	shouldFailProjeleriGetir bool
+	shouldFailGorevListele   bool
 	shouldFailAktifProje     bool
 	shouldFailBaglantiEkle   bool
 }
@@ -377,9 +378,23 @@ func (m *MockVeriYonetici) GorevDetay(id string) (*Gorev, error) {
 }
 
 func (m *MockVeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+	if m.shouldFailGorevListele {
+		return nil, errors.New("mock error: gorev listele failed")
+	}
+	
 	var result []*Gorev
+	durum := ""
+	if v, ok := filters["durum"]; ok {
+		if s, ok := v.(string); ok {
+			durum = s
+		}
+	}
+	
 	for _, gorev := range m.gorevler {
-		result = append(result, gorev)
+		// Apply durum filter if specified
+		if durum == "" || gorev.Durum == durum {
+			result = append(result, gorev)
+		}
 	}
 	return result, nil
 }
@@ -390,6 +405,21 @@ func (m *MockVeriYonetici) GorevOlustur(params map[string]interface{}) (string, 
 
 func (m *MockVeriYonetici) GorevBagimlilikGetir(gorevID string) ([]*Gorev, error) {
 	return nil, nil
+}
+
+func (m *MockVeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	result := make(map[string]int)
+	for _, id := range gorevIDs {
+		// Count how many tasks depend on this task (this task as source)
+		count := 0
+		for _, b := range m.baglantilar {
+			if b.KaynakID == id && b.BaglantiTip == "onceki" { // Other tasks depend on this task
+				count++
+			}
+		}
+		result[id] = count
+	}
+	return result, nil
 }
 
 // Tests
@@ -533,7 +563,7 @@ func TestIsYonetici_GorevListele(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockVY.shouldFailGorevleriGetir = tc.shouldFail
+			mockVY.shouldFailGorevListele = tc.shouldFail
 
 			gorevler, err := iy.GorevListele(map[string]interface{}{"durum": tc.durum})
 			if tc.wantErr {

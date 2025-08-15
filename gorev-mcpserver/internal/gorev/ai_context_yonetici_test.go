@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -23,19 +24,19 @@ func setupBasicAIContextMocks(mockVY *MockVeriYoneticiAI) {
 		LastUpdated: time.Now(),
 	}
 	mockVY.On("AIContextGetir").Return(mockContext, nil).Maybe()
-	
+
 	// Mock AIContextKaydet
 	mockVY.On("AIContextKaydet", mock.AnythingOfType("*gorev.AIContext")).Return(nil).Maybe()
-	
+
 	// Mock AIInteractionKaydet
 	mockVY.On("AIInteractionKaydet", mock.AnythingOfType("*gorev.AIInteraction")).Return(nil).Maybe()
-	
+
 	// Mock AIInteractionlariGetir
 	mockVY.On("AIInteractionlariGetir", mock.AnythingOfType("int")).Return([]*AIInteraction{}, nil).Maybe()
-	
+
 	// Mock AITodayInteractionlariGetir
 	mockVY.On("AITodayInteractionlariGetir").Return([]*AIInteraction{}, nil).Maybe()
-	
+
 	// Mock AILastInteractionGuncelle
 	mockVY.On("AILastInteractionGuncelle", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(nil).Maybe()
 }
@@ -250,6 +251,14 @@ func (m *MockVeriYoneticiAI) BulkBagimlilikSayilariGetir(gorevIDs []string) (map
 }
 
 func (m *MockVeriYoneticiAI) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	args := m.Called(gorevIDs)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]int), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map[string]int, error) {
 	args := m.Called(gorevIDs)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -511,9 +520,7 @@ func TestRecordTaskView(t *testing.T) {
 			mockVeriYonetici.On("GorevGetir", tt.taskID).Return(tt.mockTask, tt.mockError)
 
 			if tt.shouldUpdate && tt.mockTask != nil {
-				mockVeriYonetici.On("GorevGuncelle", mock.MatchedBy(func(g *Gorev) bool {
-					return g.ID == tt.taskID && g.Durum == "devam_ediyor"
-				})).Return(nil)
+				mockVeriYonetici.On("GorevGuncelle", tt.taskID, map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
 			}
 
 			// Execute
@@ -562,14 +569,10 @@ func TestBatchUpdate(t *testing.T) {
 
 	// Setup mock expectations
 	mockVeriYonetici.On("GorevGetir", "task-1").Return(&Gorev{ID: "task-1", Durum: "beklemede"}, nil)
-	mockVeriYonetici.On("GorevGuncelle", mock.MatchedBy(func(g *Gorev) bool {
-		return g.ID == "task-1" && g.Durum == "devam_ediyor"
-	})).Return(nil)
+	mockVeriYonetici.On("GorevGuncelle", "task-1", map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
 
 	mockVeriYonetici.On("GorevGetir", "task-2").Return(&Gorev{ID: "task-2", Durum: "beklemede"}, nil)
-	mockVeriYonetici.On("GorevGuncelle", mock.MatchedBy(func(g *Gorev) bool {
-		return g.ID == "task-2" && g.Durum == "tamamlandi"
-	})).Return(nil)
+	mockVeriYonetici.On("GorevGuncelle", "task-2", map[string]interface{}{"durum": "tamamlandi"}).Return(nil)
 
 	mockVeriYonetici.On("GorevGetir", "task-not-found").Return(nil, assert.AnError)
 
@@ -707,6 +710,198 @@ func TestGetContextSummary(t *testing.T) {
 	assert.Equal(t, "High Priority", summary.NextPriorities[0].Baslik)
 	assert.Len(t, summary.Blockers, 1)
 	assert.Equal(t, "Blocked Task", summary.Blockers[0].Baslik)
+
+	mockVeriYonetici.AssertExpectations(t)
+}
+
+// TestBatchUpdateEnhanced tests the enhanced BatchUpdate functionality
+func TestBatchUpdateEnhanced(t *testing.T) {
+	tests := []struct {
+		name            string
+		updates         []BatchUpdate
+		expectError     bool
+		expectedSuccess int
+		expectedFailed  int
+	}{
+		{
+			name: "valid status update",
+			updates: []BatchUpdate{
+				{
+					ID: "task1",
+					Updates: map[string]interface{}{
+						"durum": "devam_ediyor",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 1,
+			expectedFailed:  0,
+		},
+		{
+			name: "valid priority update",
+			updates: []BatchUpdate{
+				{
+					ID: "task1",
+					Updates: map[string]interface{}{
+						"oncelik": "yuksek",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 1,
+			expectedFailed:  0,
+		},
+		{
+			name: "valid multiple field update",
+			updates: []BatchUpdate{
+				{
+					ID: "task1",
+					Updates: map[string]interface{}{
+						"durum":     "devam_ediyor",
+						"oncelik":   "yuksek",
+						"baslik":    "Updated Title",
+						"aciklama":  "Updated description",
+						"son_tarih": "2024-12-31",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 1,
+			expectedFailed:  0,
+		},
+		{
+			name: "invalid status",
+			updates: []BatchUpdate{
+				{
+					ID: "task1",
+					Updates: map[string]interface{}{
+						"durum": "invalid_status",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 0,
+			expectedFailed:  1,
+		},
+		{
+			name: "invalid priority",
+			updates: []BatchUpdate{
+				{
+					ID: "task1",
+					Updates: map[string]interface{}{
+						"oncelik": "invalid_priority",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 0,
+			expectedFailed:  1,
+		},
+		{
+			name: "empty title",
+			updates: []BatchUpdate{
+				{
+					ID: "task1",
+					Updates: map[string]interface{}{
+						"baslik": "",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 0,
+			expectedFailed:  1,
+		},
+		{
+			name: "invalid date format",
+			updates: []BatchUpdate{
+				{
+					ID: "task1",
+					Updates: map[string]interface{}{
+						"son_tarih": "invalid-date",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 0,
+			expectedFailed:  1,
+		},
+		{
+			name: "task not found",
+			updates: []BatchUpdate{
+				{
+					ID: "nonexistent",
+					Updates: map[string]interface{}{
+						"durum": "devam_ediyor",
+					},
+				},
+			},
+			expectError:     false,
+			expectedSuccess: 0,
+			expectedFailed:  1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockVeriYonetici := new(MockVeriYoneticiAI)
+			acy := YeniAIContextYonetici(mockVeriYonetici)
+
+			// Setup basic AI context mock expectations
+			setupBasicAIContextMocks(mockVeriYonetici)
+
+			// Setup task existence mocks
+			for _, update := range tt.updates {
+				if update.ID == "nonexistent" {
+					mockVeriYonetici.On("GorevGetir", update.ID).Return(nil, fmt.Errorf("task not found"))
+				} else {
+					testTask := &Gorev{ID: update.ID, Baslik: "Test Task"}
+					mockVeriYonetici.On("GorevGetir", update.ID).Return(testTask, nil)
+
+					// Only expect GorevGuncelle if we expect success
+					if tt.expectedSuccess > 0 {
+						mockVeriYonetici.On("GorevGuncelle", update.ID, mock.AnythingOfType("map[string]interface {}")).Return(nil)
+					}
+				}
+			}
+
+			// Execute
+			result, err := acy.BatchUpdate(tt.updates)
+
+			// Assert
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Len(t, result.Successful, tt.expectedSuccess)
+				assert.Len(t, result.Failed, tt.expectedFailed)
+				assert.Equal(t, len(tt.updates), result.TotalProcessed)
+			}
+
+			mockVeriYonetici.AssertExpectations(t)
+		})
+	}
+}
+
+// TestBulkBuGoreveBagimliSayilariGetir tests the new bulk dependency count method
+func TestBulkBuGoreveBagimliSayilariGetir(t *testing.T) {
+	mockVeriYonetici := new(MockVeriYoneticiAI)
+
+	// Setup mock
+	expectedCounts := map[string]int{
+		"task1": 2,
+		"task2": 0,
+		"task3": 1,
+	}
+
+	mockVeriYonetici.On("BulkBuGoreveBagimliSayilariGetir", []string{"task1", "task2", "task3"}).Return(expectedCounts, nil)
+
+	// Execute
+	result, err := mockVeriYonetici.BulkBuGoreveBagimliSayilariGetir([]string{"task1", "task2", "task3"})
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Equal(t, expectedCounts, result)
 
 	mockVeriYonetici.AssertExpectations(t)
 }

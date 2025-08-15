@@ -343,7 +343,17 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := vy.GorevGuncelle(tc.gorev.ID, tc.gorev)
+			// Convert gorev struct to map for GorevGuncelle
+			params := map[string]interface{}{
+				"baslik":          tc.gorev.Baslik,
+				"aciklama":        tc.gorev.Aciklama,
+				"durum":           tc.gorev.Durum,
+				"oncelik":         tc.gorev.Oncelik,
+				"proje_id":        tc.gorev.ProjeID,
+				"guncelleme_tarih": tc.gorev.GuncellemeTarih,
+			}
+			
+			err := vy.GorevGuncelle(tc.gorev.ID, params)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -983,4 +993,176 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 	assert.False(t, yeniEtiketMap["bug"])
 	assert.True(t, yeniEtiketMap["acil"])
 	assert.True(t, yeniEtiketMap["dokumantasyon"])
+}
+
+// TestVeriYonetici_BulkDependencyCounts tests the new bulk dependency count methods
+func TestVeriYonetici_BulkDependencyCounts(t *testing.T) {
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	if err != nil {
+		t.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	// Create test tasks
+	tasks := []*Gorev{
+		{
+			ID:              "task-1",
+			Baslik:          "Task 1",
+			Durum:           "beklemede",
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		},
+		{
+			ID:              "task-2",
+			Baslik:          "Task 2",
+			Durum:           "tamamlandi",
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		},
+		{
+			ID:              "task-3",
+			Baslik:          "Task 3",
+			Durum:           "beklemede",
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		},
+		{
+			ID:              "task-4",
+			Baslik:          "Task 4",
+			Durum:           "devam_ediyor",
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		},
+	}
+
+	for _, task := range tasks {
+		if err := vy.GorevKaydet(task); err != nil {
+			t.Fatalf("failed to save task %s: %v", task.ID, err)
+		}
+	}
+
+	// Create dependencies:
+	// task-1 depends on task-2 (completed)
+	// task-3 depends on task-1 (not completed)
+	// task-4 depends on task-2 (completed) and task-3 (not completed)
+	dependencies := []*Baglanti{
+		{
+			ID:          "dep-1",
+			KaynakID:    "task-2",
+			HedefID:     "task-1",
+			BaglantiTip: "onceki",
+		},
+		{
+			ID:          "dep-2",
+			KaynakID:    "task-1",
+			HedefID:     "task-3",
+			BaglantiTip: "onceki",
+		},
+		{
+			ID:          "dep-3",
+			KaynakID:    "task-2",
+			HedefID:     "task-4",
+			BaglantiTip: "onceki",
+		},
+		{
+			ID:          "dep-4",
+			KaynakID:    "task-3",
+			HedefID:     "task-4",
+			BaglantiTip: "onceki",
+		},
+	}
+
+	for _, dep := range dependencies {
+		if err := vy.BaglantiEkle(dep); err != nil {
+			t.Fatalf("failed to add dependency %s: %v", dep.ID, err)
+		}
+	}
+
+	taskIDs := []string{"task-1", "task-2", "task-3", "task-4"}
+
+	// Test BulkBagimlilikSayilariGetir (tasks that each task depends on)
+	t.Run("BulkBagimlilikSayilariGetir", func(t *testing.T) {
+		counts, err := vy.BulkBagimlilikSayilariGetir(taskIDs)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		expected := map[string]int{
+			"task-1": 1, // depends on task-2
+			"task-2": 0, // depends on nothing
+			"task-3": 1, // depends on task-1
+			"task-4": 2, // depends on task-2 and task-3
+		}
+
+		for taskID, expectedCount := range expected {
+			if counts[taskID] != expectedCount {
+				t.Errorf("task %s: expected %d dependencies, got %d", taskID, expectedCount, counts[taskID])
+			}
+		}
+	})
+
+	// Test BulkTamamlanmamiaBagimlilikSayilariGetir (incomplete dependencies)
+	t.Run("BulkTamamlanmamiaBagimlilikSayilariGetir", func(t *testing.T) {
+		counts, err := vy.BulkTamamlanmamiaBagimlilikSayilariGetir(taskIDs)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		expected := map[string]int{
+			"task-1": 0, // depends on task-2 (completed)
+			"task-2": 0, // depends on nothing
+			"task-3": 1, // depends on task-1 (not completed)
+			"task-4": 1, // depends on task-2 (completed) and task-3 (not completed) = 1 incomplete
+		}
+
+		for taskID, expectedCount := range expected {
+			if counts[taskID] != expectedCount {
+				t.Errorf("task %s: expected %d incomplete dependencies, got %d", taskID, expectedCount, counts[taskID])
+			}
+		}
+	})
+
+	// Test BulkBuGoreveBagimliSayilariGetir (tasks that depend on each task)
+	t.Run("BulkBuGoreveBagimliSayilariGetir", func(t *testing.T) {
+		counts, err := vy.BulkBuGoreveBagimliSayilariGetir(taskIDs)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		expected := map[string]int{
+			"task-1": 1, // task-3 depends on task-1
+			"task-2": 2, // task-1 and task-4 depend on task-2
+			"task-3": 1, // task-4 depends on task-3
+			"task-4": 0, // nothing depends on task-4
+		}
+
+		for taskID, expectedCount := range expected {
+			if counts[taskID] != expectedCount {
+				t.Errorf("task %s: expected %d dependent tasks, got %d", taskID, expectedCount, counts[taskID])
+			}
+		}
+	})
+
+	// Test with empty slice
+	t.Run("EmptySlice", func(t *testing.T) {
+		counts, err := vy.BulkBagimlilikSayilariGetir([]string{})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(counts) != 0 {
+			t.Errorf("expected empty map, got %v", counts)
+		}
+	})
+
+	// Test with non-existent task IDs
+	t.Run("NonExistentTasks", func(t *testing.T) {
+		counts, err := vy.BulkBagimlilikSayilariGetir([]string{"non-existent-1", "non-existent-2"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// Should return empty counts for non-existent tasks
+		if len(counts) != 0 {
+			t.Errorf("expected empty map for non-existent tasks, got %v", counts)
+		}
+	})
 }
