@@ -36,15 +36,15 @@ type TaskCreationRequest struct {
 
 // TaskCreationResponse contains the created task and intelligent suggestions
 type TaskCreationResponse struct {
-	MainTask           *Gorev              `json:"main_task"`
-	Subtasks           []*Gorev            `json:"subtasks,omitempty"`
-	EstimatedHours     float64             `json:"estimated_hours,omitempty"`
-	SuggestedPriority  string              `json:"suggested_priority,omitempty"`
-	RecommendedTemplate string             `json:"recommended_template,omitempty"`
-	SimilarTasks       []SimilarTaskInfo   `json:"similar_tasks,omitempty"`
-	Insights           []string            `json:"insights"`
-	Confidence         TaskAnalysisScore   `json:"confidence"`
-	ExecutionTime      time.Duration       `json:"execution_time"`
+	MainTask            *Gorev            `json:"main_task"`
+	Subtasks            []*Gorev          `json:"subtasks,omitempty"`
+	EstimatedHours      float64           `json:"estimated_hours,omitempty"`
+	SuggestedPriority   string            `json:"suggested_priority,omitempty"`
+	RecommendedTemplate string            `json:"recommended_template,omitempty"`
+	SimilarTasks        []SimilarTaskInfo `json:"similar_tasks,omitempty"`
+	Insights            []string          `json:"insights"`
+	Confidence          TaskAnalysisScore `json:"confidence"`
+	ExecutionTime       time.Duration     `json:"execution_time"`
 }
 
 // SimilarTaskInfo contains information about similar tasks
@@ -56,32 +56,32 @@ type SimilarTaskInfo struct {
 
 // TaskAnalysisScore contains confidence scores for different analyses
 type TaskAnalysisScore struct {
-	PriorityConfidence  float64 `json:"priority_confidence"`
-	TimeConfidence      float64 `json:"time_confidence"`
-	TemplateConfidence  float64 `json:"template_confidence"`
-	SubtaskConfidence   float64 `json:"subtask_confidence"`
+	PriorityConfidence float64 `json:"priority_confidence"`
+	TimeConfidence     float64 `json:"time_confidence"`
+	TemplateConfidence float64 `json:"template_confidence"`
+	SubtaskConfidence  float64 `json:"subtask_confidence"`
 }
 
 // CreateIntelligentTask creates a task with AI-enhanced features
 func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationRequest) (*TaskCreationResponse, error) {
 	startTime := time.Now()
-	
+
 	log.Printf("Creating intelligent task: title=%s, autoSplit=%t", request.Title, request.AutoSplit)
-	
+
 	response := &TaskCreationResponse{
 		Insights: []string{},
 	}
-	
+
 	// Determine smart priority
 	suggestedPriority := "orta" // default
 	priorityConfidence := 0.5
 	if request.SmartPriority {
 		suggestedPriority, priorityConfidence = itc.determinePriority(request.Title, request.Description)
 		response.SuggestedPriority = suggestedPriority
-		response.Insights = append(response.Insights, 
+		response.Insights = append(response.Insights,
 			fmt.Sprintf("Öncelik analizi: %s (güven: %.1f%%)", suggestedPriority, priorityConfidence*100))
 	}
-	
+
 	// Estimate time based on historical data
 	estimatedHours := 0.0
 	timeConfidence := 0.0
@@ -89,21 +89,21 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 		estimatedHours, timeConfidence = itc.estimateTaskTime(request.Title, request.Description)
 		response.EstimatedHours = estimatedHours
 		if estimatedHours > 0 {
-			response.Insights = append(response.Insights, 
+			response.Insights = append(response.Insights,
 				fmt.Sprintf("Tahmini süre: %.1f saat (güven: %.1f%%)", estimatedHours, timeConfidence*100))
 		}
 	}
-	
+
 	// Find similar tasks
 	if len(request.Title) > 0 {
 		similarTasks := itc.findSimilarTasks(request.Title, request.Description, 5)
 		response.SimilarTasks = similarTasks
 		if len(similarTasks) > 0 {
-			response.Insights = append(response.Insights, 
+			response.Insights = append(response.Insights,
 				fmt.Sprintf("%d benzer görev bulundu", len(similarTasks)))
 		}
 	}
-	
+
 	// Suggest template
 	templateConfidence := 0.0
 	if request.SuggestTemplate {
@@ -111,11 +111,11 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 		if recommendedTemplate != "" {
 			response.RecommendedTemplate = recommendedTemplate
 			templateConfidence = confidence
-			response.Insights = append(response.Insights, 
+			response.Insights = append(response.Insights,
 				fmt.Sprintf("Önerilen template: %s (güven: %.1f%%)", recommendedTemplate, confidence*100))
 		}
 	}
-	
+
 	// Create main task
 	mainTaskID, err := itc.veriYonetici.GorevOlustur(map[string]interface{}{
 		"baslik":    request.Title,
@@ -127,15 +127,15 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 	if err != nil {
 		return nil, fmt.Errorf("ana görev oluşturulamadı: %v", err)
 	}
-	
+
 	// Get the created task for response
 	mainTask, err := itc.veriYonetici.GorevGetir(mainTaskID)
 	if err != nil {
 		return nil, fmt.Errorf("oluşturulan görev alınamadı: %v", err)
 	}
-	
+
 	response.MainTask = mainTask
-	
+
 	// Auto-split into subtasks if requested
 	subtaskConfidence := 0.0
 	if request.AutoSplit && len(request.Description) > 50 {
@@ -143,11 +143,11 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 		response.Subtasks = subtasks
 		subtaskConfidence = confidence
 		if len(subtasks) > 0 {
-			response.Insights = append(response.Insights, 
+			response.Insights = append(response.Insights,
 				fmt.Sprintf("%d alt görev otomatik oluşturuldu", len(subtasks)))
 		}
 	}
-	
+
 	// Set confidence scores
 	response.Confidence = TaskAnalysisScore{
 		PriorityConfidence: priorityConfidence,
@@ -155,33 +155,33 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 		TemplateConfidence: templateConfidence,
 		SubtaskConfidence:  subtaskConfidence,
 	}
-	
+
 	response.ExecutionTime = time.Since(startTime)
-	
+
 	log.Printf("Intelligent task created: taskId=%s, subtasks=%d, insights=%d, duration=%v", mainTask.ID, len(response.Subtasks), len(response.Insights), response.ExecutionTime)
-	
+
 	return response, nil
 }
 
 // analyzeTaskContent performs basic content analysis
 func (itc *IntelligentTaskCreator) analyzeTaskContent(title, description string) map[string]interface{} {
 	content := strings.ToLower(title + " " + description)
-	
+
 	analysis := map[string]interface{}{
-		"length":      len(content),
-		"word_count":  len(strings.Fields(content)),
-		"has_numbers": regexp.MustCompile(`\d+`).MatchString(content),
-		"urgency_keywords": itc.containsUrgencyKeywords(content),
+		"length":                len(content),
+		"word_count":            len(strings.Fields(content)),
+		"has_numbers":           regexp.MustCompile(`\d+`).MatchString(content),
+		"urgency_keywords":      itc.containsUrgencyKeywords(content),
 		"complexity_indicators": itc.detectComplexityIndicators(content),
 	}
-	
+
 	return analysis
 }
 
 // determinePriority analyzes content to suggest task priority
 func (itc *IntelligentTaskCreator) determinePriority(title, description string) (string, float64) {
 	content := strings.ToLower(title + " " + description)
-	
+
 	// High priority indicators
 	highPriorityKeywords := []string{
 		"acil", "urgent", "kritik", "critical", "hemen", "immediately", "asap",
@@ -189,37 +189,37 @@ func (itc *IntelligentTaskCreator) determinePriority(title, description string) 
 		"security", "güvenlik", "vulnerability", "zafiyet",
 		"deadline", "son tarih", "due", "release",
 	}
-	
+
 	// Medium priority indicators
 	mediumPriorityKeywords := []string{
 		"important", "önemli", "should", "need", "gerek", "lazım",
 		"improvement", "iyileştirme", "enhance", "optimize",
 		"feature", "özellik", "functionality", "fonksiyon",
 	}
-	
+
 	// Low priority indicators
 	lowPriorityKeywords := []string{
 		"nice to have", "optional", "opsiyonel", "when time permits",
 		"documentation", "dokuman", "cleanup", "temizlik",
 		"refactor", "refaktör", "research", "araştırma",
 	}
-	
+
 	highScore := itc.countKeywords(content, highPriorityKeywords)
 	mediumScore := itc.countKeywords(content, mediumPriorityKeywords)
 	lowScore := itc.countKeywords(content, lowPriorityKeywords)
-	
+
 	// Calculate priority based on keyword scores
 	totalKeywords := highScore + mediumScore + lowScore
-	
+
 	if totalKeywords == 0 {
 		return "orta", 0.3 // Default with low confidence
 	}
-	
+
 	confidence := float64(totalKeywords) / 10.0 // Normalize confidence
 	if confidence > 1.0 {
 		confidence = 1.0
 	}
-	
+
 	if highScore > 0 && highScore >= mediumScore && highScore >= lowScore {
 		return "yuksek", confidence + 0.3
 	} else if lowScore > 0 && lowScore > highScore && lowScore >= mediumScore {
@@ -233,16 +233,16 @@ func (itc *IntelligentTaskCreator) determinePriority(title, description string) 
 func (itc *IntelligentTaskCreator) estimateTaskTime(title, description string) (float64, float64) {
 	// Find similar completed tasks
 	similarTasks := itc.findSimilarTasks(title, description, 10)
-	
+
 	if len(similarTasks) == 0 {
 		// Fallback estimation based on content analysis
 		return itc.estimateTimeFromContent(title, description), 0.3
 	}
-	
+
 	// Calculate average time from similar tasks
 	var totalHours float64
 	var validSamples int
-	
+
 	for _, similar := range similarTasks {
 		// Use estimated duration as base, since Gorev struct doesn't have ActualHours
 		if estimatedDays := itc.extractDurationFromDescription(similar.Task.Aciklama); estimatedDays > 0 {
@@ -251,17 +251,17 @@ func (itc *IntelligentTaskCreator) estimateTaskTime(title, description string) (
 			validSamples++
 		}
 	}
-	
+
 	if validSamples == 0 {
 		return itc.estimateTimeFromContent(title, description), 0.2
 	}
-	
+
 	avgHours := totalHours / float64(validSamples)
 	confidence := float64(validSamples) / 10.0
 	if confidence > 0.9 {
 		confidence = 0.9
 	}
-	
+
 	return avgHours, confidence
 }
 
@@ -269,10 +269,10 @@ func (itc *IntelligentTaskCreator) estimateTaskTime(title, description string) (
 func (itc *IntelligentTaskCreator) estimateTimeFromContent(title, description string) float64 {
 	content := title + " " + description
 	wordCount := len(strings.Fields(content))
-	
+
 	// Simple heuristic based on content length and complexity
 	baseHours := float64(wordCount) / 20.0 // ~3 minutes per word
-	
+
 	// Adjust based on complexity indicators
 	complexity := itc.detectComplexityLevel(content)
 	multiplier := map[string]float64{
@@ -280,16 +280,16 @@ func (itc *IntelligentTaskCreator) estimateTimeFromContent(title, description st
 		"medium": 1.0,
 		"high":   2.0,
 	}[complexity]
-	
+
 	estimatedHours := baseHours * multiplier
-	
+
 	// Reasonable bounds
 	if estimatedHours < 0.5 {
 		estimatedHours = 0.5
 	} else if estimatedHours > 40 {
 		estimatedHours = 40
 	}
-	
+
 	return estimatedHours
 }
 
@@ -299,14 +299,14 @@ func (itc *IntelligentTaskCreator) findSimilarTasks(title, description string, l
 	if err != nil {
 		return nil
 	}
-	
+
 	targetWords := extractKeywords(title + " " + description)
 	var similarities []SimilarTaskInfo
-	
+
 	for _, task := range allTasks {
 		taskWords := extractKeywords(task.Baslik + " " + task.Aciklama)
 		similarity := calculateSimilarity(targetWords, taskWords)
-		
+
 		if similarity > 0.2 { // 20% similarity threshold
 			reason := itc.generateSimilarityReason(targetWords, taskWords)
 			similarities = append(similarities, SimilarTaskInfo{
@@ -316,24 +316,24 @@ func (itc *IntelligentTaskCreator) findSimilarTasks(title, description string, l
 			})
 		}
 	}
-	
+
 	// Sort by similarity score
 	sort.Slice(similarities, func(i, j int) bool {
 		return similarities[i].SimilarityScore > similarities[j].SimilarityScore
 	})
-	
+
 	// Limit results
 	if len(similarities) > limit {
 		similarities = similarities[:limit]
 	}
-	
+
 	return similarities
 }
 
 // suggestTemplate recommends a template based on content analysis
 func (itc *IntelligentTaskCreator) suggestTemplate(title, description string) (string, float64) {
 	content := strings.ToLower(title + " " + description)
-	
+
 	// Template matching patterns
 	templatePatterns := map[string][]string{
 		"bug_report": {
@@ -357,10 +357,10 @@ func (itc *IntelligentTaskCreator) suggestTemplate(title, description string) (s
 			"authorization", "yetki", "encryption", "şifreleme",
 		},
 	}
-	
+
 	bestTemplate := ""
 	bestScore := 0.0
-	
+
 	for template, keywords := range templatePatterns {
 		score := float64(itc.countKeywords(content, keywords))
 		if score > bestScore {
@@ -368,7 +368,7 @@ func (itc *IntelligentTaskCreator) suggestTemplate(title, description string) (s
 			bestTemplate = template
 		}
 	}
-	
+
 	if bestScore > 0 {
 		confidence := bestScore / 10.0
 		if confidence > 1.0 {
@@ -376,7 +376,7 @@ func (itc *IntelligentTaskCreator) suggestTemplate(title, description string) (s
 		}
 		return bestTemplate, confidence
 	}
-	
+
 	return "", 0.0
 }
 
@@ -385,23 +385,23 @@ func (itc *IntelligentTaskCreator) generateSubtasks(parentID, description string
 	if len(description) < 50 {
 		return nil, 0.0
 	}
-	
+
 	// Look for structured content that indicates subtasks
 	subtaskPatterns := []string{
-		`\d+\.\s+(.+)`,           // "1. Do something"
-		`[-*]\s+(.+)`,            // "- Do something" or "* Do something"
-		`\n(.+?)[:]\s*\n`,        // "Step: description"
+		`\d+\.\s+(.+)`,             // "1. Do something"
+		`[-*]\s+(.+)`,              // "- Do something" or "* Do something"
+		`\n(.+?)[:]\s*\n`,          // "Step: description"
 		`(?i)step\s+\d+[:]\s*(.+)`, // "Step 1: description"
 		`(?i)task\s+\d+[:]\s*(.+)`, // "Task 1: description"
 	}
-	
+
 	var subtasks []*Gorev
 	var foundItems []string
-	
+
 	for _, pattern := range subtaskPatterns {
 		re := regexp.MustCompile(pattern)
 		matches := re.FindAllStringSubmatch(description, -1)
-		
+
 		for _, match := range matches {
 			if len(match) > 1 && len(strings.TrimSpace(match[1])) > 5 {
 				item := strings.TrimSpace(match[1])
@@ -411,40 +411,40 @@ func (itc *IntelligentTaskCreator) generateSubtasks(parentID, description string
 				}
 			}
 		}
-		
+
 		if len(foundItems) >= 5 { // Limit to reasonable number
 			break
 		}
 	}
-	
+
 	// Create subtasks
 	for i, item := range foundItems {
 		if i >= 5 { // Maximum 5 subtasks
 			break
 		}
-		
+
 		subtask, err := itc.veriYonetici.AltGorevOlustur(
 			parentID,
 			item,
-			"", // No description for auto-generated subtasks
+			"",     // No description for auto-generated subtasks
 			"orta", // Default priority
-			"", // No due date
-			nil, // No tags
+			"",     // No due date
+			nil,    // No tags
 		)
-		
+
 		if err != nil {
 			log.Printf("Failed to create subtask: error=%v, title=%s", err, item)
 			continue
 		}
-		
+
 		subtasks = append(subtasks, subtask)
 	}
-	
+
 	confidence := 0.0
 	if len(foundItems) > 0 {
 		confidence = float64(len(subtasks)) / float64(len(foundItems))
 	}
-	
+
 	return subtasks, confidence
 }
 
@@ -459,27 +459,27 @@ func (itc *IntelligentTaskCreator) containsUrgencyKeywords(content string) bool 
 
 func (itc *IntelligentTaskCreator) detectComplexityIndicators(content string) []string {
 	var indicators []string
-	
+
 	complexityPatterns := map[string]string{
-		"multiple_steps": `\d+\.\s+|\n[-*]\s+`,
+		"multiple_steps":  `\d+\.\s+|\n[-*]\s+`,
 		"technical_terms": `api|database|algorithm|integration|deployment`,
-		"time_mentions": `\d+\s*(hour|day|week|month)s?`,
-		"dependencies": `depend|require|need|after|before`,
+		"time_mentions":   `\d+\s*(hour|day|week|month)s?`,
+		"dependencies":    `depend|require|need|after|before`,
 	}
-	
+
 	for indicator, pattern := range complexityPatterns {
 		if matched, _ := regexp.MatchString(pattern, content); matched {
 			indicators = append(indicators, indicator)
 		}
 	}
-	
+
 	return indicators
 }
 
 func (itc *IntelligentTaskCreator) detectComplexityLevel(content string) string {
 	indicators := itc.detectComplexityIndicators(content)
 	wordCount := len(strings.Fields(content))
-	
+
 	if len(indicators) >= 3 || wordCount > 100 {
 		return "high"
 	} else if len(indicators) >= 1 || wordCount > 30 {
@@ -502,25 +502,25 @@ func (itc *IntelligentTaskCreator) countKeywords(content string, keywords []stri
 func (itc *IntelligentTaskCreator) generateSimilarityReason(words1, words2 []string) string {
 	commonWords := []string{}
 	wordSet1 := make(map[string]bool)
-	
+
 	for _, word := range words1 {
 		wordSet1[word] = true
 	}
-	
+
 	for _, word := range words2 {
 		if wordSet1[word] && len(word) > 3 { // Only meaningful words
 			commonWords = append(commonWords, word)
 		}
 	}
-	
+
 	if len(commonWords) == 0 {
 		return "Genel benzerlik"
 	}
-	
+
 	if len(commonWords) <= 3 {
 		return fmt.Sprintf("Ortak kelimeler: %s", strings.Join(commonWords, ", "))
 	} else {
-		return fmt.Sprintf("Ortak kelimeler: %s ve %d tane daha", 
+		return fmt.Sprintf("Ortak kelimeler: %s ve %d tane daha",
 			strings.Join(commonWords[:3], ", "), len(commonWords)-3)
 	}
 }
@@ -530,7 +530,7 @@ func (itc *IntelligentTaskCreator) extractDurationFromDescription(description st
 	// Simple pattern matching for common duration expressions
 	// In a real implementation, this could use more sophisticated NLP
 	desc := strings.ToLower(description)
-	
+
 	if strings.Contains(desc, "1 gün") || strings.Contains(desc, "1 day") {
 		return 1
 	}
@@ -546,6 +546,6 @@ func (itc *IntelligentTaskCreator) extractDurationFromDescription(description st
 	if strings.Contains(desc, "hızlı") || strings.Contains(desc, "quick") || strings.Contains(desc, "basit") {
 		return 1
 	}
-	
+
 	return 0 // Default if no duration found
 }

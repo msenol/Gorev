@@ -33,9 +33,9 @@ type QueryIntent struct {
 
 // TimeRange represents a parsed time range
 type TimeRange struct {
-	Start *time.Time `json:"start,omitempty"`
-	End   *time.Time `json:"end,omitempty"`
-	Relative string   `json:"relative,omitempty"`
+	Start    *time.Time `json:"start,omitempty"`
+	End      *time.Time `json:"end,omitempty"`
+	Relative string     `json:"relative,omitempty"`
 }
 
 // ProcessQuery analyzes natural language and returns structured intent
@@ -49,7 +49,7 @@ func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error) {
 
 	// Normalize query
 	normalized := strings.ToLower(strings.TrimSpace(query))
-	
+
 	// Parse time expressions first
 	if timeRange := nlp.parseTimeExpressions(normalized); timeRange != nil {
 		intent.TimeRange = timeRange
@@ -77,7 +77,7 @@ func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error) {
 		intent.Confidence += 0.2
 	}
 
-	log.Printf("NLP Query processed: %s -> Action: %s, Confidence: %.2f", 
+	log.Printf("NLP Query processed: %s -> Action: %s, Confidence: %.2f",
 		query, intent.Action, intent.Confidence)
 
 	return intent, nil
@@ -130,7 +130,7 @@ func (nlp *NLPProcessor) parseAction(query string) string {
 // parseTimeExpressions extracts time-related information
 func (nlp *NLPProcessor) parseTimeExpressions(query string) *TimeRange {
 	now := time.Now().In(nlp.TimeZone)
-	
+
 	// Turkish time expressions
 	turkishPatterns := map[string]func() *TimeRange{
 		"bugün": func() *TimeRange {
@@ -152,7 +152,9 @@ func (nlp *NLPProcessor) parseTimeExpressions(query string) *TimeRange {
 		},
 		"bu hafta": func() *TimeRange {
 			weekday := int(now.Weekday())
-			if weekday == 0 { weekday = 7 } // Sunday = 7
+			if weekday == 0 {
+				weekday = 7
+			} // Sunday = 7
 			start := now.Add(-time.Duration(weekday-1) * 24 * time.Hour)
 			start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, nlp.TimeZone)
 			end := start.Add(7 * 24 * time.Hour).Add(-time.Nanosecond)
@@ -160,7 +162,9 @@ func (nlp *NLPProcessor) parseTimeExpressions(query string) *TimeRange {
 		},
 		"gelecek hafta": func() *TimeRange {
 			weekday := int(now.Weekday())
-			if weekday == 0 { weekday = 7 }
+			if weekday == 0 {
+				weekday = 7
+			}
 			nextWeekStart := now.Add(time.Duration(7-weekday+1) * 24 * time.Hour)
 			start := time.Date(nextWeekStart.Year(), nextWeekStart.Month(), nextWeekStart.Day(), 0, 0, 0, 0, nlp.TimeZone)
 			end := start.Add(7 * 24 * time.Hour).Add(-time.Nanosecond)
@@ -170,8 +174,8 @@ func (nlp *NLPProcessor) parseTimeExpressions(query string) *TimeRange {
 
 	// English time expressions
 	englishPatterns := map[string]func() *TimeRange{
-		"today": turkishPatterns["bugün"],
-		"tomorrow": turkishPatterns["yarın"],
+		"today":     turkishPatterns["bugün"],
+		"tomorrow":  turkishPatterns["yarın"],
 		"yesterday": turkishPatterns["dün"],
 		"this week": turkishPatterns["bu hafta"],
 		"next week": turkishPatterns["gelecek hafta"],
@@ -227,11 +231,11 @@ func (nlp *NLPProcessor) parseFilters(query string) map[string]interface{} {
 	// Priority filters
 	priorityPatterns := map[string]string{
 		"yüksek öncelik": "high",
-		"high priority": "high",
-		"acil": "urgent",
-		"urgent": "urgent",
-		"düşük öncelik": "low",
-		"low priority": "low",
+		"high priority":  "high",
+		"acil":           "urgent",
+		"urgent":         "urgent",
+		"düşük öncelik":  "low",
+		"low priority":   "low",
 	}
 
 	for pattern, priority := range priorityPatterns {
@@ -243,14 +247,14 @@ func (nlp *NLPProcessor) parseFilters(query string) map[string]interface{} {
 
 	// Status filters
 	statusPatterns := map[string]string{
-		"açık": "open",
-		"open": "open",
-		"tamamlanan": "completed",
-		"completed": "completed",
-		"devam eden": "in_progress",
+		"açık":        "open",
+		"open":        "open",
+		"tamamlanan":  "completed",
+		"completed":   "completed",
+		"devam eden":  "in_progress",
 		"in progress": "in_progress",
-		"bekleyen": "pending",
-		"pending": "pending",
+		"bekleyen":    "pending",
+		"pending":     "pending",
 	}
 
 	for pattern, status := range statusPatterns {
@@ -347,22 +351,22 @@ func (nlp *NLPProcessor) FormatResponse(action string, results interface{}, lang
 
 	templates := map[string]map[string]string{
 		"tr": {
-			"list_empty":    "Belirtilen kriterlere uygun görev bulunamadı.",
-			"list_found":    "%d görev bulundu.",
-			"create_success": "Görev başarıyla oluşturuldu: %s",
-			"update_success": "Görev güncellendi: %s",
+			"list_empty":       "Belirtilen kriterlere uygun görev bulunamadı.",
+			"list_found":       "%d görev bulundu.",
+			"create_success":   "Görev başarıyla oluşturuldu: %s",
+			"update_success":   "Görev güncellendi: %s",
 			"complete_success": "Görev tamamlandı: %s",
-			"delete_success": "Görev silindi: %s",
-			"error":         "İşlem sırasında hata oluştu: %s",
+			"delete_success":   "Görev silindi: %s",
+			"error":            "İşlem sırasında hata oluştu: %s",
 		},
 		"en": {
-			"list_empty":    "No tasks found matching the specified criteria.",
-			"list_found":    "Found %d tasks.",
-			"create_success": "Task created successfully: %s",
-			"update_success": "Task updated: %s",
+			"list_empty":       "No tasks found matching the specified criteria.",
+			"list_found":       "Found %d tasks.",
+			"create_success":   "Task created successfully: %s",
+			"update_success":   "Task updated: %s",
 			"complete_success": "Task completed: %s",
-			"delete_success": "Task deleted: %s",
-			"error":         "Error occurred during operation: %s",
+			"delete_success":   "Task deleted: %s",
+			"error":            "Error occurred during operation: %s",
 		},
 	}
 
@@ -387,31 +391,31 @@ func (nlp *NLPProcessor) FormatResponse(action string, results interface{}, lang
 			}
 		}
 		return template["list_empty"]
-	
+
 	case "create":
 		if title, ok := results.(string); ok {
 			return fmt.Sprintf(template["create_success"], title)
 		}
 		return template["create_success"]
-	
+
 	case "update":
 		if title, ok := results.(string); ok {
 			return fmt.Sprintf(template["update_success"], title)
 		}
 		return template["update_success"]
-	
+
 	case "complete":
 		if title, ok := results.(string); ok {
 			return fmt.Sprintf(template["complete_success"], title)
 		}
 		return template["complete_success"]
-	
+
 	case "delete":
 		if title, ok := results.(string); ok {
 			return fmt.Sprintf(template["delete_success"], title)
 		}
 		return template["delete_success"]
-	
+
 	default:
 		if err, ok := results.(error); ok {
 			return fmt.Sprintf(template["error"], err.Error())
@@ -434,8 +438,8 @@ func (nlp *NLPProcessor) ValidateIntent(intent *QueryIntent) error {
 	switch intent.Action {
 	case "create":
 		// Create actions should have some content indication
-		if !strings.Contains(strings.ToLower(intent.Raw), "görev") && 
-		   !strings.Contains(strings.ToLower(intent.Raw), "task") {
+		if !strings.Contains(strings.ToLower(intent.Raw), "görev") &&
+			!strings.Contains(strings.ToLower(intent.Raw), "task") {
 			return fmt.Errorf("create action requires task content specification")
 		}
 	case "update", "complete", "delete":
@@ -451,16 +455,16 @@ func (nlp *NLPProcessor) ValidateIntent(intent *QueryIntent) error {
 // ExtractTaskContent extracts task content from natural language
 func (nlp *NLPProcessor) ExtractTaskContent(query string) map[string]interface{} {
 	content := make(map[string]interface{})
-	
+
 	// Extract title (usually the main part after action words)
 	normalized := strings.ToLower(query)
-	
+
 	// Remove action words to get the content
 	actionWords := []string{
 		"görev oluştur", "yeni görev", "ekle", "oluştur", "yap",
 		"create task", "new task", "add task", "make task",
 	}
-	
+
 	title := query
 	for _, action := range actionWords {
 		if strings.Contains(normalized, action) {
@@ -471,13 +475,13 @@ func (nlp *NLPProcessor) ExtractTaskContent(query string) map[string]interface{}
 			}
 		}
 	}
-	
+
 	// Clean title
 	title = strings.Trim(title, `"'`)
 	if title != "" {
 		content["title"] = title
 	}
-	
+
 	// Extract description if separated by colon or dash
 	if strings.Contains(title, ":") {
 		parts := strings.SplitN(title, ":", 2)
@@ -488,11 +492,11 @@ func (nlp *NLPProcessor) ExtractTaskContent(query string) map[string]interface{}
 		content["title"] = strings.TrimSpace(parts[0])
 		content["description"] = strings.TrimSpace(parts[1])
 	}
-	
+
 	// Extract due date from time expressions
 	if timeRange := nlp.parseTimeExpressions(normalized); timeRange != nil && timeRange.Start != nil {
 		content["due_date"] = timeRange.Start.Format("2006-01-02T15:04:05Z07:00")
 	}
-	
+
 	return content
 }

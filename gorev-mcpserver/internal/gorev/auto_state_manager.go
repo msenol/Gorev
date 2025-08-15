@@ -179,9 +179,9 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 			// Record the interaction
 			if asm.aiContextManager != nil {
 				asm.aiContextManager.recordInteraction(parentID, "auto_complete_parent", map[string]interface{}{
-					"reason":       "all_subtasks_completed",
+					"reason":        "all_subtasks_completed",
 					"subtask_count": len(subtasks),
-					"timestamp":    time.Now(),
+					"timestamp":     time.Now(),
 				})
 			}
 
@@ -330,7 +330,7 @@ func (asm *AutoStateManager) ProcessNaturalLanguageQuery(query string, lang stri
 
 	// Format natural language response
 	response := asm.nlpProcessor.FormatResponse(intent.Action, result, lang)
-	
+
 	log.Printf("Natural language query processed: query=%s, action=%s, confidence=%f", query, intent.Action, intent.Confidence)
 
 	return map[string]interface{}{
@@ -366,12 +366,12 @@ func (asm *AutoStateManager) executeAction(intent *QueryIntent) (interface{}, er
 func (asm *AutoStateManager) executeListAction(intent *QueryIntent) (interface{}, error) {
 	// Build query parameters from intent
 	filters := make(map[string]interface{})
-	
+
 	// Apply filters from intent
 	for key, value := range intent.Filters {
 		filters[key] = value
 	}
-	
+
 	// Apply time range if specified
 	if intent.TimeRange != nil {
 		if intent.TimeRange.Start != nil {
@@ -381,13 +381,13 @@ func (asm *AutoStateManager) executeListAction(intent *QueryIntent) (interface{}
 			filters["created_before"] = intent.TimeRange.End
 		}
 	}
-	
+
 	// Get tasks from data manager
 	tasks, err := asm.veriYonetici.GorevListele(filters)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return tasks, nil
 }
 
@@ -395,29 +395,29 @@ func (asm *AutoStateManager) executeListAction(intent *QueryIntent) (interface{}
 func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface{}, error) {
 	// Extract task content from the query
 	content := asm.nlpProcessor.ExtractTaskContent(intent.Raw)
-	
+
 	// Validate required fields
 	title, ok := content["title"].(string)
 	if !ok || title == "" {
 		return nil, fmt.Errorf("task title is required")
 	}
-	
+
 	// Create task parameters
 	taskParams := map[string]interface{}{
 		"baslik":      title,
 		"durum":       "beklemede",
 		"olusturulma": time.Now(),
 	}
-	
+
 	// Add optional fields
 	if desc, ok := content["description"].(string); ok && desc != "" {
 		taskParams["aciklama"] = desc
 	}
-	
+
 	if dueDate, ok := content["due_date"].(string); ok && dueDate != "" {
 		taskParams["bitis_tarihi"] = dueDate
 	}
-	
+
 	// Apply filters as task properties
 	for key, value := range intent.Filters {
 		switch key {
@@ -429,22 +429,22 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 			taskParams["etiketler"] = value
 		}
 	}
-	
+
 	// Create the task
 	taskID, err := asm.veriYonetici.GorevOlustur(taskParams)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Record the creation
 	if asm.aiContextManager != nil {
 		asm.aiContextManager.recordInteraction(taskID, "nlp_create", map[string]interface{}{
-			"original_query": intent.Raw,
+			"original_query":    intent.Raw,
 			"extracted_content": content,
-			"timestamp": time.Now(),
+			"timestamp":         time.Now(),
 		})
 	}
-	
+
 	return title, nil
 }
 
@@ -454,32 +454,32 @@ func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface
 	if !ok || len(refs) == 0 {
 		return nil, fmt.Errorf("task reference required for update")
 	}
-	
+
 	// For now, handle the first reference
 	taskID, err := asm.resolveTaskReference(refs[0])
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get current task
 	task, err := asm.veriYonetici.GorevDetay(taskID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Extract update content
 	content := asm.nlpProcessor.ExtractTaskContent(intent.Raw)
 	updateParams := make(map[string]interface{})
-	
+
 	// Apply updates
 	if title, ok := content["title"].(string); ok && title != "" {
 		updateParams["baslik"] = title
 	}
-	
+
 	if desc, ok := content["description"].(string); ok && desc != "" {
 		updateParams["aciklama"] = desc
 	}
-	
+
 	// Apply filter changes as updates
 	for key, value := range intent.Filters {
 		switch key {
@@ -491,13 +491,13 @@ func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface
 			updateParams["kategori"] = value
 		}
 	}
-	
+
 	// Update the task
 	err = asm.veriYonetici.GorevGuncelle(taskID, updateParams)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return task.Baslik, nil
 }
 
@@ -507,30 +507,30 @@ func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interfa
 	if !ok || len(refs) == 0 {
 		return nil, fmt.Errorf("task reference required for completion")
 	}
-	
+
 	taskID, err := asm.resolveTaskReference(refs[0])
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get task details
 	task, err := asm.veriYonetici.GorevDetay(taskID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Complete the task
 	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": "tamamlandi"})
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Trigger auto-completion check for parent
 	err = asm.OnTaskCompleted(taskID)
 	if err != nil {
 		log.Printf("Failed to check parent completion: taskID=%s, error=%v", taskID, err)
 	}
-	
+
 	return task.Baslik, nil
 }
 
@@ -540,27 +540,27 @@ func (asm *AutoStateManager) executeDeleteAction(intent *QueryIntent) (interface
 	if !ok || len(refs) == 0 {
 		return nil, fmt.Errorf("task reference required for deletion")
 	}
-	
+
 	taskID, err := asm.resolveTaskReference(refs[0])
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get task details before deletion
 	task, err := asm.veriYonetici.GorevDetay(taskID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Delete the task
 	err = asm.veriYonetici.GorevSil(taskID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Clear any active timers
 	asm.clearInactivityTimer(taskID)
-	
+
 	return task.Baslik, nil
 }
 
@@ -577,18 +577,18 @@ func (asm *AutoStateManager) executeStatusAction(intent *QueryIntent) (interface
 		if err != nil {
 			return nil, err
 		}
-		
+
 		task, err := asm.veriYonetici.GorevDetay(taskID)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		return map[string]interface{}{
 			"task":   task,
 			"status": task.Durum,
 		}, nil
 	}
-	
+
 	// Return general status
 	return asm.executeListAction(intent)
 }
@@ -598,13 +598,13 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 	if strings.HasPrefix(ref, "id:") {
 		return strings.TrimPrefix(ref, "id:"), nil
 	}
-	
+
 	if strings.HasPrefix(ref, "title:") {
 		title := strings.TrimPrefix(ref, "title:")
 		// Search for task by title - this would need implementation in VeriYonetici
 		tasks, err := asm.veriYonetici.GorevListele(map[string]interface{}{
 			"title_search": title,
-			"limit": 1,
+			"limit":        1,
 		})
 		if err != nil {
 			return "", err
@@ -614,14 +614,14 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 		}
 		return tasks[0].ID, nil
 	}
-	
+
 	if strings.HasPrefix(ref, "recent:") {
 		countStr := strings.TrimPrefix(ref, "recent:")
 		count := 1
 		if c, err := strconv.Atoi(countStr); err == nil {
 			count = c
 		}
-		
+
 		// Get recent tasks
 		tasks, err := asm.veriYonetici.GorevListele(map[string]interface{}{
 			"order_by": "created_desc",
@@ -635,7 +635,7 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 		}
 		return tasks[0].ID, nil
 	}
-	
+
 	// Default: treat as direct task ID
 	return ref, nil
 }

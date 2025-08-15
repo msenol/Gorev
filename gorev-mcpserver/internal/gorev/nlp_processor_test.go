@@ -64,7 +64,7 @@ func TestNLPProcessor_ProcessQuery(t *testing.T) {
 			}
 
 			if intent.Confidence < tt.minConfidence {
-				t.Errorf("Confidence too low: got %.2f, expected >= %.2f", 
+				t.Errorf("Confidence too low: got %.2f, expected >= %.2f",
 					intent.Confidence, tt.minConfidence)
 			}
 
@@ -235,9 +235,9 @@ func TestNLPProcessor_ParseTaskReferences(t *testing.T) {
 	nlp := NewNLPProcessor()
 
 	tests := []struct {
-		name      string
-		query     string
-		expected  []string
+		name     string
+		query    string
+		expected []string
 	}{
 		{
 			name:     "Turkish task ID",
@@ -298,11 +298,11 @@ func TestNLPProcessor_ExtractTaskContent(t *testing.T) {
 	nlp := NewNLPProcessor()
 
 	tests := []struct {
-		name           string
-		query          string
-		expectedTitle  string
-		expectedDesc   string
-		expectDueDate  bool
+		name          string
+		query         string
+		expectedTitle string
+		expectedDesc  string
+		expectDueDate bool
 	}{
 		{
 			name:          "Turkish simple task",
@@ -576,7 +576,7 @@ func createTestIntent(action string, confidence float64) *QueryIntent {
 // Test for thread safety
 func TestNLPProcessor_ConcurrentAccess(t *testing.T) {
 	nlp := NewNLPProcessor()
-	
+
 	// Test concurrent query processing
 	queries := []string{
 		"görevleri göster",
@@ -587,7 +587,7 @@ func TestNLPProcessor_ConcurrentAccess(t *testing.T) {
 	}
 
 	results := make(chan error, len(queries))
-	
+
 	for _, query := range queries {
 		go func(q string) {
 			_, err := nlp.ProcessQuery(q)

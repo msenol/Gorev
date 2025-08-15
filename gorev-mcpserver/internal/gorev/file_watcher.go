@@ -15,18 +15,18 @@ import (
 
 // FileWatcher monitors file system changes and automatically updates related tasks
 type FileWatcher struct {
-	watcher     *fsnotify.Watcher
+	watcher      *fsnotify.Watcher
 	veriYonetici VeriYoneticiInterface
-	ctx         context.Context
-	cancel      context.CancelFunc
-	mu          sync.RWMutex
-	
+	ctx          context.Context
+	cancel       context.CancelFunc
+	mu           sync.RWMutex
+
 	// Watched paths and their associated task IDs
 	watchedPaths map[string][]string
-	
+
 	// Task-to-paths mapping for easy cleanup
-	taskPaths    map[string][]string
-	
+	taskPaths map[string][]string
+
 	// Configuration
 	config FileWatcherConfig
 }
@@ -35,16 +35,16 @@ type FileWatcher struct {
 type FileWatcherConfig struct {
 	// Extensions to watch (e.g., [".go", ".js", ".py"])
 	WatchedExtensions []string
-	
+
 	// Patterns to ignore (e.g., ["node_modules", ".git", "*.tmp"])
 	IgnorePatterns []string
-	
+
 	// Debounce duration to avoid multiple events for same file
 	DebounceDuration time.Duration
-	
+
 	// Auto-update task status on file changes
 	AutoUpdateStatus bool
-	
+
 	// Maximum file size to watch (in bytes)
 	MaxFileSize int64
 }
@@ -100,13 +100,13 @@ func (fw *FileWatcher) AddTaskPath(taskID string, path string) error {
 
 	// Clean and validate path
 	cleanPath := filepath.Clean(path)
-	
+
 	// Check if path exists and get info
 	info, err := filepath.Glob(cleanPath)
 	if err != nil {
 		return fmt.Errorf("invalid path pattern: %w", err)
 	}
-	
+
 	if len(info) == 0 {
 		// Path doesn't exist yet, still add it for future monitoring
 		log.Printf("Path %s doesn't exist yet, will monitor for creation", cleanPath)
@@ -150,16 +150,16 @@ func (fw *FileWatcher) RemoveTaskPath(taskID string, path string) error {
 				newTasks = append(newTasks, t)
 			}
 		}
-		
+
 		if len(newTasks) == 0 {
 			// No more tasks watching this path, remove from watcher
 			delete(fw.watchedPaths, cleanPath)
-			
+
 			watchPath := cleanPath
 			if !fw.isDirectory(cleanPath) {
 				watchPath = filepath.Dir(cleanPath)
 			}
-			
+
 			// Only remove if no other paths use this watch path
 			stillNeeded := false
 			for p := range fw.watchedPaths {
@@ -172,7 +172,7 @@ func (fw *FileWatcher) RemoveTaskPath(taskID string, path string) error {
 					break
 				}
 			}
-			
+
 			if !stillNeeded {
 				fw.watcher.Remove(watchPath)
 			}
@@ -189,7 +189,7 @@ func (fw *FileWatcher) RemoveTaskPath(taskID string, path string) error {
 				newPaths = append(newPaths, p)
 			}
 		}
-		
+
 		if len(newPaths) == 0 {
 			delete(fw.taskPaths, taskID)
 		} else {
@@ -335,7 +335,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 
 	// Create interaction record
 	interactionData, _ := json.Marshal(map[string]interface{}{
-		"file_change": event,
+		"file_change":    event,
 		"auto_generated": true,
 	})
 
@@ -350,7 +350,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 		if event.Operation == "write" || event.Operation == "create" {
 			gorev.Durum = "devam_ediyor"
 			gorev.GuncellemeTarih = time.Now()
-			
+
 			// Update task status using interface-compatible parameters
 			updateParams := map[string]interface{}{
 				"durum": "devam_ediyor",
@@ -358,7 +358,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 			if err := fw.veriYonetici.GorevGuncelle(taskID, updateParams); err != nil {
 				return fmt.Errorf("failed to update task status: %w", err)
 			}
-			
+
 			log.Printf("Auto-transitioned task %s to 'devam_ediyor' due to file changes", taskID)
 		}
 	}
@@ -377,18 +377,18 @@ func (fw *FileWatcher) isDirectory(path string) bool {
 	if err != nil {
 		return false
 	}
-	
+
 	if len(info) == 0 {
 		// Path doesn't exist, guess based on extension
 		return filepath.Ext(path) == ""
 	}
-	
+
 	// Check the first match (for glob patterns)
 	if len(info) > 0 {
 		stat, err := filepath.Glob(info[0])
 		return err == nil && len(stat) > 0 && filepath.Ext(stat[0]) == ""
 	}
-	
+
 	return false
 }
 
@@ -414,7 +414,7 @@ func (fw *FileWatcher) shouldIgnore(path string) bool {
 		if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
 			return true
 		}
-		
+
 		// Check if any directory in the path matches the pattern
 		parts := strings.Split(filepath.Clean(path), string(filepath.Separator))
 		for _, part := range parts {

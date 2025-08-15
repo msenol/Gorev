@@ -34,12 +34,12 @@ type BatchUpdateRequest struct {
 
 // BatchUpdateResult represents the result of a batch update operation
 type BatchUpdateResult struct {
-	Successful    []string                   `json:"successful"`
-	Failed        []BatchUpdateError         `json:"failed"`
-	Warnings      []BatchUpdateWarning       `json:"warnings"`
-	TotalProcessed int                       `json:"total_processed"`
-	ExecutionTime  time.Duration             `json:"execution_time"`
-	Summary       string                     `json:"summary"`
+	Successful     []string             `json:"successful"`
+	Failed         []BatchUpdateError   `json:"failed"`
+	Warnings       []BatchUpdateWarning `json:"warnings"`
+	TotalProcessed int                  `json:"total_processed"`
+	ExecutionTime  time.Duration        `json:"execution_time"`
+	Summary        string               `json:"summary"`
 }
 
 // BatchUpdateError represents a failed update in a batch operation
@@ -58,11 +58,11 @@ type BatchUpdateWarning struct {
 
 // BulkStatusTransitionRequest represents a bulk status change request
 type BulkStatusTransitionRequest struct {
-	TaskIDs         []string `json:"task_ids"`
-	NewStatus       string   `json:"new_status"`
-	Force           bool     `json:"force,omitempty"`
-	CheckDependencies bool   `json:"check_dependencies,omitempty"`
-	DryRun          bool     `json:"dry_run,omitempty"`
+	TaskIDs           []string `json:"task_ids"`
+	NewStatus         string   `json:"new_status"`
+	Force             bool     `json:"force,omitempty"`
+	CheckDependencies bool     `json:"check_dependencies,omitempty"`
+	DryRun            bool     `json:"dry_run,omitempty"`
 }
 
 // BulkTagOperationRequest represents a bulk tag operation request
@@ -75,17 +75,17 @@ type BulkTagOperationRequest struct {
 
 // BulkDeleteRequest represents a bulk delete request
 type BulkDeleteRequest struct {
-	TaskIDs      []string `json:"task_ids"`
-	Confirmation string   `json:"confirmation"`
-	Force        bool     `json:"force,omitempty"`
-	DeleteSubtasks bool   `json:"delete_subtasks,omitempty"`
-	DryRun       bool     `json:"dry_run,omitempty"`
+	TaskIDs        []string `json:"task_ids"`
+	Confirmation   string   `json:"confirmation"`
+	Force          bool     `json:"force,omitempty"`
+	DeleteSubtasks bool     `json:"delete_subtasks,omitempty"`
+	DryRun         bool     `json:"dry_run,omitempty"`
 }
 
 // ProcessBatchUpdate performs multiple task updates in a single transaction
 func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
-	
+
 	result := &BatchUpdateResult{
 		Successful: []string{},
 		Failed:     []BatchUpdateError{},
@@ -199,7 +199,7 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 			if newPriority := request.Updates["priority"]; newPriority != nil {
 				updateParams["oncelik"] = newPriority
 			}
-			
+
 			if err := bp.veriYonetici.GorevGuncelle(request.TaskID, updateParams); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: request.TaskID,
@@ -238,7 +238,7 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 // BulkStatusTransition changes status for multiple tasks
 func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
-	
+
 	result := &BatchUpdateResult{
 		Successful: []string{},
 		Failed:     []BatchUpdateError{},
@@ -356,7 +356,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 // BulkTagOperation adds, removes, or replaces tags for multiple tasks
 func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
-	
+
 	result := &BatchUpdateResult{
 		Successful: []string{},
 		Failed:     []BatchUpdateError{},
@@ -416,7 +416,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 			for _, tag := range task.Etiketler {
 				existingTagMap[tag.Isim] = tag
 			}
-			
+
 			newTags = task.Etiketler
 			for _, tag := range tags {
 				if _, exists := existingTagMap[tag.Isim]; !exists {
@@ -431,7 +431,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 			for _, tagName := range request.Tags {
 				removeMap[tagName] = true
 			}
-			
+
 			for _, tag := range task.Etiketler {
 				if !removeMap[tag.Isim] {
 					newTags = append(newTags, tag)
@@ -498,7 +498,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 // BulkDelete deletes multiple tasks with safety checks
 func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
-	
+
 	result := &BatchUpdateResult{
 		Successful: []string{},
 		Failed:     []BatchUpdateError{},
@@ -553,7 +553,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 
 		// Check for dependencies (tasks that depend on this one)
 		// This would require a reverse dependency lookup - for now, we'll skip this check
-		
+
 		// Delete the task
 		if err := bp.veriYonetici.GorevSil(taskID); err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
@@ -640,7 +640,7 @@ func (bp *BatchProcessor) validateStatusTransition(from, to string) bool {
 		"beklemede":    {"devam_ediyor", "iptal"},
 		"devam_ediyor": {"beklemede", "tamamlandi", "iptal"},
 		"tamamlandi":   {"devam_ediyor"}, // Allow reopening
-		"iptal":        {"beklemede"},     // Allow reactivation
+		"iptal":        {"beklemede"},    // Allow reactivation
 	}
 
 	allowed, exists := validTransitions[from]
