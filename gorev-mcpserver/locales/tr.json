@@ -136,7 +136,15 @@
     "jsonMarshalFailed": "JSON serileştirme hatası ({{.Field}}): {{.Error}}",
     "interactionQueryFailed": "AI interaction sorgusu başarısız: {{.Error}}",
     "todayInteractionQueryFailed": "bugünkü interaction sorgusu başarısız: {{.Error}}",
-    "lastInteractionUpdateFailed": "son interaction güncelleme hatası ({{.TaskID}}): {{.Error}}"
+    "lastInteractionUpdateFailed": "son interaction güncelleme hatası ({{.TaskID}}): {{.Error}}",
+    "taskNotFoundBatch": "görev bulunamadı: {{.Error}}",
+    "invalidStatusBatch": "geçersiz durum: {{.Status}}",
+    "invalidPriorityBatch": "geçersiz öncelik: {{.Priority}}",
+    "titleCannotBeEmpty": "başlık boş olamaz",
+    "invalidDateFormatBatch": "geçersiz tarih formatı (YYYY-MM-DD bekleniyor): {{.Date}}",
+    "taskUpdateError": "güncelleme hatası: {{.Error}}",
+    "currentTagsRemoveFailed": "mevcut etiketler silinemedi: {{.Error}}",
+    "projectSaveFailed": "proje kaydedilemedi: {{.Error}}"
   },
   "success": {
     "activeProjectSet": "✓ Aktif proje ayarlandı: {{.Project}}",

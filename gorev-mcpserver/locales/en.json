@@ -136,7 +136,15 @@
     "jsonMarshalFailed": "JSON marshalling error ({{.Field}}): {{.Error}}",
     "interactionQueryFailed": "AI interaction query failed: {{.Error}}",
     "todayInteractionQueryFailed": "today's interaction query failed: {{.Error}}",
-    "lastInteractionUpdateFailed": "last interaction update failed ({{.TaskID}}): {{.Error}}"
+    "lastInteractionUpdateFailed": "last interaction update failed ({{.TaskID}}): {{.Error}}",
+    "taskNotFoundBatch": "task not found: {{.Error}}",
+    "invalidStatusBatch": "invalid status: {{.Status}}",
+    "invalidPriorityBatch": "invalid priority: {{.Priority}}",
+    "titleCannotBeEmpty": "title cannot be empty",
+    "invalidDateFormatBatch": "invalid date format (expected YYYY-MM-DD): {{.Date}}",
+    "taskUpdateError": "update error: {{.Error}}",
+    "currentTagsRemoveFailed": "failed to remove current tags: {{.Error}}",
+    "projectSaveFailed": "failed to save project: {{.Error}}"
   },
   "success": {
     "activeProjectSet": "✓ Active project set: {{.Project}}",

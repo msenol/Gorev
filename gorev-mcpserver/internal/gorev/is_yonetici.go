@@ -93,26 +93,11 @@ func (iy *IsYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, er
 		tamamlanmamisSayilari = make(map[string]int)
 	}
 
-	// TODO: Bu göreve bağımlı olanları hesaplamak için de bulk query eklenebilir
-	// Şimdilik bu kısmı basitleştirip performans sorununu çözmek öncelikli
-
-	// BuGoreveBagimliSayisi hesaplaması için tüm görevleri kontrol et
-	buGoreveBagimliSayilari := make(map[string]int)
-	for _, gorev := range gorevler {
-		buGoreveBagimliSayilari[gorev.ID] = 0
-	}
-
-	// Her görev için bu göreve bağımlı olan görevleri say
-	for _, gorev := range gorevler {
-		baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorev.ID)
-		if err == nil {
-			for _, baglanti := range baglantilar {
-				// Eğer bu görev kaynak ise (başka görevler buna bağımlı)
-				if baglanti.KaynakID == gorev.ID {
-					buGoreveBagimliSayilari[gorev.ID]++
-				}
-			}
-		}
+	// Bu göreve bağımlı olanları hesaplamak için bulk query kullan
+	buGoreveBagimliSayilari, err := iy.veriYonetici.BulkBuGoreveBagimliSayilariGetir(gorevIDs)
+	if err != nil {
+		// Hata durumunda bile devam et, sadece bağımlı sayıları 0 olarak kalır
+		buGoreveBagimliSayilari = make(map[string]int)
 	}
 
 	// Her görev için hesaplanan değerleri ata
@@ -182,7 +167,7 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	gorev.GuncellemeTarih = time.Now()
 
 	return iy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{
-		"durum": durum,
+		"durum":            durum,
 		"guncelleme_tarih": time.Now(),
 	})
 }
@@ -197,7 +182,7 @@ func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 	}
 
 	if err := iy.veriYonetici.ProjeKaydet(proje); err != nil {
-		return nil, fmt.Errorf("proje kaydedilemedi: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.projectSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	return proje, nil
@@ -247,7 +232,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 			// Tüm alt görevlerin projesini güncelle
 			for _, altGorev := range altGorevler {
 				if err := iy.veriYonetici.GorevGuncelle(altGorev.ID, map[string]interface{}{
-					"proje_id": projeID,
+					"proje_id":         projeID,
 					"guncelleme_tarih": time.Now(),
 				}); err != nil {
 					return fmt.Errorf(i18n.T("error.subtaskUpdateFailed", map[string]interface{}{"Error": err}))
@@ -262,7 +247,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 		} else {
 			t, err := time.Parse("2006-01-02", sonTarihStr)
 			if err != nil {
-				return fmt.Errorf("geçersiz son tarih formatı (YYYY-AA-GG olmalı): %w", err)
+				return fmt.Errorf(i18n.T("error.invalidDateFormat", map[string]interface{}{"Error": err}))
 			}
 			gorev.SonTarih = &t
 		}
@@ -271,7 +256,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 	updateParams := map[string]interface{}{
 		"guncelleme_tarih": time.Now(),
 	}
-	
+
 	if baslikVar && baslik != "" {
 		updateParams["baslik"] = baslik
 	}
@@ -306,7 +291,7 @@ func (iy *IsYonetici) GorevSil(id string) error {
 	// Alt görevleri kontrol et
 	altGorevler, err := iy.veriYonetici.AltGorevleriGetir(id)
 	if err != nil {
-		return fmt.Errorf("alt görevler kontrol edilemedi: %w", err)
+		return fmt.Errorf(i18n.T("error.subtasksCheckFailed", map[string]interface{}{"Error": err}))
 	}
 
 	if len(altGorevler) > 0 {
@@ -394,12 +379,12 @@ func (iy *IsYonetici) AktifProjeKaldir() error {
 func (iy *IsYonetici) OzetAl() (*Ozet, error) {
 	gorevler, err := iy.veriYonetici.GorevleriGetir("", "", "")
 	if err != nil {
-		return nil, fmt.Errorf("görevler alınamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.tasksFetchFailed", map[string]interface{}{"Error": err}))
 	}
 
 	projeler, err := iy.veriYonetici.ProjeleriGetir()
 	if err != nil {
-		return nil, fmt.Errorf("projeler alınamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.projectListFailed", map[string]interface{}{"Error": err}))
 	}
 
 	ozet := &Ozet{
@@ -434,11 +419,11 @@ func (iy *IsYonetici) GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi string
 	// Görevlerin var olup olmadığını kontrol et
 	_, err := iy.veriYonetici.GorevGetir(kaynakID)
 	if err != nil {
-		return nil, fmt.Errorf("kaynak görev bulunamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.sourceTaskNotFound", map[string]interface{}{"Error": err}))
 	}
 	_, err = iy.veriYonetici.GorevGetir(hedefID)
 	if err != nil {
-		return nil, fmt.Errorf("hedef görev bulunamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.targetTaskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	baglanti := &Baglanti{
@@ -449,7 +434,7 @@ func (iy *IsYonetici) GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi string
 	}
 
 	if err := iy.veriYonetici.BaglantiEkle(baglanti); err != nil {
-		return nil, fmt.Errorf("bağlantı eklenemedi: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.linkAddFailed", map[string]interface{}{"Error": err}))
 	}
 
 	return baglanti, nil
@@ -463,7 +448,7 @@ func (iy *IsYonetici) GorevBaglantilariGetir(gorevID string) ([]*Baglanti, error
 func (iy *IsYonetici) GorevBagimliMi(gorevID string) (bool, []string, error) {
 	baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorevID)
 	if err != nil {
-		return false, nil, fmt.Errorf("bağlantılar alınamadı: %w", err)
+		return false, nil, fmt.Errorf(i18n.T("error.dependencyFetchFailed", map[string]interface{}{"Error": err}))
 	}
 
 	var tamamlanmamisBagimliliklar []string
@@ -474,7 +459,7 @@ func (iy *IsYonetici) GorevBagimliMi(gorevID string) (bool, []string, error) {
 			// Kaynak görevin durumunu kontrol et
 			kaynakGorev, err := iy.veriYonetici.GorevGetir(baglanti.KaynakID)
 			if err != nil {
-				return false, nil, fmt.Errorf("bağımlı görev bulunamadı: %w", err)
+				return false, nil, fmt.Errorf(i18n.T("error.dependentTaskNotFound", map[string]interface{}{"Error": err}))
 			}
 
 			// Eğer bağımlı görev tamamlanmamışsa
@@ -502,7 +487,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	// Parent görevi kontrol et
 	parent, err := iy.veriYonetici.GorevGetir(parentID)
 	if err != nil {
-		return nil, fmt.Errorf("üst görev bulunamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.parentTaskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	var sonTarih *time.Time
@@ -528,7 +513,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf("alt görev kaydedilemedi: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.subtaskSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	if len(etiketIsimleri) > 0 {
@@ -537,7 +522,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
 		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
-			return nil, fmt.Errorf("etiketler ayarlanamadı: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.tagsSetFailed", map[string]interface{}{"Error": err}))
 		}
 		gorev.Etiketler = etiketler
 	}
@@ -557,21 +542,21 @@ func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
 	if yeniParentID != "" {
 		parent, err := iy.veriYonetici.GorevGetir(yeniParentID)
 		if err != nil {
-			return fmt.Errorf("yeni üst görev bulunamadı: %w", err)
+			return fmt.Errorf(i18n.T("error.parentTaskNotFound", map[string]interface{}{"Error": err}))
 		}
 
 		// Circular dependency kontrolü
 		circular, err := iy.veriYonetici.DaireBagimliligiKontrolEt(gorevID, yeniParentID)
 		if err != nil {
-			return fmt.Errorf("dairesel bağımlılık kontrolü başarısız: %w", err)
+			return fmt.Errorf(i18n.T("error.circularDependencyCheckFailed", map[string]interface{}{"Error": err}))
 		}
 		if circular {
-			return fmt.Errorf("dairesel bağımlılık tespit edildi")
+			return fmt.Errorf(i18n.T("error.circularDependency"))
 		}
 
 		// Alt görev ve üst görev aynı projede olmalı
 		if gorev.ProjeID != parent.ProjeID {
-			return fmt.Errorf("alt görev ve üst görev aynı projede olmalı")
+			return fmt.Errorf(i18n.T("error.subtaskProjectMismatch"))
 		}
 	}
 

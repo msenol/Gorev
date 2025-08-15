@@ -43,8 +43,8 @@ type AIContextSummary struct {
 
 // AIContextYonetici manages AI context and interactions
 type AIContextYonetici struct {
-	veriYonetici       VeriYoneticiInterface
-	autoStateManager   *AutoStateManager
+	veriYonetici     VeriYoneticiInterface
+	autoStateManager *AutoStateManager
 }
 
 // YeniAIContextYonetici creates a new AI context manager
@@ -237,7 +237,7 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 	if err := acy.updateLastInteraction(taskID); err != nil {
 		return err
 	}
-	
+
 	// Add task to recent tasks
 	return acy.addToRecentTasks(taskID)
 }
@@ -294,7 +294,7 @@ func (acy *AIContextYonetici) addToRecentTasks(taskID string) error {
 			RecentTasks: []string{},
 		}
 	}
-	
+
 	// Remove taskID if it already exists (to move it to front)
 	newRecentTasks := []string{}
 	for _, id := range context.RecentTasks {
@@ -302,20 +302,18 @@ func (acy *AIContextYonetici) addToRecentTasks(taskID string) error {
 			newRecentTasks = append(newRecentTasks, id)
 		}
 	}
-	
+
 	// Add taskID to front
 	context.RecentTasks = append([]string{taskID}, newRecentTasks...)
-	
+
 	// Keep only last 10 tasks
 	if len(context.RecentTasks) > 10 {
 		context.RecentTasks = context.RecentTasks[:10]
 	}
-	
+
 	// Save updated context
 	return acy.saveContext(context)
 }
-
-
 
 // BatchUpdate represents a single update in a batch operation
 type BatchUpdate struct {
@@ -323,13 +321,11 @@ type BatchUpdate struct {
 	Updates map[string]interface{} `json:"updates"`
 }
 
-
-
 // BatchUpdate performs multiple task updates in a single operation
 func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateResult, error) {
 	result := &BatchUpdateResult{
 		Successful: []string{},
-		Failed: []BatchUpdateError{},
+		Failed:     []BatchUpdateError{},
 	}
 
 	for _, update := range updates {
@@ -338,23 +334,94 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: update.ID,
-				Error: fmt.Sprintf("görev bulunamadı: %v", err),
+				Error:  i18n.T("error.taskNotFoundBatch", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
 
 		// Apply updates based on fields
+		updateFields := make(map[string]interface{})
+
+		// Validate and collect all supported field updates
 		if durum, ok := update.Updates["durum"].(string); ok {
-			if err := acy.veriYonetici.GorevGuncelle(update.ID, map[string]interface{}{"durum": durum}); err != nil {
+			// Validate status values
+			validStatuses := []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"}
+			isValid := false
+			for _, status := range validStatuses {
+				if durum == status {
+					isValid = true
+					break
+				}
+			}
+			if !isValid {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: update.ID,
-					Error: fmt.Sprintf("durum güncelleme hatası: %v", err),
+					Error:  i18n.T("error.invalidStatusBatch", map[string]interface{}{"Status": durum}),
+				})
+				continue
+			}
+			updateFields["durum"] = durum
+		}
+
+		if oncelik, ok := update.Updates["oncelik"].(string); ok {
+			// Validate priority values
+			validPriorities := []string{"dusuk", "normal", "yuksek", "acil"}
+			isValid := false
+			for _, priority := range validPriorities {
+				if oncelik == priority {
+					isValid = true
+					break
+				}
+			}
+			if !isValid {
+				result.Failed = append(result.Failed, BatchUpdateError{
+					TaskID: update.ID,
+					Error:  i18n.T("error.invalidPriorityBatch", map[string]interface{}{"Priority": oncelik}),
+				})
+				continue
+			}
+			updateFields["oncelik"] = oncelik
+		}
+
+		if baslik, ok := update.Updates["baslik"].(string); ok {
+			if strings.TrimSpace(baslik) == "" {
+				result.Failed = append(result.Failed, BatchUpdateError{
+					TaskID: update.ID,
+					Error:  i18n.T("error.titleCannotBeEmpty"),
+				})
+				continue
+			}
+			updateFields["baslik"] = baslik
+		}
+
+		if aciklama, ok := update.Updates["aciklama"].(string); ok {
+			updateFields["aciklama"] = aciklama
+		}
+
+		if sonTarih, ok := update.Updates["son_tarih"].(string); ok {
+			if sonTarih != "" {
+				// Validate date format (YYYY-MM-DD)
+				if _, err := time.Parse("2006-01-02", sonTarih); err != nil {
+					result.Failed = append(result.Failed, BatchUpdateError{
+						TaskID: update.ID,
+						Error:  i18n.T("error.invalidDateFormatBatch", map[string]interface{}{"Date": sonTarih}),
+					})
+					continue
+				}
+			}
+			updateFields["son_tarih"] = sonTarih
+		}
+
+		// Apply all validated updates at once
+		if len(updateFields) > 0 {
+			if err := acy.veriYonetici.GorevGuncelle(update.ID, updateFields); err != nil {
+				result.Failed = append(result.Failed, BatchUpdateError{
+					TaskID: update.ID,
+					Error:  i18n.T("error.taskUpdateError", map[string]interface{}{"Error": err}),
 				})
 				continue
 			}
 		}
-
-		// TODO: Add support for other fields (priority, description, etc.)
 
 		result.Successful = append(result.Successful, update.ID)
 
@@ -378,7 +445,7 @@ func (acy *AIContextYonetici) NLPQuery(query string) ([]*Gorev, error) {
 			// Fallback to basic NLP processing
 			return acy.basicNLPQuery(query)
 		}
-		
+
 		// Extract tasks from the structured result
 		if resultMap, ok := result.(map[string]interface{}); ok {
 			if tasksResult, ok := resultMap["result"]; ok {
@@ -388,7 +455,7 @@ func (acy *AIContextYonetici) NLPQuery(query string) ([]*Gorev, error) {
 			}
 		}
 	}
-	
+
 	// Fallback to basic NLP processing
 	return acy.basicNLPQuery(query)
 }

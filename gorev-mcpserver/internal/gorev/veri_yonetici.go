@@ -24,12 +24,12 @@ type VeriYonetici struct {
 func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, error) {
 	db, err := sql.Open("sqlite3", dbYolu)
 	if err != nil {
-		return nil, fmt.Errorf("veritabanı açılamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
 	}
 
 	vy := &VeriYonetici{db: db}
 	if err := vy.migrateDB(migrationsYolu); err != nil {
-		return nil, fmt.Errorf("veritabanı migrate edilemedi: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.migrationFailed", map[string]interface{}{"Error": err}))
 	}
 
 	return vy, nil
@@ -60,7 +60,7 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 
 	err = m.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return fmt.Errorf("migration işlemi başarısız: %w", err)
+		return fmt.Errorf(i18n.T("error.migrationProcessFailed", map[string]interface{}{"Error": err}))
 	}
 
 	_, _, err = m.Version()
@@ -87,7 +87,7 @@ func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, 
 	durum := ""
 	sirala := ""
 	filtre := ""
-	
+
 	if v, ok := filters["durum"]; ok {
 		if s, ok := v.(string); ok {
 			durum = s
@@ -103,7 +103,7 @@ func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, 
 			filtre = s
 		}
 	}
-	
+
 	return vy.GorevleriGetir(durum, sirala, filtre)
 }
 
@@ -115,7 +115,7 @@ func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, err
 		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
 	}
-	
+
 	if v, ok := params["baslik"]; ok {
 		if s, ok := v.(string); ok {
 			gorev.Baslik = s
@@ -141,11 +141,11 @@ func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, err
 			gorev.ParentID = s
 		}
 	}
-	
+
 	if err := vy.GorevKaydet(gorev); err != nil {
 		return "", err
 	}
-	
+
 	return gorev.ID, nil
 }
 
@@ -161,7 +161,7 @@ func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var bagimliGorevler []*Gorev
 	for _, baglanti := range baglantilari {
 		if baglanti.HedefID == taskID {
@@ -172,7 +172,7 @@ func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
 			}
 		}
 	}
-	
+
 	return bagimliGorevler, nil
 }
 
@@ -391,19 +391,19 @@ func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket,
 	etiketler := make([]*Etiket, 0, len(isimler))
 	tx, err := vy.db.Begin()
 	if err != nil {
-		return nil, fmt.Errorf("transaction başlatılamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.transactionFailed", map[string]interface{}{"Error": err}))
 	}
 	defer tx.Rollback() // Hata durumunda geri al
 
 	stmtSelect, err := tx.Prepare("SELECT id, isim FROM etiketler WHERE isim = ?")
 	if err != nil {
-		return nil, fmt.Errorf("select statement hazırlanamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.selectPrepFailed", map[string]interface{}{"Error": err}))
 	}
 	defer stmtSelect.Close()
 
 	stmtInsert, err := tx.Prepare("INSERT INTO etiketler (id, isim) VALUES (?, ?)")
 	if err != nil {
-		return nil, fmt.Errorf("insert statement hazırlanamadı: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
 	}
 	defer stmtInsert.Close()
 
@@ -431,19 +431,19 @@ func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket,
 func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
 	tx, err := vy.db.Begin()
 	if err != nil {
-		return fmt.Errorf("transaction başlatılamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.transactionFailed", map[string]interface{}{"Error": err}))
 	}
 	defer tx.Rollback()
 
 	// Mevcut bağlantıları sil
 	if _, err := tx.Exec("DELETE FROM gorev_etiketleri WHERE gorev_id = ?", gorevID); err != nil {
-		return fmt.Errorf("mevcut etiketler silinemedi: %w", err)
+		return fmt.Errorf(i18n.T("error.currentTagsRemoveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Yeni bağlantıları ekle
 	stmt, err := tx.Prepare("INSERT INTO gorev_etiketleri (gorev_id, etiket_id) VALUES (?, ?)")
 	if err != nil {
-		return fmt.Errorf("insert statement hazırlanamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
 	}
 	defer stmt.Close()
 
@@ -875,7 +875,7 @@ func (vy *VeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error {
 			return err
 		}
 		if daireVar {
-			return fmt.Errorf("dairesel bağımlılık tespit edildi")
+			return fmt.Errorf(i18n.T("error.circularDependency"))
 		}
 	}
 
@@ -940,10 +940,10 @@ func (vy *VeriYonetici) BulkBagimlilikSayilariGetir(gorevIDs []string) (map[stri
 	}
 
 	sorgu := fmt.Sprintf(`
-		SELECT kaynak_id, COUNT(*) as bagli_sayi
+		SELECT hedef_id, COUNT(*) as bagli_sayi
 		FROM baglantilar 
-		WHERE kaynak_id IN (%s)
-		GROUP BY kaynak_id
+		WHERE hedef_id IN (%s)
+		GROUP BY hedef_id
 	`, strings.Join(placeholders, ","))
 
 	rows, err := vy.db.Query(sorgu, args...)
@@ -980,10 +980,51 @@ func (vy *VeriYonetici) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []stri
 	}
 
 	sorgu := fmt.Sprintf(`
-		SELECT b.kaynak_id, COUNT(*) as tamamlanmamis_sayi
+		SELECT b.hedef_id, COUNT(*) as tamamlanmamis_sayi
 		FROM baglantilar b
-		INNER JOIN gorevler g ON b.hedef_id = g.id
-		WHERE b.kaynak_id IN (%s) AND g.durum != 'tamamlandi'
+		INNER JOIN gorevler g ON b.kaynak_id = g.id
+		WHERE b.hedef_id IN (%s) AND g.durum != 'tamamlandi'
+		GROUP BY b.hedef_id
+	`, strings.Join(placeholders, ","))
+
+	rows, err := vy.db.Query(sorgu, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]int)
+	for rows.Next() {
+		var gorevID string
+		var count int
+		if err := rows.Scan(&gorevID, &count); err != nil {
+			return nil, err
+		}
+		result[gorevID] = count
+	}
+
+	return result, nil
+}
+
+// BulkBuGoreveBagimliSayilariGetir tüm görevlere bağımlı olan görev sayılarını hesaplar
+func (vy *VeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map[string]int, error) {
+	if len(gorevIDs) == 0 {
+		return make(map[string]int), nil
+	}
+
+	// Placeholder'ları oluştur
+	placeholders := make([]string, len(gorevIDs))
+	args := make([]interface{}, len(gorevIDs))
+	for i, id := range gorevIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	// Bu göreve bağımlı olan görevleri say (bu görev kaynak olduğu bağlantılar)
+	sorgu := fmt.Sprintf(`
+		SELECT b.kaynak_id, COUNT(*) as bagimli_sayi
+		FROM baglantilar b
+		WHERE b.kaynak_id IN (%s)
 		GROUP BY b.kaynak_id
 	`, strings.Join(placeholders, ","))
 
@@ -1016,7 +1057,7 @@ func (vy *VeriYonetici) AIContextGetir() (*AIContext, error) {
 
 	sorgu := `SELECT active_task_id, recent_tasks, session_data, last_updated FROM ai_context WHERE id = 1`
 	err := vy.db.QueryRow(sorgu).Scan(&activeTaskID, &recentTasksJSON, &sessionDataJSON, &lastUpdated)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Initialize default context if not exists
@@ -1078,7 +1119,7 @@ func (vy *VeriYonetici) AIContextKaydet(context *AIContext) error {
 	sorgu := `
 		INSERT OR REPLACE INTO ai_context (id, active_task_id, recent_tasks, session_data, last_updated)
 		VALUES (1, ?, ?, ?, ?)`
-	
+
 	_, err = vy.db.Exec(sorgu, activeTaskID, string(recentTasksJSON), string(sessionDataJSON), time.Now())
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
@@ -1097,7 +1138,7 @@ func (vy *VeriYonetici) AIInteractionKaydet(interaction *AIInteraction) error {
 	sorgu := `
 		INSERT INTO ai_interactions (gorev_id, action_type, context, timestamp)
 		VALUES (?, ?, ?, ?)`
-	
+
 	_, err := vy.db.Exec(sorgu, interaction.GorevID, interaction.ActionType, contextJSON, time.Now())
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.interactionSaveFailed", map[string]interface{}{"Error": err}))
@@ -1117,7 +1158,7 @@ func (vy *VeriYonetici) AIInteractionlariGetir(limit int) ([]*AIInteraction, err
 		FROM ai_interactions
 		ORDER BY timestamp DESC
 		LIMIT ?`
-	
+
 	rows, err := vy.db.Query(sorgu, limit)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.interactionQueryFailed", map[string]interface{}{"Error": err}))
@@ -1132,11 +1173,11 @@ func (vy *VeriYonetici) AIInteractionlariGetir(limit int) ([]*AIInteraction, err
 		if err != nil {
 			return nil, err
 		}
-		
+
 		if contextStr.Valid {
 			interaction.Context = contextStr.String
 		}
-		
+
 		interactions = append(interactions, &interaction)
 	}
 
@@ -1153,7 +1194,7 @@ func (vy *VeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) 
 		FROM ai_interactions
 		WHERE timestamp >= ? AND timestamp < ?
 		ORDER BY timestamp DESC`
-	
+
 	rows, err := vy.db.Query(sorgu, today, tomorrow)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.todayInteractionQueryFailed", map[string]interface{}{"Error": err}))
@@ -1168,11 +1209,11 @@ func (vy *VeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) 
 		if err != nil {
 			return nil, err
 		}
-		
+
 		if contextStr.Valid {
 			interaction.Context = contextStr.String
 		}
-		
+
 		interactions = append(interactions, &interaction)
 	}
 
@@ -1182,7 +1223,7 @@ func (vy *VeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) 
 // AILastInteractionGuncelle updates the last AI interaction timestamp for a task
 func (vy *VeriYonetici) AILastInteractionGuncelle(taskID string, timestamp time.Time) error {
 	sorgu := `UPDATE gorevler SET last_ai_interaction = ? WHERE id = ?`
-	
+
 	_, err := vy.db.Exec(sorgu, timestamp, taskID)
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.lastInteractionUpdateFailed", map[string]interface{}{"TaskID": taskID, "Error": err}))

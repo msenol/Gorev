@@ -20,6 +20,7 @@ type VeriYoneticiInterface interface {
 	BaglantilariGetir(gorevID string) ([]*Baglanti, error)
 	BulkBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error)
 	BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error)
+	BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map[string]int, error)
 	EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error)
 	GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error
 	TemplateOlustur(template *GorevTemplate) error
@@ -34,7 +35,7 @@ type VeriYoneticiInterface interface {
 	ParentIDGuncelle(gorevID, yeniParentID string) error
 	DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error)
 	AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error)
-	
+
 	// AI Context Management methods
 	AIContextGetir() (*AIContext, error)
 	AIContextKaydet(context *AIContext) error
@@ -42,7 +43,7 @@ type VeriYoneticiInterface interface {
 	AIInteractionlariGetir(limit int) ([]*AIInteraction, error)
 	AITodayInteractionlariGetir() ([]*AIInteraction, error)
 	AILastInteractionGuncelle(taskID string, timestamp time.Time) error
-	
+
 	// File Watcher Integration methods (using string IDs to match existing interface)
 	GorevDosyaYoluEkle(taskID string, path string) error
 	GorevDosyaYoluSil(taskID string, path string) error
@@ -50,12 +51,12 @@ type VeriYoneticiInterface interface {
 	DosyaYoluGorevleriGetir(path string) ([]string, error)
 	AIEtkilemasimKaydet(taskID string, interactionType, data, sessionID string) error
 	GorevSonAIEtkilesiminiGuncelle(taskID string, timestamp time.Time) error
-	
+
 	// Additional methods for NLP and auto state management
 	GorevDetay(taskID string) (*Gorev, error)
 	GorevListele(filters map[string]interface{}) ([]*Gorev, error)
 	GorevOlustur(params map[string]interface{}) (string, error)
 	GorevBagimlilikGetir(taskID string) ([]*Gorev, error)
-	
+
 	Kapat() error
 }
