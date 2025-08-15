@@ -118,14 +118,34 @@ func createMCPCallCommand() *cobra.Command {
 			for i := 1; i < len(args); i++ {
 				parts := strings.SplitN(args[i], "=", 2)
 				if len(parts) == 2 {
+					key := parts[0]
+					value := parts[1]
+
+					// Special handling for degerler parameter (JSON object)
+					if key == "degerler" {
+						var degerlerMap map[string]interface{}
+						if err := json.Unmarshal([]byte(value), &degerlerMap); err == nil {
+							params[key] = degerlerMap
+						} else {
+							return fmt.Errorf("degerler parametresi geçerli JSON objesi olmalı: %v", err)
+						}
+						continue
+					}
+
 					// Convert boolean strings
-					switch parts[1] {
+					switch value {
 					case "true":
-						params[parts[0]] = true
+						params[key] = true
 					case "false":
-						params[parts[0]] = false
+						params[key] = false
 					default:
-						params[parts[0]] = parts[1]
+						// Try to parse as JSON for nested objects
+						var jsonValue interface{}
+						if err := json.Unmarshal([]byte(value), &jsonValue); err == nil {
+							params[key] = jsonValue
+						} else {
+							params[key] = value
+						}
 					}
 				}
 			}
