@@ -1,9 +1,8 @@
 package gorev
 
 import (
-	"encoding/json"
+	"strings"
 	"testing"
-	"time"
 )
 
 func TestNLPProcessor_ProcessQuery(t *testing.T) {

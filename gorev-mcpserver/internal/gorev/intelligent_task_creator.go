@@ -5,7 +5,6 @@ import (
 	"log"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -296,7 +295,7 @@ func (itc *IntelligentTaskCreator) estimateTimeFromContent(title, description st
 
 // findSimilarTasks finds tasks similar to the given title and description
 func (itc *IntelligentTaskCreator) findSimilarTasks(title, description string, limit int) []SimilarTaskInfo {
-	allTasks, err := itc.veriYonetici.GorevListele("", "", "")
+	allTasks, err := itc.veriYonetici.GorevListele(map[string]interface{}{})
 	if err != nil {
 		return nil
 	}

@@ -343,7 +343,7 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := vy.GorevGuncelle(tc.gorev)
+			err := vy.GorevGuncelle(tc.gorev.ID, tc.gorev)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")

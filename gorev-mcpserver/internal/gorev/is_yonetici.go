@@ -63,8 +63,8 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 	return gorev, nil
 }
 
-func (iy *IsYonetici) GorevListele(durum, sirala, filtre string) ([]*Gorev, error) {
-	gorevler, err := iy.veriYonetici.GorevleriGetir(durum, sirala, filtre)
+func (iy *IsYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+	gorevler, err := iy.veriYonetici.GorevListele(filters)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,10 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	gorev.Durum = durum
 	gorev.GuncellemeTarih = time.Now()
 
-	return iy.veriYonetici.GorevGuncelle(gorev)
+	return iy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{
+		"durum": durum,
+		"guncelleme_tarih": time.Now(),
+	})
 }
 
 func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
@@ -243,9 +246,10 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 
 			// Tüm alt görevlerin projesini güncelle
 			for _, altGorev := range altGorevler {
-				altGorev.ProjeID = projeID
-				altGorev.GuncellemeTarih = time.Now()
-				if err := iy.veriYonetici.GorevGuncelle(altGorev); err != nil {
+				if err := iy.veriYonetici.GorevGuncelle(altGorev.ID, map[string]interface{}{
+					"proje_id": projeID,
+					"guncelleme_tarih": time.Now(),
+				}); err != nil {
 					return fmt.Errorf(i18n.T("error.subtaskUpdateFailed", map[string]interface{}{"Error": err}))
 				}
 			}
@@ -264,9 +268,32 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 		}
 	}
 
-	gorev.GuncellemeTarih = time.Now()
+	updateParams := map[string]interface{}{
+		"guncelleme_tarih": time.Now(),
+	}
+	
+	if baslikVar && baslik != "" {
+		updateParams["baslik"] = baslik
+	}
+	if aciklamaVar {
+		updateParams["aciklama"] = aciklama
+	}
+	if oncelikVar && oncelik != "" {
+		updateParams["oncelik"] = oncelik
+	}
+	if projeVar {
+		updateParams["proje_id"] = projeID
+	}
+	if sonTarihVar {
+		if sonTarihStr == "" {
+			updateParams["son_tarih"] = nil
+		} else {
+			t, _ := time.Parse("2006-01-02", sonTarihStr)
+			updateParams["son_tarih"] = t
+		}
+	}
 
-	return iy.veriYonetici.GorevGuncelle(gorev)
+	return iy.veriYonetici.GorevGuncelle(gorev.ID, updateParams)
 }
 
 func (iy *IsYonetici) GorevSil(id string) error {

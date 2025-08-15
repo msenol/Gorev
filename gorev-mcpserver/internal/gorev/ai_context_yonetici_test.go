@@ -53,8 +53,8 @@ func (m *MockVeriYoneticiAI) GorevGetir(id string) (*Gorev, error) {
 	return args.Get(0).(*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) GorevGuncelle(gorev *Gorev) error {
-	args := m.Called(gorev)
+func (m *MockVeriYoneticiAI) GorevGuncelle(taskID string, params interface{}) error {
+	args := m.Called(taskID, params)
 	return args.Error(0)
 }
 
@@ -302,6 +302,62 @@ func (m *MockVeriYoneticiAI) Kapat() error {
 	return args.Error(0)
 }
 
+// Missing interface methods
+func (m *MockVeriYoneticiAI) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+	args := m.Called(parentID, baslik, aciklama, oncelik, sonTarihStr, etiketIsimleri)
+	return args.Get(0).(*Gorev), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) GorevDosyaYoluEkle(taskID string, path string) error {
+	args := m.Called(taskID, path)
+	return args.Error(0)
+}
+
+func (m *MockVeriYoneticiAI) GorevDosyaYoluSil(taskID string, path string) error {
+	args := m.Called(taskID, path)
+	return args.Error(0)
+}
+
+func (m *MockVeriYoneticiAI) GorevDosyaYollariGetir(taskID string) ([]string, error) {
+	args := m.Called(taskID)
+	return args.Get(0).([]string), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) DosyaYoluGorevleriGetir(path string) ([]string, error) {
+	args := m.Called(path)
+	return args.Get(0).([]string), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) AIEtkilemasimKaydet(taskID string, interactionType, data, sessionID string) error {
+	args := m.Called(taskID, interactionType, data, sessionID)
+	return args.Error(0)
+}
+
+func (m *MockVeriYoneticiAI) GorevSonAIEtkilesiminiGuncelle(taskID string, timestamp time.Time) error {
+	args := m.Called(taskID, timestamp)
+	return args.Error(0)
+}
+
+func (m *MockVeriYoneticiAI) GorevDetay(taskID string) (*Gorev, error) {
+	args := m.Called(taskID)
+	return args.Get(0).(*Gorev), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+	args := m.Called(filters)
+	return args.Get(0).([]*Gorev), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) GorevOlustur(params map[string]interface{}) (string, error) {
+	args := m.Called(params)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
+	args := m.Called(taskID)
+	return args.Get(0).([]*Gorev), args.Error(1)
+}
+
 // TestSetActiveTask tests the SetActiveTask functionality
 func TestSetActiveTask(t *testing.T) {
 	tests := []struct {
@@ -356,9 +412,7 @@ func TestSetActiveTask(t *testing.T) {
 
 			if tt.mockTask != nil && tt.mockTask.Durum == "beklemede" {
 				// The task will be updated with new status
-				mockVeriYonetici.On("GorevGuncelle", mock.MatchedBy(func(g *Gorev) bool {
-					return g.ID == tt.taskID && g.Durum == "devam_ediyor"
-				})).Return(nil)
+				mockVeriYonetici.On("GorevGuncelle", tt.taskID, map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
 			}
 
 			// Execute
@@ -530,7 +584,7 @@ func TestBatchUpdate(t *testing.T) {
 	assert.Len(t, result.Failed, 1)
 	assert.Contains(t, result.Successful, "task-1")
 	assert.Contains(t, result.Successful, "task-2")
-	assert.Equal(t, "task-not-found", result.Failed[0].ID)
+	assert.Equal(t, "task-not-found", result.Failed[0].TaskID)
 
 	mockVeriYonetici.AssertExpectations(t)
 }

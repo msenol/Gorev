@@ -1,14 +1,11 @@
 package gorev
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/msenol/gorev/internal/i18n"
 )
 
 // AutoStateManager handles automatic task state transitions
@@ -69,7 +66,7 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	}
 
 	// Transition to "devam_ediyor"
-	err = asm.veriYonetici.GorevGuncelle(taskID, "devam_ediyor")
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": "devam_ediyor"})
 	if err != nil {
 		return err
 	}
@@ -109,7 +106,7 @@ func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 	}
 
 	// Transition back to "beklemede"
-	err = asm.veriYonetici.GorevGuncelle(taskID, "beklemede")
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": "beklemede"})
 	if err != nil {
 		return err
 	}
@@ -174,7 +171,7 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 
 		// Auto-complete parent if not already completed
 		if parentTask.Durum != "tamamlandi" {
-			err = asm.veriYonetici.GorevGuncelle(parentID, "tamamlandi")
+			err = asm.veriYonetici.GorevGuncelle(parentID, map[string]interface{}{"durum": "tamamlandi"})
 			if err != nil {
 				return err
 			}
@@ -523,7 +520,7 @@ func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interfa
 	}
 	
 	// Complete the task
-	err = asm.veriYonetici.GorevGuncelle(taskID, "tamamlandi")
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": "tamamlandi"})
 	if err != nil {
 		return nil, err
 	}

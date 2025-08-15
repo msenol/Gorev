@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -411,7 +412,19 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	// DEBUG: Log parametreleri
 	// fmt.Fprintf(os.Stderr, "[GorevListele] Called - durum: %s, limit: %d, offset: %d\n", durum, limit, offset)
 
-	gorevler, err := h.isYonetici.GorevListele(durum, sirala, filtre)
+	// Create filters map
+	filters := make(map[string]interface{})
+	if durum != "" {
+		filters["durum"] = durum
+	}
+	if sirala != "" {
+		filters["sirala"] = sirala
+	}
+	if filtre != "" {
+		filters["filtre"] = filtre
+	}
+
+	gorevler, err := h.isYonetici.GorevListele(filters)
 	if err != nil {
 		return mcp.NewToolResultError(i18n.T("error.taskListFailed", map[string]interface{}{"Error": err})), nil
 	}
@@ -1187,7 +1200,10 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	// Set project if specified
 	if projeID != "" && response.MainTask != nil {
 		response.MainTask.ProjeID = projeID
-		if err := h.isYonetici.VeriYonetici().GorevGuncelle(response.MainTask); err != nil {
+		updateParams := map[string]interface{}{
+			"proje_id": projeID,
+		}
+		if err := h.isYonetici.VeriYonetici().GorevGuncelle(response.MainTask.ID, updateParams); err != nil {
 			// Log but don't fail
 			slog.Warn("Failed to set project for intelligent task", "error", err)
 		}
@@ -2813,7 +2829,7 @@ func (h *Handlers) GorevBatchUpdate(params map[string]interface{}) (*mcp.CallToo
 	if len(result.Failed) > 0 {
 		response.WriteString("### ❌ Başarısız Güncellemeler\n")
 		for _, fail := range result.Failed {
-			response.WriteString(fmt.Sprintf("- %s: %s\n", fail.ID, fail.Error))
+			response.WriteString(fmt.Sprintf("- %s: %s\n", fail.TaskID, fail.Error))
 		}
 	}
 

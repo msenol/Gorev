@@ -129,7 +129,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	assert.Contains(t, text, "devam_ediyor")
 
 	// Güncellemeyi doğrula
-	gorevler, err := isYonetici.GorevListele("devam_ediyor", "", "")
+	gorevler, err := isYonetici.GorevListele(map[string]interface{}{"durum": "devam_ediyor"})
 	require.NoError(t, err)
 	assert.Len(t, gorevler, 1)
 	assert.Equal(t, "devam_ediyor", gorevler[0].Durum)

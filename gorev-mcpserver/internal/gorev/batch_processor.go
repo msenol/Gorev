@@ -5,8 +5,6 @@ import (
 	"log"
 	"strings"
 	"time"
-
-	"github.com/msenol/gorev/internal/i18n"
 )
 
 // BatchProcessor handles batch operations on multiple tasks

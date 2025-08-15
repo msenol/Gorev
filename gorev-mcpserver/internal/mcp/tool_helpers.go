@@ -241,6 +241,31 @@ func (cv *CommonValidators) ValidatePagination(params map[string]interface{}) (l
 	return limit, offset
 }
 
+// ValidateRequiredString validates a required string parameter
+func (cv *CommonValidators) ValidateRequiredString(params map[string]interface{}, paramName string) (string, *mcp.CallToolResult) {
+	return cv.paramValidator.ValidateRequiredString(params, paramName)
+}
+
+// ValidateEnum validates an enum parameter
+func (cv *CommonValidators) ValidateEnum(params map[string]interface{}, paramName string, validValues []string, required bool) (string, *mcp.CallToolResult) {
+	return cv.paramValidator.ValidateEnum(params, paramName, validValues, required)
+}
+
+// ValidateNumber validates a number parameter
+func (cv *CommonValidators) ValidateNumber(params map[string]interface{}, paramName string, defaultValue int) int {
+	return cv.paramValidator.ValidateNumber(params, paramName, defaultValue)
+}
+
+// ValidateBool validates a boolean parameter
+func (cv *CommonValidators) ValidateBool(params map[string]interface{}, paramName string) bool {
+	return cv.paramValidator.ValidateBool(params, paramName)
+}
+
+// ValidateOptionalString validates an optional string parameter
+func (cv *CommonValidators) ValidateOptionalString(params map[string]interface{}, paramName string) string {
+	return cv.paramValidator.ValidateOptionalString(params, paramName)
+}
+
 // ToolHelpers provides common functionality for handlers
 type ToolHelpers struct {
 	Validator     *CommonValidators

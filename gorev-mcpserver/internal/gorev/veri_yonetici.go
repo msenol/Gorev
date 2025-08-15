@@ -81,6 +81,142 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	return nil
 }
 
+// GorevListele retrieves tasks based on filters
+func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+	// Convert filters to old format for compatibility
+	durum := ""
+	sirala := ""
+	filtre := ""
+	
+	if v, ok := filters["durum"]; ok {
+		if s, ok := v.(string); ok {
+			durum = s
+		}
+	}
+	if v, ok := filters["sirala"]; ok {
+		if s, ok := v.(string); ok {
+			sirala = s
+		}
+	}
+	if v, ok := filters["filtre"]; ok {
+		if s, ok := v.(string); ok {
+			filtre = s
+		}
+	}
+	
+	return vy.GorevleriGetir(durum, sirala, filtre)
+}
+
+// GorevOlustur creates a new task
+func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, error) {
+	gorev := &Gorev{
+		ID:              uuid.New().String(),
+		Durum:           "beklemede",
+		OlusturmaTarih:  time.Now(),
+		GuncellemeTarih: time.Now(),
+	}
+	
+	if v, ok := params["baslik"]; ok {
+		if s, ok := v.(string); ok {
+			gorev.Baslik = s
+		}
+	}
+	if v, ok := params["aciklama"]; ok {
+		if s, ok := v.(string); ok {
+			gorev.Aciklama = s
+		}
+	}
+	if v, ok := params["oncelik"]; ok {
+		if s, ok := v.(string); ok {
+			gorev.Oncelik = s
+		}
+	}
+	if v, ok := params["proje_id"]; ok {
+		if s, ok := v.(string); ok {
+			gorev.ProjeID = s
+		}
+	}
+	if v, ok := params["parent_id"]; ok {
+		if s, ok := v.(string); ok {
+			gorev.ParentID = s
+		}
+	}
+	
+	if err := vy.GorevKaydet(gorev); err != nil {
+		return "", err
+	}
+	
+	return gorev.ID, nil
+}
+
+// GorevDetay retrieves detailed task information
+func (vy *VeriYonetici) GorevDetay(taskID string) (*Gorev, error) {
+	return vy.GorevGetir(taskID)
+}
+
+// GorevBagimlilikGetir retrieves task dependencies
+func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
+	// Get all dependencies for the task
+	baglantilari, err := vy.BaglantilariGetir(taskID)
+	if err != nil {
+		return nil, err
+	}
+	
+	var bagimliGorevler []*Gorev
+	for _, baglanti := range baglantilari {
+		if baglanti.HedefID == taskID {
+			// This task depends on the source task
+			gorev, err := vy.GorevGetir(baglanti.KaynakID)
+			if err == nil {
+				bagimliGorevler = append(bagimliGorevler, gorev)
+			}
+		}
+	}
+	
+	return bagimliGorevler, nil
+}
+
+// AltGorevOlustur creates a subtask under a parent task
+func (vy *VeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+	var sonTarih *time.Time
+	if sonTarihStr != "" {
+		t, err := time.Parse("2006-01-02", sonTarihStr)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.T("error.invalidDateFormat", map[string]interface{}{"Error": err}))
+		}
+		sonTarih = &t
+	}
+
+	gorev := &Gorev{
+		ID:              uuid.New().String(),
+		Baslik:          baslik,
+		Aciklama:        aciklama,
+		Oncelik:         oncelik,
+		Durum:           "beklemede",
+		ParentID:        parentID,
+		OlusturmaTarih:  time.Now(),
+		GuncellemeTarih: time.Now(),
+		SonTarih:        sonTarih,
+	}
+
+	if err := vy.GorevKaydet(gorev); err != nil {
+		return nil, fmt.Errorf(i18n.T("error.taskSaveFailed", map[string]interface{}{"Error": err}))
+	}
+
+	if len(etiketIsimleri) > 0 {
+		etiketler, err := vy.EtiketleriGetirVeyaOlustur(etiketIsimleri)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
+		}
+		if err := vy.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
+			return nil, fmt.Errorf(i18n.T("error.taskTagsSetFailed", map[string]interface{}{"Error": err}))
+		}
+		gorev.Etiketler = etiketler
+	}
+
+	return gorev, nil
+}
+
 func (vy *VeriYonetici) Kapat() error {
 	return vy.db.Close()
 }
@@ -320,21 +456,29 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 	return tx.Commit()
 }
 
-func (vy *VeriYonetici) GorevGuncelle(gorev *Gorev) error {
-	sorgu := `UPDATE gorevler SET baslik = ?, aciklama = ?, durum = ?, oncelik = ?, 
-	          proje_id = ?, guncelleme_tarih = ?, son_tarih = ? WHERE id = ?`
+func (vy *VeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
+	paramsMap, ok := params.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid params type, expected map[string]interface{}")
+	}
 
-	_, err := vy.db.Exec(sorgu,
-		gorev.Baslik,
-		gorev.Aciklama,
-		gorev.Durum,
-		gorev.Oncelik,
-		gorev.ProjeID,
-		gorev.GuncellemeTarih,
-		gorev.SonTarih,
-		gorev.ID,
-	)
+	if len(paramsMap) == 0 {
+		return nil // No updates to perform
+	}
 
+	// Build dynamic UPDATE query
+	var setParts []string
+	var args []interface{}
+
+	for key, value := range paramsMap {
+		setParts = append(setParts, key+" = ?")
+		args = append(args, value)
+	}
+
+	sorgu := fmt.Sprintf("UPDATE gorevler SET %s WHERE id = ?", strings.Join(setParts, ", "))
+	args = append(args, taskID)
+
+	_, err := vy.db.Exec(sorgu, args...)
 	return err
 }
 
@@ -1045,4 +1189,50 @@ func (vy *VeriYonetici) AILastInteractionGuncelle(taskID string, timestamp time.
 	}
 
 	return nil
+}
+
+// AIEtkilemasimKaydet saves an AI interaction record
+func (vy *VeriYonetici) AIEtkilemasimKaydet(taskID string, interactionType, data, sessionID string) error {
+	// For now, we'll use the existing AIInteractionKaydet method
+	// This is a simplified implementation that matches the interface
+	interaction := &AIInteraction{
+		GorevID:    taskID,
+		ActionType: interactionType,
+		Context:    data,
+		Timestamp:  time.Now(),
+	}
+	return vy.AIInteractionKaydet(interaction)
+}
+
+// GorevSonAIEtkilesiminiGuncelle updates the last AI interaction timestamp for a task
+func (vy *VeriYonetici) GorevSonAIEtkilesiminiGuncelle(taskID string, timestamp time.Time) error {
+	return vy.AILastInteractionGuncelle(taskID, timestamp)
+}
+
+// GorevDosyaYoluEkle adds a file path to a task
+func (vy *VeriYonetici) GorevDosyaYoluEkle(taskID string, path string) error {
+	// This would need proper implementation with a file_paths table
+	// For now, return nil as a placeholder
+	return nil
+}
+
+// GorevDosyaYoluSil removes a file path from a task
+func (vy *VeriYonetici) GorevDosyaYoluSil(taskID string, path string) error {
+	// This would need proper implementation with a file_paths table
+	// For now, return nil as a placeholder
+	return nil
+}
+
+// GorevDosyaYollariGetir gets all file paths for a task
+func (vy *VeriYonetici) GorevDosyaYollariGetir(taskID string) ([]string, error) {
+	// This would need proper implementation with a file_paths table
+	// For now, return empty slice as a placeholder
+	return []string{}, nil
+}
+
+// DosyaYoluGorevleriGetir gets all tasks associated with a file path
+func (vy *VeriYonetici) DosyaYoluGorevleriGetir(path string) ([]string, error) {
+	// This would need proper implementation with a file_paths table
+	// For now, return empty slice as a placeholder
+	return []string{}, nil
 }

@@ -90,3 +90,13 @@ type GorevHiyerarsi struct {
 	BeklemedeAlt    int      `json:"beklemede_alt"`
 	IlerlemeYuzdesi float64  `json:"ilerleme_yuzdesi"`
 }
+
+// AIEtkilemasim AI etkileşim bilgilerini tutar
+type AIEtkilemasim struct {
+	ID            string                 `json:"id"`
+	GorevID       string                 `json:"gorev_id"`
+	EtkilemasimTip string                 `json:"etkilemasim_tip"`
+	Veri          map[string]interface{} `json:"veri"`
+	OturumID      string                 `json:"oturum_id"`
+	ZamanDamgasi  time.Time              `json:"zaman_damgasi"`
+}

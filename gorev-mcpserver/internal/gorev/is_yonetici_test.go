@@ -103,14 +103,15 @@ func (m *MockVeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gore
 	return result, nil
 }
 
-func (m *MockVeriYonetici) GorevGuncelle(gorev *Gorev) error {
+func (m *MockVeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
 	if m.shouldFailGorevGuncelle {
 		return errors.New("mock error: gorev guncelle failed")
 	}
-	if _, ok := m.gorevler[gorev.ID]; !ok {
+	if _, ok := m.gorevler[taskID]; !ok {
 		return errors.New("görev bulunamadı")
 	}
-	m.gorevler[gorev.ID] = gorev
+	// In a real implementation, params would be used to update the task
+	// For mock, we just keep the existing task
 	return nil
 }
 
@@ -343,6 +344,54 @@ func (m *MockVeriYonetici) AILastInteractionGuncelle(taskID string, timestamp ti
 	return nil
 }
 
+func (m *MockVeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+	return nil, nil
+}
+
+func (m *MockVeriYonetici) GorevDosyaYoluEkle(gorevID, dosyaYolu string) error {
+	return nil
+}
+
+func (m *MockVeriYonetici) GorevDosyaYoluSil(gorevID, dosyaYolu string) error {
+	return nil
+}
+
+func (m *MockVeriYonetici) GorevDosyaYollariGetir(gorevID string) ([]string, error) {
+	return nil, nil
+}
+
+func (m *MockVeriYonetici) DosyaYoluGorevleriGetir(dosyaYolu string) ([]string, error) {
+	return nil, nil
+}
+
+func (m *MockVeriYonetici) AIEtkilemasimKaydet(taskID string, interactionType, data, sessionID string) error {
+	return nil
+}
+
+func (m *MockVeriYonetici) GorevSonAIEtkilesiminiGuncelle(gorevID string, timestamp time.Time) error {
+	return nil
+}
+
+func (m *MockVeriYonetici) GorevDetay(id string) (*Gorev, error) {
+	return m.GorevGetir(id)
+}
+
+func (m *MockVeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+	var result []*Gorev
+	for _, gorev := range m.gorevler {
+		result = append(result, gorev)
+	}
+	return result, nil
+}
+
+func (m *MockVeriYonetici) GorevOlustur(params map[string]interface{}) (string, error) {
+	return "test-id", nil
+}
+
+func (m *MockVeriYonetici) GorevBagimlilikGetir(gorevID string) ([]*Gorev, error) {
+	return nil, nil
+}
+
 // Tests
 
 func TestYeniIsYonetici(t *testing.T) {
@@ -486,7 +535,7 @@ func TestIsYonetici_GorevListele(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockVY.shouldFailGorevleriGetir = tc.shouldFail
 
-			gorevler, err := iy.GorevListele(tc.durum, "", "")
+			gorevler, err := iy.GorevListele(map[string]interface{}{"durum": tc.durum})
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -1136,7 +1185,7 @@ func TestIsYonetici_GorevListele_WithDependencyCounts(t *testing.T) {
 	})
 
 	// Get tasks with dependency counts
-	gorevler, err := iy.GorevListele("", "", "")
+	gorevler, err := iy.GorevListele(map[string]interface{}{})
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

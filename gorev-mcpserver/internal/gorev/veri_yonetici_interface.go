@@ -33,6 +33,7 @@ type VeriYoneticiInterface interface {
 	GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error)
 	ParentIDGuncelle(gorevID, yeniParentID string) error
 	DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error)
+	AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error)
 	
 	// AI Context Management methods
 	AIContextGetir() (*AIContext, error)

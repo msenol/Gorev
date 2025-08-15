@@ -131,7 +131,7 @@ func (fw *FileWatcher) AddTaskPath(taskID string, path string) error {
 	fw.watchedPaths[cleanPath] = append(fw.watchedPaths[cleanPath], taskID)
 	fw.taskPaths[taskID] = append(fw.taskPaths[taskID], cleanPath)
 
-	log.Printf("Added path %s for task %d", cleanPath, taskID)
+	log.Printf("Added path %s for task %s", cleanPath, taskID)
 	return nil
 }
 
@@ -197,7 +197,7 @@ func (fw *FileWatcher) RemoveTaskPath(taskID string, path string) error {
 		}
 	}
 
-	log.Printf("Removed path %s for task %d", cleanPath, taskID)
+	log.Printf("Removed path %s for task %s", cleanPath, taskID)
 	return nil
 }
 
@@ -210,7 +210,7 @@ func (fw *FileWatcher) RemoveTask(taskID string) error {
 
 	for _, path := range paths {
 		if err := fw.RemoveTaskPath(taskID, path); err != nil {
-			log.Printf("Error removing path %s for task %d: %v", path, taskID, err)
+			log.Printf("Error removing path %s for task %s: %v", path, taskID, err)
 		}
 	}
 
@@ -320,7 +320,7 @@ func (fw *FileWatcher) handleFileEvent(event fsnotify.Event) {
 	// Update affected tasks
 	for _, taskID := range uniqueTasks {
 		if err := fw.updateTaskOnFileChange(taskID, changeEvent); err != nil {
-			log.Printf("Error updating task %d for file change: %v", taskID, err)
+			log.Printf("Error updating task %s for file change: %v", taskID, err)
 		}
 	}
 }
@@ -330,7 +330,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 	// Get current task
 	gorev, err := fw.veriYonetici.GorevGetir(taskID)
 	if err != nil {
-		return fmt.Errorf("failed to get task %d: %w", taskID, err)
+		return fmt.Errorf("failed to get task %s: %w", taskID, err)
 	}
 
 	// Create interaction record
@@ -341,7 +341,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 
 	// Record the file change interaction
 	if err := fw.veriYonetici.AIEtkilemasimKaydet(taskID, "file_change", string(interactionData), "file_watcher"); err != nil {
-		log.Printf("Failed to record AI interaction for task %d: %v", taskID, err)
+		log.Printf("Failed to record AI interaction for task %s: %v", taskID, err)
 	}
 
 	// Auto-update task status if configured
@@ -365,7 +365,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 
 	// Update last AI interaction timestamp
 	if err := fw.veriYonetici.GorevSonAIEtkilesiminiGuncelle(taskID, time.Now()); err != nil {
-		log.Printf("Failed to update last AI interaction for task %d: %v", taskID, err)
+		log.Printf("Failed to update last AI interaction for task %s: %v", taskID, err)
 	}
 
 	return nil

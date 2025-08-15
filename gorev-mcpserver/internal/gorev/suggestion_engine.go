@@ -136,7 +136,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	var suggestions []Suggestion
 	
 	// Get high priority pending tasks
-	gorevler, err := se.veriYonetici.GorevListele("beklemede", "", "")
+	gorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": "beklemede"})
 	if err != nil {
 		return suggestions, err
 	}
@@ -180,7 +180,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	}
 	
 	// Suggest completing tasks in progress
-	devamEdenGorevler, err := se.veriYonetici.GorevListele("devam_ediyor", "", "")
+	devamEdenGorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": "devam_ediyor"})
 	if err == nil {
 		for i, gorev := range devamEdenGorevler {
 			if i >= 2 { // Limit to top 2
@@ -221,7 +221,7 @@ func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionReq
 	}
 	
 	// Find similar tasks based on title and description
-	allTasks, err := se.veriYonetici.GorevListele("", "", "")
+	allTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{})
 	if err != nil {
 		return suggestions, err
 	}
@@ -280,7 +280,7 @@ func (se *SuggestionEngine) generateTemplateSuggestions(request SuggestionReques
 	}
 	
 	// Analyze recent tasks to suggest relevant templates
-	recentTasks, err := se.veriYonetici.GorevListele("", "", "")
+	recentTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{})
 	if err != nil {
 		return suggestions, err
 	}
@@ -329,7 +329,7 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 	var suggestions []Suggestion
 	
 	// Get tasks with deadlines
-	allTasks, err := se.veriYonetici.GorevListele("", "", "")
+	allTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{})
 	if err != nil {
 		return suggestions, err
 	}
