@@ -133,14 +133,51 @@ gorev serve --lang=tr    # Turkish interface
 - **Testing Guide**: Table-driven tests, 81.3% server coverage, 100% extension coverage
 - **Version Management**: Build-time injection via Makefile LDFLAGS
 
-## 🚨 Important Rules
+## 🚨 Rule 15: Comprehensive Problem-Solving & Zero Technical Debt
+
+**ZERO TOLERANCE for shortcuts, workarounds, or temporary fixes**
+
+### Core Principles:
+1. **NO Workarounds**: Every problem requires root cause analysis and proper solution
+2. **NO Code Duplication**: DRY (Don't Repeat Yourself) principle is absolute
+3. **NO Technical Debt**: "Şimdilik böyle kalsın" approach is FORBIDDEN
+4. **NO Quick Fixes**: Every solution must be production-ready
+5. **NO Disabled Tests/Lints**: Fix test and lint errors instead of bypassing them
+
+### Implementation Rules:
+- ❌ `"temporary"`, `"workaround"`, `"quick fix"`, `"hotfix"`, `"band-aid"`
+- ❌ `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `//nolint`
+- ❌ Hardcoded values "for speed"
+- ❌ Copy-paste solutions
+- ✅ Root cause analysis
+- ✅ Proper abstraction and reusability
+- ✅ Comprehensive testing
+- ✅ Clean, maintainable code
+
+### For Gorev Project Specifically:
+- **Template Enforcement**: All tasks MUST use templates (v0.10.0+)
+- **Domain Terms**: Turkish domain terminology must be preserved
+- **i18n Compliance**: Use `i18n.T()` for all user-facing strings
+- **Test Coverage**: Maintain %81.3+ (server), %100 (extension)
+- **Atomic Tasks**: Even atomic tasks must be comprehensive
+
+### Quality Checklist:
+- [ ] Root cause identified and addressed
+- [ ] No temporary workarounds introduced
+- [ ] DRY principle followed (no duplication)
+- [ ] All tests passing without disabling
+- [ ] Proper error handling with context
+- [ ] i18n keys used for user messages
+
+## 🚨 Important Development Rules
 
 1. **NEVER commit**: `*.db`, `*.log`, binary files (`gorev`, `gorev.exe`)
-2. **Always run before commit**: `make fmt`, `go vet ./...`, `make deps`
+2. **Always run before commit**: `make fmt`, `go vet ./...`, `make deps`, `make test`
 3. **Template Usage**: Mandatory since v0.10.0, use `templateden_gorev_olustur`
 4. **Turkish Domain**: Keep domain concepts in Turkish, technical terms in English
 5. **Error Context**: Wrap errors with context: `fmt.Errorf("context: %w", err)`
 6. **i18n Strings**: Use `i18n.T()` for all user-facing messages
+7. **Rule 15 Compliance**: NO workarounds, NO technical debt, NO quick fixes
 
 ---
 

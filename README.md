@@ -340,6 +340,7 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 - 🏗 [System Architecture](docs/development/architecture.md) - Technical details
 - 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
 - 💻 [Contributing Guide](docs/development/contributing.md) - How to contribute
+- 🔧 [Go Setup Guide](docs/development/go-setup-guide.md) - Go development environment setup
 - 🎨 [VS Code Extension](docs/user-guide/vscode-extension.md) - Extension documentation
 - 🚀 **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** - Extension'ı indir
 
