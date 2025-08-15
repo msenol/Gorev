@@ -17,10 +17,10 @@ import (
 func TestMain(m *testing.M) {
 	// Initialize i18n for all tests in this package
 	i18n.Initialize("tr")
-	
+
 	// Run tests
 	code := m.Run()
-	
+
 	// Exit with the test result code
 	os.Exit(code)
 }
@@ -1076,7 +1076,7 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 	require.NoError(t, err)
 	text = getResultText(result)
 	// Template system will use its own title format, check for the research topic instead
-	assert.Contains(t, text, "testing") // Should contain the research topic we specified
+	assert.Contains(t, text, "testing")      // Should contain the research topic we specified
 	assert.Contains(t, text, "devam_ediyor") // Should auto-transition
 
 	// Test with extra parameters (should be ignored)
@@ -1107,26 +1107,26 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 	// Create a project first
 	proje, err := handlers.isYonetici.ProjeOlustur("Test Project", "Test project for recent tasks")
 	require.NoError(t, err)
-	
+
 	// Set as active project
 	_, err = handlers.AktifProjeAyarla(map[string]interface{}{"proje_id": proje.ID})
 	require.NoError(t, err)
-	
+
 	// Get a valid template ID
 	featureTemplateID := getTemplateIDByName(t, handlers, "Özellik İsteği")
-	
+
 	// Create some tasks and interact with them
 	var taskIDs []string
 	for i := 0; i < 10; i++ {
 		taskResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 			"template_id": featureTemplateID,
 			"degerler": map[string]interface{}{
-				"baslik":      fmt.Sprintf("Feature %d", i),
-				"aciklama":    "Test feature description",
-				"amac":        "Test purpose for feature",
+				"baslik":       fmt.Sprintf("Feature %d", i),
+				"aciklama":     "Test feature description",
+				"amac":         "Test purpose for feature",
 				"kullanicilar": "test users",
-				"kriterler":   "success criteria for test",
-				"oncelik":     "orta",
+				"kriterler":    "success criteria for test",
+				"oncelik":      "orta",
 			},
 		})
 		require.NoError(t, err)
@@ -1137,7 +1137,7 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 		// View the task to create interaction
 		_, err = handlers.GorevDetay(map[string]interface{}{"id": taskID})
 		require.NoError(t, err)
-		
+
 		time.Sleep(10 * time.Millisecond) // Small delay to ensure different timestamps
 	}
 
@@ -1147,7 +1147,7 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 	text = getResultText(result)
 	// Should contain recent tasks (template may change the title format)
 	assert.Contains(t, text, "Son Etkileşimli Görevler") // Should have header with tasks
-	assert.True(t, len(taskIDs) > 0)                    // Ensure we have tasks
+	assert.True(t, len(taskIDs) > 0)                     // Ensure we have tasks
 
 	// Test with custom limit
 	result, err = handlers.GorevRecent(map[string]interface{}{
@@ -1328,11 +1328,11 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 	// Create a project first
 	proje, err := handlers.isYonetici.ProjeOlustur("Test Project", "Test project for dependency tests")
 	require.NoError(t, err)
-	
+
 	// Set as active project
 	_, err = handlers.AktifProjeAyarla(map[string]interface{}{"proje_id": proje.ID})
 	require.NoError(t, err)
-	
+
 	// Get template ID
 	featureTemplateID := getTemplateIDByName(t, handlers, "Özellik İsteği")
 
@@ -1467,7 +1467,7 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	// Create a project first
 	proje, err := handlers.isYonetici.ProjeOlustur("Test Project", "Test project for detail tests")
 	require.NoError(t, err)
-	
+
 	// Set as active project
 	_, err = handlers.AktifProjeAyarla(map[string]interface{}{"proje_id": proje.ID})
 	require.NoError(t, err)

@@ -35,10 +35,10 @@ func (pv *ParameterValidator) ValidateOptionalString(params map[string]interface
 // ValidateEnum validates an enum parameter
 func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramName string, validValues []string, required bool) (string, *mcp.CallToolResult) {
 	value, exists := params[paramName].(string)
-	
+
 	if !exists || value == "" {
 		if required {
-			return "", mcp.NewToolResultError(fmt.Sprintf("%s parametresi gerekli. Geçerli değerler: %s", 
+			return "", mcp.NewToolResultError(fmt.Sprintf("%s parametresi gerekli. Geçerli değerler: %s",
 				paramName, strings.Join(validValues, ", ")))
 		}
 		return "", nil
@@ -50,7 +50,7 @@ func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramN
 		}
 	}
 
-	return "", mcp.NewToolResultError(fmt.Sprintf("%s için geçersiz değer: %s. Geçerli değerler: %s", 
+	return "", mcp.NewToolResultError(fmt.Sprintf("%s için geçersiz değer: %s. Geçerli değerler: %s",
 		paramName, value, strings.Join(validValues, ", ")))
 }
 
@@ -169,20 +169,20 @@ func (rb *ResponseBuilder) BuildMarkdownTaskDetail(task interface{}) string {
 // BuildTaskList builds a formatted task list
 func (rb *ResponseBuilder) BuildTaskList(tasks []interface{}, title string) string {
 	var result strings.Builder
-	
+
 	if title != "" {
 		result.WriteString(fmt.Sprintf("## %s\n\n", title))
 	}
-	
+
 	if len(tasks) == 0 {
 		result.WriteString("*Görev bulunamadı*\n")
 		return result.String()
 	}
-	
+
 	result.WriteString(fmt.Sprintf("**%d görev bulundu**\n\n", len(tasks)))
-	
+
 	// Task formatting would be implemented here based on task structure
-	
+
 	return result.String()
 }
 
@@ -226,7 +226,7 @@ func (cv *CommonValidators) ValidateTaskPriority(params map[string]interface{}, 
 func (cv *CommonValidators) ValidatePagination(params map[string]interface{}) (limit, offset int) {
 	limit = cv.paramValidator.ValidateNumber(params, "limit", 50)
 	offset = cv.paramValidator.ValidateNumber(params, "offset", 0)
-	
+
 	// Ensure reasonable limits
 	if limit > 200 {
 		limit = 200
@@ -237,7 +237,7 @@ func (cv *CommonValidators) ValidatePagination(params map[string]interface{}) (l
 	if offset < 0 {
 		offset = 0
 	}
-	
+
 	return limit, offset
 }
 
@@ -268,9 +268,9 @@ func (cv *CommonValidators) ValidateOptionalString(params map[string]interface{}
 
 // ToolHelpers provides common functionality for handlers
 type ToolHelpers struct {
-	Validator     *CommonValidators
-	Formatter     *TaskFormatter
-	ErrorFormatter *ErrorFormatter
+	Validator       *CommonValidators
+	Formatter       *TaskFormatter
+	ErrorFormatter  *ErrorFormatter
 	ResponseBuilder *ResponseBuilder
 }
 

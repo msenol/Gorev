@@ -91,7 +91,7 @@ func TestGorevGetActive(t *testing.T) {
 	t.Run("Get active task when none exists", func(t *testing.T) {
 		// Create a fresh handler without active task
 		h2 := setupTestHandlers(t)
-		
+
 		result, _ := h2.GorevGetActive(map[string]interface{}{})
 
 		assert.NotNil(t, result)
