@@ -381,7 +381,7 @@ func (m *MockVeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gore
 	if m.shouldFailGorevListele {
 		return nil, errors.New("mock error: gorev listele failed")
 	}
-	
+
 	var result []*Gorev
 	durum := ""
 	if v, ok := filters["durum"]; ok {
@@ -389,7 +389,7 @@ func (m *MockVeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gore
 			durum = s
 		}
 	}
-	
+
 	for _, gorev := range m.gorevler {
 		// Apply durum filter if specified
 		if durum == "" || gorev.Durum == durum {

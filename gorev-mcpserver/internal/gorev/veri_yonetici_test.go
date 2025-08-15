@@ -345,14 +345,14 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Convert gorev struct to map for GorevGuncelle
 			params := map[string]interface{}{
-				"baslik":          tc.gorev.Baslik,
-				"aciklama":        tc.gorev.Aciklama,
-				"durum":           tc.gorev.Durum,
-				"oncelik":         tc.gorev.Oncelik,
-				"proje_id":        tc.gorev.ProjeID,
+				"baslik":           tc.gorev.Baslik,
+				"aciklama":         tc.gorev.Aciklama,
+				"durum":            tc.gorev.Durum,
+				"oncelik":          tc.gorev.Oncelik,
+				"proje_id":         tc.gorev.ProjeID,
 				"guncelleme_tarih": tc.gorev.GuncellemeTarih,
 			}
-			
+
 			err := vy.GorevGuncelle(tc.gorev.ID, params)
 			if tc.wantErr {
 				if err == nil {
