@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 21 July 2025 | **Version:** v0.11.0
+**Last Updated:** 16 August 2025 | **Version:** v0.11.1
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,10 +10,15 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.11.0 - Complete Internationalization Support**
-- **270+ strings converted** to i18n system (Turkish default, English support)
-- Dynamic language switching: `--lang=en` or `GOREV_LANG=en`  
-- Zero breaking changes, 100% backward compatibility
+**v0.11.1 - Thread-Safety Enhancement (16 Aug 2025)**
+- **AI Context Manager Race Condition Fix**: Comprehensive thread-safety implementation
+  - Added `sync.RWMutex` protection to `AIContextYonetici` struct
+  - Protected all context operations: SetActiveTask, GetActiveTask, GetContext, saveContext
+  - Created internal unsafe methods for use within locked sections
+  - Zero breaking changes, full backward compatibility maintained
+- **Enhanced Testing Infrastructure**: 50-goroutine concurrent access test with race detector
+- **Production Readiness**: Resolves data corruption issues in high-concurrency environments
+- **Rule 15 Compliance**: Comprehensive solution, no technical debt
 
 ## 📋 Project Overview
 
@@ -85,7 +90,7 @@ npm test                  # Run tests
 - **aktif_proje**: Active project setting
 - **gorev_hiyerarsi** (VIEW): Recursive hierarchy queries
 
-Migrations: `internal/veri/migrations/` (handled by golang-migrate)
+Migrations: `gorev-mcpserver/internal/veri/migrations/` (handled by golang-migrate)
 
 ## 📝 Code Style
 
