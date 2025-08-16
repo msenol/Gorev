@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // ParameterValidator handles common parameter validation patterns
@@ -19,7 +20,7 @@ func NewParameterValidator() *ParameterValidator {
 func (pv *ParameterValidator) ValidateRequiredString(params map[string]interface{}, paramName string) (string, *mcp.CallToolResult) {
 	value, ok := params[paramName].(string)
 	if !ok || strings.TrimSpace(value) == "" {
-		return "", mcp.NewToolResultError(fmt.Sprintf("%s parametresi gerekli", paramName))
+		return "", mcp.NewToolResultError(i18n.FormatParameterRequired(paramName))
 	}
 	return strings.TrimSpace(value), nil
 }
@@ -38,8 +39,9 @@ func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramN
 
 	if !exists || value == "" {
 		if required {
-			return "", mcp.NewToolResultError(fmt.Sprintf("%s parametresi gerekli. Geçerli değerler: %s",
-				paramName, strings.Join(validValues, ", ")))
+			return "", mcp.NewToolResultError(i18n.TValidation("param_required_with_values", paramName, map[string]interface{}{
+				"Values": strings.Join(validValues, ", "),
+			}))
 		}
 		return "", nil
 	}
@@ -50,8 +52,7 @@ func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramN
 		}
 	}
 
-	return "", mcp.NewToolResultError(fmt.Sprintf("%s için geçersiz değer: %s. Geçerli değerler: %s",
-		paramName, value, strings.Join(validValues, ", ")))
+	return "", mcp.NewToolResultError(i18n.FormatInvalidValue(paramName, value, validValues))
 }
 
 // ValidateNumber validates a number parameter
@@ -134,17 +135,19 @@ func NewErrorFormatter() *ErrorFormatter {
 
 // FormatNotFoundError formats "not found" errors consistently
 func (ef *ErrorFormatter) FormatNotFoundError(entityType, id string) *mcp.CallToolResult {
-	return mcp.NewToolResultError(fmt.Sprintf("%s bulunamadı: %s", entityType, id))
+	return mcp.NewToolResultError(i18n.FormatEntityNotFound(entityType, id))
 }
 
 // FormatOperationError formats operation errors consistently
 func (ef *ErrorFormatter) FormatOperationError(operation string, err error) *mcp.CallToolResult {
-	return mcp.NewToolResultError(fmt.Sprintf("%s işlemi başarısız: %v", operation, err))
+	return mcp.NewToolResultError(i18n.FormatOperationFailed(operation, err))
 }
 
 // FormatValidationError formats validation errors consistently
 func (ef *ErrorFormatter) FormatValidationError(message string) *mcp.CallToolResult {
-	return mcp.NewToolResultError(fmt.Sprintf("Doğrulama hatası: %s", message))
+	return mcp.NewToolResultError(i18n.TValidation("validation_error", "", map[string]interface{}{
+		"Message": message,
+	}))
 }
 
 // ResponseBuilder helps build consistent response formats
@@ -175,11 +178,13 @@ func (rb *ResponseBuilder) BuildTaskList(tasks []interface{}, title string) stri
 	}
 
 	if len(tasks) == 0 {
-		result.WriteString("*Görev bulunamadı*\n")
+		result.WriteString(i18n.T("messages.no_tasks_found", nil) + "\n")
 		return result.String()
 	}
 
-	result.WriteString(fmt.Sprintf("**%d görev bulundu**\n\n", len(tasks)))
+	result.WriteString(i18n.T("messages.tasks_found_count", map[string]interface{}{
+		"Count": len(tasks),
+	}) + "\n\n")
 
 	// Task formatting would be implemented here based on task structure
 

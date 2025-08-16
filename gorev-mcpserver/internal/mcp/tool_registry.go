@@ -3,6 +3,7 @@ package mcp
 import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // ToolRegistry handles MCP tool registration and schema definitions
@@ -32,7 +33,7 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 	// Görev oluştur (deprecated)
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_olustur",
-		Description: "⚠️ KULLANIM DIŞI: Bu tool v0.10.0'dan beri kullanımdan kaldırılmıştır. Lütfen 'templateden_gorev_olustur' tool'unu kullanın.",
+		Description: i18n.T("tools.descriptions.gorev_olustur", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},
@@ -42,40 +43,40 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 	// Görev listele
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_listele",
-		Description: "Görevleri durum, proje, son teslim tarihi gibi kriterlere göre filtreleyerek ve sıralayarak listeler.",
+		Description: i18n.T("tools.descriptions.gorev_listele", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
 				"durum": map[string]interface{}{
 					"type":        "string",
-					"description": "Filtrelenecek görev durumu (beklemede, devam_ediyor, tamamlandi).",
+					"description": i18n.TParam("durum_filter"),
 					"enum":        []string{"beklemede", "devam_ediyor", "tamamlandi"},
 				},
 				"sirala": map[string]interface{}{
 					"type":        "string",
-					"description": "Sıralama kriteri (son_tarih_asc, son_tarih_desc).",
+					"description": i18n.TParam("sirala"),
 					"enum":        []string{"son_tarih_asc", "son_tarih_desc"},
 				},
 				"filtre": map[string]interface{}{
 					"type":        "string",
-					"description": "Özel filtre türü (acil: 7 gün içinde bitenler, gecmis: vadesi geçenler).",
+					"description": i18n.TParam("filtre"),
 					"enum":        []string{"acil", "gecmis"},
 				},
 				"etiket": map[string]interface{}{
 					"type":        "string",
-					"description": "Etiket adına göre filtrele.",
+					"description": i18n.TParam("etiket"),
 				},
 				"tum_projeler": map[string]interface{}{
 					"type":        "boolean",
-					"description": "true ise tüm projelerden görevleri göster, false ise sadece aktif projeden.",
+					"description": i18n.TParam("tum_projeler"),
 				},
 				"limit": map[string]interface{}{
 					"type":        "number",
-					"description": "Döndürülecek maksimum görev sayısı (varsayılan: 50, maksimum: 200).",
+					"description": i18n.TParam("limit"),
 				},
 				"offset": map[string]interface{}{
 					"type":        "number",
-					"description": "Atlanacak görev sayısı, sayfalama için (varsayılan: 0).",
+					"description": i18n.TParam("offset"),
 				},
 			},
 		},
@@ -84,13 +85,13 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 	// Görev detay
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_detay",
-		Description: "Bir görevin tüm detaylarını markdown formatında gösterir. Bağımlılıklar, etiketler, son tarih gibi bilgileri içerir.",
+		Description: i18n.T("tools.descriptions.gorev_detay", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
 					"type":        "string",
-					"description": "Görevin benzersiz ID'si.",
+					"description": i18n.TParam("id_field"),
 				},
 			},
 			Required: []string{"id"},
@@ -100,17 +101,17 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 	// Görev güncelle
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_guncelle",
-		Description: "Bir görevin durumunu günceller (beklemede, devam_ediyor, tamamlandi).",
+		Description: i18n.T("tools.descriptions.gorev_guncelle", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
 					"type":        "string",
-					"description": "Görevin benzersiz ID'si.",
+					"description": i18n.TParam("id_field"),
 				},
 				"durum": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni durum.",
+					"description": i18n.TParam("durum"),
 					"enum":        []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"},
 				},
 			},
@@ -121,30 +122,30 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 	// Görev düzenle
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_duzenle",
-		Description: "Bir görevin başlık, açıklama, öncelik gibi özelliklerini düzenler.",
+		Description: i18n.T("tools.descriptions.gorev_duzenle", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
 					"type":        "string",
-					"description": "Görevin benzersiz ID'si.",
+					"description": i18n.TParam("id_field"),
 				},
 				"baslik": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni başlık.",
+					"description": i18n.TParam("baslik"),
 				},
 				"aciklama": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni açıklama.",
+					"description": i18n.TParam("aciklama"),
 				},
 				"oncelik": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni öncelik seviyesi.",
+					"description": i18n.TParam("oncelik"),
 					"enum":        []string{"dusuk", "orta", "yuksek"},
 				},
 				"son_tarih": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni son tarih (YYYY-MM-DD formatında).",
+					"description": i18n.TParam("son_tarih"),
 				},
 			},
 			Required: []string{"id"},
@@ -154,7 +155,7 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 	// Görev sil
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_sil",
-		Description: "Bir görevi kalıcı olarak siler. DİKKAT: Bu işlem geri alınamaz!",
+		Description: i18n.T("tools.descriptions.gorev_sil", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -164,7 +165,7 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 				},
 				"onay": map[string]interface{}{
 					"type":        "boolean",
-					"description": "Silme işlemini onaylamak için true olmalı.",
+					"description": i18n.TParam("onay"),
 				},
 			},
 			Required: []string{"id", "onay"},
@@ -177,7 +178,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 	// Proje oluştur
 	s.AddTool(mcp.Tool{
 		Name:        "proje_olustur",
-		Description: "Yeni bir proje oluşturur.",
+		Description: i18n.T("tools.descriptions.proje_olustur", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -197,7 +198,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 	// Proje listele
 	s.AddTool(mcp.Tool{
 		Name:        "proje_listele",
-		Description: "Tüm projeleri görev sayıları ile birlikte listeler.",
+		Description: i18n.T("tools.descriptions.proje_listele", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},
@@ -207,7 +208,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 	// Proje görevleri
 	s.AddTool(mcp.Tool{
 		Name:        "proje_gorevleri",
-		Description: "Belirtilen projeye ait görevleri durum gruplarına göre organize ederek gösterir.",
+		Description: i18n.T("tools.descriptions.proje_gorevleri", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -231,7 +232,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 	// Aktif proje ayarla
 	s.AddTool(mcp.Tool{
 		Name:        "aktif_proje_ayarla",
-		Description: "Çalışılacak aktif projeyi ayarlar. Yeni görevler bu projeye otomatik atanır.",
+		Description: i18n.T("tools.descriptions.aktif_proje_ayarla", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -247,7 +248,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 	// Aktif proje göster
 	s.AddTool(mcp.Tool{
 		Name:        "aktif_proje_goster",
-		Description: "Şu anda aktif olan projeyi gösterir.",
+		Description: i18n.T("tools.descriptions.aktif_proje_goster", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},
@@ -257,7 +258,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 	// Aktif proje kaldır
 	s.AddTool(mcp.Tool{
 		Name:        "aktif_proje_kaldir",
-		Description: "Aktif proje ayarını kaldırır. Artık hiçbir proje aktif olmaz.",
+		Description: i18n.T("tools.descriptions.aktif_proje_kaldir", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},
@@ -270,7 +271,7 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 	// Template listele
 	s.AddTool(mcp.Tool{
 		Name:        "template_listele",
-		Description: "Mevcut görev template'lerini listeler. Template'ler tutarlı görev oluşturmak için kullanılır.",
+		Description: i18n.T("tools.descriptions.template_listele", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -285,7 +286,7 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 	// Template'den görev oluştur
 	s.AddTool(mcp.Tool{
 		Name:        "templateden_gorev_olustur",
-		Description: "Belirtilen template kullanarak yeni görev oluşturur. Bu, v0.10.0+ sürümlerinde görev oluşturmanın TEK yoludur.",
+		Description: i18n.T("tools.descriptions.templateden_gorev_olustur", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -308,7 +309,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 	// AI aktif görev ayarla
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_set_active",
-		Description: "AI session için aktif görev ayarlar ve otomatik olarak durumunu 'devam_ediyor' yapar.",
+		Description: i18n.T("tools.descriptions.gorev_set_active", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -324,7 +325,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 	// AI aktif görevi getir
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_get_active",
-		Description: "AI session için şu anda aktif olan görevi döndürür.",
+		Description: i18n.T("tools.descriptions.gorev_get_active", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},
@@ -334,7 +335,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 	// Son görevleri getir
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_recent",
-		Description: "Son etkileşimde bulunulan görevleri döndürür.",
+		Description: i18n.T("tools.descriptions.gorev_recent", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -349,7 +350,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 	// Context özeti
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_context_summary",
-		Description: "AI session için optimize edilmiş context özeti. Aktif görev, son görevler, öncelikler ve blokajları gösterir.",
+		Description: i18n.T("tools.descriptions.gorev_context_summary", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},
@@ -359,7 +360,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 	// Toplu güncelleme
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_batch_update",
-		Description: "Birden fazla görevi tek seferde günceller. Verimli toplu işlemler için kullanılır.",
+		Description: i18n.T("tools.descriptions.gorev_batch_update", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -375,7 +376,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 	// Doğal dil sorgusu
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_nlp_query",
-		Description: "Doğal dil ile görev arama. Örn: 'yüksek öncelikli', 'bugün üzerinde çalıştığım', 'etiket:bug'",
+		Description: i18n.T("tools.descriptions.gorev_nlp_query", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -394,7 +395,7 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 	// Dosya izleme ekle
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_file_watch_add",
-		Description: "Bir göreve dosya yolu ekler ve otomatik durum güncelleme için izlemeye başlar.",
+		Description: i18n.T("tools.descriptions.gorev_file_watch_add", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -414,7 +415,7 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 	// Dosya izleme kaldır
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_file_watch_remove",
-		Description: "Bir görevden dosya yolu kaldırır ve izlemeyi durdurur.",
+		Description: i18n.T("tools.descriptions.gorev_file_watch_remove", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -434,7 +435,7 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 	// Dosya izleme listesi
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_file_watch_list",
-		Description: "Bir görevin izlenen dosya yollarını listeler.",
+		Description: i18n.T("tools.descriptions.gorev_file_watch_list", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -450,7 +451,7 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 	// Dosya izleme istatistikleri
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_file_watch_stats",
-		Description: "Dosya izleme sisteminin istatistiklerini gösterir.",
+		Description: i18n.T("tools.descriptions.gorev_file_watch_stats", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},
@@ -463,7 +464,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 	// Alt görev oluştur
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_altgorev_olustur",
-		Description: "Mevcut bir görev altında alt görev oluşturur. Alt görev üst görevin projesini devralır.",
+		Description: i18n.T("tools.descriptions.gorev_altgorev_olustur", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -500,7 +501,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 	// Üst görev değiştir
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_ust_degistir",
-		Description: "Bir görevin üst görevini değiştirir veya kök seviyeye taşır.",
+		Description: i18n.T("tools.descriptions.gorev_ust_degistir", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -520,7 +521,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 	// Hiyerarşi göster
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_hiyerarsi_goster",
-		Description: "Bir görevin tüm hiyerarşisini (üst görevler ve alt görevler) gösterir.",
+		Description: i18n.T("tools.descriptions.gorev_hiyerarsi_goster", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -536,7 +537,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 	// Bağımlılık ekle
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_bagimlilik_ekle",
-		Description: "İki görev arasında bağımlılık ilişkisi kurar.",
+		Description: i18n.T("tools.descriptions.gorev_bagimlilik_ekle", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
@@ -561,7 +562,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 	// Özet göster
 	s.AddTool(mcp.Tool{
 		Name:        "ozet_goster",
-		Description: "Sistemin genel durumu, proje ve görev istatistiklerini gösterir.",
+		Description: i18n.T("tools.descriptions.ozet_goster", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type:       "object",
 			Properties: map[string]interface{}{},

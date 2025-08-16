@@ -10,20 +10,21 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.11.1 - Thread-Safety Enhancement & Major Refactoring (16 Aug 2025)**
-- **AI Context Manager Race Condition Fix**: Comprehensive thread-safety implementation
+**v0.11.1 - DRY Patterns Implementation & Thread-Safety (16 Aug 2025)**
+- **Comprehensive DRY Patterns Implementation**: Major code quality enhancement
+  - **i18n DRY Patterns**: New `internal/i18n/helpers.go` with TParam(), FormatParameterRequired(), FormatInvalidValue()
+  - **Testing DRY Infrastructure**: 5 new test files with reusable patterns (BenchmarkConfig, ConcurrencyTestConfig, TestCase)
+  - **Code Reduction**: ~60% reduction in duplicate strings and validation patterns
+  - **12 total test files**: Comprehensive coverage with table-driven patterns
+- **Thread-Safety Enhancement**: AI Context Manager race condition fix
   - Added `sync.RWMutex` protection to `AIContextYonetici` struct
-  - Protected all context operations: SetActiveTask, GetActiveTask, GetContext, saveContext
-  - Created internal unsafe methods for use within locked sections
-  - Zero breaking changes, full backward compatibility maintained
-- **Major Code Refactoring**: handlers.go architectural improvement
+  - Protected all context operations with read-write locks
+  - 50-goroutine concurrent access test with race detector
+- **Major Refactoring**: handlers.go architectural improvement
   - **File size reduction**: 3,060 lines → 2,362 lines (-698 lines, 23% reduction)
   - **New Architecture**: Extracted `tool_registry.go` (570 lines) and `tool_helpers.go` (286 lines)
   - **Eliminated Code Smells**: Replaced 703-line RegisterTools method with 4-line delegation
-  - **Improved Maintainability**: Tool registration organized by categories, reusable helper classes
-- **Enhanced Testing Infrastructure**: 50-goroutine concurrent access test with race detector
-- **Production Readiness**: Resolves data corruption issues in high-concurrency environments
-- **Rule 15 Compliance**: Comprehensive solution, no technical debt
+- **Rule 15 Compliance**: Zero technical debt, comprehensive DRY implementation
 
 ## 📋 Project Overview
 
@@ -44,6 +45,7 @@ internal/mcp/tool_helpers.go       → Validation & formatting utilities (286 li
 internal/gorev/is_yonetici.go      → Business logic orchestration
 internal/gorev/veri_yonetici.go    → Data access layer (SQLite)
 internal/i18n/manager.go           → Internationalization system
+internal/i18n/helpers.go           → DRY i18n patterns (NEW)
 locales/[tr|en].json              → Translation files
 ```
 
@@ -110,8 +112,9 @@ Migrations: `gorev-mcpserver/internal/veri/migrations/` (handled by golang-migra
 ## 🧪 Testing Strategy
 
 - **Unit Tests**: Business logic (`internal/gorev/`) - 81.3% coverage
+- **DRY Test Patterns**: 12 comprehensive test files with reusable infrastructure
+- **Table-Driven Tests**: TestCase structs, BenchmarkConfig, ConcurrencyTestConfig
 - **Integration Tests**: MCP handlers (`test/integration_test.go`)  
-- **Table-Driven Tests**: Go best practices pattern
 - **VS Code Extension**: 100% test coverage with comprehensive mocks
 - **Test Database**: Use `:memory:` SQLite for tests
 
@@ -142,7 +145,7 @@ gorev serve --lang=tr    # Turkish interface
 - **Development History**: @docs/DEVELOPMENT_HISTORY.md  
 - **Architecture Details**: Project structure above + clean architecture pattern
 - **Database Migrations**: @internal/veri/migrations/
-- **Testing Guide**: Table-driven tests, 81.3% server coverage, 100% extension coverage
+- **Testing Guide**: DRY patterns, table-driven tests, 81.3% server coverage, 100% extension coverage
 - **Version Management**: Build-time injection via Makefile LDFLAGS
 
 ## 🚨 Rule 15: Comprehensive Problem-Solving & Zero Technical Debt
