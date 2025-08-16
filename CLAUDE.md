@@ -10,12 +10,17 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.11.1 - Thread-Safety Enhancement (16 Aug 2025)**
+**v0.11.1 - Thread-Safety Enhancement & Major Refactoring (16 Aug 2025)**
 - **AI Context Manager Race Condition Fix**: Comprehensive thread-safety implementation
   - Added `sync.RWMutex` protection to `AIContextYonetici` struct
   - Protected all context operations: SetActiveTask, GetActiveTask, GetContext, saveContext
   - Created internal unsafe methods for use within locked sections
   - Zero breaking changes, full backward compatibility maintained
+- **Major Code Refactoring**: handlers.go architectural improvement
+  - **File size reduction**: 3,060 lines → 2,362 lines (-698 lines, 23% reduction)
+  - **New Architecture**: Extracted `tool_registry.go` (570 lines) and `tool_helpers.go` (286 lines)
+  - **Eliminated Code Smells**: Replaced 703-line RegisterTools method with 4-line delegation
+  - **Improved Maintainability**: Tool registration organized by categories, reusable helper classes
 - **Enhanced Testing Infrastructure**: 50-goroutine concurrent access test with race detector
 - **Production Readiness**: Resolves data corruption issues in high-concurrency environments
 - **Rule 15 Compliance**: Comprehensive solution, no technical debt
@@ -33,7 +38,9 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ```
 cmd/gorev/main.go                  → Entry point, CLI commands (cobra)
-internal/mcp/handlers.go           → 25 MCP tool implementations  
+internal/mcp/handlers.go           → MCP handlers (refactored, 2,362 lines)
+internal/mcp/tool_registry.go      → MCP tool registration (570 lines)
+internal/mcp/tool_helpers.go       → Validation & formatting utilities (286 lines)
 internal/gorev/is_yonetici.go      → Business logic orchestration
 internal/gorev/veri_yonetici.go    → Data access layer (SQLite)
 internal/i18n/manager.go           → Internationalization system

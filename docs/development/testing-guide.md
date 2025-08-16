@@ -462,9 +462,112 @@ jobs:
    - Run with `-v` flag: `go test -v`
    - Use debugger: `dlv test`
 
+## Testing Refactored Code (v0.11.1+)
+
+### Architecture Verification Testing
+
+After the major refactoring in v0.11.1, ensure that architectural improvements maintain functionality:
+
+#### 1. Tool Registration Testing
+Verify that the new `ToolRegistry` pattern correctly registers all 25 MCP tools:
+
+```bash
+# Test tool registration
+./gorev mcp list | wc -l  # Should show 25 tools
+
+# Test specific tool categories
+./gorev mcp list | grep -E "(gorev_|proje_|template_|aktif_|ozet_)"
+```
+
+#### 2. Helper Class Unit Testing
+Test the extracted helper classes individually:
+
+```go
+func TestParameterValidator(t *testing.T) {
+    validator := NewParameterValidator()
+    
+    // Test required string validation
+    result, err := validator.ValidateRequiredString(params, "test_param")
+    assert.NoError(t, err)
+    assert.Equal(t, "expected_value", result)
+}
+
+func TestTaskFormatter(t *testing.T) {
+    formatter := NewTaskFormatter()
+    
+    // Test status emoji formatting
+    emoji := formatter.GetStatusEmoji("tamamlandi")
+    assert.Equal(t, "✅", emoji)
+}
+```
+
+#### 3. Integration Testing Pattern
+Verify that refactored components work together correctly:
+
+```bash
+# Test complete workflow after refactoring
+make test  # Run all tests
+go test -v ./internal/mcp/  # Specific MCP package tests
+```
+
+#### 4. Regression Testing Checklist
+After any refactoring, verify:
+
+- [ ] **All MCP tools register correctly** (`./gorev mcp list`)
+- [ ] **Build succeeds without errors** (`make build`)
+- [ ] **All tests pass** (`make test`)
+- [ ] **No performance degradation** (benchmark if needed)
+- [ ] **API compatibility maintained** (existing clients work)
+
+#### 5. Code Quality Verification
+
+```bash
+# Verify code formatting
+make fmt
+
+# Run static analysis
+go vet ./...
+
+# Check for code smells (manual review)
+wc -l internal/mcp/*.go  # Verify reasonable file sizes
+```
+
+### Refactoring Testing Best Practices
+
+1. **Test Before Refactoring**: Ensure comprehensive test coverage exists
+2. **Incremental Testing**: Test after each refactoring step
+3. **Functional Verification**: Verify behavior unchanged after refactoring
+4. **Performance Testing**: Ensure refactoring doesn't degrade performance
+5. **Integration Testing**: Test interactions between refactored components
+
+### Testing the Tool Registry Pattern
+
+The new tool registry pattern should be tested to ensure:
+
+- All tool categories are registered
+- Tools have correct schemas and handlers
+- Registration order doesn't affect functionality
+- Error handling works properly
+
+```go
+func TestToolRegistryCategories(t *testing.T) {
+    handler := setupTestHandler()
+    registry := NewToolRegistry(handler)
+    server := setupTestMCPServer()
+    
+    registry.RegisterAllTools(server)
+    
+    // Verify all categories registered
+    tools := server.GetRegisteredTools()
+    assert.Len(t, tools, 25)  // Expected tool count
+}
+```
+
 ## Additional Resources
 
 - [VS Code Testing Guide](https://code.visualstudio.com/api/working-with-extensions/testing-extension)
 - [Go Testing Guide](https://go.dev/doc/tutorial/add-a-test)
 - [Mocha Documentation](https://mochajs.org/)
 - [Sinon.js Documentation](https://sinonjs.org/)
+- [Architecture Guide](architecture.md) - Refactoring patterns and improvements
+- [Concurrency Guide](concurrency-guide.md) - Thread-safety testing patterns

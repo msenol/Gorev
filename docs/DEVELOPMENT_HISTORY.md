@@ -2,7 +2,7 @@
 
 This file contains the detailed development history and release notes for the Gorev project, moved from CLAUDE.md to optimize token usage.
 
-## MCP Server (v0.11.1) - Thread-Safety Enhancement (16 August 2025)
+## MCP Server (v0.11.1) - Thread-Safety Enhancement & Major Refactoring (16 August 2025)
 - **AI Context Manager Race Condition Fix**: Comprehensive thread-safety implementation
   - Added `sync.RWMutex` protection to `AIContextYonetici` struct in `internal/gorev/ai_context_yonetici.go`
   - Protected all context operations: SetActiveTask, GetActiveTask, GetContext, saveContext
@@ -28,11 +28,27 @@ This file contains the detailed development history and release notes for the Go
   - Created `docs/security/thread-safety.md` - Comprehensive thread-safety guidelines
   - Created `docs/development/concurrency-guide.md` - Developer concurrency patterns
   - Updated testing documentation with race condition prevention strategies
+- **Major Code Refactoring**: handlers.go architectural improvement for maintainability
+  - **Massive Line Reduction**: `internal/mcp/handlers.go` reduced from 3,060 lines to 2,362 lines (-698 lines, 23% reduction)
+  - **New File Architecture**: Extracted two specialized modules for better organization
+    - `internal/mcp/tool_registry.go` (570 lines) - Clean tool registration organized by categories
+    - `internal/mcp/tool_helpers.go` (286 lines) - Reusable validation, formatting, and utility functions
+  - **Code Smell Elimination**: Replaced massive 703-line `RegisterTools` method with 4-line delegation pattern
+  - **Improved Maintainability**: Tool registration now organized into logical categories (Task Management, Project Management, Templates, AI Context, File Watcher, Advanced Tools)
+  - **Helper Class Architecture**: Created reusable components for common patterns
+    - `ParameterValidator` - Centralized input validation logic
+    - `TaskFormatter` - Consistent task formatting with status/priority emojis  
+    - `ErrorFormatter` - Standardized error message formatting
+    - `ResponseBuilder` - Reusable response construction patterns
+    - `CommonValidators` - Frequently used validation methods
+  - **Zero Breaking Changes**: All existing functionality preserved, API compatibility maintained
+  - **Build & Test Verification**: All tests pass, MCP tools registration verified, build successful
 - **Rule 15 Compliance**: Comprehensive solution addressing root cause, no workarounds or technical debt
   - Complete thread-safety implementation, not a temporary fix
   - Comprehensive testing covering all concurrent access scenarios
   - Clean abstraction separating safe public methods from internal unsafe operations
   - Production-ready implementation following Go concurrency best practices
+  - Major refactoring eliminates technical debt and improves long-term maintainability
 
 ## MCP Server (v0.11.0) - Complete Internationalization Support (21 July 2025)
 - **Full Bilingual MCP Server**: Implemented complete i18n system for Gorev MCP server
