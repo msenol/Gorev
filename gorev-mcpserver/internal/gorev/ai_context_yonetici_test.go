@@ -913,3 +913,104 @@ func TestHelperFunctions(t *testing.T) {
 	assert.False(t, contains([]string{"a", "b", "c"}, "d"))
 	assert.False(t, contains([]string{}, "a"))
 }
+
+// TestAIContextRaceCondition tests concurrent access to AI context manager
+func TestAIContextRaceCondition(t *testing.T) {
+	mockVeriYonetici := new(MockVeriYoneticiAI)
+	setupBasicAIContextMocks(mockVeriYonetici)
+
+	// Mock a valid task
+	mockGorev := &Gorev{
+		ID:      "test-task-id",
+		Baslik:  "Test Task",
+		Durum:   "beklemede",
+		ProjeID: "test-project-id",
+	}
+	mockVeriYonetici.On("GorevGetir", "test-task-id").Return(mockGorev, nil)
+	mockVeriYonetici.On("GorevGuncelle", "test-task-id", mock.AnythingOfType("map[string]interface {}")).Return(nil)
+
+	// Create AI context manager
+	acy := YeniAIContextYonetici(mockVeriYonetici)
+
+	// Track errors from concurrent operations
+	errors := make(chan error, 100)
+	const numGoroutines = 50
+	const operationsPerGoroutine = 10
+
+	// Function to perform concurrent operations
+	performOperations := func() {
+		for i := 0; i < operationsPerGoroutine; i++ {
+			// Mix of read and write operations
+			switch i % 4 {
+			case 0:
+				// SetActiveTask (write operation)
+				err := acy.SetActiveTask("test-task-id")
+				if err != nil {
+					errors <- fmt.Errorf("SetActiveTask failed: %w", err)
+					return
+				}
+			case 1:
+				// GetActiveTask (read operation)
+				_, err := acy.GetActiveTask()
+				if err != nil {
+					errors <- fmt.Errorf("GetActiveTask failed: %w", err)
+					return
+				}
+			case 2:
+				// GetContext (read operation)
+				_, err := acy.GetContext()
+				if err != nil {
+					errors <- fmt.Errorf("GetContext failed: %w", err)
+					return
+				}
+			case 3:
+				// GetRecentTasks (read operation)
+				_, err := acy.GetRecentTasks(5)
+				if err != nil {
+					errors <- fmt.Errorf("GetRecentTasks failed: %w", err)
+					return
+				}
+			}
+		}
+	}
+
+	// Launch concurrent goroutines
+	for i := 0; i < numGoroutines; i++ {
+		go performOperations()
+	}
+
+	// Wait a bit for operations to complete
+	time.Sleep(100 * time.Millisecond)
+
+	// Check if any errors occurred
+	close(errors)
+	var collectedErrors []error
+	for err := range errors {
+		collectedErrors = append(collectedErrors, err)
+	}
+
+	// Assert no race conditions or errors occurred
+	if len(collectedErrors) > 0 {
+		var errorMessages []string
+		for _, err := range collectedErrors {
+			errorMessages = append(errorMessages, err.Error())
+		}
+		t.Fatalf("Race condition detected - %d errors occurred:\n%s",
+			len(collectedErrors),
+			strings.Join(errorMessages, "\n"))
+	}
+
+	// Verify final state is consistent
+	context, err := acy.GetContext()
+	assert.NoError(t, err)
+	assert.NotNil(t, context)
+
+	activeTask, err := acy.GetActiveTask()
+	assert.NoError(t, err)
+	if activeTask != nil {
+		assert.Equal(t, "test-task-id", activeTask.ID)
+	}
+
+	t.Logf("Successfully completed %d concurrent operations across %d goroutines without race conditions",
+		numGoroutines*operationsPerGoroutine, numGoroutines)
+}

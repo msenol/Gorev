@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/msenol/gorev/internal/i18n"
@@ -45,6 +46,7 @@ type AIContextSummary struct {
 type AIContextYonetici struct {
 	veriYonetici     VeriYoneticiInterface
 	autoStateManager *AutoStateManager
+	mu               sync.RWMutex // Protects concurrent access to context operations
 }
 
 // YeniAIContextYonetici creates a new AI context manager
@@ -61,6 +63,9 @@ func (acy *AIContextYonetici) SetAutoStateManager(asm *AutoStateManager) {
 
 // SetActiveTask sets the active task for the AI session
 func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
+	acy.mu.Lock()
+	defer acy.mu.Unlock()
+
 	// Validate task exists
 	gorev, err := acy.veriYonetici.GorevGetir(taskID)
 	if err != nil {
@@ -68,7 +73,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	}
 
 	// Get current context
-	context, err := acy.GetContext()
+	context, err := acy.getContextUnsafe()
 	if err != nil {
 		// Initialize new context if not exists
 		context = &AIContext{
@@ -90,7 +95,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	}
 
 	// Save context
-	if err := acy.saveContext(context); err != nil {
+	if err := acy.saveContextUnsafe(context); err != nil {
 		return fmt.Errorf(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
@@ -112,7 +117,10 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 
 // GetActiveTask returns the current active task
 func (acy *AIContextYonetici) GetActiveTask() (*Gorev, error) {
-	context, err := acy.GetContext()
+	acy.mu.RLock()
+	defer acy.mu.RUnlock()
+
+	context, err := acy.getContextUnsafe()
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +134,10 @@ func (acy *AIContextYonetici) GetActiveTask() (*Gorev, error) {
 
 // GetRecentTasks returns the recent tasks interacted with
 func (acy *AIContextYonetici) GetRecentTasks(limit int) ([]*Gorev, error) {
-	context, err := acy.GetContext()
+	acy.mu.RLock()
+	defer acy.mu.RUnlock()
+
+	context, err := acy.getContextUnsafe()
 	if err != nil {
 		return nil, err
 	}
@@ -245,10 +256,24 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 // Helper functions
 
 func (acy *AIContextYonetici) GetContext() (*AIContext, error) {
-	return acy.veriYonetici.AIContextGetir()
+	acy.mu.RLock()
+	defer acy.mu.RUnlock()
+	return acy.getContextUnsafe()
 }
 
 func (acy *AIContextYonetici) saveContext(context *AIContext) error {
+	acy.mu.Lock()
+	defer acy.mu.Unlock()
+	return acy.saveContextUnsafe(context)
+}
+
+// getContextUnsafe is the internal method without mutex protection
+func (acy *AIContextYonetici) getContextUnsafe() (*AIContext, error) {
+	return acy.veriYonetici.AIContextGetir()
+}
+
+// saveContextUnsafe is the internal method without mutex protection
+func (acy *AIContextYonetici) saveContextUnsafe(context *AIContext) error {
 	return acy.veriYonetici.AIContextKaydet(context)
 }
 
