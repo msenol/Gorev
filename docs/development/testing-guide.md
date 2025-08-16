@@ -228,6 +228,172 @@ jobs:
           npm test
 ```
 
+## Race Condition Testing (v0.11.1+)
+
+### Go Race Detector
+
+The Go race detector is essential for detecting race conditions in concurrent code. All tests must pass with the race detector enabled.
+
+#### Running Tests with Race Detector
+```bash
+# Run all tests with race detector
+cd gorev-mcpserver
+go test -race ./...
+
+# Run specific concurrent tests
+go test -race -v -run TestAIContextRaceCondition ./internal/gorev/
+
+# Build and run server with race detector
+go build -race ./cmd/gorev
+./gorev serve --debug
+```
+
+#### Continuous Integration
+The CI pipeline includes race detection:
+```bash
+# In CI scripts
+make test-race  # Equivalent to go test -race ./...
+```
+
+### Concurrent Testing Patterns
+
+#### Standard Race Condition Test Pattern
+```go
+func TestComponentName_ConcurrentAccess(t *testing.T) {
+    // Setup component under test
+    component := setupTestComponent()
+    
+    // Error collection
+    errors := make(chan error, 100)
+    const numGoroutines = 50
+    const operationsPerGoroutine = 10
+    
+    // Launch concurrent operations
+    for i := 0; i < numGoroutines; i++ {
+        go func(id int) {
+            defer func() {
+                if r := recover(); r != nil {
+                    errors <- fmt.Errorf("goroutine %d panicked: %v", id, r)
+                }
+            }()
+            
+            for j := 0; j < operationsPerGoroutine; j++ {
+                if err := component.ConcurrentOperation(); err != nil {
+                    errors <- fmt.Errorf("goroutine %d operation failed: %w", id, err)
+                    return
+                }
+            }
+        }(i)
+    }
+    
+    // Wait and collect results
+    time.Sleep(100 * time.Millisecond)
+    close(errors)
+    
+    var collectedErrors []error
+    for err := range errors {
+        collectedErrors = append(collectedErrors, err)
+    }
+    
+    assert.Empty(t, collectedErrors, "No race conditions should occur")
+}
+```
+
+#### AI Context Manager Example
+The `TestAIContextRaceCondition` in `ai_context_yonetici_test.go` demonstrates comprehensive concurrent testing:
+
+```go
+func TestAIContextRaceCondition(t *testing.T) {
+    // Test demonstrates 50 goroutines performing 500 total operations
+    // Mix of read and write operations:
+    // - SetActiveTask (write)
+    // - GetActiveTask (read)
+    // - GetContext (read)
+    // - GetRecentTasks (read)
+    
+    // Verifies no race conditions occur under high concurrency
+}
+```
+
+### Load Testing for Concurrency
+
+#### MCP Tool Concurrent Access
+```bash
+#!/bin/bash
+# test_concurrent_mcp.sh
+
+echo "Testing concurrent MCP tool access..."
+
+call_mcp_tool() {
+    local task_id="task-$1"
+    ./gorev mcp call gorev_set_active "{\"task_id\": \"$task_id\"}" 2>&1
+}
+
+# Launch 20 concurrent MCP calls
+for i in {1..20}; do
+    call_mcp_tool $i &
+done
+
+wait
+echo "Concurrent MCP test completed"
+```
+
+### Benchmarking Concurrent Performance
+
+#### Concurrent Benchmark Pattern
+```go
+func BenchmarkConcurrentAccess(b *testing.B) {
+    component := setupBenchmarkComponent()
+    
+    b.ResetTimer()
+    b.RunParallel(func(pb *testing.PB) {
+        for pb.Next() {
+            // Mix of operations to benchmark
+            switch rand.Intn(3) {
+            case 0:
+                component.WriteOperation()
+            case 1:
+                component.ReadOperation()
+            case 2:
+                component.QueryOperation()
+            }
+        }
+    })
+}
+```
+
+### Thread-Safety Verification Checklist
+
+When testing concurrent components:
+
+- [ ] **Race Detector**: All tests pass with `go test -race`
+- [ ] **Stress Testing**: 50+ goroutines performing mixed operations
+- [ ] **Error Collection**: Proper error handling from concurrent operations
+- [ ] **Final State Verification**: Consistent state after concurrent access
+- [ ] **Performance**: No significant degradation under concurrency
+- [ ] **Deadlock Detection**: Tests complete without hanging
+
+### Integration with CI/CD
+
+#### GitHub Actions Race Detection
+```yaml
+name: Race Condition Tests
+on: [push, pull_request]
+
+jobs:
+  race-detection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+      - name: Run race detector
+        run: |
+          cd gorev-mcpserver
+          go test -race -timeout=10m ./...
+```
+
 ## Best Practices
 
 1. **Test Isolation**
@@ -247,6 +413,12 @@ jobs:
 4. **Test Coverage**
    - Aim for >80% coverage
    - Focus on critical paths
+
+5. **Concurrent Testing (v0.11.1+)**
+   - Always test concurrent components with race detector
+   - Use high goroutine counts (50+) for stress testing
+   - Verify final state consistency after concurrent operations
+   - Include concurrent scenarios in integration tests
    - Don't just chase numbers
 
 5. **Performance Testing**
