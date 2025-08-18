@@ -17,6 +17,18 @@ func YeniMCPSunucu(isYonetici *gorev.IsYonetici) (*server.MCPServer, error) {
 	return s, nil
 }
 
+// YeniMCPSunucuWithDebug yeni bir MCP sunucusu oluşturur (debug desteği ile)
+func YeniMCPSunucuWithDebug(isYonetici *gorev.IsYonetici, debug bool) (*server.MCPServer, error) {
+	// MCP sunucusunu oluştur
+	s := server.NewMCPServer("gorev", "1.0.0")
+
+	// Handler'ları oluştur ve kaydet (debug flag ile)
+	handlers := YeniHandlersWithDebug(isYonetici, debug)
+	handlers.RegisterTools(s)
+
+	return s, nil
+}
+
 // ServeSunucu MCP sunucusunu stdio üzerinden çalıştırır
 func ServeSunucu(s *server.MCPServer) error {
 	return server.ServeStdio(s)

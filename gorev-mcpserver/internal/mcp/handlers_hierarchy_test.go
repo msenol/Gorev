@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,7 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 		ID:      "parent-123",
 		Baslik:  "Parent Task",
 		Durum:   "beklemede",
-		Oncelik: "yuksek",
+		Oncelik: constants.PriorityHigh,
 		ProjeID: "proj-1",
 	}
 
@@ -28,7 +29,7 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 		ID:       "child-1",
 		Baslik:   "Child 1",
 		Durum:    "devam_ediyor",
-		Oncelik:  "orta",
+		Oncelik:  constants.PriorityMedium,
 		ProjeID:  "proj-1",
 		ParentID: parentTask.ID,
 	}
@@ -37,7 +38,7 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 		ID:       "child-2",
 		Baslik:   "Child 2",
 		Durum:    "tamamlandi",
-		Oncelik:  "dusuk",
+		Oncelik:  constants.PriorityLow,
 		ProjeID:  "proj-1",
 		ParentID: parentTask.ID,
 	}
@@ -46,7 +47,7 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 		ID:       "grandchild-1",
 		Baslik:   "Grandchild",
 		Durum:    "beklemede",
-		Oncelik:  "orta",
+		Oncelik:  constants.PriorityMedium,
 		ProjeID:  "proj-1",
 		ParentID: childTask1.ID,
 	}
@@ -156,7 +157,7 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 		ID:                            "root-task",
 		Baslik:                        "Root Task with Dependencies",
 		Durum:                         "devam_ediyor",
-		Oncelik:                       "yuksek",
+		Oncelik:                       constants.PriorityHigh,
 		ProjeID:                       "proj-main",
 		BagimliGorevSayisi:            3,
 		TamamlanmamisBagimlilikSayisi: 2,
@@ -167,7 +168,7 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 		ID:        "completed-child",
 		Baslik:    "Completed Subtask",
 		Durum:     "tamamlandi",
-		Oncelik:   "orta",
+		Oncelik:   constants.PriorityMedium,
 		ProjeID:   "proj-main",
 		ParentID:  rootTask.ID,
 		Etiketler: []*gorev.Etiket{{Isim: "done"}},
@@ -177,7 +178,7 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 		ID:                            "progress-child",
 		Baslik:                        "In Progress Subtask",
 		Durum:                         "devam_ediyor",
-		Oncelik:                       "yuksek",
+		Oncelik:                       constants.PriorityHigh,
 		ProjeID:                       "proj-main",
 		ParentID:                      rootTask.ID,
 		BagimliGorevSayisi:            1,
@@ -188,7 +189,7 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 		ID:       "deep-child",
 		Baslik:   "Deep Nested Task",
 		Durum:    "beklemede",
-		Oncelik:  "dusuk",
+		Oncelik:  constants.PriorityLow,
 		ProjeID:  "proj-main",
 		ParentID: inProgressChild.ID,
 	}
@@ -327,13 +328,13 @@ func TestHierarchyWithPagination(t *testing.T) {
 	var taskIDs []string
 
 	// Create multiple root tasks
-	for i := 0; i < 10; i++ {
+	for i := 0; i < constants.TestIterationSmall; i++ {
 		rootResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-			"template_id": "feature_request",
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":    fmt.Sprintf("Root Task %d", i),
 				"aciklama":  "Root task",
-				"oncelik":   "orta",
+				"oncelik":   constants.PriorityMedium,
 				"modul":     "test",
 				"kullanici": "user",
 			},
@@ -433,11 +434,11 @@ func TestCircularDependencyPrevention(t *testing.T) {
 
 	// Create a chain of tasks
 	task1Result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": "feature_request",
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":    "Task 1",
 			"aciklama":  "First",
-			"oncelik":   "orta",
+			"oncelik":   constants.PriorityMedium,
 			"modul":     "test",
 			"kullanici": "user",
 		},

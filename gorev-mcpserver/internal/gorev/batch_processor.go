@@ -5,6 +5,8 @@ import (
 	"log"
 	"strings"
 	"time"
+
+	"github.com/msenol/gorev/internal/constants"
 )
 
 // BatchProcessor handles batch operations on multiple tasks
@@ -304,7 +306,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		}
 
 		// Check dependencies if required
-		if request.CheckDependencies && request.NewStatus == "devam_ediyor" {
+		if request.CheckDependencies && request.NewStatus == constants.TaskStatusInProgress {
 			canStart, err := bp.checkDependenciesCompleted(taskID)
 			if err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
@@ -615,7 +617,7 @@ func (bp *BatchProcessor) validateUpdateRequest(request BatchUpdateRequest) erro
 }
 
 func (bp *BatchProcessor) validateStatus(status string) bool {
-	validStatuses := []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"}
+	validStatuses := constants.GetValidTaskStatuses()
 	for _, valid := range validStatuses {
 		if status == valid {
 			return true
@@ -625,7 +627,7 @@ func (bp *BatchProcessor) validateStatus(status string) bool {
 }
 
 func (bp *BatchProcessor) validatePriority(priority string) bool {
-	validPriorities := []string{"dusuk", "orta", "yuksek"}
+	validPriorities := constants.GetValidPriorities()
 	for _, valid := range validPriorities {
 		if priority == valid {
 			return true
@@ -637,10 +639,10 @@ func (bp *BatchProcessor) validatePriority(priority string) bool {
 func (bp *BatchProcessor) validateStatusTransition(from, to string) bool {
 	// Define valid transitions
 	validTransitions := map[string][]string{
-		"beklemede":    {"devam_ediyor", "iptal"},
-		"devam_ediyor": {"beklemede", "tamamlandi", "iptal"},
-		"tamamlandi":   {"devam_ediyor"}, // Allow reopening
-		"iptal":        {"beklemede"},    // Allow reactivation
+		constants.TaskStatusPending:    {constants.TaskStatusInProgress, constants.TaskStatusCancelled},
+		constants.TaskStatusInProgress: {constants.TaskStatusPending, constants.TaskStatusCompleted, constants.TaskStatusCancelled},
+		constants.TaskStatusCompleted:  {constants.TaskStatusInProgress}, // Allow reopening
+		constants.TaskStatusCancelled:  {constants.TaskStatusPending},    // Allow reactivation
 	}
 
 	allowed, exists := validTransitions[from]
@@ -663,7 +665,7 @@ func (bp *BatchProcessor) checkDependenciesCompleted(taskID string) (bool, error
 	}
 
 	for _, dep := range dependencies {
-		if dep.Durum != "tamamlandi" {
+		if dep.Durum != constants.TaskStatusCompleted {
 			return false, nil
 		}
 	}

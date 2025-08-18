@@ -3,13 +3,14 @@ package mcp
 import (
 	"testing"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
 // TestDRYi18nPatterns tests our DRY i18n patterns work correctly
 func TestDRYi18nPatterns(t *testing.T) {
 	// Initialize i18n
-	if err := i18n.Initialize("tr"); err != nil {
+	if err := i18n.Initialize(constants.DefaultTestLanguage); err != nil {
 		t.Fatalf("Failed to initialize i18n: %v", err)
 	}
 
@@ -40,7 +41,7 @@ func TestDRYi18nPatterns(t *testing.T) {
 	})
 
 	t.Run("FormatInvalidValue", func(t *testing.T) {
-		result := i18n.FormatInvalidValue("durum", "invalid", []string{"beklemede", "devam_ediyor"})
+		result := i18n.FormatInvalidValue("durum", "invalid", constants.GetValidTaskStatuses()[:2])
 		if result == "" {
 			t.Error("FormatInvalidValue should return non-empty string")
 		}
@@ -55,7 +56,7 @@ func TestDRYi18nPatterns(t *testing.T) {
 		// Test that our common translation keys work
 		keys := []string{
 			"tools.descriptions.gorev_listele",
-			"tools.params.descriptions.id",
+			"tools.params.descriptions.id_field",
 			"error.taskNotFound",
 			"success.taskUpdated",
 		}
@@ -77,14 +78,14 @@ func TestValidationDRYPatterns(t *testing.T) {
 	}
 
 	t.Run("ValidStringValidation", func(t *testing.T) {
-		params := map[string]interface{}{"id": "test-id-123"}
+		params := map[string]interface{}{"id": constants.TestIDValidation}
 		result, err := validator.ValidateRequiredString(params, "id")
 
 		if err != nil {
 			t.Errorf("ValidateRequiredString should not fail for valid input: %v", err)
 		}
 
-		if result != "test-id-123" {
+		if result != constants.TestIDValidation {
 			t.Errorf("Expected 'test-id-123', got '%s'", result)
 		}
 	})
@@ -109,7 +110,7 @@ func TestValidationDRYPatterns(t *testing.T) {
 
 	t.Run("ValidEnumValue", func(t *testing.T) {
 		params := map[string]interface{}{"durum": "beklemede"}
-		validOptions := []string{"beklemede", "devam_ediyor", "tamamlandi"}
+		validOptions := constants.GetValidTaskStatuses()[:3]
 
 		result, err := validator.ValidateEnum(params, "durum", validOptions, false)
 
@@ -124,7 +125,7 @@ func TestValidationDRYPatterns(t *testing.T) {
 
 	t.Run("InvalidEnumValue", func(t *testing.T) {
 		params := map[string]interface{}{"durum": "invalid-status"}
-		validOptions := []string{"beklemede", "devam_ediyor", "tamamlandi"}
+		validOptions := constants.GetValidTaskStatuses()[:3]
 
 		_, err := validator.ValidateEnum(params, "durum", validOptions, false)
 
@@ -142,14 +143,14 @@ func TestFormatterDRYPatterns(t *testing.T) {
 	}
 
 	t.Run("FormatTaskBasic", func(t *testing.T) {
-		result := formatter.FormatTaskBasic("Test Task", "12345678-1234-1234-1234-123456789012")
+		result := formatter.FormatTaskBasic(constants.TestTaskTitleEN, constants.TestTaskID)
 
 		if result == "" {
 			t.Error("FormatTaskBasic should return non-empty string")
 		}
 
 		// Should contain task name and short ID
-		if len(result) < len("Test Task") {
+		if len(result) < len(constants.TestTaskTitleEN) {
 			t.Error("Result should contain task name")
 		}
 	})
@@ -159,11 +160,11 @@ func TestFormatterDRYPatterns(t *testing.T) {
 			status   string
 			expected string
 		}{
-			{"beklemede", "⏳"},
-			{"devam_ediyor", "🔄"},
-			{"tamamlandi", "✅"},
-			{"iptal_edildi", "❌"},
-			{"unknown", "❓"},
+			{constants.TaskStatusPending, constants.EmojiStatusPending},
+			{constants.TaskStatusInProgress, constants.EmojiStatusInProgress},
+			{constants.TaskStatusCompleted, constants.EmojiStatusCompleted},
+			{constants.TaskStatusCancelled, constants.EmojiStatusCancelled},
+			{"unknown", constants.EmojiStatusUnknown},
 		}
 
 		for _, tc := range testCases {
@@ -179,10 +180,10 @@ func TestFormatterDRYPatterns(t *testing.T) {
 			priority string
 			expected string
 		}{
-			{"yuksek", "🔴"},
-			{"orta", "🟡"},
-			{"dusuk", "🟢"},
-			{"unknown", "⚪"},
+			{constants.PriorityHigh, constants.EmojiPriorityHigh},
+			{constants.PriorityMedium, constants.EmojiPriorityMedium},
+			{constants.PriorityLow, constants.EmojiPriorityLow},
+			{"unknown", constants.EmojiPriorityUnknown},
 		}
 
 		for _, tc := range testCases {
@@ -234,7 +235,7 @@ func TestToolHelpersDRYPatterns(t *testing.T) {
 
 		// Test status and priority formatting
 		status := helpers.Formatter.GetStatusEmoji("beklemede")
-		priority := helpers.Formatter.GetPriorityEmoji("yuksek")
+		priority := helpers.Formatter.GetPriorityEmoji(constants.PriorityHigh)
 
 		if status == "" || priority == "" {
 			t.Error("Status and priority emojis should not be empty")
@@ -245,7 +246,7 @@ func TestToolHelpersDRYPatterns(t *testing.T) {
 // BenchmarkDRYValidationPatterns benchmarks our DRY patterns
 func BenchmarkDRYValidationPatterns(b *testing.B) {
 	// Initialize i18n for benchmarks
-	i18n.Initialize("tr")
+	i18n.Initialize(constants.DefaultTestLanguage)
 
 	b.Run("I18nTParam", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -286,7 +287,7 @@ func BenchmarkDRYValidationPatterns(b *testing.B) {
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			formatter.FormatTaskBasic("Test Task", "test-id")
+			formatter.FormatTaskBasic(constants.TestTaskTitleEN, constants.TestIDBasic)
 		}
 	})
 

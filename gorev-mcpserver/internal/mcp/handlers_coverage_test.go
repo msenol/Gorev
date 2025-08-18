@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ import (
 // TestMain sets up global test environment
 func TestMain(m *testing.M) {
 	// Initialize i18n for all tests in this package
-	i18n.Initialize("tr")
+	i18n.Initialize(constants.DefaultTestLanguage)
 
 	// Run tests
 	code := m.Run()
@@ -54,10 +55,10 @@ func TestGorevOzetYazdirTamamlandi(t *testing.T) {
 		{
 			name: "normal task",
 			gorev: &gorev.Gorev{
-				ID:     "task-123456789",
-				Baslik: "Test Task",
+				ID:     constants.TestTaskID,
+				Baslik: constants.TestTaskTitleEN,
 			},
-			expected: "- ~~Test Task~~ | task-123\n",
+			expected: "- ~~Test Task~~ | " + constants.TestTaskShortID + "\n",
 		},
 		{
 			name: "task with special characters",
@@ -79,9 +80,9 @@ func TestGorevOzetYazdirTamamlandi(t *testing.T) {
 			name: "very long title",
 			gorev: &gorev.Gorev{
 				ID:     "task-long",
-				Baslik: strings.Repeat("A", 200),
+				Baslik: strings.Repeat("A", constants.TestLongTitleLength),
 			},
-			expected: fmt.Sprintf("- ~~%s~~ | task-lon\n", strings.Repeat("A", 200)),
+			expected: fmt.Sprintf("- ~~%s~~ | task-lon\n", strings.Repeat("A", constants.TestLongTitleLength)),
 		},
 	}
 
@@ -100,20 +101,20 @@ func TestGorevHiyerarsiYazdir(t *testing.T) {
 
 	// Create test tasks
 	parentTask := &gorev.Gorev{
-		ID:                            "parent-123",
+		ID:                            constants.TestParentTaskID,
 		Baslik:                        "Parent Task",
-		Durum:                         "beklemede",
-		Oncelik:                       "yuksek",
+		Durum:                         constants.TaskStatusPending,
+		Oncelik:                       constants.PriorityHigh,
 		ProjeID:                       "proj-1",
 		BagimliGorevSayisi:            2,
 		TamamlanmamisBagimlilikSayisi: 1,
 	}
 
 	childTask := &gorev.Gorev{
-		ID:       "child-123",
+		ID:       constants.TestChildTaskID,
 		Baslik:   "Child Task",
-		Durum:    "devam_ediyor",
-		Oncelik:  "orta",
+		Durum:    constants.TaskStatusInProgress,
+		Oncelik:  constants.PriorityMedium,
 		ProjeID:  "proj-1",
 		ParentID: parentTask.ID,
 	}
@@ -213,7 +214,7 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 
 	// Create a project first
 	projResult, err := handlers.ProjeOlustur(map[string]interface{}{
-		"isim":  "Test Project",
+		"isim":  constants.TestProjectNameEN,
 		"tanim": "For testing hierarchy",
 	})
 	require.NoError(t, err)
@@ -225,13 +226,13 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 
 	// Create a parent task first
 	parentResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": templateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: templateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"konu":      "Parent Research",
 			"amac":      "Study parent-child relationships",
 			"sorular":   "How to implement hierarchy?",
 			"kriterler": "Must be maintainable",
-			"oncelik":   "yuksek",
+			"oncelik":   constants.PriorityHigh,
 		},
 	})
 	require.NoError(t, err)
@@ -252,7 +253,7 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 				"parent_id": parentID,
 				"baslik":    "Subtask 1",
 				"aciklama":  "Subtask description",
-				"oncelik":   "orta",
+				"oncelik":   constants.PriorityMedium,
 			},
 			expectError: false,
 		},
@@ -296,7 +297,7 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 			params: map[string]interface{}{
 				"parent_id": parentID,
 				"baslik":    "Subtask with due date",
-				"son_tarih": "2025-12-31",
+				"son_tarih": constants.TestFutureDateString,
 			},
 			expectError: false,
 		},
@@ -315,8 +316,8 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 				"parent_id": parentID,
 				"baslik":    "Complete subtask",
 				"aciklama":  "Full description",
-				"oncelik":   "dusuk",
-				"son_tarih": "2025-06-30",
+				"oncelik":   constants.PriorityLow,
+				"son_tarih": constants.TestPastDateString,
 				"etiketler": "testing,subtask",
 			},
 			expectError: false,
@@ -357,7 +358,7 @@ func TestGorevUstDegistir(t *testing.T) {
 
 	// Create test project
 	projectResult, err := handlers.ProjeOlustur(map[string]interface{}{
-		"isim":  "Test Project",
+		"isim":  constants.TestProjectNameEN,
 		"tanim": "Test project for hierarchy tests",
 	})
 	require.NoError(t, err)
@@ -378,11 +379,11 @@ func TestGorevUstDegistir(t *testing.T) {
 
 	// Create test tasks
 	parent1Result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": featureTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: featureTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":       "Parent 1",
 			"aciklama":     "First parent",
-			"oncelik":      "orta",
+			"oncelik":      constants.PriorityMedium,
 			"amac":         "UI improvement",
 			"kullanicilar": "end users",
 			"kriterler":    "must work",
@@ -394,11 +395,11 @@ func TestGorevUstDegistir(t *testing.T) {
 	}
 
 	parent2Result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": featureTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: featureTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":       "Parent 2",
 			"aciklama":     "Second parent",
-			"oncelik":      "orta",
+			"oncelik":      constants.PriorityMedium,
 			"amac":         "API improvement",
 			"kullanicilar": "developers",
 			"kriterler":    "must be fast",
@@ -542,7 +543,7 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 
 	// Create test project
 	projectResult, err := handlers.ProjeOlustur(map[string]interface{}{
-		"isim":  "Test Project",
+		"isim":  constants.TestProjectNameEN,
 		"tanim": "Test project for hierarchy tests",
 	})
 	require.NoError(t, err)
@@ -563,11 +564,11 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 
 	// Create a hierarchy of tasks
 	rootResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": featureTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: featureTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":       "Root Feature",
 			"aciklama":     "Main feature",
-			"oncelik":      "yuksek",
+			"oncelik":      constants.PriorityHigh,
 			"amac":         "Core functionality",
 			"kullanicilar": "all users",
 			"kriterler":    "comprehensive",
@@ -582,14 +583,14 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 	sub1Result, _ := handlers.GorevAltGorevOlustur(map[string]interface{}{
 		"parent_id": rootID,
 		"baslik":    "Subtask 1",
-		"oncelik":   "orta",
+		"oncelik":   constants.PriorityMedium,
 	})
 	sub1ID := extractTaskIDFromText(getResultText(sub1Result))
 
 	sub2Result, _ := handlers.GorevAltGorevOlustur(map[string]interface{}{
 		"parent_id": rootID,
 		"baslik":    "Subtask 2",
-		"oncelik":   "dusuk",
+		"oncelik":   constants.PriorityLow,
 	})
 	sub2ID := extractTaskIDFromText(getResultText(sub2Result))
 
@@ -603,7 +604,7 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 	// Complete one subtask
 	handlers.GorevGuncelle(map[string]interface{}{
 		"id":    sub2ID,
-		"durum": "tamamlandi",
+		"durum": constants.TaskStatusCompleted,
 	})
 
 	// Test cases using the created task IDs
@@ -713,7 +714,7 @@ func TestCallTool(t *testing.T) {
 
 	// Create a project for testing
 	projResult, _ := handlers.ProjeOlustur(map[string]interface{}{
-		"isim":  "Test Project",
+		"isim":  constants.TestProjectNameEN,
 		"tanim": "For CallTool testing",
 	})
 	projID := extractProjectIDFromText(getResultText(projResult))
@@ -729,7 +730,7 @@ func TestCallTool(t *testing.T) {
 			name:     "call gorev_olustur (deprecated)",
 			toolName: "gorev_olustur",
 			params: map[string]interface{}{
-				"baslik": "Test Task",
+				"baslik": constants.TestTaskTitleEN,
 			},
 			expectError: false, // Returns error result, not error
 		},
@@ -737,7 +738,7 @@ func TestCallTool(t *testing.T) {
 			name:     "call gorev_listele",
 			toolName: "gorev_listele",
 			params: map[string]interface{}{
-				"durum": "beklemede",
+				"durum": constants.TaskStatusPending,
 			},
 			expectError: false,
 		},
@@ -792,13 +793,13 @@ func TestCallTool(t *testing.T) {
 			name:     "call templateden_gorev_olustur",
 			toolName: "templateden_gorev_olustur",
 			params: map[string]interface{}{
-				"template_id": bugTemplateID,
-				"degerler": map[string]interface{}{
+				constants.ParamTemplateID: bugTemplateID,
+				constants.ParamDegerler: map[string]interface{}{
 					"baslik":   "Bug via CallTool",
 					"aciklama": "Test",
-					"oncelik":  "orta",
+					"oncelik":  constants.PriorityMedium,
 					"modul":    "test",
-					"ortam":    "development",
+					"ortam":    constants.ValidEnvironments[0],
 					"adimlar":  "steps",
 					"beklenen": "expected",
 					"mevcut":   "actual",
@@ -969,39 +970,39 @@ func TestMin(t *testing.T) {
 	}{
 		{
 			name:     "a is smaller",
-			a:        5,
-			b:        10,
-			expected: 5,
+			a:        constants.TestMathSmallValue,
+			b:        constants.TestMathMediumValue,
+			expected: constants.TestMathSmallValue,
 		},
 		{
 			name:     "b is smaller",
-			a:        20,
-			b:        15,
-			expected: 15,
+			a:        constants.TestMathLargeValue,
+			b:        constants.TestMathEqualValue,
+			expected: constants.TestMathEqualValue,
 		},
 		{
 			name:     "equal values",
-			a:        7,
-			b:        7,
-			expected: 7,
+			a:        constants.TestMathEqualCompare,
+			b:        constants.TestMathEqualCompare,
+			expected: constants.TestMathEqualCompare,
 		},
 		{
 			name:     "negative values",
-			a:        -5,
-			b:        -10,
-			expected: -10,
+			a:        constants.TestMathNegativeSmall,
+			b:        constants.TestMathNegativeLarge,
+			expected: constants.TestMathNegativeLarge,
 		},
 		{
 			name:     "zero and positive",
-			a:        0,
-			b:        5,
-			expected: 0,
+			a:        constants.TestMathZero,
+			b:        constants.TestMathSmallValue,
+			expected: constants.TestMathZero,
 		},
 		{
 			name:     "large numbers",
-			a:        1000000,
-			b:        999999,
-			expected: 999999,
+			a:        constants.TestMathHugeValue,
+			b:        constants.TestMathHugeValueMinus,
+			expected: constants.TestMathHugeValueMinus,
 		},
 	}
 
@@ -1022,7 +1023,7 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 
 	// Create test project
 	projectResult, err := handlers.ProjeOlustur(map[string]interface{}{
-		"isim":  "Test Project",
+		"isim":  constants.TestProjectNameEN,
 		"tanim": "Test project for active task tests",
 	})
 	require.NoError(t, err)
@@ -1049,12 +1050,12 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 
 	// Create and set an active task
 	taskResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": researchTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: researchTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":    "Active Bug",
 			"aciklama":  "Test research task for active testing",
-			"oncelik":   "yuksek",
-			"konu":      "testing",
+			"oncelik":   constants.PriorityHigh,
+			"konu":      constants.TestResearchTopic,
 			"amac":      "test research",
 			"sorular":   "how to test?",
 			"kriterler": "success criteria",
@@ -1076,8 +1077,8 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 	require.NoError(t, err)
 	text = getResultText(result)
 	// Template system will use its own title format, check for the research topic instead
-	assert.Contains(t, text, "testing")      // Should contain the research topic we specified
-	assert.Contains(t, text, "devam_ediyor") // Should auto-transition
+	assert.Contains(t, text, constants.TestResearchTopic)    // Should contain the research topic we specified
+	assert.Contains(t, text, constants.TaskStatusInProgress) // Should auto-transition
 
 	// Test with extra parameters (should be ignored)
 	result, err = handlers.GorevGetActive(map[string]interface{}{
@@ -1086,7 +1087,7 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 	require.NoError(t, err)
 	// Check for research topic or task ID instead of hardcoded title
 	resultText := getResultText(result)
-	assert.True(t, strings.Contains(resultText, "testing") || strings.Contains(resultText, taskID))
+	assert.True(t, strings.Contains(resultText, constants.TestResearchTopic) || strings.Contains(resultText, taskID))
 }
 
 // Test edge cases for GorevRecent
@@ -1105,7 +1106,7 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 	assert.Contains(t, text, "Son etkileşimde bulunulan görev yok")
 
 	// Create a project first
-	proje, err := handlers.isYonetici.ProjeOlustur("Test Project", "Test project for recent tasks")
+	proje, err := handlers.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 	require.NoError(t, err)
 
 	// Set as active project
@@ -1117,16 +1118,16 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 
 	// Create some tasks and interact with them
 	var taskIDs []string
-	for i := 0; i < 10; i++ {
+	for i := 0; i < constants.TestIterationSmall; i++ {
 		taskResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-			"template_id": featureTemplateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: featureTemplateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":       fmt.Sprintf("Feature %d", i),
 				"aciklama":     "Test feature description",
 				"amac":         "Test purpose for feature",
 				"kullanicilar": "test users",
 				"kriterler":    "success criteria for test",
-				"oncelik":      "orta",
+				"oncelik":      constants.PriorityMedium,
 			},
 		})
 		require.NoError(t, err)
@@ -1138,7 +1139,7 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 		_, err = handlers.GorevDetay(map[string]interface{}{"id": taskID})
 		require.NoError(t, err)
 
-		time.Sleep(10 * time.Millisecond) // Small delay to ensure different timestamps
+		time.Sleep(constants.TestCallTimeoutMs * time.Millisecond) // Small delay to ensure different timestamps
 	}
 
 	// Test with default limit
@@ -1197,13 +1198,13 @@ func TestGorevContextSummary_EdgeCases(t *testing.T) {
 
 	// High priority task
 	highPrioResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": bugTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: bugTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":   "Critical Bug",
 			"aciklama": "High priority issue",
-			"oncelik":  "yuksek",
+			"oncelik":  constants.PriorityHigh,
 			"modul":    "core",
-			"ortam":    "production",
+			"ortam":    constants.ValidEnvironments[2],
 			"adimlar":  "always",
 			"beklenen": "no crash",
 			"mevcut":   "crash",
@@ -1213,11 +1214,11 @@ func TestGorevContextSummary_EdgeCases(t *testing.T) {
 
 	// Create blocked task with dependency
 	blockedResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": "feature_request",
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":    "Blocked Feature",
 			"aciklama":  "Waiting for bug fix",
-			"oncelik":   "orta",
+			"oncelik":   constants.PriorityMedium,
 			"modul":     "ui",
 			"kullanici": "user",
 		},
@@ -1262,19 +1263,19 @@ func TestProjeGorevleri_EdgeCases(t *testing.T) {
 
 	// Create a project
 	projResult, _ := handlers.ProjeOlustur(map[string]interface{}{
-		"isim":  "Test Project",
+		"isim":  constants.TestProjectNameEN,
 		"tanim": "For edge case testing",
 	})
 	projID := extractProjectIDFromText(getResultText(projResult))
 
 	// Create many tasks for pagination testing
-	for i := 0; i < 60; i++ {
+	for i := 0; i < constants.TestLargeIteration; i++ {
 		handlers.TemplatedenGorevOlustur(map[string]interface{}{
-			"template_id": "feature_request",
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":    fmt.Sprintf("Feature %d", i),
 				"aciklama":  "Test",
-				"oncelik":   "orta",
+				"oncelik":   constants.PriorityMedium,
 				"modul":     "test",
 				"kullanici": "user",
 			},
@@ -1284,13 +1285,13 @@ func TestProjeGorevleri_EdgeCases(t *testing.T) {
 	// Test with limit and offset
 	result, err := handlers.ProjeGorevleri(map[string]interface{}{
 		"proje_id": projID,
-		"limit":    float64(10),
+		"limit":    float64(constants.TestPaginationLimit),
 		"offset":   float64(5),
 	})
 	require.NoError(t, err)
 	text := getResultText(result)
 	// Should have project header
-	assert.Contains(t, text, "Test Project")
+	assert.Contains(t, text, constants.TestProjectNameEN)
 	// Since no tasks exist, should show "Görev yok" message
 	assert.Contains(t, text, "Görev yok")
 
@@ -1307,8 +1308,8 @@ func TestProjeGorevleri_EdgeCases(t *testing.T) {
 	// Test with very large offset
 	result, err = handlers.ProjeGorevleri(map[string]interface{}{
 		"proje_id": projID,
-		"limit":    float64(10),
-		"offset":   float64(1000),
+		"limit":    float64(constants.TestPaginationLimit),
+		"offset":   float64(constants.TestLargeOffset),
 	})
 	require.NoError(t, err)
 	text = getResultText(result)
@@ -1326,7 +1327,7 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a project first
-	proje, err := handlers.isYonetici.ProjeOlustur("Test Project", "Test project for dependency tests")
+	proje, err := handlers.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 	require.NoError(t, err)
 
 	// Set as active project
@@ -1338,14 +1339,14 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 
 	// Create test tasks
 	task1Result, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": featureTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: featureTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":       "Task 1",
 			"aciklama":     "First task",
 			"amac":         "Test purpose 1",
 			"kullanicilar": "test users",
 			"kriterler":    "success criteria 1",
-			"oncelik":      "orta",
+			"oncelik":      constants.PriorityMedium,
 		},
 	})
 	require.NoError(t, err)
@@ -1353,14 +1354,14 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 	require.NotEmpty(t, task1ID)
 
 	task2Result, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": featureTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: featureTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":       "Task 2",
 			"aciklama":     "Second task",
 			"amac":         "Test purpose 2",
 			"kullanicilar": "test users",
 			"kriterler":    "success criteria 2",
-			"oncelik":      "orta",
+			"oncelik":      constants.PriorityMedium,
 		},
 	})
 	require.NoError(t, err)
@@ -1465,7 +1466,7 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a project first
-	proje, err := handlers.isYonetici.ProjeOlustur("Test Project", "Test project for detail tests")
+	proje, err := handlers.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 	require.NoError(t, err)
 
 	// Set as active project
@@ -1477,13 +1478,13 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 
 	// Create a task with all features
 	taskResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": bugTemplateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: bugTemplateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":   "Complex Bug",
 			"aciklama": "Bug with all features",
-			"oncelik":  "yuksek",
+			"oncelik":  constants.PriorityHigh,
 			"modul":    "core",
-			"ortam":    "production",
+			"ortam":    constants.ValidEnvironments[2],
 			"adimlar":  "steps to reproduce the bug",
 			"beklenen": "expected behavior",
 			"mevcut":   "actual behavior",
@@ -1502,16 +1503,16 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	// Add due date
 	handlers.GorevDuzenle(map[string]interface{}{
 		"id":        taskID,
-		"son_tarih": "2025-12-31",
+		"son_tarih": constants.TestFutureDateString,
 	})
 
 	// Create dependency
 	depResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
-		"template_id": "feature_request",
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
+		constants.ParamDegerler: map[string]interface{}{
 			"baslik":    "Dependency Task",
 			"aciklama":  "Must complete first",
-			"oncelik":   "orta",
+			"oncelik":   constants.PriorityMedium,
 			"modul":     "test",
 			"kullanici": "user",
 		},
@@ -1559,7 +1560,7 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 
 	// Create project for testing
 	projResult, _ := handlers.ProjeOlustur(map[string]interface{}{
-		"isim":  "Test Project",
+		"isim":  constants.TestProjectNameEN,
 		"tanim": "Testing",
 	})
 	projID := extractProjectIDFromText(getResultText(projResult))
@@ -1576,8 +1577,8 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 			gorev: &gorev.Gorev{
 				ID:                 "task-completed",
 				Baslik:             "Completed Task",
-				Durum:              "tamamlandi",
-				Oncelik:            "yuksek",
+				Durum:              constants.TaskStatusCompleted,
+				Oncelik:            constants.PriorityHigh,
 				ProjeID:            projID,
 				SonTarih:           &now,
 				Etiketler:          []*gorev.Etiket{{Isim: "done"}, {Isim: "tested"}},
@@ -1591,9 +1592,9 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 			gorev: &gorev.Gorev{
 				ID:       "task-long",
 				Baslik:   "Long Task",
-				Aciklama: strings.Repeat("Very long description ", 50),
-				Durum:    "beklemede",
-				Oncelik:  "orta",
+				Aciklama: strings.Repeat("Very long description ", constants.TestDescriptionRepeat),
+				Durum:    constants.TaskStatusPending,
+				Oncelik:  constants.PriorityMedium,
 			},
 			projeGoster:    false,
 			expectContains: []string{"..."},
@@ -1604,8 +1605,8 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 				ID:                            "task-full",
 				Baslik:                        "Full Task",
 				Aciklama:                      "Complete task",
-				Durum:                         "devam_ediyor",
-				Oncelik:                       "dusuk",
+				Durum:                         constants.TaskStatusInProgress,
+				Oncelik:                       constants.PriorityLow,
 				ProjeID:                       projID,
 				SonTarih:                      &now,
 				Etiketler:                     []*gorev.Etiket{{Isim: "tag1"}, {Isim: "tag2"}, {Isim: "tag3"}},
@@ -1615,10 +1616,10 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 			projeGoster: true,
 			expectContains: []string{
 				"Full Task",
-				"D",     // durum
-				"dusuk", // oncelik
-				"tag1",  // tags
-				"🔒",     // dependency indicator
+				"D",                   // durum
+				constants.PriorityLow, // oncelik
+				"tag1",                // tags
+				"🔒",                   // dependency indicator
 			},
 		},
 		{
@@ -1626,8 +1627,8 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 			gorev: &gorev.Gorev{
 				ID:       "task-overdue",
 				Baslik:   "Overdue Task",
-				Durum:    "beklemede",
-				Oncelik:  "yuksek",
+				Durum:    constants.TaskStatusPending,
+				Oncelik:  constants.PriorityHigh,
 				SonTarih: func() *time.Time { t := now.AddDate(0, 0, -7); return &t }(),
 			},
 			projeGoster:    false,

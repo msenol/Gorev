@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,7 +13,7 @@ import (
 // Test for ServeSunucu
 func TestServeSunucu(t *testing.T) {
 	// Create a test server
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
@@ -32,7 +33,7 @@ func TestServeSunucu(t *testing.T) {
 // Test for NewServer
 func TestNewServer(t *testing.T) {
 	// Create test handlers
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
@@ -163,7 +164,7 @@ func TestYeniMCPSunucu_EdgeCases(t *testing.T) {
 		{
 			name: "valid is yonetici",
 			setupFunc: func() *gorev.IsYonetici {
-				veriYonetici, _ := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+				veriYonetici, _ := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 				return gorev.YeniIsYonetici(veriYonetici)
 			},
 			expectError: false,
@@ -203,7 +204,7 @@ func TestYeniMCPSunucu_EdgeCases(t *testing.T) {
 // Test server initialization and tool registration
 func TestServerToolRegistration(t *testing.T) {
 	// Create handlers
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
@@ -224,13 +225,13 @@ func TestServerToolRegistration(t *testing.T) {
 // Test concurrent server creation
 func TestConcurrentServerCreation(t *testing.T) {
 	// Create shared veri yonetici
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 
 	// Test concurrent server creation
-	serverCount := 10
+	serverCount := constants.TestIterationSmall
 	servers := make([]*server.MCPServer, serverCount)
 	// errors := make([]error, serverCount) // unused
 
@@ -260,7 +261,7 @@ func TestConcurrentServerCreation(t *testing.T) {
 // Test server with different configurations
 func TestServerConfigurations(t *testing.T) {
 	// Test with in-memory database
-	veriYonetici1, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici1, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 	isYonetici1 := gorev.YeniIsYonetici(veriYonetici1)
 	handlers1 := YeniHandlers(isYonetici1)
@@ -274,7 +275,7 @@ func TestServerConfigurations(t *testing.T) {
 		_ = veriYonetici1.Kapat()
 	}()
 
-	veriYonetici2, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	veriYonetici2, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer func() {
 		_ = veriYonetici2.Kapat()

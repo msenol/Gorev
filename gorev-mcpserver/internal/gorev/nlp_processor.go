@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/msenol/gorev/internal/constants"
 )
 
 // NLPProcessor handles natural language queries for task management
@@ -53,14 +55,14 @@ func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error) {
 	// Parse time expressions first
 	if timeRange := nlp.parseTimeExpressions(normalized); timeRange != nil {
 		intent.TimeRange = timeRange
-		intent.Confidence += 0.3
+		intent.Confidence += constants.ConfidenceWeightMedium
 	}
 
 	// Parse action intent
 	action := nlp.parseAction(normalized)
 	if action != "" {
 		intent.Action = action
-		intent.Confidence += 0.4
+		intent.Confidence += constants.ConfidenceWeightHigh
 	}
 
 	// Parse filters and tags
@@ -68,13 +70,13 @@ func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error) {
 		for k, v := range filters {
 			intent.Filters[k] = v
 		}
-		intent.Confidence += 0.3
+		intent.Confidence += constants.ConfidenceWeightMedium
 	}
 
 	// Parse task references
 	if refs := nlp.parseTaskReferences(normalized); len(refs) > 0 {
 		intent.Parameters["task_references"] = refs
-		intent.Confidence += 0.2
+		intent.Confidence += constants.ConfidenceWeightLow
 	}
 
 	log.Printf("NLP Query processed: %s -> Action: %s, Confidence: %.2f",
@@ -426,7 +428,7 @@ func (nlp *NLPProcessor) FormatResponse(action string, results interface{}, lang
 
 // ValidateIntent checks if the parsed intent is actionable
 func (nlp *NLPProcessor) ValidateIntent(intent *QueryIntent) error {
-	if intent.Confidence < 0.3 {
+	if intent.Confidence < constants.ConfidenceThreshold {
 		return fmt.Errorf("query confidence too low (%.2f): %s", intent.Confidence, intent.Raw)
 	}
 

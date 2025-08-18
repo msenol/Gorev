@@ -55,6 +55,8 @@ const (
 	// Test helper IDs for generic test helpers
 	TestHelperProjectID = "test-project-id"
 	TestHelperTaskID    = "test-task-id"
+	TestParentTaskID    = "parent-123"
+	TestChildTaskID     = "child-123"
 )
 
 // Test language and localization constants
@@ -194,6 +196,12 @@ const (
 
 	// TestDateTimeString standardized test datetime
 	TestDateTimeString = "2025-01-15 10:30:00"
+
+	// TestFutureDateString standardized future test date
+	TestFutureDateString = "2025-12-31"
+
+	// TestPastDateString standardized past test date
+	TestPastDateString = "2025-06-30"
 )
 
 // Test template constants to eliminate template_id duplications
@@ -222,6 +230,33 @@ const (
 	// TestPaginationLimit for pagination tests
 	TestPaginationLimit = 10
 
+	// TestLargeOffset for testing pagination with large offset
+	TestLargeOffset = 1000
+
 	// TestStressIterations for stress testing
 	TestStressIterations = 1000
+
+	// TestLongTitleLength for testing very long titles
+	TestLongTitleLength = 200
+
+	// Mathematical test constants for comparison functions
+	TestMathSmallValue     = 5
+	TestMathMediumValue    = 10
+	TestMathLargeValue     = 20
+	TestMathEqualValue     = 15
+	TestMathEqualCompare   = 7
+	TestMathNegativeSmall  = -5
+	TestMathNegativeLarge  = -10
+	TestMathZero           = 0
+	TestMathHugeValue      = 1000000
+	TestMathHugeValueMinus = 999999
+
+	// Edge case test constants
+	TestStringVeryLong    = 10000
+	TestStringLong        = 1000
+	TestStringMedium      = 100
+	TestStringHuge        = 100000
+	TestEdgeCaseLimit     = 100
+	TestLargeIteration    = 60
+	TestDescriptionRepeat = 50
 )

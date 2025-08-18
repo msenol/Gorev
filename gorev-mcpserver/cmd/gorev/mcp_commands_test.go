@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,7 +54,7 @@ func captureOutput(f func()) (string, string) {
 // Setup test environment
 func setupTestEnvironment(t *testing.T) {
 	// Initialize i18n for tests
-	i18n.Initialize("tr")
+	i18n.Initialize(constants.DefaultTestLanguage)
 }
 
 // Test the main MCP command creation
@@ -116,14 +117,14 @@ func TestParameterParsingLogic(t *testing.T) {
 		{
 			name:        "Valid JSON degerler parameter",
 			paramString: `degerler={"baslik":"Test","aciklama":"Description"}`,
-			expectedKey: "degerler",
+			expectedKey: constants.ParamDegerler,
 			expectedVal: map[string]interface{}{"baslik": "Test", "aciklama": "Description"},
 			expectError: false,
 		},
 		{
 			name:        "Invalid JSON degerler parameter",
 			paramString: `degerler={"baslik":"Test","aciklama":invalid}`,
-			expectedKey: "degerler",
+			expectedKey: constants.ParamDegerler,
 			expectedVal: nil,
 			expectError: true,
 		},
@@ -152,7 +153,7 @@ func TestParameterParsingLogic(t *testing.T) {
 			params := make(map[string]interface{})
 
 			// Special handling for degerler parameter (JSON object)
-			if key == "degerler" {
+			if key == constants.ParamDegerler {
 				var degerlerMap map[string]interface{}
 				if err := json.Unmarshal([]byte(value), &degerlerMap); err != nil {
 					if !tt.expectError {

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	mcphandlers "github.com/msenol/gorev/internal/mcp"
@@ -14,7 +15,7 @@ import (
 // setupIntegrationTestI18n initializes the i18n system for integration tests
 func setupIntegrationTestI18n() {
 	// Initialize i18n with Turkish (default) for tests
-	i18n.Initialize("tr")
+	i18n.Initialize(constants.DefaultTestLanguage)
 }
 
 // Helper function to extract text from MCP result
@@ -38,7 +39,7 @@ func extractText(t *testing.T, result *mcp.CallToolResult) string {
 func TestGorevOlusturVeListele(t *testing.T) {
 	setupIntegrationTestI18n() // Initialize i18n for tests
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -72,8 +73,8 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	// İlk template'i kullan (research template)
 	templateID := templates[0].ID
 	params := map[string]interface{}{
-		"template_id": templateID,
-		"degerler": map[string]interface{}{
+		constants.ParamTemplateID: templateID,
+		constants.ParamDegerler: map[string]interface{}{
 			"konu":      "Test görevi",
 			"amac":      "Bu bir test görevidir",
 			"sorular":   "Test soruları",
@@ -103,7 +104,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 
 func TestGorevDurumGuncelle(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -137,7 +138,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 
 func TestProjeOlustur(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -161,7 +162,7 @@ func TestProjeOlustur(t *testing.T) {
 
 func TestOzetGoster(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -198,7 +199,7 @@ func TestOzetGoster(t *testing.T) {
 
 func TestHataYonetimi(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -232,7 +233,7 @@ func TestHataYonetimi(t *testing.T) {
 
 func TestGorevDetay(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -266,7 +267,7 @@ func TestGorevDetay(t *testing.T) {
 	detayText := extractText(t, result)
 	assert.Contains(t, detayText, "# Detaylı Test Görevi")
 	assert.Contains(t, detayText, "**Proje:** Test Projesi")
-	assert.Contains(t, detayText, "**Son Teslim Tarihi:** 2025-12-31")
+	assert.Contains(t, detayText, "**Son Tarih:** 2025-12-31")
 	// Etiketler farklı sırada olabilir
 	assert.Contains(t, detayText, "**Etiketler:**")
 	assert.Contains(t, detayText, "bug")
@@ -278,7 +279,7 @@ func TestGorevDetay(t *testing.T) {
 
 func TestGorevDuzenle(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -314,7 +315,7 @@ func TestGorevDuzenle(t *testing.T) {
 
 func TestGorevSil(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -354,7 +355,7 @@ func TestGorevSil(t *testing.T) {
 func TestProjeListele(t *testing.T) {
 	setupIntegrationTestI18n() // Initialize i18n for tests
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -396,7 +397,7 @@ func TestProjeListele(t *testing.T) {
 
 func TestProjeGorevleri(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -449,7 +450,7 @@ func TestProjeGorevleri(t *testing.T) {
 
 func TestGorevBagimlilikEkle(t *testing.T) {
 	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 

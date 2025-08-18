@@ -215,6 +215,110 @@ Test MCP tools directly:
 echo '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"gorev_listele","arguments":{}},"id":1}' | ./gorev serve
 ```
 
+## DRY Testing Patterns (v0.11.1+)
+
+### Constants Usage in Tests
+
+All test files must use centralized constants from `internal/constants/test_constants.go`:
+
+#### Template Constants
+```go
+// ✅ Correct - Use constants
+result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
+    constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
+    constants.ParamDegerler: map[string]interface{}{
+        "baslik": constants.TestTaskTitleEN,
+    },
+})
+
+// ❌ Wrong - Hardcoded strings
+result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
+    "template_id": "feature_request",
+    "degerler": map[string]interface{}{
+        "baslik": "Test Task",
+    },
+})
+```
+
+#### Test Iteration Constants
+```go
+// ✅ Correct - Use constants for pagination and loops
+for i := 0; i < constants.TestIterationSmall; i++ {
+    // test logic
+}
+
+params := map[string]interface{}{
+    "limit": float64(constants.TestPaginationLimit),
+}
+
+// ❌ Wrong - Magic numbers
+for i := 0; i < 10; i++ {
+    // test logic
+}
+
+params := map[string]interface{}{
+    "limit": float64(10),
+}
+```
+
+#### Concurrency Test Constants
+```go
+// ✅ Correct - Use predefined concurrency levels
+config := ConcurrencyTestConfig{
+    Goroutines: constants.TestConcurrencyLarge, // 50
+    Operations: constants.TestIterationMedium,  // 50
+    Timeout:    constants.TestTimeoutLargeSeconds * time.Second,
+}
+
+// ❌ Wrong - Hardcoded concurrency values
+config := ConcurrencyTestConfig{
+    Goroutines: 50,
+    Operations: 50,
+    Timeout:    30 * time.Second,
+}
+```
+
+### DRY Test Infrastructure
+
+The testing infrastructure includes comprehensive reusable patterns:
+
+#### Test Helper Functions
+```go
+// Use centralized test environment setup
+env := SetupTestEnvironment(t)
+defer env.Cleanup()
+
+// Use helper functions for common operations
+projectID := CreateTestProject(t, env, constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+taskID := CreateTestTask(t, env, constants.TestTemplateFeatureRequest, taskValues)
+```
+
+#### Table-Driven Test Patterns
+```go
+// Use standardized TestCase struct
+testCases := []TestCase{
+    {
+        Name:       "ValidInput",
+        Input:      constants.TestIDBasic,
+        Expected:   expectedResult,
+        ShouldFail: false,
+    },
+}
+
+TableDrivenTest(t, "ValidationTest", testCases, testFunc)
+```
+
+### Rule 15 Compliance in Tests
+
+All test code must follow Rule 15 principles:
+
+- ✅ **Use constants** for all repeated values
+- ✅ **No hardcoded strings** in test parameters
+- ✅ **No magic numbers** in test configurations
+- ✅ **DRY helper functions** for common test operations
+- ❌ **No copy-paste** test patterns
+- ❌ **No temporary** test values
+
 ## Test Data Management
 
 ### Creating Test Data

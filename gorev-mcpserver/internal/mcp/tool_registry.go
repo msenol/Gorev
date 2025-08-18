@@ -3,6 +3,7 @@ package mcp
 import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
@@ -50,7 +51,7 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 				"durum": map[string]interface{}{
 					"type":        "string",
 					"description": i18n.TParam("durum_filter"),
-					"enum":        []string{"beklemede", "devam_ediyor", "tamamlandi"},
+					"enum":        []string{constants.TaskStatusPending, constants.TaskStatusInProgress, constants.TaskStatusCompleted},
 				},
 				"sirala": map[string]interface{}{
 					"type":        "string",
@@ -112,7 +113,7 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 				"durum": map[string]interface{}{
 					"type":        "string",
 					"description": i18n.TParam("durum"),
-					"enum":        []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"},
+					"enum":        constants.GetValidTaskStatuses(),
 				},
 			},
 			Required: []string{"id", "durum"},
@@ -141,7 +142,7 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 				"oncelik": map[string]interface{}{
 					"type":        "string",
 					"description": i18n.TParam("oncelik"),
-					"enum":        []string{"dusuk", "orta", "yuksek"},
+					"enum":        constants.GetValidPriorities(),
 				},
 				"son_tarih": map[string]interface{}{
 					"type":        "string",
@@ -161,7 +162,7 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
 					"type":        "string",
-					"description": "Silinecek görevin benzersiz ID'si.",
+					"description": i18n.TFieldID("task", "delete"),
 				},
 				"onay": map[string]interface{}{
 					"type":        "boolean",
@@ -184,11 +185,11 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"isim": map[string]interface{}{
 					"type":        "string",
-					"description": "Projenin adı.",
+					"description": i18n.TProjectField("name"),
 				},
 				"tanim": map[string]interface{}{
 					"type":        "string",
-					"description": "Projenin açıklaması.",
+					"description": i18n.TProjectField("description"),
 				},
 			},
 			Required: []string{"isim", "tanim"},
@@ -214,15 +215,15 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"proje_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Projenin benzersiz ID'si.",
+					"description": i18n.TFieldID("project", "unique"),
 				},
 				"limit": map[string]interface{}{
 					"type":        "number",
-					"description": "Döndürülecek maksimum görev sayısı (varsayılan: 50).",
+					"description": i18n.TTaskCount("return_max", "fifty"),
 				},
 				"offset": map[string]interface{}{
 					"type":        "number",
-					"description": "Atlanacak görev sayısı (varsayılan: 0).",
+					"description": i18n.TTaskCount("skip", "zero"),
 				},
 			},
 			Required: []string{"proje_id"},
@@ -238,7 +239,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"proje_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Aktif yapılacak projenin ID'si.",
+					"description": i18n.TFieldID("project", "active"),
 				},
 			},
 			Required: []string{"proje_id"},
@@ -277,7 +278,7 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"kategori": map[string]interface{}{
 					"type":        "string",
-					"description": "Template kategorisine göre filtrele.",
+					"description": i18n.TTemplate("filter"),
 				},
 			},
 		},
@@ -290,16 +291,16 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"template_id": map[string]interface{}{
+				constants.ParamTemplateID: map[string]interface{}{
 					"type":        "string",
-					"description": "Kullanılacak template'in ID'si. 'template_listele' ile mevcut template'leri görebilirsiniz.",
+					"description": i18n.TTemplate("template_id"),
 				},
-				"degerler": map[string]interface{}{
+				constants.ParamDegerler: map[string]interface{}{
 					"type":        "object",
-					"description": "Template alanları için değerler. Her template'in farklı gerekli alanları vardır.",
+					"description": i18n.TTemplate("fields"),
 				},
 			},
-			Required: []string{"template_id", "degerler"},
+			Required: []string{constants.ParamTemplateID, constants.ParamDegerler},
 		},
 	}, tr.handlers.TemplatedenGorevOlustur)
 }
@@ -315,7 +316,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Aktif yapılacak görevin ID'si.",
+					"description": i18n.TFieldID("task", "active"),
 				},
 			},
 			Required: []string{"task_id"},
@@ -341,7 +342,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"limit": map[string]interface{}{
 					"type":        "number",
-					"description": "Döndürülecek görev sayısı (varsayılan: 5).",
+					"description": i18n.TTaskCount("return", "five"),
 				},
 			},
 		},
@@ -366,7 +367,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"updates": map[string]interface{}{
 					"type":        "array",
-					"description": "Güncelleme listesi. Her öğe {id: string, updates: object} formatında olmalı.",
+					"description": i18n.TBatch("updates"),
 				},
 			},
 			Required: []string{"updates"},
@@ -382,7 +383,7 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"query": map[string]interface{}{
 					"type":        "string",
-					"description": "Doğal dil sorgusu.",
+					"description": i18n.TBatch("query"),
 				},
 			},
 			Required: []string{"query"},
@@ -401,11 +402,11 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Görevin ID'si.",
+					"description": i18n.TFieldID("task", "simple"),
 				},
 				"file_path": map[string]interface{}{
 					"type":        "string",
-					"description": "İzlenecek dosya yolu.",
+					"description": i18n.TFilePath("watch"),
 				},
 			},
 			Required: []string{"task_id", "file_path"},
@@ -421,11 +422,11 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Görevin ID'si.",
+					"description": i18n.TFieldID("task", "simple"),
 				},
 				"file_path": map[string]interface{}{
 					"type":        "string",
-					"description": "Kaldırılacak dosya yolu.",
+					"description": i18n.TFilePath("remove"),
 				},
 			},
 			Required: []string{"task_id", "file_path"},
@@ -441,7 +442,7 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Görevin ID'si.",
+					"description": i18n.TFieldID("task", "simple"),
 				},
 			},
 			Required: []string{"task_id"},
@@ -470,28 +471,28 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"parent_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Üst görevin ID'si.",
+					"description": i18n.TFieldID("task", "parent"),
 				},
 				"baslik": map[string]interface{}{
 					"type":        "string",
-					"description": "Alt görevin başlığı.",
+					"description": i18n.TSubtaskField("title"),
 				},
 				"aciklama": map[string]interface{}{
 					"type":        "string",
-					"description": "Alt görevin açıklaması.",
+					"description": i18n.TSubtaskField("subtask_description"),
 				},
 				"oncelik": map[string]interface{}{
 					"type":        "string",
-					"description": "Alt görevin öncelik seviyesi.",
-					"enum":        []string{"dusuk", "orta", "yuksek"},
+					"description": i18n.TSubtaskField("priority"),
+					"enum":        constants.GetValidPriorities(),
 				},
 				"son_tarih": map[string]interface{}{
 					"type":        "string",
-					"description": "Alt görevin son tarihi (YYYY-MM-DD).",
+					"description": i18n.TWithFormat(i18n.TSubtaskField("due_date"), "YYYY-MM-DD"),
 				},
 				"etiketler": map[string]interface{}{
 					"type":        "string",
-					"description": "Virgülle ayrılmış etiket listesi.",
+					"description": i18n.TCommaSeparated("etiket"),
 				},
 			},
 			Required: []string{"parent_id", "baslik"},
@@ -507,11 +508,11 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"gorev_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Taşınacak görevin ID'si.",
+					"description": i18n.TFieldID("task", "move"),
 				},
 				"yeni_parent_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Yeni üst görevin ID'si. Boş bırakılırsa kök seviyeye taşınır.",
+					"description": i18n.TFieldID("task", "new_parent"),
 				},
 			},
 			Required: []string{"gorev_id"},
@@ -527,7 +528,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"gorev_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Hiyerarşisi gösterilecek görevin ID'si.",
+					"description": i18n.TFieldID("task", "hierarchy"),
 				},
 			},
 			Required: []string{"gorev_id"},
@@ -543,16 +544,16 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{
 				"kaynak_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Bağımlı olan görevin ID'si (bekleyecek olan).",
+					"description": i18n.TFieldID("task", "dependent"),
 				},
 				"hedef_id": map[string]interface{}{
 					"type":        "string",
-					"description": "Bağımlılık hedefinin ID'si (önce tamamlanması gereken).",
+					"description": i18n.T("common.fields.target_id", nil),
 				},
 				"baglanti_tipi": map[string]interface{}{
 					"type":        "string",
-					"description": "Bağımlılık türü.",
-					"enum":        []string{"blocker", "depends_on"},
+					"description": i18n.TBatch("dependency_type"),
+					"enum":        constants.GetValidDependencyTypes(),
 				},
 			},
 			Required: []string{"kaynak_id", "hedef_id", "baglanti_tipi"},

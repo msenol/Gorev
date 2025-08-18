@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
@@ -38,7 +39,7 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 		Baslik:          baslik,
 		Aciklama:        aciklama,
 		Oncelik:         oncelik,
-		Durum:           "beklemede",
+		Durum:           constants.TaskStatusPending,
 		ProjeID:         projeID,
 		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
@@ -46,7 +47,7 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf(i18n.T("error.taskSaveFailed", map[string]interface{}{"Error": err}))
+		return nil, fmt.Errorf(i18n.TSaveFailed("task", err))
 	}
 
 	if len(etiketIsimleri) > 0 {
@@ -55,7 +56,7 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
 		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
-			return nil, fmt.Errorf(i18n.T("error.taskTagsSetFailed", map[string]interface{}{"Error": err}))
+			return nil, fmt.Errorf(i18n.TSetFailed("task_tags", err))
 		}
 		gorev.Etiketler = etiketler
 	}
@@ -120,7 +121,7 @@ func (iy *IsYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, er
 
 func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	// Validate status values
-	validStatuses := []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"}
+	validStatuses := constants.GetValidTaskStatuses()
 	isValidStatus := false
 	for _, validStatus := range validStatuses {
 		if durum == validStatus {
@@ -134,14 +135,14 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.TEntityNotFound("task", err))
 	}
 
 	// Eğer görev "devam_ediyor" durumuna geçiyorsa, bağımlılıkları kontrol et
-	if durum == "devam_ediyor" && gorev.Durum == "beklemede" {
+	if durum == constants.TaskStatusInProgress && gorev.Durum == constants.TaskStatusPending {
 		bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(id)
 		if err != nil {
-			return fmt.Errorf(i18n.T("error.dependencyCheckFailed", map[string]interface{}{"Error": err}))
+			return fmt.Errorf(i18n.TCheckFailed("dependency", err))
 		}
 
 		if !bagimli {
@@ -150,14 +151,14 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	}
 
 	// Eğer görev "tamamlandi" durumuna geçiyorsa, tüm alt görevlerin tamamlandığını kontrol et
-	if durum == "tamamlandi" && gorev.Durum != "tamamlandi" {
+	if durum == constants.TaskStatusCompleted && gorev.Durum != constants.TaskStatusCompleted {
 		altGorevler, err := iy.veriYonetici.AltGorevleriGetir(id)
 		if err != nil {
 			return fmt.Errorf(i18n.T("error.subtasksCheckFailed", map[string]interface{}{"Error": err}))
 		}
 
 		for _, altGorev := range altGorevler {
-			if altGorev.Durum != "tamamlandi" {
+			if altGorev.Durum != constants.TaskStatusCompleted {
 				return fmt.Errorf(i18n.T("error.taskCannotCompleteSubtasks"))
 			}
 		}
@@ -182,7 +183,7 @@ func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 	}
 
 	if err := iy.veriYonetici.ProjeKaydet(proje); err != nil {
-		return nil, fmt.Errorf(i18n.T("error.projectSaveFailed", map[string]interface{}{"Error": err}))
+		return nil, fmt.Errorf(i18n.TSaveFailed("project", err))
 	}
 
 	return proje, nil
@@ -191,7 +192,7 @@ func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 func (iy *IsYonetici) GorevGetir(id string) (*Gorev, error) {
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
+		return nil, fmt.Errorf(i18n.TEntityNotFound("task", err))
 	}
 	return gorev, nil
 }
@@ -208,7 +209,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 	// Önce mevcut görevi al
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.TEntityNotFound("task", err))
 	}
 
 	// Sadece belirtilen alanları güncelle
@@ -285,7 +286,7 @@ func (iy *IsYonetici) GorevSil(id string) error {
 	// Önce görevin var olduğunu kontrol et
 	_, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.TEntityNotFound("task", err))
 	}
 
 	// Alt görevleri kontrol et
@@ -322,7 +323,7 @@ func (iy *IsYonetici) ProjeGorevleri(projeID string) ([]*Gorev, error) {
 			tamamlanmamisSayisi := 0
 			for _, baglanti := range baglantilar {
 				hedefGorev, err := iy.veriYonetici.GorevGetir(baglanti.HedefID)
-				if err == nil && hedefGorev.Durum != "tamamlandi" {
+				if err == nil && hedefGorev.Durum != constants.TaskStatusCompleted {
 					tamamlanmamisSayisi++
 				}
 			}
@@ -394,20 +395,20 @@ func (iy *IsYonetici) OzetAl() (*Ozet, error) {
 
 	for _, gorev := range gorevler {
 		switch gorev.Durum {
-		case "beklemede":
+		case constants.TaskStatusPending:
 			ozet.BeklemedeGorev++
-		case "devam_ediyor":
+		case constants.TaskStatusInProgress:
 			ozet.DevamEdenGorev++
-		case "tamamlandi":
+		case constants.TaskStatusCompleted:
 			ozet.TamamlananGorev++
 		}
 
 		switch gorev.Oncelik {
-		case "yuksek":
+		case constants.PriorityHigh:
 			ozet.YuksekOncelik++
-		case "orta":
+		case constants.PriorityMedium:
 			ozet.OrtaOncelik++
-		case "dusuk":
+		case constants.PriorityLow:
 			ozet.DusukOncelik++
 		}
 	}
@@ -434,7 +435,7 @@ func (iy *IsYonetici) GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi string
 	}
 
 	if err := iy.veriYonetici.BaglantiEkle(baglanti); err != nil {
-		return nil, fmt.Errorf(i18n.T("error.linkAddFailed", map[string]interface{}{"Error": err}))
+		return nil, fmt.Errorf(i18n.TAddFailed("link", err))
 	}
 
 	return baglanti, nil
@@ -463,7 +464,7 @@ func (iy *IsYonetici) GorevBagimliMi(gorevID string) (bool, []string, error) {
 			}
 
 			// Eğer bağımlı görev tamamlanmamışsa
-			if kaynakGorev.Durum != "tamamlandi" {
+			if kaynakGorev.Durum != constants.TaskStatusCompleted {
 				tamamlanmamisBagimliliklar = append(tamamlanmamisBagimliliklar, kaynakGorev.Baslik)
 			}
 		}
@@ -504,7 +505,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 		Baslik:          baslik,
 		Aciklama:        aciklama,
 		Oncelik:         oncelik,
-		Durum:           "beklemede",
+		Durum:           constants.TaskStatusPending,
 		ProjeID:         parent.ProjeID, // Alt görev aynı projede olmalı
 		ParentID:        parentID,
 		OlusturmaTarih:  time.Now(),
@@ -513,7 +514,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf(i18n.T("error.subtaskSaveFailed", map[string]interface{}{"Error": err}))
+		return nil, fmt.Errorf(i18n.TSaveFailed("subtask", err))
 	}
 
 	if len(etiketIsimleri) > 0 {
@@ -535,7 +536,7 @@ func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
 	// Görevi kontrol et
 	gorev, err := iy.veriYonetici.GorevGetir(gorevID)
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.TEntityNotFound("task", err))
 	}
 
 	// Yeni parent varsa kontrol et

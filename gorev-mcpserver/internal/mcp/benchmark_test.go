@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 )
@@ -55,10 +56,10 @@ func RunConcurrentBenchmark(b *testing.B, config BenchmarkConfig) {
 // setupBenchmarkEnvironment - DRY setup for all benchmarks
 func setupBenchmarkEnvironment() (*Handlers, func()) {
 	// Initialize i18n for consistent environment
-	i18n.Initialize("tr")
+	i18n.Initialize(constants.DefaultTestLanguage)
 
 	// Setup data manager
-	dataManager, err := gorev.YeniVeriYonetici(":memory:", "")
+	dataManager, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
 	if err != nil {
 		panic("Failed to create data manager: " + err.Error())
 	}
@@ -81,8 +82,8 @@ func BenchmarkToolRegistration(b *testing.B) {
 	config := BenchmarkConfig{
 		Name: "ToolRegistration",
 		Setup: func() interface{} {
-			i18n.Initialize("tr")
-			dataManager, _ := gorev.YeniVeriYonetici(":memory:", "")
+			i18n.Initialize(constants.DefaultTestLanguage)
+			dataManager, _ := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
 			isYonetici := gorev.YeniIsYonetici(dataManager)
 			handlers := YeniHandlers(isYonetici)
 			return handlers
@@ -108,9 +109,9 @@ func BenchmarkParameterValidation(b *testing.B) {
 		Setup: func() interface{} {
 			validator := NewParameterValidator()
 			params := map[string]interface{}{
-				"id":     "test-id-123",
-				"durum":  "beklemede",
-				"limit":  float64(50),
+				"id":     constants.TestIDValidation,
+				"durum":  constants.TaskStatusPending,
+				"limit":  float64(constants.TestIterationLimit),
 				"offset": float64(0),
 			}
 			return map[string]interface{}{
@@ -130,12 +131,12 @@ func BenchmarkParameterValidation(b *testing.B) {
 				return fmt.Errorf("validation failed: %v", validationError.Content)
 			}
 
-			_, validationError = validator.ValidateEnum(params, "durum", []string{"beklemede", "devam_ediyor", "tamamlandi"}, true)
+			_, validationError = validator.ValidateEnum(params, "durum", constants.GetValidTaskStatuses()[:3], true)
 			if validationError != nil {
 				return fmt.Errorf("validation failed: %v", validationError.Content)
 			}
 
-			validator.ValidateNumber(params, "limit", 50)
+			validator.ValidateNumber(params, "limit", constants.TestIterationLimit)
 			validator.ValidateNumber(params, "offset", 0)
 
 			return nil
@@ -158,11 +159,11 @@ func BenchmarkTaskFormatter(b *testing.B) {
 			formatter := data.(*TaskFormatter)
 
 			// Test multiple formatting operations
-			formatter.FormatTaskBasic("Test Task", "12345678-1234-1234-1234-123456789012")
-			formatter.FormatTaskWithStatus("Test Task", "12345678-1234-1234-1234-123456789012", "beklemede")
-			formatter.FormatSuccessMessage("Test Action", "Test Task", "12345678")
-			formatter.GetStatusEmoji("beklemede")
-			formatter.GetPriorityEmoji("yuksek")
+			formatter.FormatTaskBasic(constants.TestTaskTitleEN, constants.TestTaskID)
+			formatter.FormatTaskWithStatus(constants.TestTaskTitleEN, constants.TestTaskID, constants.TaskStatusPending)
+			formatter.FormatSuccessMessage(constants.TestActionName, constants.TestTaskTitleEN, constants.TestTaskShortID)
+			formatter.GetStatusEmoji(constants.TaskStatusPending)
+			formatter.GetPriorityEmoji(constants.PriorityHigh)
 
 			return nil
 		},
@@ -197,7 +198,7 @@ func BenchmarkConcurrentToolCalls(b *testing.B) {
 			}
 			return nil
 		},
-		Goroutines: 10,
+		Goroutines: constants.TestConcurrencyMedium,
 	}
 
 	RunConcurrentBenchmark(b, config)
@@ -208,7 +209,7 @@ func BenchmarkI18nHelpers(b *testing.B) {
 	config := BenchmarkConfig{
 		Name: "I18nHelpers",
 		Setup: func() interface{} {
-			i18n.Initialize("tr")
+			i18n.Initialize(constants.DefaultTestLanguage)
 			return nil
 		},
 		Cleanup: func() {},
@@ -243,17 +244,17 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 
 			// Test memory allocation in helper functions
 			params := map[string]interface{}{
-				"id":     "test-id",
-				"durum":  "beklemede",
-				"baslik": "Test Task",
+				"id":     constants.TestIDBasic,
+				"durum":  constants.TaskStatusPending,
+				"baslik": constants.TestTaskTitleEN,
 			}
 
 			helpers.Validator.ValidateRequiredString(params, "id")
 			helpers.Validator.ValidateRequiredString(params, "baslik")
-			helpers.Validator.ValidateEnum(params, "durum", []string{"beklemede", "devam_ediyor"}, true)
+			helpers.Validator.ValidateEnum(params, "durum", constants.GetValidTaskStatuses()[:2], true)
 
-			helpers.Formatter.FormatTaskBasic("Test", "12345678")
-			helpers.Formatter.GetStatusEmoji("beklemede")
+			helpers.Formatter.FormatTaskBasic("Test", constants.TestTaskShortID)
+			helpers.Formatter.GetStatusEmoji(constants.TaskStatusPending)
 
 			return nil
 		},
@@ -264,8 +265,8 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 
 // BenchmarkRegistryPatterns compares old vs new registry patterns
 func BenchmarkRegistryPatterns(b *testing.B) {
-	i18n.Initialize("tr")
-	dataManager, _ := gorev.YeniVeriYonetici(":memory:", "")
+	i18n.Initialize(constants.DefaultTestLanguage)
+	dataManager, _ := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
 	isYonetici := gorev.YeniIsYonetici(dataManager)
 	handlers := YeniHandlers(isYonetici)
 
@@ -346,7 +347,7 @@ func BenchmarkStressConcurrency(b *testing.B) {
 			op := operations[len(operations)%3]
 			return op()
 		},
-		Goroutines: 50, // High concurrency
+		Goroutines: constants.TestConcurrencyLarge, // High concurrency
 	}
 
 	RunConcurrentBenchmark(b, config)
@@ -363,8 +364,8 @@ func BenchmarkPerformanceRegression(b *testing.B) {
 	defer cleanup()
 
 	setupTime := time.Since(start)
-	if setupTime > 100*time.Millisecond {
-		b.Errorf("Setup took too long: %v (expected < 100ms)", setupTime)
+	if setupTime > constants.TestSetupTimeoutMs*time.Millisecond {
+		b.Errorf("Setup took too long: %v (expected < %dms)", setupTime, constants.TestSetupTimeoutMs)
 	}
 
 	// Test tool call latency
@@ -380,8 +381,8 @@ func BenchmarkPerformanceRegression(b *testing.B) {
 		b.Errorf("Tool call failed: %v", result.Content)
 	}
 
-	if callTime > 10*time.Millisecond {
-		b.Errorf("Tool call took too long: %v (expected < 10ms)", callTime)
+	if callTime > constants.TestCallTimeoutMs*time.Millisecond {
+		b.Errorf("Tool call took too long: %v (expected < %dms)", callTime, constants.TestCallTimeoutMs)
 	}
 }
 
@@ -390,8 +391,8 @@ func BenchmarkRaceConditionDetection(b *testing.B) {
 	handlers, cleanup := setupBenchmarkEnvironment()
 	defer cleanup()
 
-	const goroutines = 100
-	const iterations = 10
+	const goroutines = constants.TestConcurrencyLarge
+	const iterations = constants.TestIterationSmall
 
 	errors := make(chan error, goroutines*iterations)
 	var wg sync.WaitGroup

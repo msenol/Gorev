@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/msenol/gorev/internal/constants"
 )
 
 // IntelligentTaskCreator provides advanced task creation capabilities
@@ -73,8 +75,8 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 	}
 
 	// Determine smart priority
-	suggestedPriority := "orta" // default
-	priorityConfidence := 0.5
+	suggestedPriority := constants.PriorityMedium // default
+	priorityConfidence := constants.DefaultConfidence
 	if request.SmartPriority {
 		suggestedPriority, priorityConfidence = itc.determinePriority(request.Title, request.Description)
 		response.SuggestedPriority = suggestedPriority
@@ -212,20 +214,20 @@ func (itc *IntelligentTaskCreator) determinePriority(title, description string) 
 	totalKeywords := highScore + mediumScore + lowScore
 
 	if totalKeywords == 0 {
-		return "orta", 0.3 // Default with low confidence
+		return constants.PriorityMedium, constants.ConfidenceVeryLow // Default with low confidence
 	}
 
-	confidence := float64(totalKeywords) / 10.0 // Normalize confidence
-	if confidence > 1.0 {
-		confidence = 1.0
+	confidence := float64(totalKeywords) / constants.ConfidenceNormalizer // Normalize confidence
+	if confidence > constants.ConfidenceVeryHigh {
+		confidence = constants.ConfidenceVeryHigh
 	}
 
 	if highScore > 0 && highScore >= mediumScore && highScore >= lowScore {
-		return "yuksek", confidence + 0.3
+		return constants.PriorityHigh, confidence + constants.ConfidenceWeightMedium
 	} else if lowScore > 0 && lowScore > highScore && lowScore >= mediumScore {
-		return "dusuk", confidence + 0.2
+		return constants.PriorityLow, confidence + constants.ConfidenceWeightLow
 	} else {
-		return "orta", confidence + 0.1
+		return constants.PriorityMedium, confidence + constants.ConfidenceWeightMinimal
 	}
 }
 
@@ -236,7 +238,7 @@ func (itc *IntelligentTaskCreator) estimateTaskTime(title, description string) (
 
 	if len(similarTasks) == 0 {
 		// Fallback estimation based on content analysis
-		return itc.estimateTimeFromContent(title, description), 0.3
+		return itc.estimateTimeFromContent(title, description), constants.ConfidenceVeryLow
 	}
 
 	// Calculate average time from similar tasks
@@ -271,7 +273,7 @@ func (itc *IntelligentTaskCreator) estimateTimeFromContent(title, description st
 	wordCount := len(strings.Fields(content))
 
 	// Simple heuristic based on content length and complexity
-	baseHours := float64(wordCount) / 20.0 // ~3 minutes per word
+	baseHours := float64(wordCount) / constants.WordsPerHourEstimate // Time estimation
 
 	// Adjust based on complexity indicators
 	complexity := itc.detectComplexityLevel(content)
@@ -284,10 +286,10 @@ func (itc *IntelligentTaskCreator) estimateTimeFromContent(title, description st
 	estimatedHours := baseHours * multiplier
 
 	// Reasonable bounds
-	if estimatedHours < 0.5 {
-		estimatedHours = 0.5
-	} else if estimatedHours > 40 {
-		estimatedHours = 40
+	if estimatedHours < constants.MinimumTaskTimeHours {
+		estimatedHours = constants.MinimumTaskTimeHours
+	} else if estimatedHours > constants.MaxEstimatedHours {
+		estimatedHours = constants.MaxEstimatedHours
 	}
 
 	return estimatedHours
@@ -412,24 +414,24 @@ func (itc *IntelligentTaskCreator) generateSubtasks(parentID, description string
 			}
 		}
 
-		if len(foundItems) >= 5 { // Limit to reasonable number
+		if len(foundItems) >= constants.MaxSubtasksAuto { // Limit to reasonable number
 			break
 		}
 	}
 
 	// Create subtasks
 	for i, item := range foundItems {
-		if i >= 5 { // Maximum 5 subtasks
+		if i >= constants.MaxSubtasksAuto { // Maximum subtasks
 			break
 		}
 
 		subtask, err := itc.veriYonetici.AltGorevOlustur(
 			parentID,
 			item,
-			"",     // No description for auto-generated subtasks
-			"orta", // Default priority
-			"",     // No due date
-			nil,    // No tags
+			"",                       // No description for auto-generated subtasks
+			constants.PriorityMedium, // Default priority
+			"",                       // No due date
+			nil,                      // No tags
 		)
 
 		if err != nil {
@@ -480,9 +482,9 @@ func (itc *IntelligentTaskCreator) detectComplexityLevel(content string) string 
 	indicators := itc.detectComplexityIndicators(content)
 	wordCount := len(strings.Fields(content))
 
-	if len(indicators) >= 3 || wordCount > 100 {
+	if len(indicators) >= constants.ComplexityIndicatorMinimum || wordCount > constants.ComplexityWordCountHigh {
 		return "high"
-	} else if len(indicators) >= 1 || wordCount > 30 {
+	} else if len(indicators) >= 1 || wordCount > constants.ComplexityWordCountMedium {
 		return "medium"
 	} else {
 		return "low"
@@ -517,11 +519,11 @@ func (itc *IntelligentTaskCreator) generateSimilarityReason(words1, words2 []str
 		return "Genel benzerlik"
 	}
 
-	if len(commonWords) <= 3 {
+	if len(commonWords) <= constants.MaxCommonWordsDisplay {
 		return fmt.Sprintf("Ortak kelimeler: %s", strings.Join(commonWords, ", "))
 	} else {
 		return fmt.Sprintf("Ortak kelimeler: %s ve %d tane daha",
-			strings.Join(commonWords[:3], ", "), len(commonWords)-3)
+			strings.Join(commonWords[:constants.MaxCommonWordsDisplay], ", "), len(commonWords)-constants.MaxCommonWordsDisplay)
 	}
 }
 

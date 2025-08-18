@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 )
@@ -24,6 +26,7 @@ type Handlers struct {
 	aiContextYonetici *gorev.AIContextYonetici
 	fileWatcher       *gorev.FileWatcher
 	toolHelpers       *ToolHelpers
+	debug             bool
 }
 
 func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
@@ -51,27 +54,58 @@ func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 		aiContextYonetici: aiContextYonetici,
 		fileWatcher:       fileWatcher,
 		toolHelpers:       toolHelpers,
+		debug:             false,
+	}
+}
+
+// YeniHandlersWithDebug creates handlers with debug support
+func YeniHandlersWithDebug(isYonetici *gorev.IsYonetici, debug bool) *Handlers {
+	var aiContextYonetici *gorev.AIContextYonetici
+	var fileWatcher *gorev.FileWatcher
+
+	// Create AI context manager using the same data manager if isYonetici is not nil
+	if isYonetici != nil {
+		aiContextYonetici = gorev.YeniAIContextYonetici(isYonetici.VeriYonetici())
+
+		// Initialize file watcher with default configuration
+		if fw, err := gorev.NewFileWatcher(isYonetici.VeriYonetici(), gorev.DefaultFileWatcherConfig()); err == nil {
+			fileWatcher = fw
+		} else if debug {
+			// In debug mode, log the error
+			fmt.Printf("DEBUG: Failed to initialize file watcher: %v\n", err)
+		}
+	}
+
+	// Initialize tool helpers with shared utilities
+	toolHelpers := NewToolHelpers()
+
+	return &Handlers{
+		isYonetici:        isYonetici,
+		aiContextYonetici: aiContextYonetici,
+		fileWatcher:       fileWatcher,
+		toolHelpers:       toolHelpers,
+		debug:             debug,
 	}
 }
 
 // gorevResponseSizeEstimate bir görev için tahmini response boyutunu hesaplar
 func (h *Handlers) gorevResponseSizeEstimate(gorev *gorev.Gorev) int {
 	// Tahmini karakter sayıları
-	size := 100 // Temel formatlar için
+	size := constants.BaseResponseSize // Temel formatlar için
 	size += len(gorev.Baslik) + len(gorev.Aciklama)
 	size += len(gorev.ID) + len(gorev.ProjeID)
 
 	if gorev.SonTarih != nil {
-		size += 30 // Tarih formatı için
+		size += constants.DateFormatSize // Tarih formatı için
 	}
 
 	for _, etiket := range gorev.Etiketler {
-		size += len(etiket.Isim) + 5
+		size += len(etiket.Isim) + constants.TagSizeConstant
 	}
 
 	// Bağımlılık bilgileri
 	if gorev.BagimliGorevSayisi > 0 || gorev.BuGoreveBagimliSayisi > 0 {
-		size += 100
+		size += constants.DependencyInfoSize
 	}
 
 	return size
@@ -80,28 +114,20 @@ func (h *Handlers) gorevResponseSizeEstimate(gorev *gorev.Gorev) int {
 // gorevOzetYazdir bir görevi özet formatta yazdırır (ProjeGorevleri için)
 func (h *Handlers) gorevOzetYazdir(g *gorev.Gorev) string {
 	// Öncelik kısaltması
-	oncelik := ""
-	switch g.Oncelik {
-	case "yuksek":
-		oncelik = "Y"
-	case "orta":
-		oncelik = "O"
-	case "dusuk":
-		oncelik = "D"
-	}
+	oncelik := PriorityFormat.GetPriorityShort(g.Oncelik)
 
 	metin := fmt.Sprintf("- **%s** (%s)", g.Baslik, oncelik)
 
 	// Inline detaylar
 	details := []string{}
-	if g.Aciklama != "" && len(g.Aciklama) <= 50 {
+	if g.Aciklama != "" && len(g.Aciklama) <= constants.MaxInlineDescriptionLength {
 		details = append(details, g.Aciklama)
 	} else if g.Aciklama != "" {
-		details = append(details, g.Aciklama[:47]+"...")
+		details = append(details, g.Aciklama[:constants.TruncatedDescriptionLength]+"...")
 	}
 
 	if g.SonTarih != nil {
-		details = append(details, g.SonTarih.Format("02/01"))
+		details = append(details, g.SonTarih.Format(constants.DateFormatShort))
 	}
 
 	if len(g.Etiketler) > 0 && len(g.Etiketler) <= 2 {
@@ -118,7 +144,7 @@ func (h *Handlers) gorevOzetYazdir(g *gorev.Gorev) string {
 		details = append(details, fmt.Sprintf("🔒%d", g.TamamlanmamisBagimlilikSayisi))
 	}
 
-	details = append(details, g.ID[:8])
+	details = append(details, TaskIDFormat.FormatShortID(g.ID))
 
 	if len(details) > 0 {
 		metin += " - " + strings.Join(details, " | ")
@@ -131,7 +157,7 @@ func (h *Handlers) gorevOzetYazdir(g *gorev.Gorev) string {
 // gorevOzetYazdirTamamlandi tamamlanmış bir görevi özet formatta yazdırır
 func (h *Handlers) gorevOzetYazdirTamamlandi(g *gorev.Gorev) string {
 	// Çok kısa format - sadece başlık ve ID
-	return fmt.Sprintf("- ~~%s~~ | %s\n", g.Baslik, g.ID[:8])
+	return fmt.Sprintf("- ~~%s~~ | %s\n", g.Baslik, TaskIDFormat.FormatShortID(g.ID))
 }
 
 // gorevHiyerarsiYazdir bir görevi ve alt görevlerini hiyerarşik olarak yazdırır
@@ -142,28 +168,10 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 		prefix = "└─ "
 	}
 
-	durum := ""
-	switch gorev.Durum {
-	case "tamamlandi":
-		durum = "✓"
-	case "devam_ediyor":
-		durum = "🔄"
-	case "beklemede":
-		durum = "⏳"
-	}
+	durum := StatusFormat.GetStatusSymbol(gorev.Durum)
 
 	// Öncelik kısaltması
-	oncelikKisa := ""
-	switch gorev.Oncelik {
-	case "yuksek":
-		oncelikKisa = "Y"
-	case "orta":
-		oncelikKisa = "O"
-	case "dusuk":
-		oncelikKisa = "D"
-	default:
-		oncelikKisa = gorev.Oncelik
-	}
+	oncelikKisa := PriorityFormat.GetPriorityShort(gorev.Oncelik)
 
 	// Temel satır - öncelik parantez içinde kısaltılmış
 	metin := fmt.Sprintf("%s%s[%s] %s (%s)\n", indent, prefix, durum, gorev.Baslik, oncelikKisa)
@@ -173,11 +181,11 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 
 	if gorev.Aciklama != "" {
 		// Template sistemi için açıklama limiti büyük ölçüde artırıldı
-		// Sadece gerçekten çok uzun açıklamaları kısalt (2000+ karakter)
+		// Sadece gerçekten çok uzun açıklamaları kısalt
 		aciklama := gorev.Aciklama
-		if len(aciklama) > 2000 {
-			// İlk 1997 karakteri al ve ... ekle
-			aciklama = aciklama[:1997] + "..."
+		if len(aciklama) > constants.MaxDescriptionLength {
+			// İlk karakterleri al ve ... ekle
+			aciklama = aciklama[:constants.MaxDescriptionTruncateLength] + "..."
 		}
 		details = append(details, aciklama)
 	}
@@ -190,22 +198,22 @@ func (h *Handlers) gorevHiyerarsiYazdir(gorev *gorev.Gorev, gorevMap map[string]
 	}
 
 	if gorev.SonTarih != nil {
-		details = append(details, i18n.T("messages.dateLabel", map[string]interface{}{"Date": gorev.SonTarih.Format("02/01")}))
+		details = append(details, i18n.T("messages.dateLabel", map[string]interface{}{"Date": gorev.SonTarih.Format(constants.DateFormatShort)}))
 	}
 
-	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= 3 {
+	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= constants.MaxTagsToDisplay {
 		etiketIsimleri := make([]string, len(gorev.Etiketler))
 		for i, etiket := range gorev.Etiketler {
 			etiketIsimleri[i] = etiket.Isim
 		}
 		details = append(details, i18n.T("messages.tagLabel", map[string]interface{}{"Tags": strings.Join(etiketIsimleri, ",")}))
-	} else if len(gorev.Etiketler) > 3 {
+	} else if len(gorev.Etiketler) > constants.MaxTagsToDisplay {
 		details = append(details, i18n.T("messages.tagCountLabel", map[string]interface{}{"Count": len(gorev.Etiketler)}))
 	}
 
 	// Bağımlılık bilgileri - sadece varsa ve sıfırdan büyükse
 	if gorev.TamamlanmamisBagimlilikSayisi > 0 {
-		details = append(details, fmt.Sprintf("Bekleyen: %d", gorev.TamamlanmamisBagimlilikSayisi))
+		details = append(details, i18n.TMarkdownLabel("bekleyen", gorev.TamamlanmamisBagimlilikSayisi))
 	}
 
 	// ID'yi en sona ekle
@@ -249,28 +257,10 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 		prefix = "└─ "
 	}
 
-	durum := ""
-	switch gorev.Durum {
-	case "tamamlandi":
-		durum = "✓"
-	case "devam_ediyor":
-		durum = "🔄"
-	case "beklemede":
-		durum = "⏳"
-	}
+	durum := StatusFormat.GetStatusSymbol(gorev.Durum)
 
 	// Öncelik kısaltması
-	oncelikKisa := ""
-	switch gorev.Oncelik {
-	case "yuksek":
-		oncelikKisa = "Y"
-	case "orta":
-		oncelikKisa = "O"
-	case "dusuk":
-		oncelikKisa = "D"
-	default:
-		oncelikKisa = gorev.Oncelik
-	}
+	oncelikKisa := PriorityFormat.GetPriorityShort(gorev.Oncelik)
 
 	// Temel satır - öncelik parantez içinde kısaltılmış
 	metin := fmt.Sprintf("%s%s[%s] %s (%s)\n", indent, prefix, durum, gorev.Baslik, oncelikKisa)
@@ -280,11 +270,11 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 
 	if gorev.Aciklama != "" {
 		// Template sistemi için açıklama limiti büyük ölçüde artırıldı
-		// Sadece gerçekten çok uzun açıklamaları kısalt (2000+ karakter)
+		// Sadece gerçekten çok uzun açıklamaları kısalt
 		aciklama := gorev.Aciklama
-		if len(aciklama) > 2000 {
-			// İlk 1997 karakteri al ve ... ekle
-			aciklama = aciklama[:1997] + "..."
+		if len(aciklama) > constants.MaxDescriptionLength {
+			// İlk karakterleri al ve ... ekle
+			aciklama = aciklama[:constants.MaxDescriptionTruncateLength] + "..."
 		}
 		details = append(details, aciklama)
 	}
@@ -297,22 +287,22 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 	}
 
 	if gorev.SonTarih != nil {
-		details = append(details, i18n.T("messages.dateLabel", map[string]interface{}{"Date": gorev.SonTarih.Format("02/01")}))
+		details = append(details, i18n.T("messages.dateLabel", map[string]interface{}{"Date": gorev.SonTarih.Format(constants.DateFormatShort)}))
 	}
 
-	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= 3 {
+	if len(gorev.Etiketler) > 0 && len(gorev.Etiketler) <= constants.MaxTagsToDisplay {
 		etiketIsimleri := make([]string, len(gorev.Etiketler))
 		for i, etiket := range gorev.Etiketler {
 			etiketIsimleri[i] = etiket.Isim
 		}
-		details = append(details, fmt.Sprintf("Etiket: %s", strings.Join(etiketIsimleri, ", ")))
-	} else if len(gorev.Etiketler) > 3 {
+		details = append(details, i18n.TMarkdownLabel("etiket", strings.Join(etiketIsimleri, ", ")))
+	} else if len(gorev.Etiketler) > constants.MaxTagsToDisplay {
 		details = append(details, i18n.T("messages.tagCountLabel", map[string]interface{}{"Count": len(gorev.Etiketler)}))
 	}
 
 	// Bağımlılık bilgileri - sadece varsa ve sıfırdan büyükse
 	if gorev.TamamlanmamisBagimlilikSayisi > 0 {
-		details = append(details, fmt.Sprintf("Bekleyen: %d", gorev.TamamlanmamisBagimlilikSayisi))
+		details = append(details, i18n.TMarkdownLabel("bekleyen", gorev.TamamlanmamisBagimlilikSayisi))
 	}
 
 	// ID'yi en sona ekle
@@ -365,7 +355,7 @@ func (h *Handlers) templateOrnekDegerler(template *gorev.GorevTemplate) string {
 					ornek = alan.Secenekler[0]
 				}
 			case "date":
-				ornek = "2025-01-15"
+				ornek = time.Now().AddDate(0, 0, 7).Format(constants.DateFormatISO) // One week from now
 			case "text":
 				ornek = "örnek " + alan.Isim
 			}
@@ -400,7 +390,7 @@ Detaylı bilgi için: template_listele kategori='Bug'`), nil
 
 // GorevListele görevleri listeler
 func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
-	durum, _ := params["durum"].(string)
+	durum, _ := params[constants.ParamDurum].(string)
 	sirala, _ := params["sirala"].(string)
 	filtre, _ := params["filtre"].(string)
 	etiket, _ := params["etiket"].(string)
@@ -415,7 +405,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	// Create filters map
 	filters := make(map[string]interface{})
 	if durum != "" {
-		filters["durum"] = durum
+		filters[constants.ParamDurum] = durum
 	}
 	if sirala != "" {
 		filters["sirala"] = sirala
@@ -426,7 +416,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 
 	gorevler, err := h.isYonetici.GorevListele(filters)
 	if err != nil {
-		return mcp.NewToolResultError(i18n.T("error.taskListFailed", map[string]interface{}{"Error": err})), nil
+		return mcp.NewToolResultError(i18n.TListFailed("task", err)), nil
 	}
 
 	// DEBUG: Log görev sayısı
@@ -518,7 +508,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 
 	// Response boyutunu tahmin et ve gerekirse daha az görev göster
 	estimatedSize := 0
-	const maxResponseSize = 20000 // ~20K karakter güvenli limit
+	maxResponseSize := constants.MaxResponseSize // ~20K karakter güvenli limit
 
 	gorevlerToShow := []*gorev.Gorev{}
 	for _, kokGorev := range paginatedKokGorevler {
@@ -687,14 +677,14 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		gorev.ID,
 		gorev.Durum,
 		gorev.Oncelik,
-		gorev.OlusturmaTarih.Format("2006-01-02 15:04:05"),
-		gorev.GuncellemeTarih.Format("2006-01-02 15:04:05"),
+		gorev.OlusturmaTarih.Format(constants.DateTimeFormatFull),
+		gorev.GuncellemeTarih.Format(constants.DateTimeFormatFull),
 	)
 
 	if gorev.ProjeID != "" {
 		proje, err := h.isYonetici.ProjeGetir(gorev.ProjeID)
 		if err == nil {
-			metin += fmt.Sprintf("\n- **Proje:** %s", proje.Isim)
+			metin += "\n" + i18n.TListItem("proje", proje.Isim)
 		}
 	}
 	if gorev.ParentID != "" {
@@ -704,14 +694,14 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		}
 	}
 	if gorev.SonTarih != nil {
-		metin += fmt.Sprintf("\n- **Son Teslim Tarihi:** %s", gorev.SonTarih.Format("2006-01-02"))
+		metin += "\n" + i18n.TListItem("son_tarih", gorev.SonTarih.Format(constants.DateFormatISO))
 	}
 	if len(gorev.Etiketler) > 0 {
 		var etiketIsimleri []string
 		for _, e := range gorev.Etiketler {
 			etiketIsimleri = append(etiketIsimleri, e.Isim)
 		}
-		metin += fmt.Sprintf("\n- **Etiketler:** %s", strings.Join(etiketIsimleri, ", "))
+		metin += "\n" + i18n.TListItem("etiketler", strings.Join(etiketIsimleri, ", "))
 	}
 
 	metin += "\n\n## 📝 Açıklama\n"
@@ -740,8 +730,8 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 					// Bu görev hedefse, kaynak önceki görevdir
 					kaynakGorev, err := h.isYonetici.GorevGetir(b.KaynakID)
 					if err == nil {
-						durum := "✅"
-						if kaynakGorev.Durum != "tamamlandi" {
+						durum := constants.EmojiStatusCompleted
+						if kaynakGorev.Durum != constants.TaskStatusCompleted {
 							durum = "⏳"
 						}
 						oncekiler = append(oncekiler, fmt.Sprintf("%s %s (`%s`)", durum, kaynakGorev.Baslik, kaynakGorev.Durum))
@@ -776,28 +766,28 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 
 		// Bağımlılık durumu kontrolü
 		bagimli, tamamlanmamislar, err := h.isYonetici.GorevBagimliMi(id)
-		if err == nil && !bagimli && gorev.Durum == "beklemede" {
+		if err == nil && !bagimli && gorev.Durum == constants.TaskStatusPending {
 			metin += fmt.Sprintf("\n> ⚠️ **Uyarı:** Bu görev başlatılamaz! Önce şu görevler tamamlanmalı: %v\n", tamamlanmamislar)
 		}
 	}
 
 	metin += "\n\n---\n"
-	metin += fmt.Sprintf("\n*Son güncelleme: %s*", gorev.GuncellemeTarih.Format("02 Jan 2006, 15:04"))
+	metin += fmt.Sprintf("\n*Son güncelleme: %s*", gorev.GuncellemeTarih.Format(constants.DateFormatDisplay))
 
 	return mcp.NewToolResultText(metin), nil
 }
 
 // GorevDuzenle görevi düzenler
 func (h *Handlers) GorevDuzenle(params map[string]interface{}) (*mcp.CallToolResult, error) {
-	id, ok := params["id"].(string)
+	id, ok := params[constants.ParamID].(string)
 	if !ok || id == "" {
 		return mcp.NewToolResultError("id parametresi gerekli"), nil
 	}
 
 	// En az bir düzenleme alanı olmalı
-	baslik, baslikVar := params["baslik"].(string)
-	aciklama, aciklamaVar := params["aciklama"].(string)
-	oncelik, oncelikVar := params["oncelik"].(string)
+	baslik, baslikVar := params[constants.ParamBaslik].(string)
+	aciklama, aciklamaVar := params[constants.ParamAciklama].(string)
+	oncelik, oncelikVar := params[constants.ParamOncelik].(string)
 	projeID, projeVar := params["proje_id"].(string)
 	sonTarih, sonTarihVar := params["son_tarih"].(string)
 
@@ -900,20 +890,20 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 	if dryRun {
 		response.WriteString("🔍 **Kuru Çalıştırma Sonucu**\n\n")
 	} else {
-		response.WriteString("✅ **Toplu Durum Değişikliği Tamamlandı**\n\n")
+		response.WriteString(constants.EmojiStatusCompleted + " **Toplu Durum Değişikliği Tamamlandı**\n\n")
 	}
 
-	response.WriteString(fmt.Sprintf("**Hedef Durum:** %s\n", newStatus))
-	response.WriteString(fmt.Sprintf("**İşlenen Görev:** %d\n", result_batch.TotalProcessed))
-	response.WriteString(fmt.Sprintf("**Başarılı:** %d\n", len(result_batch.Successful)))
-	response.WriteString(fmt.Sprintf("**Başarısız:** %d\n", len(result_batch.Failed)))
-	response.WriteString(fmt.Sprintf("**Uyarı:** %d\n", len(result_batch.Warnings)))
-	response.WriteString(fmt.Sprintf("**Süre:** %v\n\n", result_batch.ExecutionTime))
+	response.WriteString(i18n.TMarkdownLabel("hedef_durum", newStatus) + "\n")
+	response.WriteString(i18n.TCount("islenen_gorev", result_batch.TotalProcessed) + "\n")
+	response.WriteString(i18n.TCount("basarili", len(result_batch.Successful)) + "\n")
+	response.WriteString(i18n.TCount("basarisiz", len(result_batch.Failed)) + "\n")
+	response.WriteString(i18n.TCount("uyari", len(result_batch.Warnings)) + "\n")
+	response.WriteString(i18n.TDuration("sure", result_batch.ExecutionTime) + "\n\n")
 
 	if len(result_batch.Successful) > 0 {
-		response.WriteString("**✅ Başarılı Görevler:**\n")
+		response.WriteString("**" + constants.EmojiStatusCompleted + " Başarılı Görevler:**\n")
 		for _, taskID := range result_batch.Successful {
-			response.WriteString(fmt.Sprintf("- %s\n", taskID[:8]))
+			response.WriteString(fmt.Sprintf("- %s\n", TaskIDFormat.FormatShortID(taskID)))
 		}
 		response.WriteString("\n")
 	}
@@ -921,7 +911,7 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 	if len(result_batch.Failed) > 0 {
 		response.WriteString("**❌ Başarısız Görevler:**\n")
 		for _, failure := range result_batch.Failed {
-			response.WriteString(fmt.Sprintf("- %s: %s\n", failure.TaskID[:8], failure.Error))
+			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(failure.TaskID), failure.Error))
 		}
 		response.WriteString("\n")
 	}
@@ -1009,11 +999,11 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	if dryRun {
 		response.WriteString("🔍 **Kuru Çalıştırma Sonucu**\n\n")
 	} else {
-		response.WriteString("✅ **Toplu Etiket İşlemi Tamamlandı**\n\n")
+		response.WriteString(constants.EmojiStatusCompleted + " **Toplu Etiket İşlemi Tamamlandı**\n\n")
 	}
 
 	response.WriteString(fmt.Sprintf("**İşlem:** %s\n", operation))
-	response.WriteString(fmt.Sprintf("**Etiketler:** %s\n", strings.Join(tags, ", ")))
+	response.WriteString(i18n.TMarkdownLabel("etiketler", strings.Join(tags, ", ")) + "\n")
 	response.WriteString(fmt.Sprintf("**İşlenen Görev:** %d\n", result_batch.TotalProcessed))
 	response.WriteString(fmt.Sprintf("**Başarılı:** %d\n", len(result_batch.Successful)))
 	response.WriteString(fmt.Sprintf("**Başarısız:** %d\n", len(result_batch.Failed)))
@@ -1021,9 +1011,9 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	response.WriteString(fmt.Sprintf("**Süre:** %v\n\n", result_batch.ExecutionTime))
 
 	if len(result_batch.Successful) > 0 {
-		response.WriteString("**✅ Başarılı Görevler:**\n")
+		response.WriteString("**" + constants.EmojiStatusCompleted + " Başarılı Görevler:**\n")
 		for _, taskID := range result_batch.Successful {
-			response.WriteString(fmt.Sprintf("- %s\n", taskID[:8]))
+			response.WriteString(fmt.Sprintf("- %s\n", TaskIDFormat.FormatShortID(taskID)))
 		}
 		response.WriteString("\n")
 	}
@@ -1031,7 +1021,7 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	if len(result_batch.Failed) > 0 {
 		response.WriteString("**❌ Başarısız Görevler:**\n")
 		for _, failure := range result_batch.Failed {
-			response.WriteString(fmt.Sprintf("- %s: %s\n", failure.TaskID[:8], failure.Error))
+			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(failure.TaskID), failure.Error))
 		}
 		response.WriteString("\n")
 	}
@@ -1039,7 +1029,7 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	if len(result_batch.Warnings) > 0 {
 		response.WriteString("**⚠️ Uyarılar:**\n")
 		for _, warning := range result_batch.Warnings {
-			response.WriteString(fmt.Sprintf("- %s: %s\n", warning.TaskID[:8], warning.Message))
+			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(warning.TaskID), warning.Message))
 		}
 	}
 
@@ -1059,7 +1049,7 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 	}
 
 	// Get optional parameters
-	limit := h.toolHelpers.Validator.ValidateNumber(params, "limit", 10)
+	limit := h.toolHelpers.Validator.ValidateNumber(params, "limit", constants.DefaultSuggestionLimit)
 
 	// Get suggestion types filter
 	var types []string
@@ -1140,7 +1130,7 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 			output.WriteString(fmt.Sprintf("**Güven Skoru:** %.1f%%\n", suggestion.Confidence*100))
 
 			if suggestion.TaskID != "" {
-				output.WriteString(fmt.Sprintf("**İlgili Görev:** %s\n", suggestion.TaskID[:8]))
+				output.WriteString(fmt.Sprintf("**İlgili Görev:** %s\n", TaskIDFormat.FormatShortID(suggestion.TaskID)))
 			}
 
 			output.WriteString("\n")
@@ -1156,13 +1146,13 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 // GorevIntelligentCreate creates a task with AI-enhanced features
 func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	// Validate required parameters
-	title, result := h.toolHelpers.Validator.ValidateRequiredString(params, "baslik")
+	title, result := h.toolHelpers.Validator.ValidateRequiredString(params, constants.ParamBaslik)
 	if result != nil {
 		return result, nil
 	}
 
 	// Optional parameters
-	description := h.toolHelpers.Validator.ValidateOptionalString(params, "aciklama")
+	description := h.toolHelpers.Validator.ValidateOptionalString(params, constants.ParamAciklama)
 	autoSplit := h.toolHelpers.Validator.ValidateBool(params, "auto_split")
 	estimateTime := h.toolHelpers.Validator.ValidateBool(params, "estimate_time")
 	smartPriority := h.toolHelpers.Validator.ValidateBool(params, "smart_priority")
@@ -1231,11 +1221,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	output.WriteString(fmt.Sprintf("**ID:** %s\n", response.MainTask.ID))
 
 	if response.SuggestedPriority != "" {
-		priorityEmoji := map[string]string{
-			"yuksek": "🔥",
-			"orta":   "⚡",
-			"dusuk":  "ℹ️",
-		}[response.SuggestedPriority]
+		priorityEmoji := h.toolHelpers.Formatter.GetPriorityEmoji(response.SuggestedPriority)
 		output.WriteString(fmt.Sprintf("**Akıllı Öncelik:** %s %s\n", priorityEmoji, response.SuggestedPriority))
 	}
 
@@ -1255,7 +1241,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	if len(response.Subtasks) > 0 {
 		output.WriteString(fmt.Sprintf("### 🌳 Otomatik Alt Görevler (%d)\n", len(response.Subtasks)))
 		for i, subtask := range response.Subtasks {
-			output.WriteString(fmt.Sprintf("%d. %s (`%s`)\n", i+1, subtask.Baslik, subtask.ID[:8]))
+			output.WriteString(fmt.Sprintf("%d. %s (`%s`)\n", i+1, subtask.Baslik, TaskIDFormat.FormatShortID(subtask.ID)))
 		}
 		output.WriteString("\n")
 	}
@@ -1272,7 +1258,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	if len(response.SimilarTasks) > 0 {
 		output.WriteString(fmt.Sprintf("### 🔍 Benzer Görevler (%d)\n", len(response.SimilarTasks)))
 		for i, similar := range response.SimilarTasks {
-			if i >= 3 { // Show top 3
+			if i >= constants.MaxSuggestionsToShow { // Show top suggestions
 				break
 			}
 			output.WriteString(fmt.Sprintf("%d. %s (%.1f%% benzer - %s)\n",
@@ -1314,7 +1300,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 func (h *Handlers) ProjeListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	projeler, err := h.isYonetici.ProjeListele()
 	if err != nil {
-		return mcp.NewToolResultError(i18n.T("error.projectListFailed", map[string]interface{}{"Error": err})), nil
+		return mcp.NewToolResultError(i18n.TListFailed("project", err)), nil
 	}
 
 	if len(projeler) == 0 {
@@ -1328,7 +1314,7 @@ func (h *Handlers) ProjeListele(params map[string]interface{}) (*mcp.CallToolRes
 		if proje.Tanim != "" {
 			metin += fmt.Sprintf("- **Tanım:** %s\n", proje.Tanim)
 		}
-		metin += fmt.Sprintf("- **Oluşturma:** %s\n", proje.OlusturmaTarih.Format("02 Jan 2006, 15:04"))
+		metin += fmt.Sprintf("- **Oluşturma:** %s\n", proje.OlusturmaTarih.Format(constants.DateFormatDisplay))
 
 		// Her proje için görev sayısını göster
 		gorevSayisi, err := h.isYonetici.ProjeGorevSayisi(proje.ID)
@@ -1363,7 +1349,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	}
 
 	// Pagination parametreleri
-	limit := 50 // Varsayılan limit
+	limit := constants.DefaultTaskLimit // Varsayılan limit
 	if l, ok := params["limit"].(float64); ok && l > 0 {
 		limit = int(l)
 	}
@@ -1411,11 +1397,11 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 
 	for _, g := range gorevler {
 		switch g.Durum {
-		case "beklemede":
+		case constants.TaskStatusPending:
 			beklemede = append(beklemede, g)
-		case "devam_ediyor":
+		case constants.TaskStatusInProgress:
 			devamEdiyor = append(devamEdiyor, g)
-		case "tamamlandi":
+		case constants.TaskStatusCompleted:
 			tamamlandi = append(tamamlandi, g)
 		}
 	}
@@ -1435,7 +1421,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 
 	// Response boyut kontrolü
 	estimatedSize := len(metin)
-	const maxResponseSize = 20000
+	maxResponseSize := constants.MaxResponseSize
 	gorevleriGoster := 0
 
 	// Önce devam eden görevleri göster
@@ -1520,7 +1506,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	}
 
 	if tamamlandiEnd > tamamlandiStart && estimatedSize < maxResponseSize {
-		metin += "\n✅ Tamamlandı\n"
+		metin += "\n" + constants.EmojiStatusCompleted + " Tamamlandı\n"
 		for i := tamamlandiStart; i < tamamlandiEnd; i++ {
 			g := tamamlandi[i]
 			gorevSize := h.gorevResponseSizeEstimate(g)
@@ -1601,7 +1587,7 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 
 	templates, err := h.isYonetici.TemplateListele(kategori)
 	if err != nil {
-		return mcp.NewToolResultError(i18n.T("error.templateList", map[string]interface{}{"Error": err})), nil
+		return mcp.NewToolResultError(i18n.TListFailed("template", err)), nil
 	}
 
 	if len(templates) == 0 {
@@ -1655,12 +1641,12 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 
 // TemplatedenGorevOlustur template kullanarak görev oluşturur
 func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
-	templateID, ok := params["template_id"].(string)
+	templateID, ok := params[constants.ParamTemplateID].(string)
 	if !ok || templateID == "" {
 		return mcp.NewToolResultError("template_id parametresi gerekli"), nil
 	}
 
-	degerlerRaw, ok := params["degerler"].(map[string]interface{})
+	degerlerRaw, ok := params[constants.ParamDegerler].(map[string]interface{})
 	if !ok {
 		return mcp.NewToolResultError("degerler parametresi gerekli ve obje tipinde olmalı"), nil
 	}
@@ -1756,15 +1742,15 @@ func (h *Handlers) GorevAltGorevOlustur(params map[string]interface{}) (*mcp.Cal
 		return mcp.NewToolResultError("parent_id parametresi gerekli"), nil
 	}
 
-	baslik, ok := params["baslik"].(string)
+	baslik, ok := params[constants.ParamBaslik].(string)
 	if !ok || baslik == "" {
 		return mcp.NewToolResultError("başlık parametresi gerekli"), nil
 	}
 
-	aciklama, _ := params["aciklama"].(string)
-	oncelik, _ := params["oncelik"].(string)
+	aciklama, _ := params[constants.ParamAciklama].(string)
+	oncelik, _ := params[constants.ParamOncelik].(string)
 	if oncelik == "" {
-		oncelik = "orta"
+		oncelik = constants.PriorityMedium
 	}
 
 	sonTarih, _ := params["son_tarih"].(string)
@@ -1843,15 +1829,7 @@ func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.Cal
 	if err == nil && len(altGorevler) > 0 {
 		sb.WriteString("## 🌳 Doğrudan Alt Görevler\n")
 		for _, alt := range altGorevler {
-			durum := ""
-			switch alt.Durum {
-			case "tamamlandi":
-				durum = "✓"
-			case "devam_ediyor":
-				durum = "🔄"
-			case "beklemede":
-				durum = "⏳"
-			}
+			durum := h.toolHelpers.Formatter.GetStatusEmoji(alt.Durum)
 			sb.WriteString(fmt.Sprintf("- %s %s (ID: %s)\n", durum, alt.Baslik, alt.ID))
 		}
 	}
@@ -1957,7 +1935,7 @@ func (h *Handlers) GorevSetActive(params map[string]interface{}) (*mcp.CallToolR
 		// fmt.Printf("Görev görüntüleme kaydı hatası: %v\n", err)
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("✅ Görev %s başarıyla aktif görev olarak ayarlandı.", taskID)), nil
+	return mcp.NewToolResultText(fmt.Sprintf(constants.EmojiStatusCompleted+" Görev %s başarıyla aktif görev olarak ayarlandı.", taskID)), nil
 }
 
 // GorevGetActive returns the current active task
@@ -1994,7 +1972,7 @@ func (h *Handlers) GorevGetActive(params map[string]interface{}) (*mcp.CallToolR
 
 // GorevRecent returns recent tasks interacted with by AI
 func (h *Handlers) GorevRecent(params map[string]interface{}) (*mcp.CallToolResult, error) {
-	limit := 5
+	limit := constants.DefaultRecentTaskLimit
 	if l, ok := params["limit"].(float64); ok {
 		limit = int(l)
 	}
@@ -2121,7 +2099,7 @@ func (h *Handlers) GorevBatchUpdate(params map[string]interface{}) (*mcp.CallToo
 	response.WriteString(fmt.Sprintf("**Başarısız:** %d\n\n", len(result.Failed)))
 
 	if len(result.Successful) > 0 {
-		response.WriteString("### ✅ Başarılı Güncellemeler\n")
+		response.WriteString("### " + constants.EmojiStatusCompleted + " Başarılı Güncellemeler\n")
 		for _, id := range result.Successful {
 			response.WriteString(fmt.Sprintf("- %s\n", id))
 		}
@@ -2160,26 +2138,15 @@ func (h *Handlers) GorevNLPQuery(params map[string]interface{}) (*mcp.CallToolRe
 
 	// Use compact format for results
 	for _, task := range tasks {
-		statusEmoji := "⏳"
-		if task.Durum == "devam_ediyor" {
-			statusEmoji = "🔄"
-		} else if task.Durum == "tamamlandi" {
-			statusEmoji = "✅"
-		}
+		statusEmoji := h.toolHelpers.Formatter.GetStatusEmoji(task.Durum)
+		priorityEmoji := h.toolHelpers.Formatter.GetPriorityEmoji(task.Oncelik)
 
-		priorityEmoji := "ℹ️"
-		if task.Oncelik == "yuksek" {
-			priorityEmoji = "🔥"
-		} else if task.Oncelik == "orta" {
-			priorityEmoji = "⚡"
-		}
-
-		result.WriteString(fmt.Sprintf("%s %s **%s** (ID: %s)\n", statusEmoji, priorityEmoji, task.Baslik, task.ID[:8]))
+		result.WriteString(fmt.Sprintf("%s %s **%s** (ID: %s)\n", statusEmoji, priorityEmoji, task.Baslik, TaskIDFormat.FormatShortID(task.ID)))
 
 		if task.Aciklama != "" {
 			desc := task.Aciklama
-			if len(desc) > 100 {
-				desc = desc[:100] + "..."
+			if len(desc) > constants.MaxDescriptionDisplayLength {
+				desc = desc[:constants.MaxDescriptionDisplayLength] + "..."
 			}
 			result.WriteString(fmt.Sprintf("   %s\n", desc))
 		}
@@ -2193,10 +2160,10 @@ func (h *Handlers) GorevNLPQuery(params map[string]interface{}) (*mcp.CallToolRe
 			for _, tag := range task.Etiketler {
 				tagNames = append(tagNames, tag.Isim)
 			}
-			details = append(details, fmt.Sprintf("Etiketler: %s", strings.Join(tagNames, ", ")))
+			details = append(details, i18n.TMarkdownLabel("etiketler", strings.Join(tagNames, ", ")))
 		}
 		if task.SonTarih != nil {
-			details = append(details, fmt.Sprintf("Son tarih: %s", task.SonTarih.Format("2006-01-02")))
+			details = append(details, i18n.TMarkdownLabel("son_tarih", task.SonTarih.Format(constants.DateFormatISO)))
 		}
 
 		if len(details) > 0 {
@@ -2240,7 +2207,7 @@ func (h *Handlers) GorevFileWatchAdd(params map[string]interface{}) (*mcp.CallTo
 		return mcp.NewToolResultError(fmt.Sprintf("Dosya izleme eklenemedi: %v", err)), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("✅ Görev '%s' için '%s' dosya yolu izlemeye eklendi.\n\nDosya değişiklikleri otomatik olarak takip edilecek ve görev durumu gerektiğinde güncellenecek.", task.Baslik, filePath)), nil
+	return mcp.NewToolResultText(fmt.Sprintf(constants.EmojiStatusCompleted+" Görev '%s' için '%s' dosya yolu izlemeye eklendi.\n\nDosya değişiklikleri otomatik olarak takip edilecek ve görev durumu gerektiğinde güncellenecek.", task.Baslik, filePath)), nil
 }
 
 // GorevFileWatchRemove removes a file path from being watched for a specific task
@@ -2266,7 +2233,7 @@ func (h *Handlers) GorevFileWatchRemove(params map[string]interface{}) (*mcp.Cal
 		return mcp.NewToolResultError(fmt.Sprintf("Dosya izleme kaldırılamadı: %v", err)), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("✅ Görev ID %s için '%s' dosya yolu izlemeden kaldırıldı.", taskID, filePath)), nil
+	return mcp.NewToolResultText(fmt.Sprintf(constants.EmojiStatusCompleted+" Görev ID %s için '%s' dosya yolu izlemeden kaldırıldı.", taskID, filePath)), nil
 }
 
 // GorevFileWatchList lists all watched file paths and their associated tasks

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/msenol/gorev/internal/constants"
 )
 
 // AutoStateManager handles automatic task state transitions
@@ -38,7 +40,7 @@ func (asm *AutoStateManager) SetAIContextManager(acm *AIContextYonetici) {
 	asm.aiContextManager = acm
 }
 
-// AutoTransitionToInProgress automatically transitions a task to "devam_ediyor" when accessed
+// AutoTransitionToInProgress automatically transitions a task to in-progress when accessed
 func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	log.Printf("Debug: Auto-transitioning task to in-progress, taskID: %s", taskID)
 
@@ -48,8 +50,8 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 		return err
 	}
 
-	// Only transition if currently "beklemede"
-	if task.Durum != "beklemede" {
+	// Only transition if currently pending
+	if task.Durum != constants.TaskStatusPending {
 		log.Printf("Task not in pending status, skipping auto-transition: taskID=%s, currentStatus=%s", taskID, task.Durum)
 		return nil
 	}
@@ -65,8 +67,8 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 		return nil
 	}
 
-	// Transition to "devam_ediyor"
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": "devam_ediyor"})
+	// Transition to in-progress
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": constants.TaskStatusInProgress})
 	if err != nil {
 		return err
 	}
@@ -74,8 +76,8 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	// Record the interaction
 	if asm.aiContextManager != nil {
 		asm.aiContextManager.recordInteraction(taskID, "auto_transition_start", map[string]interface{}{
-			"from_status": "beklemede",
-			"to_status":   "devam_ediyor",
+			"from_status": constants.TaskStatusPending,
+			"to_status":   constants.TaskStatusInProgress,
 			"reason":      "task_accessed",
 			"timestamp":   time.Now(),
 		})
@@ -89,7 +91,7 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	return nil
 }
 
-// AutoTransitionToPending automatically transitions a task back to "beklemede" after inactivity
+// AutoTransitionToPending automatically transitions a task back to pending after inactivity
 func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 	log.Printf("Auto-transitioning task to pending due to inactivity: taskID=%s", taskID)
 
@@ -99,14 +101,14 @@ func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 		return err
 	}
 
-	// Only transition if currently "devam_ediyor"
-	if task.Durum != "devam_ediyor" {
+	// Only transition if currently in progress
+	if task.Durum != constants.TaskStatusInProgress {
 		log.Printf("Task not in progress, skipping auto-transition: taskID=%s, currentStatus=%s", taskID, task.Durum)
 		return nil
 	}
 
-	// Transition back to "beklemede"
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": "beklemede"})
+	// Transition back to pending
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": constants.TaskStatusPending})
 	if err != nil {
 		return err
 	}
@@ -114,8 +116,8 @@ func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 	// Record the interaction
 	if asm.aiContextManager != nil {
 		asm.aiContextManager.recordInteraction(taskID, "auto_transition_pause", map[string]interface{}{
-			"from_status": "devam_ediyor",
-			"to_status":   "beklemede",
+			"from_status": constants.TaskStatusInProgress,
+			"to_status":   constants.TaskStatusPending,
 			"reason":      "inactivity_timeout",
 			"timeout":     asm.inactivityTimer.String(),
 			"timestamp":   time.Now(),
@@ -156,7 +158,7 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 	// Check if all subtasks are completed
 	allCompleted := true
 	for _, subtask := range subtasks {
-		if subtask.Durum != "tamamlandi" {
+		if subtask.Durum != constants.TaskStatusCompleted {
 			allCompleted = false
 			break
 		}
@@ -170,8 +172,8 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 		}
 
 		// Auto-complete parent if not already completed
-		if parentTask.Durum != "tamamlandi" {
-			err = asm.veriYonetici.GorevGuncelle(parentID, map[string]interface{}{"durum": "tamamlandi"})
+		if parentTask.Durum != constants.TaskStatusCompleted {
+			err = asm.veriYonetici.GorevGuncelle(parentID, map[string]interface{}{"durum": constants.TaskStatusCompleted})
 			if err != nil {
 				return err
 			}
@@ -273,7 +275,7 @@ func (asm *AutoStateManager) checkDependenciesCompleted(taskID string) (bool, er
 	}
 
 	for _, dep := range dependencies {
-		if dep.Durum != "tamamlandi" {
+		if dep.Durum != constants.TaskStatusCompleted {
 			return false, nil
 		}
 	}
@@ -405,7 +407,7 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 	// Create task parameters
 	taskParams := map[string]interface{}{
 		"baslik":      title,
-		"durum":       "beklemede",
+		"durum":       constants.TaskStatusPending,
 		"olusturulma": time.Now(),
 	}
 
@@ -520,7 +522,7 @@ func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interfa
 	}
 
 	// Complete the task
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": "tamamlandi"})
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": constants.TaskStatusCompleted})
 	if err != nil {
 		return nil, err
 	}

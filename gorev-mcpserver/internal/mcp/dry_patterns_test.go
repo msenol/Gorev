@@ -1,15 +1,17 @@
 package mcp
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
 // TestDRYPatternsBasic tests our basic DRY patterns work correctly
 func TestDRYPatternsBasic(t *testing.T) {
 	// Initialize i18n
-	if err := i18n.Initialize("tr"); err != nil {
+	if err := i18n.Initialize(constants.DefaultTestLanguage); err != nil {
 		t.Fatalf("Failed to initialize i18n: %v", err)
 	}
 
@@ -28,7 +30,7 @@ func TestDRYPatternsBasic(t *testing.T) {
 		}
 
 		// Test FormatInvalidValue
-		invalid := i18n.FormatInvalidValue("durum", "invalid", []string{"beklemede", "devam_ediyor"})
+		invalid := i18n.FormatInvalidValue("durum", "invalid", constants.GetValidTaskStatuses()[:2])
 		if invalid == "" {
 			t.Error("FormatInvalidValue should return non-empty string")
 		}
@@ -42,12 +44,12 @@ func TestDRYPatternsBasic(t *testing.T) {
 		}
 
 		// Test valid string validation
-		params := map[string]interface{}{"id": "test-id"}
+		params := map[string]interface{}{"id": constants.TestIDBasic}
 		result, err := validator.ValidateRequiredString(params, "id")
 		if err != nil {
 			t.Errorf("ValidateRequiredString should not fail for valid input: %v", err)
 		}
-		if result != "test-id" {
+		if result != constants.TestIDBasic {
 			t.Errorf("Expected 'test-id', got '%s'", result)
 		}
 
@@ -67,7 +69,7 @@ func TestDRYPatternsBasic(t *testing.T) {
 		}
 
 		// Test basic task formatting
-		result := formatter.FormatTaskBasic("Test Task", "12345678-1234-1234-1234-123456789012")
+		result := formatter.FormatTaskBasic(constants.TestTaskTitleEN, constants.TestTaskID)
 		if result == "" {
 			t.Error("FormatTaskBasic should return non-empty string")
 		}
@@ -79,7 +81,7 @@ func TestDRYPatternsBasic(t *testing.T) {
 		}
 
 		// Test priority emoji
-		priorityEmoji := formatter.GetPriorityEmoji("yuksek")
+		priorityEmoji := formatter.GetPriorityEmoji(constants.PriorityHigh)
 		if priorityEmoji == "" {
 			t.Error("GetPriorityEmoji should return non-empty string")
 		}
@@ -101,7 +103,7 @@ func TestDRYPatternsBasic(t *testing.T) {
 		}
 
 		// Test combined usage
-		params := map[string]interface{}{"id": "combined-test"}
+		params := map[string]interface{}{"id": constants.TestIDBasic}
 		result, err := helpers.Validator.ValidateRequiredString(params, "id")
 		if err != nil {
 			t.Errorf("Combined validation should not fail: %v", err)
@@ -125,13 +127,14 @@ func TestTableDrivenPatterns(t *testing.T) {
 		{"EmptyString", "", false},
 		{"NonEmptyString", "test", true},
 		{"SpaceOnly", " ", false},
-		{"ValidID", "test-id-123", true},
+		{"ValidID", constants.TestIDValidation, true},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Simple non-empty check
-			result := tc.input != "" && len(tc.input) > 0
+			// Check for non-empty and non-whitespace-only content
+			trimmed := strings.TrimSpace(tc.input)
+			result := trimmed != ""
 			if result != tc.expected {
 				t.Errorf("Expected %v, got %v for input '%s'", tc.expected, result, tc.input)
 			}
@@ -195,7 +198,7 @@ func TestConcurrencyPatterns(t *testing.T) {
 
 // BenchmarkDRYPatternsSample benchmarks our DRY patterns
 func BenchmarkDRYPatternsSample(b *testing.B) {
-	i18n.Initialize("tr")
+	i18n.Initialize(constants.DefaultTestLanguage)
 
 	cases := []BenchmarkTestCase{
 		{
@@ -217,7 +220,7 @@ func BenchmarkDRYPatternsSample(b *testing.B) {
 			Cleanup: func() {},
 			Operation: func(data interface{}) error {
 				formatter := data.(*TaskFormatter)
-				formatter.FormatTaskBasic("Test", "test-id")
+				formatter.FormatTaskBasic("Test", constants.TestIDBasic)
 				return nil
 			},
 		},

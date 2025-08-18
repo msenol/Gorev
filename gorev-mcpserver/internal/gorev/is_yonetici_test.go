@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
 // setupTestI18n initializes the i18n system for tests
 func setupTestI18n() {
 	// Initialize i18n with Turkish (default) for tests
-	i18n.Initialize("tr")
+	i18n.Initialize(constants.DefaultTestLanguage)
 }
 
 // MockVeriYonetici is a mock implementation of VeriYonetici for testing
@@ -86,7 +87,7 @@ func (m *MockVeriYonetici) GorevGetir(id string) (*Gorev, error) {
 	}
 	gorev, ok := m.gorevler[id]
 	if !ok {
-		return nil, errors.New(i18n.T("error.taskNotFound"))
+		return nil, errors.New(i18n.TEntityNotFound("task", errors.New("not found")))
 	}
 	return gorev, nil
 }
@@ -606,7 +607,7 @@ func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
 			gorevID:       "non-existing",
 			yeniDurum:     "tamamlandi",
 			wantErr:       true,
-			expectedError: "error.taskNotFound", // Will be compared after i18n initialization
+			expectedError: "not found", // Will be compared after i18n initialization
 		},
 		{
 			name:            "database getir error",

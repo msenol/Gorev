@@ -16,6 +16,7 @@ var (
 	buildTime = "unknown"
 	gitCommit = "unknown"
 	langFlag  string
+	debugFlag bool
 )
 
 // getMigrationsPath returns the correct path to migrations folder
@@ -225,6 +226,7 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 		},
 	}
 	serveCmd.PersistentFlags().StringVar(&langFlag, "lang", "", "Language preference (tr, en)")
+	serveCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, i18n.T("cli.debug"))
 
 	versionCmd := &cobra.Command{
 		Use:   "version",
@@ -297,10 +299,16 @@ func runServer() error {
 	// İş mantığı servisini oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 
-	// MCP sunucusunu başlat
-	sunucu, err := mcp.YeniMCPSunucu(isYonetici)
+	// MCP sunucusunu başlat (debug desteği ile)
+	sunucu, err := mcp.YeniMCPSunucuWithDebug(isYonetici, debugFlag)
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.mcpServerCreate", map[string]interface{}{"Error": err}))
+	}
+
+	// Debug mode mesajı
+	if debugFlag {
+		fmt.Printf("DEBUG: Starting Gorev MCP server with debug mode enabled\n")
+		fmt.Printf("DEBUG: Language: %s\n", langFlag)
 	}
 
 	// Sunucuyu çalıştır

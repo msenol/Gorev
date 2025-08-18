@@ -3,6 +3,7 @@ package mcp
 import (
 	"testing"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -10,7 +11,7 @@ import (
 
 func TestYeniMCPSunucu(t *testing.T) {
 	// Create a test data manager
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -29,7 +30,7 @@ func TestYeniMCPSunucu(t *testing.T) {
 
 func TestMCPServerIntegration(t *testing.T) {
 	// Create test environment
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -54,7 +55,7 @@ func TestMCPServerIntegration(t *testing.T) {
 
 // Test MCP server configuration and metadata
 func TestMCPServerMetadata(t *testing.T) {
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 
@@ -69,7 +70,7 @@ func TestMCPServerMetadata(t *testing.T) {
 
 // Test handler creation and initialization
 func TestHandlerCreation(t *testing.T) {
-	veriYonetici, err := gorev.YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer veriYonetici.Kapat()
 

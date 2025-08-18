@@ -10,6 +10,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ import (
 func setupTestEnvironment(t *testing.T) (*server.MCPServer, *Handlers, func()) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
@@ -34,7 +35,7 @@ func setupTestEnvironment(t *testing.T) (*server.MCPServer, *Handlers, func()) {
 		os.Remove(tempDB)
 	}
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
@@ -147,7 +148,7 @@ func callTool(t *testing.T, handlers *Handlers, toolName string, params map[stri
 func TestMCPHandlers_Integration(t *testing.T) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
@@ -160,7 +161,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 	}
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	// Initialize default templates
@@ -210,7 +211,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 				"amac":      "Test the integration workflow",
 				"sorular":   "Does the integration work correctly?",
 				"kriterler": "All tests must pass",
-				"oncelik":   "yuksek",
+				"oncelik":   constants.PriorityHigh,
 				"son_tarih": "2025-12-31",
 				"etiketler": "test,integration",
 			},
@@ -220,7 +221,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 				"amac":      "Test secondary functionality",
 				"sorular":   "Does secondary functionality work?",
 				"kriterler": "Secondary tests must pass",
-				"oncelik":   "dusuk",
+				"oncelik":   constants.PriorityLow,
 				"etiketler": "test,secondary",
 			},
 		}
@@ -228,8 +229,8 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		var taskIDs []string
 		for i, params := range taskParams {
 			result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-				"template_id": templateID,
-				"degerler":    params,
+				constants.ParamTemplateID: templateID,
+				constants.ParamDegerler:   params,
 			})
 			if result.IsError {
 				t.Logf("Task %d creation failed: %v", i+1, getResultText(result))
@@ -252,7 +253,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 
 		// 6. List tasks by status
 		result = callTool(t, handlers, "gorev_listele", map[string]interface{}{
-			"durum": "beklemede",
+			"durum": constants.TaskStatusPending,
 		})
 		assert.False(t, result.IsError)
 
@@ -272,7 +273,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		// 9. Update task status
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
 			"id":    taskIDs[0],
-			"durum": "devam_ediyor",
+			"durum": constants.TaskStatusInProgress,
 		})
 		assert.False(t, result.IsError)
 
@@ -280,7 +281,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		result = callTool(t, handlers, "gorev_duzenle", map[string]interface{}{
 			"id":      taskIDs[1],
 			"baslik":  "Secondary Testing (Updated)",
-			"oncelik": "yuksek",
+			"oncelik": constants.PriorityHigh,
 		})
 		assert.False(t, result.IsError)
 
@@ -423,10 +424,10 @@ func TestMCPHandlers_TemplateIntegration(t *testing.T) {
 		if !listResult.IsError && strings.Contains(getResultText(listResult), "Bug Fix") {
 			// Try to create a task from the Bug Fix template
 			result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-				"template_id": "bug-fix",
-				"degerler": map[string]interface{}{
+				constants.ParamTemplateID: constants.TestTemplateBugFix,
+				constants.ParamDegerler: map[string]interface{}{
 					"bug_tanim": "Test bug açıklaması",
-					"oncelik":   "yuksek",
+					"oncelik":   constants.PriorityHigh,
 				},
 			})
 			// This might fail if the template structure doesn't match
@@ -439,7 +440,7 @@ func TestMCPHandlers_TemplateIntegration(t *testing.T) {
 func TestMCPHandlers_ProjectManagement(t *testing.T) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
@@ -452,7 +453,7 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 	}
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	// Initialize default templates
@@ -501,14 +502,14 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 
 		// Create tasks in the active project
 		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": templateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: templateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":    "Proje A Görevi",
 				"konu":      "Project A Research",
 				"amac":      "Test project A functionality",
 				"sorular":   "Does project A work correctly?",
 				"kriterler": "All project A tests must pass",
-				"oncelik":   "orta",
+				"oncelik":   constants.PriorityMedium,
 			},
 		})
 		assert.False(t, result.IsError)
@@ -545,7 +546,7 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 func TestMCPHandlers_TaskDependencies(t *testing.T) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
@@ -558,7 +559,7 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 	}
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	// Initialize default templates
@@ -567,7 +568,7 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 
 	// Create and set active project
 	proje := &gorev.Proje{
-		ID:    "test-dep-project",
+		ID:    constants.TestProjectIDDep,
 		Isim:  "Test Dependency Project",
 		Tanim: "Test project for dependencies",
 	}
@@ -594,7 +595,7 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 				"amac":      "Complete task 1",
 				"sorular":   "Is task 1 complete?",
 				"kriterler": "Task 1 criteria",
-				"oncelik":   "yuksek",
+				"oncelik":   constants.PriorityHigh,
 			},
 			{
 				"baslik":    "Görev 2",
@@ -602,7 +603,7 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 				"amac":      "Complete task 2",
 				"sorular":   "Is task 2 complete?",
 				"kriterler": "Task 2 criteria",
-				"oncelik":   "orta",
+				"oncelik":   constants.PriorityMedium,
 			},
 			{
 				"baslik":    "Görev 3",
@@ -610,15 +611,15 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 				"amac":      "Complete task 3",
 				"sorular":   "Is task 3 complete?",
 				"kriterler": "Task 3 criteria",
-				"oncelik":   "dusuk",
+				"oncelik":   constants.PriorityLow,
 			},
 		}
 		var taskIDs []string
 
 		for _, taskData := range tasks {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-				"template_id": templateID,
-				"degerler":    taskData,
+				constants.ParamTemplateID: templateID,
+				constants.ParamDegerler:   taskData,
 			})
 			assert.False(t, result.IsError)
 
@@ -650,7 +651,7 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 		// Try to start Task 3 (should fail due to dependencies)
 		result := callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
 			"id":    taskIDs[2],
-			"durum": "devam_ediyor",
+			"durum": constants.TaskStatusInProgress,
 		})
 		// Note: Dependencies might not be enforced in this version, so this test might pass
 		if result.IsError {
@@ -662,14 +663,14 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 		// Complete Task 1
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
 			"id":    taskIDs[0],
-			"durum": "tamamlandi",
+			"durum": constants.TaskStatusCompleted,
 		})
 		assert.False(t, result.IsError)
 
 		// Still can't start Task 3 (Task 2 not complete) - but this might not be enforced
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
 			"id":    taskIDs[2],
-			"durum": "devam_ediyor",
+			"durum": constants.TaskStatusInProgress,
 		})
 		// Dependencies might not be enforced in this version
 		if result.IsError {
@@ -681,14 +682,14 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 		// Complete Task 2
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
 			"id":    taskIDs[1],
-			"durum": "tamamlandi",
+			"durum": constants.TaskStatusCompleted,
 		})
 		assert.False(t, result.IsError)
 
 		// Now Task 3 can start
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
 			"id":    taskIDs[2],
-			"durum": "devam_ediyor",
+			"durum": constants.TaskStatusInProgress,
 		})
 		assert.False(t, result.IsError)
 
@@ -709,7 +710,7 @@ func TestMCPHandlers_Performance(t *testing.T) {
 
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
@@ -722,7 +723,7 @@ func TestMCPHandlers_Performance(t *testing.T) {
 	}
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
 	require.NoError(t, err)
 
 	// Initialize default templates
@@ -731,7 +732,7 @@ func TestMCPHandlers_Performance(t *testing.T) {
 
 	// Create and set active project
 	proje := &gorev.Proje{
-		ID:    "test-perf-project",
+		ID:    constants.TestProjectIDPerf,
 		Isim:  "Test Performance Project",
 		Tanim: "Test project for performance testing",
 	}
@@ -756,14 +757,14 @@ func TestMCPHandlers_Performance(t *testing.T) {
 
 		for i := 0; i < taskCount; i++ {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-				"template_id": templateID,
-				"degerler": map[string]interface{}{
+				constants.ParamTemplateID: templateID,
+				constants.ParamDegerler: map[string]interface{}{
 					"baslik":    fmt.Sprintf("Performance Test Task %d", i),
 					"konu":      "Performance Testing",
 					"amac":      "Test system performance",
 					"sorular":   "How fast can we create tasks?",
 					"kriterler": "Speed and accuracy",
-					"oncelik":   "orta",
+					"oncelik":   constants.PriorityMedium,
 				},
 			})
 			if result.IsError {
@@ -792,14 +793,14 @@ func TestMCPHandlers_Performance(t *testing.T) {
 func TestTemplateHandlers(t *testing.T) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
 	}
 	t.Run("List Templates Empty", func(t *testing.T) {
 		// Create fresh database without templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_empty.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_empty.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_empty.db")
 
@@ -821,7 +822,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Initialize Default Templates", func(t *testing.T) {
 		// Initialize default templates through veri_yonetici
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_init.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_init.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_init.db")
 
@@ -849,7 +850,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("List Templates By Category", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_category.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_category.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_category.db")
 
@@ -874,7 +875,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Bug Report", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_bug.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_bug.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_bug.db")
 
@@ -883,7 +884,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create and set active project
 		proje := &gorev.Proje{
-			ID:    "test-bug-project",
+			ID:    constants.TestProjectIDBug,
 			Isim:  "Test Bug Project",
 			Tanim: "Test project for bug reports",
 		}
@@ -910,8 +911,8 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create task from bug report template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": bugTemplateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: bugTemplateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":    "Login button not working",
 				"aciklama":  "Users can't log in when clicking the login button",
 				"modul":     "Authentication",
@@ -921,7 +922,7 @@ func TestTemplateHandlers(t *testing.T) {
 				"mevcut":    "Nothing happens when clicking the button",
 				"ekler":     "console-error.png",
 				"cozum":     "Check event handler binding",
-				"oncelik":   "yuksek",
+				"oncelik":   constants.PriorityHigh,
 				"etiketler": "bug,urgent,auth",
 			},
 		})
@@ -965,7 +966,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Missing Required Fields", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_missing.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_missing.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_missing.db")
 
@@ -990,8 +991,8 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Try to create task without required fields
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": bugTemplateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: bugTemplateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik": "Test bug",
 				// Missing required fields: aciklama, modul, ortam, adimlar, beklenen, mevcut, oncelik
 			},
@@ -1009,8 +1010,8 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Try to create task with non-existent template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": "non-existent-template-id",
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: constants.TestTemplateNonExistent,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik": "Test task",
 			},
 		})
@@ -1022,7 +1023,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Feature Request", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_feature.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_feature.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_feature.db")
 
@@ -1063,8 +1064,8 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create task from feature request template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": featureTemplateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: featureTemplateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":       "Dark mode support",
 				"aciklama":     "Add dark mode theme to the mobile app",
 				"amac":         "Improve user experience in low-light conditions and save battery",
@@ -1072,8 +1073,8 @@ func TestTemplateHandlers(t *testing.T) {
 				"kriterler":    "- Theme toggle in settings\n- Persistent preference\n- Smooth transition",
 				"ui_ux":        "Material Design 3 dark theme guidelines",
 				"ilgili":       "Settings module, Theme manager",
-				"efor":         "orta",
-				"oncelik":      "orta",
+				"efor":         constants.PriorityMedium,
+				"oncelik":      constants.PriorityMedium,
 				"etiketler":    "özellik,ui,mobile",
 				"proje_id":     projectID,
 				"son_tarih":    "2025-08-15",
@@ -1098,7 +1099,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Technical Debt", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_tech_debt.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_tech_debt.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_tech_debt.db")
 
@@ -1107,7 +1108,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create and set active project
 		proje := &gorev.Proje{
-			ID:    "test-tech-debt-project",
+			ID:    constants.TestProjectIDTechDebt,
 			Isim:  "Test Tech Debt Project",
 			Tanim: "Test project for technical debt",
 		}
@@ -1134,8 +1135,8 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create task from technical debt template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": techDebtTemplateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: techDebtTemplateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":         "Database query optimization",
 				"aciklama":       "Optimize slow database queries in user listing",
 				"alan":           "Backend/Database",
@@ -1146,7 +1147,7 @@ func TestTemplateHandlers(t *testing.T) {
 				"riskler":        "Potential data inconsistency during migration",
 				"iyilestirmeler": "50% reduction in page load time",
 				"sure":           "2-3 gün",
-				"oncelik":        "yuksek",
+				"oncelik":        constants.PriorityHigh,
 				"etiketler":      "teknik-borç,performance,database",
 			},
 		})
@@ -1174,7 +1175,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Template Field Validation", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_validation.db", "file://../../internal/veri/migrations")
+		veriYonetici, err := gorev.YeniVeriYonetici("test_template_validation.db", constants.TestMigrationsPath)
 		require.NoError(t, err)
 		defer os.Remove("test_template_validation.db")
 
@@ -1206,7 +1207,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Test missing template_id
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"degerler": map[string]interface{}{
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik": "Test",
 			},
 		})
@@ -1215,15 +1216,15 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Test missing degerler
 		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": "some-id",
+			constants.ParamTemplateID: constants.TestTemplateSomeID,
 		})
 		assert.True(t, result.IsError)
 		assert.Contains(t, getResultText(result), "degerler parametresi gerekli")
 
 		// Test wrong type for degerler
 		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": "some-id",
-			"degerler":    "not-an-object",
+			constants.ParamTemplateID: constants.TestTemplateSomeID,
+			constants.ParamDegerler:   "not-an-object",
 		})
 		assert.True(t, result.IsError)
 		assert.Contains(t, getResultText(result), "degerler parametresi gerekli ve obje tipinde olmalı")
@@ -1234,13 +1235,13 @@ func TestTemplateHandlers(t *testing.T) {
 func TestTemplateConcurrency(t *testing.T) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
 	}
 	// Setup with default templates
-	veriYonetici, err := gorev.YeniVeriYonetici("test_template_concurrent.db", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici("test_template_concurrent.db", constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer os.Remove("test_template_concurrent.db")
 
@@ -1249,7 +1250,7 @@ func TestTemplateConcurrency(t *testing.T) {
 
 	// Create and set active project for template tests
 	proje := &gorev.Proje{
-		ID:    "test-concurrent-project",
+		ID:    constants.TestProjectIDConcurrent,
 		Isim:  "Test Concurrent Project",
 		Tanim: "Test project for concurrent operations",
 	}
@@ -1281,8 +1282,8 @@ func TestTemplateConcurrency(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		go func(index int) {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-				"template_id": bugTemplateID,
-				"degerler": map[string]interface{}{
+				constants.ParamTemplateID: bugTemplateID,
+				constants.ParamDegerler: map[string]interface{}{
 					"baslik":    fmt.Sprintf("Concurrent Bug %d", index),
 					"aciklama":  fmt.Sprintf("Bug description %d", index),
 					"modul":     "TestModule",
@@ -1290,7 +1291,7 @@ func TestTemplateConcurrency(t *testing.T) {
 					"adimlar":   "Test steps",
 					"beklenen":  "Expected behavior",
 					"mevcut":    "Current behavior",
-					"oncelik":   "orta",
+					"oncelik":   constants.PriorityMedium,
 					"etiketler": "test,concurrent",
 				},
 			})
@@ -1318,12 +1319,12 @@ func TestTemplateConcurrency(t *testing.T) {
 func TestGorevOlusturDeprecated(t *testing.T) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
 	}
-	veriYonetici, err := gorev.YeniVeriYonetici("test_deprecated_gorev.db", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici("test_deprecated_gorev.db", constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer os.Remove("test_deprecated_gorev.db")
 
@@ -1332,9 +1333,9 @@ func TestGorevOlusturDeprecated(t *testing.T) {
 
 	t.Run("GorevOlustur returns deprecation error", func(t *testing.T) {
 		result, err := handlers.GorevOlustur(map[string]interface{}{
-			"baslik":   "Test Task",
+			"baslik":   constants.TestTaskTitleEN,
 			"aciklama": "This should fail",
-			"oncelik":  "yuksek",
+			"oncelik":  constants.PriorityHigh,
 		})
 
 		// Should not return a Go error, but should return an MCP error result
@@ -1353,7 +1354,7 @@ func TestGorevOlusturDeprecated(t *testing.T) {
 		result, err := handlers.GorevOlustur(map[string]interface{}{
 			"baslik":    "Valid Task Title",
 			"aciklama":  "Valid description",
-			"oncelik":   "orta",
+			"oncelik":   constants.PriorityMedium,
 			"proje_id":  "valid-project-id",
 			"son_tarih": "2025-12-31",
 			"etiketler": "test,valid",
@@ -1377,13 +1378,13 @@ func TestGorevOlusturDeprecated(t *testing.T) {
 func TestTemplateMandatoryWorkflow(t *testing.T) {
 	// Initialize i18n system for tests
 	if !i18n.IsInitialized() {
-		err := i18n.Initialize("tr")
+		err := i18n.Initialize(constants.DefaultTestLanguage)
 		if err != nil {
 			t.Logf("Warning: i18n initialization failed: %v", err)
 		}
 	}
 	// Setup with default templates
-	veriYonetici, err := gorev.YeniVeriYonetici("test_template_mandatory.db", "file://../../internal/veri/migrations")
+	veriYonetici, err := gorev.YeniVeriYonetici("test_template_mandatory.db", constants.TestMigrationsPath)
 	require.NoError(t, err)
 	defer os.Remove("test_template_mandatory.db")
 
@@ -1435,8 +1436,8 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 		// 2. Create task from bug report template
 		taskResult := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": bugTemplateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: bugTemplateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik":    "Login API fails with 500 error",
 				"aciklama":  "Users cannot login due to server error",
 				"modul":     "Authentication",
@@ -1444,7 +1445,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 				"adimlar":   "1. Go to login page\n2. Enter valid credentials\n3. Click login",
 				"beklenen":  "User should be logged in successfully",
 				"mevcut":    "Server returns 500 internal server error",
-				"oncelik":   "yuksek",
+				"oncelik":   constants.PriorityHigh,
 				"etiketler": "bug,login,critical",
 			},
 		})
@@ -1458,7 +1459,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		oldResult, err := handlers.GorevOlustur(map[string]interface{}{
 			"baslik":   "This should fail",
 			"aciklama": "Old method",
-			"oncelik":  "yuksek",
+			"oncelik":  constants.PriorityHigh,
 		})
 		assert.NoError(t, err)
 		assert.True(t, oldResult.IsError)
@@ -1480,8 +1481,8 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 		// Try to create task with missing required fields
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			"template_id": bugTemplateID,
-			"degerler": map[string]interface{}{
+			constants.ParamTemplateID: bugTemplateID,
+			constants.ParamDegerler: map[string]interface{}{
 				"baslik": "Incomplete bug report",
 				// Missing required fields like modul, ortam, adimlar, etc.
 			},

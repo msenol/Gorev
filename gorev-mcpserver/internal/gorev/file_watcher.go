@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/msenol/gorev/internal/constants"
 )
 
 // FileWatcher monitors file system changes and automatically updates related tasks
@@ -345,21 +346,21 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 	}
 
 	// Auto-update task status if configured
-	if fw.config.AutoUpdateStatus && gorev.Durum == "beklemede" {
-		// Transition to "devam_ediyor" when files are modified
+	if fw.config.AutoUpdateStatus && gorev.Durum == constants.TaskStatusPending {
+		// Transition to in-progress when files are modified
 		if event.Operation == "write" || event.Operation == "create" {
-			gorev.Durum = "devam_ediyor"
+			gorev.Durum = constants.TaskStatusInProgress
 			gorev.GuncellemeTarih = time.Now()
 
 			// Update task status using interface-compatible parameters
 			updateParams := map[string]interface{}{
-				"durum": "devam_ediyor",
+				"durum": constants.TaskStatusInProgress,
 			}
 			if err := fw.veriYonetici.GorevGuncelle(taskID, updateParams); err != nil {
 				return fmt.Errorf("failed to update task status: %w", err)
 			}
 
-			log.Printf("Auto-transitioned task %s to 'devam_ediyor' due to file changes", taskID)
+			log.Printf("Auto-transitioned task %s to in-progress due to file changes", taskID)
 		}
 	}
 

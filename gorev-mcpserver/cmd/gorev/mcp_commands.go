@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	"github.com/msenol/gorev/internal/mcp"
@@ -122,7 +123,7 @@ func createMCPCallCommand() *cobra.Command {
 					value := parts[1]
 
 					// Special handling for degerler parameter (JSON object)
-					if key == "degerler" {
+					if key == constants.ParamDegerler {
 						var degerlerMap map[string]interface{}
 						if err := json.Unmarshal([]byte(value), &degerlerMap); err == nil {
 							params[key] = degerlerMap
@@ -269,7 +270,7 @@ func createMCPCreateTaskCommand() *cobra.Command {
 
 	cmd.Flags().StringVar(&title, "title", "", i18n.T("flags.title"))
 	cmd.Flags().StringVar(&description, "description", "", i18n.T("flags.taskDescription"))
-	cmd.Flags().StringVar(&priority, "priority", "orta", i18n.T("flags.priority"))
+	cmd.Flags().StringVar(&priority, "priority", constants.PriorityMedium, i18n.T("flags.priority"))
 	cmd.Flags().StringVar(&projectID, "project", "", i18n.T("flags.projectId"))
 
 	return cmd

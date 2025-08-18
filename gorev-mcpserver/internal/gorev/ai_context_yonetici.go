@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
@@ -69,7 +70,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	// Validate task exists
 	gorev, err := acy.veriYonetici.GorevGetir(taskID)
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.taskNotFoundAi", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.TEntityNotFound("task", err))
 	}
 
 	// Get current context
@@ -89,8 +90,8 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	// Add to recent tasks if not already there
 	if !contains(context.RecentTasks, taskID) {
 		context.RecentTasks = append([]string{taskID}, context.RecentTasks...)
-		if len(context.RecentTasks) > 10 {
-			context.RecentTasks = context.RecentTasks[:10]
+		if len(context.RecentTasks) > constants.MaxRecentTasks {
+			context.RecentTasks = context.RecentTasks[:constants.MaxRecentTasks]
 		}
 	}
 
@@ -104,10 +105,10 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 		return fmt.Errorf(i18n.T("error.interactionSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
-	// Auto-transition to "devam_ediyor" if task is in "beklemede"
-	if gorev.Durum == "beklemede" {
-		gorev.Durum = "devam_ediyor"
-		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": "devam_ediyor"}); err != nil {
+	// Auto-transition to constants.TaskStatusInProgress if task is in constants.TaskStatusPending
+	if gorev.Durum == constants.TaskStatusPending {
+		gorev.Durum = constants.TaskStatusInProgress
+		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": constants.TaskStatusInProgress}); err != nil {
 			return fmt.Errorf(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
@@ -167,7 +168,7 @@ func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
 	summary.ActiveTask = activeTask
 
 	// Get recent tasks
-	recentTasks, _ := acy.GetRecentTasks(5)
+	recentTasks, _ := acy.GetRecentTasks(constants.DefaultRecentTaskLimit)
 	summary.RecentTasks = recentTasks
 
 	// Get working project
@@ -192,11 +193,11 @@ func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
 	}
 
 	// Get next priorities (high priority, not completed)
-	gorevler, _ := acy.veriYonetici.GorevleriGetir("beklemede", "", "")
+	gorevler, _ := acy.veriYonetici.GorevleriGetir(constants.TaskStatusPending, "", "")
 	for _, g := range gorevler {
-		if g.Oncelik == "yuksek" {
+		if g.Oncelik == constants.PriorityHigh {
 			summary.NextPriorities = append(summary.NextPriorities, g)
-			if len(summary.NextPriorities) >= 5 {
+			if len(summary.NextPriorities) >= constants.MaxSummaryItems {
 				break
 			}
 		}
@@ -206,7 +207,7 @@ func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
 	for _, g := range gorevler {
 		if g.TamamlanmamisBagimlilikSayisi > 0 {
 			summary.Blockers = append(summary.Blockers, g)
-			if len(summary.Blockers) >= 5 {
+			if len(summary.Blockers) >= constants.MaxSummaryItems {
 				break
 			}
 		}
@@ -228,17 +229,17 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 		return err
 	}
 
-	// Auto-transition to "devam_ediyor" if in "beklemede"
-	if gorev.Durum == "beklemede" {
-		gorev.Durum = "devam_ediyor"
-		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": "devam_ediyor"}); err != nil {
+	// Auto-transition to constants.TaskStatusInProgress if in constants.TaskStatusPending
+	if gorev.Durum == constants.TaskStatusPending {
+		gorev.Durum = constants.TaskStatusInProgress
+		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": constants.TaskStatusInProgress}); err != nil {
 			return fmt.Errorf(i18n.T("error.autoStatusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 		// Record the state change
 		if err := acy.recordInteraction(taskID, "updated", map[string]interface{}{
 			"auto_state_change": true,
-			"from":              "beklemede",
-			"to":                "devam_ediyor",
+			"from":              constants.TaskStatusPending,
+			"to":                constants.TaskStatusInProgress,
 		}); err != nil {
 			return err
 		}
@@ -303,7 +304,7 @@ func (acy *AIContextYonetici) recordInteraction(taskID, actionType string, conte
 }
 
 func (acy *AIContextYonetici) getSessionInteractions() ([]*AIInteraction, error) {
-	return acy.veriYonetici.AIInteractionlariGetir(50) // Get last 50 interactions for session
+	return acy.veriYonetici.AIInteractionlariGetir(constants.MaxInteractionHistory) // Get last 50 interactions for session
 }
 
 func (acy *AIContextYonetici) updateLastInteraction(taskID string) error {
@@ -332,8 +333,8 @@ func (acy *AIContextYonetici) addToRecentTasks(taskID string) error {
 	context.RecentTasks = append([]string{taskID}, newRecentTasks...)
 
 	// Keep only last 10 tasks
-	if len(context.RecentTasks) > 10 {
-		context.RecentTasks = context.RecentTasks[:10]
+	if len(context.RecentTasks) > constants.MaxRecentTasks {
+		context.RecentTasks = context.RecentTasks[:constants.MaxRecentTasks]
 	}
 
 	// Save updated context
@@ -359,7 +360,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: update.ID,
-				Error:  i18n.T("error.taskNotFoundBatch", map[string]interface{}{"Error": err}),
+				Error:  i18n.TEntityNotFound("task", err),
 			})
 			continue
 		}
@@ -370,7 +371,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 		// Validate and collect all supported field updates
 		if durum, ok := update.Updates["durum"].(string); ok {
 			// Validate status values
-			validStatuses := []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"}
+			validStatuses := constants.GetValidTaskStatuses()
 			isValid := false
 			for _, status := range validStatuses {
 				if durum == status {
@@ -390,7 +391,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 
 		if oncelik, ok := update.Updates["oncelik"].(string); ok {
 			// Validate priority values
-			validPriorities := []string{"dusuk", "normal", "yuksek", "acil"}
+			validPriorities := constants.GetValidPriorities()
 			isValid := false
 			for _, priority := range validPriorities {
 				if oncelik == priority {
@@ -502,27 +503,27 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 		},
 		"son oluşturduğum": func() ([]*Gorev, error) {
 			// Last created task
-			return acy.getLastCreatedTasks(1)
+			return acy.getLastCreatedTasks(constants.LastCreatedCount)
 		},
 		"son oluşturulan": func() ([]*Gorev, error) {
 			// Recently created tasks
-			return acy.getLastCreatedTasks(5)
+			return acy.getLastCreatedTasks(constants.RecentlyCreatedCount)
 		},
 		"yüksek öncelik": func() ([]*Gorev, error) {
 			// High priority tasks
-			return acy.veriYonetici.GorevleriGetir("beklemede", "", "")
+			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusPending, "", "")
 		},
 		"tamamlanmamış": func() ([]*Gorev, error) {
 			// Incomplete tasks
-			return acy.veriYonetici.GorevleriGetir("beklemede", "", "")
+			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusPending, "", "")
 		},
 		"devam eden": func() ([]*Gorev, error) {
 			// In progress tasks
-			return acy.veriYonetici.GorevleriGetir("devam_ediyor", "", "")
+			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusInProgress, "", "")
 		},
 		"tamamlanan": func() ([]*Gorev, error) {
 			// Completed tasks
-			return acy.veriYonetici.GorevleriGetir("tamamlandi", "", "")
+			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusCompleted, "", "")
 		},
 		"blokaj": func() ([]*Gorev, error) {
 			// Blocked tasks

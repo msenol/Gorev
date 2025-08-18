@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
@@ -36,7 +37,7 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 		string(alanlarJSON), string(ornekDegerlerJSON), template.Kategori, template.Aktif)
 
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.templateCreateFailed", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.TCreateFailed("template", err))
 	}
 
 	return nil
@@ -156,14 +157,14 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 	}
 
 	// Varsayılan değerleri uygula
-	oncelik := "orta"
+	oncelik := constants.PriorityMedium
 	if val, ok := degerler["oncelik"]; ok {
 		oncelik = val
 	}
 
 	var sonTarih *time.Time
 	if val, ok := degerler["son_tarih"]; ok {
-		if t, err := time.Parse("2006-01-02", val); err == nil {
+		if t, err := time.Parse(constants.DateFormatISO, val); err == nil {
 			sonTarih = &t
 		}
 	}
@@ -182,7 +183,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 		Baslik:   baslik,
 		Aciklama: aciklama,
 		Oncelik:  oncelik,
-		Durum:    "beklemede",
+		Durum:    constants.TaskStatusPending,
 	}
 
 	// ProjeID'yi ayarla
@@ -265,13 +266,13 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "baslik", Tip: "text", Zorunlu: true},
 				{Isim: "aciklama", Tip: "text", Zorunlu: true},
 				{Isim: "modul", Tip: "text", Zorunlu: true},
-				{Isim: "ortam", Tip: "select", Zorunlu: true, Secenekler: []string{"development", "staging", "production"}},
+				{Isim: "ortam", Tip: "select", Zorunlu: true, Secenekler: constants.ValidEnvironments},
 				{Isim: "adimlar", Tip: "text", Zorunlu: true},
 				{Isim: "beklenen", Tip: "text", Zorunlu: true},
 				{Isim: "mevcut", Tip: "text", Zorunlu: true},
 				{Isim: "ekler", Tip: "text", Zorunlu: false},
 				{Isim: "cozum", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "orta", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "bug"},
 			},
 			Kategori: "Teknik",
@@ -311,9 +312,9 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "kriterler", Tip: "text", Zorunlu: true},
 				{Isim: "ui_ux", Tip: "text", Zorunlu: false},
 				{Isim: "ilgili", Tip: "text", Zorunlu: false},
-				{Isim: "efor", Tip: "select", Zorunlu: false, Secenekler: []string{"küçük", "orta", "büyük"}},
+				{Isim: "efor", Tip: "select", Zorunlu: false, Secenekler: constants.ValidEffortLevels},
 				{Isim: "son_tarih", Tip: "date", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "orta", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "özellik"},
 			},
 			Kategori: "Özellik",
@@ -358,7 +359,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "riskler", Tip: "text", Zorunlu: false},
 				{Isim: "iyilestirmeler", Tip: "text", Zorunlu: true},
 				{Isim: "sure", Tip: "select", Zorunlu: false, Secenekler: []string{"1 gün", "2-3 gün", "1 hafta", "2+ hafta"}},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "orta", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "teknik-borç,refaktöring"},
 			},
 			Kategori: "Teknik",
@@ -396,7 +397,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "alternatifler", Tip: "text", Zorunlu: false},
 				{Isim: "kriterler", Tip: "text", Zorunlu: true},
 				{Isim: "son_tarih", Tip: "date", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "orta", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "araştırma"},
 			},
 			Kategori: "Araştırma",
@@ -449,7 +450,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "affected_users", Tip: "text", Zorunlu: true},
 				{Isim: "attachments", Tip: "text", Zorunlu: false},
 				{Isim: "workaround", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "yuksek", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "bug,production"},
 			},
 			Kategori: "Bug",
@@ -487,7 +488,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "research_plan", Tip: "text", Zorunlu: true},
 				{Isim: "expected_outputs", Tip: "text", Zorunlu: true},
 				{Isim: "risks_assumptions", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "yuksek", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "spike,research,poc"},
 			},
 			Kategori: "Araştırma",
@@ -534,7 +535,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "root_cause", Tip: "text", Zorunlu: false},
 				{Isim: "proposed_solutions", Tip: "text", Zorunlu: true},
 				{Isim: "tradeoffs", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "yuksek", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "performance,optimization"},
 			},
 			Kategori: "Teknik",
@@ -585,7 +586,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "mitigation_steps", Tip: "text", Zorunlu: true},
 				{Isim: "testing_requirements", Tip: "text", Zorunlu: true},
 				{Isim: "disclosure_timeline", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "yuksek", Secenekler: []string{"yuksek"}}, // Güvenlik her zaman yüksek
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: []string{constants.PriorityHigh}}, // Güvenlik her zaman yüksek
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "security,vulnerability"},
 			},
 			Kategori: "Güvenlik",
@@ -639,7 +640,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 				{Isim: "current_complexity", Tip: "text", Zorunlu: false},
 				{Isim: "target_complexity", Tip: "text", Zorunlu: false},
 				{Isim: "current_coverage", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: "orta", Secenekler: []string{"dusuk", "orta", "yuksek"}},
+				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
 				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "refactoring,code-quality"},
 			},
 			Kategori: "Teknik",
@@ -651,7 +652,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		if err := vy.TemplateOlustur(template); err != nil {
 			// Template zaten varsa hata verme
 			if !strings.Contains(err.Error(), "UNIQUE constraint") {
-				return fmt.Errorf(i18n.T("error.defaultTemplateCreateFailed", map[string]interface{}{"Template": template.Isim, "Error": err}))
+				return fmt.Errorf(fmt.Sprintf("varsayılan template oluşturulamadı (%s): %v", template.Isim, err))
 			}
 		}
 	}

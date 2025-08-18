@@ -3,6 +3,7 @@ package i18n
 import (
 	"testing"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +44,7 @@ func TestInitialize(t *testing.T) {
 
 func TestSetLanguage(t *testing.T) {
 	// Initialize first
-	err := Initialize("tr")
+	err := Initialize(constants.DefaultTestLanguage)
 	assert.NoError(t, err)
 
 	tests := []struct {
@@ -82,7 +83,7 @@ func TestSetLanguage(t *testing.T) {
 
 func TestT(t *testing.T) {
 	// Initialize with Turkish
-	err := Initialize("tr")
+	err := Initialize(constants.DefaultTestLanguage)
 	assert.NoError(t, err)
 
 	tests := []struct {
@@ -94,14 +95,14 @@ func TestT(t *testing.T) {
 	}{
 		{
 			name:     "Simple key translation",
-			key:      "error.taskNotFound",
+			key:      "common.validation.not_found",
 			data:     nil,
 			contains: "bulunamadı", // Should contain Turkish word
 		},
 		{
 			name:     "Key with template data",
-			key:      "error.dataManagerCreate",
-			data:     map[string]interface{}{"Error": "test error"},
+			key:      "common.operations.create_failed",
+			data:     map[string]interface{}{"Entity": "data_manager", "Error": "test error"},
 			contains: "test error",
 		},
 		{
@@ -130,17 +131,17 @@ func TestT(t *testing.T) {
 
 func TestTWithLanguageSwitching(t *testing.T) {
 	// Start with Turkish
-	err := Initialize("tr")
+	err := Initialize(constants.DefaultTestLanguage)
 	assert.NoError(t, err)
 
-	turkishResult := T("error.taskNotFound", nil)
+	turkishResult := T("common.validation.not_found", map[string]interface{}{"Entity": "görev", "Error": "test"})
 	assert.NotEmpty(t, turkishResult)
 
 	// Switch to English
 	err = SetLanguage("en")
 	assert.NoError(t, err)
 
-	englishResult := T("error.taskNotFound", nil)
+	englishResult := T("common.validation.not_found", map[string]interface{}{"Entity": "görev", "Error": "test"})
 	assert.NotEmpty(t, englishResult)
 
 	// Results should be different (unless the key doesn't exist in translations)
@@ -152,13 +153,13 @@ func TestTWithLanguageSwitching(t *testing.T) {
 
 func TestMultipleInitializations(t *testing.T) {
 	// Test that multiple initializations don't cause issues
-	err1 := Initialize("tr")
+	err1 := Initialize(constants.DefaultTestLanguage)
 	assert.NoError(t, err1)
 
 	err2 := Initialize("en")
 	assert.NoError(t, err2)
 
 	// Should be able to translate after multiple initializations
-	result := T("error.taskNotFound", nil)
+	result := T("common.validation.not_found", map[string]interface{}{"Entity": "görev", "Error": "test"})
 	assert.NotEmpty(t, result)
 }

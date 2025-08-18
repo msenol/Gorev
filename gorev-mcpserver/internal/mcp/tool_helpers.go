@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
@@ -81,47 +82,55 @@ func NewTaskFormatter() *TaskFormatter {
 
 // FormatTaskBasic formats a task in basic format with ID
 func (tf *TaskFormatter) FormatTaskBasic(baslik, id string) string {
-	return fmt.Sprintf("**%s** (ID: %s)", baslik, id[:8])
+	shortID := id
+	if len(id) > constants.ShortIDLength {
+		shortID = id[:constants.ShortIDLength]
+	}
+	return fmt.Sprintf("**%s** (ID: %s)", baslik, shortID)
 }
 
 // FormatTaskWithStatus formats a task with status emoji
 func (tf *TaskFormatter) FormatTaskWithStatus(baslik, id, durum string) string {
 	statusEmoji := tf.GetStatusEmoji(durum)
-	return fmt.Sprintf("%s %s (ID: %s)", statusEmoji, baslik, id[:8])
+	shortID := id
+	if len(id) > constants.ShortIDLength {
+		shortID = id[:constants.ShortIDLength]
+	}
+	return fmt.Sprintf("%s %s (ID: %s)", statusEmoji, baslik, shortID)
 }
 
 // FormatSuccessMessage formats a success message consistently
 func (tf *TaskFormatter) FormatSuccessMessage(action, title, id string) string {
-	return fmt.Sprintf("✓ %s: %s (ID: %s)", action, title, id)
+	return fmt.Sprintf("%s%s: %s (ID: %s)", constants.PrefixSuccess, action, title, id)
 }
 
 // GetStatusEmoji returns appropriate emoji for task status
 func (tf *TaskFormatter) GetStatusEmoji(durum string) string {
 	switch durum {
-	case "tamamlandi":
-		return "✅"
-	case "devam_ediyor":
-		return "🔄"
-	case "beklemede":
-		return "⏳"
-	case "iptal":
-		return "❌"
+	case constants.TaskStatusCompleted:
+		return constants.EmojiStatusCompleted
+	case constants.TaskStatusInProgress:
+		return constants.EmojiStatusInProgress
+	case constants.TaskStatusPending:
+		return constants.EmojiStatusPending
+	case constants.TaskStatusCancelled:
+		return constants.EmojiStatusCancelled
 	default:
-		return "⚪"
+		return "❓"
 	}
 }
 
 // GetPriorityEmoji returns appropriate emoji for task priority
 func (tf *TaskFormatter) GetPriorityEmoji(oncelik string) string {
 	switch oncelik {
-	case "yuksek":
-		return "🔥"
-	case "orta":
-		return "⚡"
-	case "dusuk":
-		return "ℹ️"
+	case constants.PriorityHigh:
+		return constants.EmojiPriorityHigh
+	case constants.PriorityMedium:
+		return constants.EmojiPriorityMedium
+	case constants.PriorityLow:
+		return constants.EmojiPriorityLow
 	default:
-		return "ℹ️"
+		return constants.EmojiPriorityUnknown
 	}
 }
 
@@ -217,30 +226,30 @@ func (cv *CommonValidators) ValidateTaskIDField(params map[string]interface{}, f
 
 // ValidateTaskStatus validates task status
 func (cv *CommonValidators) ValidateTaskStatus(params map[string]interface{}, required bool) (string, *mcp.CallToolResult) {
-	validStatuses := []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"}
+	validStatuses := constants.GetValidTaskStatuses()
 	return cv.paramValidator.ValidateEnum(params, "durum", validStatuses, required)
 }
 
 // ValidateTaskPriority validates task priority
 func (cv *CommonValidators) ValidateTaskPriority(params map[string]interface{}, required bool) (string, *mcp.CallToolResult) {
-	validPriorities := []string{"dusuk", "orta", "yuksek"}
+	validPriorities := constants.GetValidPriorities()
 	return cv.paramValidator.ValidateEnum(params, "oncelik", validPriorities, required)
 }
 
 // ValidatePagination validates pagination parameters
 func (cv *CommonValidators) ValidatePagination(params map[string]interface{}) (limit, offset int) {
-	limit = cv.paramValidator.ValidateNumber(params, "limit", 50)
-	offset = cv.paramValidator.ValidateNumber(params, "offset", 0)
+	limit = cv.paramValidator.ValidateNumber(params, "limit", constants.DefaultTaskLimit)
+	offset = cv.paramValidator.ValidateNumber(params, "offset", constants.DefaultPaginationOffset)
 
 	// Ensure reasonable limits
-	if limit > 200 {
-		limit = 200
+	if limit > constants.MaxTaskLimit {
+		limit = constants.MaxTaskLimit
 	}
 	if limit < 1 {
-		limit = 50
+		limit = constants.DefaultTaskLimit
 	}
 	if offset < 0 {
-		offset = 0
+		offset = constants.DefaultPaginationOffset
 	}
 
 	return limit, offset
@@ -288,3 +297,126 @@ func NewToolHelpers() *ToolHelpers {
 		ResponseBuilder: NewResponseBuilder(),
 	}
 }
+
+// ==================== CENTRALIZED FORMATTERS ====================
+
+// PriorityFormatter handles priority formatting consistently
+type PriorityFormatter struct{}
+
+// NewPriorityFormatter creates a new priority formatter
+func NewPriorityFormatter() *PriorityFormatter {
+	return &PriorityFormatter{}
+}
+
+// GetPriorityShort returns single letter priority code
+func (pf *PriorityFormatter) GetPriorityShort(priority string) string {
+	switch priority {
+	case constants.PriorityHigh:
+		return "Y"
+	case constants.PriorityMedium:
+		return "O"
+	case constants.PriorityLow:
+		return "D"
+	default:
+		return "?"
+	}
+}
+
+// GetPriorityEmoji returns emoji for priority
+func (pf *PriorityFormatter) GetPriorityEmoji(priority string) string {
+	switch priority {
+	case constants.PriorityHigh:
+		return constants.EmojiPriorityHigh
+	case constants.PriorityMedium:
+		return constants.EmojiPriorityMedium
+	case constants.PriorityLow:
+		return constants.EmojiPriorityLow
+	default:
+		return "⚪"
+	}
+}
+
+// StatusFormatter handles status formatting consistently
+type StatusFormatter struct{}
+
+// NewStatusFormatter creates a new status formatter
+func NewStatusFormatter() *StatusFormatter {
+	return &StatusFormatter{}
+}
+
+// GetStatusEmoji returns emoji for status
+func (sf *StatusFormatter) GetStatusEmoji(status string) string {
+	switch status {
+	case constants.TaskStatusPending:
+		return constants.EmojiStatusPending
+	case constants.TaskStatusInProgress:
+		return constants.EmojiStatusInProgress
+	case constants.TaskStatusCompleted:
+		return constants.EmojiStatusCompleted
+	case constants.TaskStatusCancelled:
+		return constants.EmojiStatusCancelled
+	default:
+		return "❓"
+	}
+}
+
+// GetStatusSymbol returns simple symbol for status (for compact display)
+func (sf *StatusFormatter) GetStatusSymbol(status string) string {
+	switch status {
+	case constants.TaskStatusPending:
+		return constants.EmojiStatusPending
+	case constants.TaskStatusInProgress:
+		return constants.EmojiStatusInProgress
+	case constants.TaskStatusCompleted:
+		return constants.BulletCheck
+	case constants.TaskStatusCancelled:
+		return constants.EmojiStatusCancelled
+	default:
+		return "?"
+	}
+}
+
+// GetStatusShort returns short status code
+func (sf *StatusFormatter) GetStatusShort(status string) string {
+	switch status {
+	case constants.TaskStatusPending:
+		return "P"
+	case constants.TaskStatusInProgress:
+		return "I"
+	case constants.TaskStatusCompleted:
+		return "C"
+	case constants.TaskStatusCancelled:
+		return "X"
+	default:
+		return "?"
+	}
+}
+
+// TaskIDFormatter handles task ID formatting
+type TaskIDFormatter struct{}
+
+// NewTaskIDFormatter creates a new task ID formatter
+func NewTaskIDFormatter() *TaskIDFormatter {
+	return &TaskIDFormatter{}
+}
+
+// FormatShortID returns truncated task ID (first 8 characters)
+func (tf *TaskIDFormatter) FormatShortID(taskID string) string {
+	if len(taskID) > constants.ShortIDLength {
+		return taskID[:constants.ShortIDLength]
+	}
+	return taskID
+}
+
+// FormatTaskReference formats task with short ID and title
+func (tf *TaskIDFormatter) FormatTaskReference(taskID, title string) string {
+	shortID := tf.FormatShortID(taskID)
+	return fmt.Sprintf("%s (%s)", title, shortID)
+}
+
+// Global formatter instances for easy access
+var (
+	PriorityFormat = NewPriorityFormatter()
+	StatusFormat   = NewStatusFormatter()
+	TaskIDFormat   = NewTaskIDFormatter()
+)

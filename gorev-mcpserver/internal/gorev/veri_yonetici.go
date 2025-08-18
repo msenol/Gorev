@@ -14,6 +14,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
@@ -111,7 +112,7 @@ func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, 
 func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, error) {
 	gorev := &Gorev{
 		ID:              uuid.New().String(),
-		Durum:           "beklemede",
+		Durum:           constants.TaskStatusPending,
 		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
 	}
@@ -192,7 +193,7 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, son
 		Baslik:          baslik,
 		Aciklama:        aciklama,
 		Oncelik:         oncelik,
-		Durum:           "beklemede",
+		Durum:           constants.TaskStatusPending,
 		ParentID:        parentID,
 		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
@@ -200,7 +201,7 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, son
 	}
 
 	if err := vy.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf(i18n.T("error.taskSaveFailed", map[string]interface{}{"Error": err}))
+		return nil, fmt.Errorf(i18n.TSaveFailed("task", err))
 	}
 
 	if len(etiketIsimleri) > 0 {
@@ -209,7 +210,7 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, son
 			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
 		if err := vy.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
-			return nil, fmt.Errorf(i18n.T("error.taskTagsSetFailed", map[string]interface{}{"Error": err}))
+			return nil, fmt.Errorf(i18n.TSetFailed("task_tags", err))
 		}
 		gorev.Etiketler = etiketler
 	}
@@ -560,7 +561,7 @@ func (vy *VeriYonetici) GorevSil(id string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf(i18n.T("error.taskNotFound"))
+		return fmt.Errorf(i18n.TEntityNotFound("task", errors.New("not found")))
 	}
 
 	return nil
@@ -851,7 +852,7 @@ func (vy *VeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, er
 	var ilerlemeYuzdesi float64
 	if toplam > 0 {
 		ilerlemeYuzdesi = (float64(tamamlanan) / float64(toplam)) * 100
-	} else if gorev.Durum == "tamamlandi" {
+	} else if gorev.Durum == constants.TaskStatusCompleted {
 		ilerlemeYuzdesi = 100
 	}
 

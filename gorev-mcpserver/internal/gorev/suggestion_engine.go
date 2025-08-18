@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/msenol/gorev/internal/constants"
 )
 
 // SuggestionEngine provides intelligent suggestions for task management
@@ -102,7 +104,7 @@ func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*Suggesti
 	// Sort by priority and confidence
 	sort.Slice(allSuggestions, func(i, j int) bool {
 		// First by priority (high > medium > low)
-		priorityScore := map[string]int{"high": 3, "medium": 2, "low": 1}
+		priorityScore := map[string]int{"high": constants.PriorityScoreHigh, "medium": constants.PriorityScoreMedium, "low": constants.PriorityScoreLow}
 		if priorityScore[allSuggestions[i].Priority] != priorityScore[allSuggestions[j].Priority] {
 			return priorityScore[allSuggestions[i].Priority] > priorityScore[allSuggestions[j].Priority]
 		}
@@ -113,7 +115,7 @@ func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*Suggesti
 	// Apply limit
 	limit := request.Limit
 	if limit <= 0 {
-		limit = 10 // Default limit
+		limit = constants.DefaultSuggestionLimit // Default limit
 	}
 	if len(allSuggestions) > limit {
 		allSuggestions = allSuggestions[:limit]
@@ -136,7 +138,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	var suggestions []Suggestion
 
 	// Get high priority pending tasks
-	gorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": "beklemede"})
+	gorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": constants.TaskStatusPending})
 	if err != nil {
 		return suggestions, err
 	}
@@ -144,14 +146,14 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	// Filter for high priority tasks
 	var highPriorityTasks []*Gorev
 	for _, gorev := range gorevler {
-		if gorev.Oncelik == "yuksek" {
+		if gorev.Oncelik == constants.PriorityHigh {
 			highPriorityTasks = append(highPriorityTasks, gorev)
 		}
 	}
 
 	// Suggest starting high priority tasks
 	for i, gorev := range highPriorityTasks {
-		if i >= 3 { // Limit to top 3
+		if i >= constants.MaxSuggestionsToShow { // Limit to top suggestions
 			break
 		}
 
@@ -173,14 +175,14 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 					"task_priority": gorev.Oncelik,
 					"task_id":       gorev.ID,
 				},
-				Confidence: 0.9,
+				Confidence: constants.ConfidenceVeryHigh,
 				TaskID:     gorev.ID,
 			})
 		}
 	}
 
 	// Suggest completing tasks in progress
-	devamEdenGorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": "devam_ediyor"})
+	devamEdenGorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": constants.TaskStatusInProgress})
 	if err == nil {
 		for i, gorev := range devamEdenGorevler {
 			if i >= 2 { // Limit to top 2
@@ -197,7 +199,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 					"task_title": gorev.Baslik,
 					"task_id":    gorev.ID,
 				},
-				Confidence: 0.7,
+				Confidence: constants.ConfidenceMedium,
 				TaskID:     gorev.ID,
 			})
 		}
@@ -237,18 +239,18 @@ func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionReq
 		taskWords := extractKeywords(task.Baslik + " " + task.Aciklama)
 		similarity := calculateSimilarity(activeWords, taskWords)
 
-		if similarity > 0.3 { // 30% similarity threshold
+		if similarity > constants.SimilarityThreshold { // Similarity threshold
 			similarTasks = append(similarTasks, task)
 		}
 	}
 
 	// Suggest reviewing similar completed tasks
 	for i, task := range similarTasks {
-		if i >= 3 { // Limit to top 3
+		if i >= constants.MaxSuggestionsToShow { // Limit to top suggestions
 			break
 		}
 
-		if task.Durum == "tamamlandi" {
+		if task.Durum == constants.TaskStatusCompleted {
 			suggestions = append(suggestions, Suggestion{
 				Type:        "similar_task",
 				Priority:    "medium",
@@ -260,7 +262,7 @@ func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionReq
 					"similar_task_id":    task.ID,
 					"active_task_id":     request.ActiveTaskID,
 				},
-				Confidence: 0.6,
+				Confidence: constants.ConfidenceLow,
 				TaskID:     task.ID,
 			})
 		}
@@ -310,12 +312,12 @@ func (se *SuggestionEngine) generateTemplateSuggestions(request SuggestionReques
 				Description: fmt.Sprintf("'%s' template'i son görevlerinize uygun görünüyor", template.Isim),
 				Action:      fmt.Sprintf("template_listele kategori='%s'", template.Kategori),
 				Context: map[string]interface{}{
-					"template_id":       template.ID,
-					"template_name":     template.Isim,
-					"template_category": template.Kategori,
-					"relevance_score":   score,
+					constants.ParamTemplateID: template.ID,
+					"template_name":           template.Isim,
+					"template_category":       template.Kategori,
+					"relevance_score":         score,
 				},
-				Confidence: float64(score) / 10.0, // Normalize score
+				Confidence: float64(score) / constants.ConfidenceNormalizer, // Normalize score
 				TaskID:     "",
 			})
 		}
@@ -338,7 +340,7 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 	var riskyTasks []*Gorev
 
 	for _, task := range allTasks {
-		if task.SonTarih == nil || task.Durum == "tamamlandi" {
+		if task.SonTarih == nil || task.Durum == constants.TaskStatusCompleted {
 			continue
 		}
 
@@ -361,9 +363,9 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 					"task_title":   task.Baslik,
 					"task_id":      task.ID,
 					"days_overdue": int(-daysUntilDeadline),
-					"deadline":     task.SonTarih.Format("2006-01-02"),
+					"deadline":     task.SonTarih.Format(constants.DateFormatISO),
 				},
-				Confidence: 1.0,
+				Confidence: constants.ConfidenceVeryHigh,
 				TaskID:     task.ID,
 			})
 		}
@@ -376,7 +378,7 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 
 	// Add deadline risk suggestions
 	for i, task := range riskyTasks {
-		if i >= 3 { // Limit to top 3
+		if i >= constants.MaxSuggestionsToShow { // Limit to top suggestions
 			break
 		}
 
@@ -391,9 +393,9 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 				"task_title": task.Baslik,
 				"task_id":    task.ID,
 				"days_until": daysUntil,
-				"deadline":   task.SonTarih.Format("2006-01-02"),
+				"deadline":   task.SonTarih.Format(constants.DateFormatISO),
 			},
-			Confidence: 0.8,
+			Confidence: constants.ConfidenceHigh,
 			TaskID:     task.ID,
 		})
 	}
@@ -412,7 +414,7 @@ func (se *SuggestionEngine) checkCanStartTask(taskID string) (bool, error) {
 	}
 
 	for _, dep := range dependencies {
-		if dep.Durum != "tamamlandi" {
+		if dep.Durum != constants.TaskStatusCompleted {
 			return false, nil
 		}
 	}
@@ -434,7 +436,7 @@ func extractKeywords(text string) []string {
 
 	var keywords []string
 	for _, word := range words {
-		if len(word) > 2 && !stopWords[word] {
+		if len(word) > constants.MinWordLength && !stopWords[word] {
 			keywords = append(keywords, word)
 		}
 	}

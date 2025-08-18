@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 )
@@ -94,7 +95,7 @@ func SetupTestEnvironment(t *testing.T) *TestEnvironment {
 	}
 
 	// Create in-memory database
-	dataManager, err := gorev.YeniVeriYonetici(":memory:", "")
+	dataManager, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 	if err != nil {
 		t.Fatalf("Failed to create test data manager: %v", err)
 	}
@@ -264,7 +265,7 @@ func CreateTestProject(t *testing.T, env *TestEnvironment, name, description str
 	// Extract project ID from result - simplified extraction
 	// result.Content is []interface{} with text content
 	if len(result.Content) > 0 {
-		return "test-project-id"
+		return constants.TestHelperProjectID
 	}
 
 	return ""
@@ -273,8 +274,8 @@ func CreateTestProject(t *testing.T, env *TestEnvironment, name, description str
 // CreateTestTask creates a test task using template for use in tests
 func CreateTestTask(t *testing.T, env *TestEnvironment, templateID string, values map[string]interface{}) string {
 	params := map[string]interface{}{
-		"template_id": templateID,
-		"degerler":    values,
+		constants.ParamTemplateID: templateID,
+		constants.ParamDegerler:   values,
 	}
 
 	result, err := env.Handlers.TemplatedenGorevOlustur(params)
@@ -289,7 +290,7 @@ func CreateTestTask(t *testing.T, env *TestEnvironment, templateID string, value
 	// Extract task ID from result - simplified extraction
 	// result.Content is []interface{} with text content
 	if len(result.Content) > 0 {
-		return "test-task-id"
+		return constants.TestHelperTaskID
 	}
 
 	return ""
@@ -351,7 +352,7 @@ func ParameterTestCases() []ValidationTestCase {
 			Params:        map[string]interface{}{"durum": "beklemede"},
 			ParamName:     "durum",
 			ExpectedValue: "beklemede",
-			ValidOptions:  []string{"beklemede", "devam_ediyor", "tamamlandi"},
+			ValidOptions:  constants.GetValidTaskStatuses()[:3], // Exclude "iptal" for this test
 			Required:      false,
 		},
 		{
@@ -361,7 +362,7 @@ func ParameterTestCases() []ValidationTestCase {
 			},
 			Params:       map[string]interface{}{"durum": "invalid-status"},
 			ParamName:    "durum",
-			ValidOptions: []string{"beklemede", "devam_ediyor", "tamamlandi"},
+			ValidOptions: constants.GetValidTaskStatuses()[:3], // Exclude "iptal" for this test
 			Required:     false,
 		},
 	}
@@ -379,9 +380,11 @@ func HandlerTestCases() []HandlerTestCase {
 			Params:       map[string]interface{}{},
 			ExpectedType: "success",
 			ContentCheck: func(content interface{}) bool {
-				// Check if result contains task list structure
-				str, ok := content.(string)
-				return ok && len(str) > 0
+				// Check if result is a valid CallToolResult with content
+				if result, ok := content.(*mcp.CallToolResult); ok {
+					return result != nil && !result.IsError && len(result.Content) > 0
+				}
+				return false
 			},
 		},
 		{
@@ -393,8 +396,11 @@ func HandlerTestCases() []HandlerTestCase {
 			Params:       map[string]interface{}{},
 			ExpectedType: "success",
 			ContentCheck: func(content interface{}) bool {
-				str, ok := content.(string)
-				return ok && len(str) > 0
+				// Check if result is a valid CallToolResult with content
+				if result, ok := content.(*mcp.CallToolResult); ok {
+					return result != nil && !result.IsError && len(result.Content) > 0
+				}
+				return false
 			},
 		},
 		{
@@ -406,8 +412,11 @@ func HandlerTestCases() []HandlerTestCase {
 			Params:       map[string]interface{}{},
 			ExpectedType: "success",
 			ContentCheck: func(content interface{}) bool {
-				str, ok := content.(string)
-				return ok && len(str) > 0
+				// Check if result is a valid CallToolResult with content
+				if result, ok := content.(*mcp.CallToolResult); ok {
+					return result != nil && !result.IsError && len(result.Content) > 0
+				}
+				return false
 			},
 		},
 		{
@@ -419,8 +428,11 @@ func HandlerTestCases() []HandlerTestCase {
 			Params:       map[string]interface{}{},
 			ExpectedType: "success",
 			ContentCheck: func(content interface{}) bool {
-				str, ok := content.(string)
-				return ok && len(str) > 0
+				// Check if result is a valid CallToolResult with content
+				if result, ok := content.(*mcp.CallToolResult); ok {
+					return result != nil && !result.IsError && len(result.Content) > 0
+				}
+				return false
 			},
 		},
 	}
