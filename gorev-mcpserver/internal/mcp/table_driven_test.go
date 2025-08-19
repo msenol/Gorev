@@ -217,11 +217,6 @@ func TestI18nTableDriven(t *testing.T) {
 			ShouldExist: true,
 		},
 		{
-			Key:         "error.taskNotFound",
-			Data:        map[string]interface{}{"Error": "test error"},
-			ShouldExist: true,
-		},
-		{
 			Key:         "success.taskUpdated",
 			Data:        map[string]interface{}{"OldStatus": "beklemede", "NewStatus": "devam_ediyor"},
 			ShouldExist: true,

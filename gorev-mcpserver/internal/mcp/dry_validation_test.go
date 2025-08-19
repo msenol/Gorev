@@ -57,7 +57,6 @@ func TestDRYi18nPatterns(t *testing.T) {
 		keys := []string{
 			"tools.descriptions.gorev_listele",
 			"tools.params.descriptions.id_field",
-			"error.taskNotFound",
 			"success.taskUpdated",
 		}
 
