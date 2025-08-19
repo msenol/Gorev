@@ -380,7 +380,7 @@ func TestGorevGuncelle_EdgeCases(t *testing.T) {
 		for _, fakeID := range fakeIDs {
 			result := callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
 				"id":    fakeID,
-				"durum": "devam_ediyor",
+				"durum": constants.TaskStatusInProgress,
 			})
 
 			assert.True(t, result.IsError, "Expected error for non-existent ID: %s", fakeID)
@@ -441,7 +441,7 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 	// Test 1: Concurrent task creation
 	t.Run("Concurrent task creation", func(t *testing.T) {
 		var wg sync.WaitGroup
-		numGoroutines := 10
+		numGoroutines := constants.TestConcurrencyMedium
 		errors := make([]error, numGoroutines)
 
 		for i := 0; i < numGoroutines; i++ {
@@ -553,7 +553,7 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 		}
 
 		var wg sync.WaitGroup
-		numChanges := 10
+		numChanges := constants.TestConcurrencyMedium
 
 		// Try to change active project concurrently
 		for i := 0; i < numChanges; i++ {
@@ -944,7 +944,7 @@ func TestPerformance_EdgeCases(t *testing.T) {
 			params map[string]interface{}
 		}{
 			{"All tasks", map[string]interface{}{}},
-			{"By status", map[string]interface{}{"durum": "beklemede"}},
+			{"By status", map[string]interface{}{"durum": constants.TaskStatusPending}},
 			{"By priority", map[string]interface{}{"filtre": "acil"}},
 			{"By tag", map[string]interface{}{"etiket": "performance"}},
 			{"Sorted by date", map[string]interface{}{"sirala": "son_tarih_asc"}},

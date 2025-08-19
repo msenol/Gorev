@@ -108,7 +108,7 @@ func TestValidationDRYPatterns(t *testing.T) {
 	})
 
 	t.Run("ValidEnumValue", func(t *testing.T) {
-		params := map[string]interface{}{"durum": "beklemede"}
+		params := map[string]interface{}{"durum": constants.TaskStatusPending}
 		validOptions := constants.GetValidTaskStatuses()[:3]
 
 		result, err := validator.ValidateEnum(params, "durum", validOptions, false)
@@ -117,8 +117,8 @@ func TestValidationDRYPatterns(t *testing.T) {
 			t.Errorf("ValidateEnum should not fail for valid enum value: %v", err)
 		}
 
-		if result != "beklemede" {
-			t.Errorf("Expected 'beklemede', got '%s'", result)
+		if result != constants.TaskStatusPending {
+			t.Errorf("Expected '%s', got '%s'", constants.TaskStatusPending, result)
 		}
 	})
 
@@ -233,7 +233,7 @@ func TestToolHelpersDRYPatterns(t *testing.T) {
 		}
 
 		// Test status and priority formatting
-		status := helpers.Formatter.GetStatusEmoji("beklemede")
+		status := helpers.Formatter.GetStatusEmoji(constants.TaskStatusPending)
 		priority := helpers.Formatter.GetPriorityEmoji(constants.PriorityHigh)
 
 		if status == "" || priority == "" {

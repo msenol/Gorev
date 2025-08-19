@@ -192,13 +192,13 @@ func TestGorevBatchUpdate(t *testing.T) {
 					map[string]interface{}{
 						"id": task1.ID,
 						"updates": map[string]interface{}{
-							"durum": "devam_ediyor",
+							"durum": constants.TaskStatusInProgress,
 						},
 					},
 					map[string]interface{}{
 						"id": task2.ID,
 						"updates": map[string]interface{}{
-							"durum": "tamamlandi",
+							"durum": constants.TaskStatusCompleted,
 						},
 					},
 				},
@@ -226,7 +226,7 @@ func TestGorevBatchUpdate(t *testing.T) {
 					map[string]interface{}{
 						"id": "non-existent",
 						"updates": map[string]interface{}{
-							"durum": "devam_ediyor",
+							"durum": constants.TaskStatusInProgress,
 						},
 					},
 				},
@@ -356,13 +356,13 @@ func TestGorevNLPQuery(t *testing.T) {
 func TestAutoStateTransition(t *testing.T) {
 	h := setupTestHandlers(t)
 
-	// Create a task in "beklemede" state
+	// Create a task in pending state
 	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 	gorevTest, _ := h.isYonetici.GorevOlustur(constants.TestTaskTitleEN, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
 
 	// Verify initial state
 	gorev, _ := h.isYonetici.GorevGetir(gorevTest.ID)
-	assert.Equal(t, "beklemede", gorev.Durum)
+	assert.Equal(t, constants.TaskStatusPending, gorev.Durum)
 
 	// Call GorevDetay which should trigger auto-state transition
 	result, _ := h.GorevDetay(map[string]interface{}{"id": gorevTest.ID})

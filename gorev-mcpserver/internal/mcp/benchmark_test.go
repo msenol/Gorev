@@ -128,12 +128,12 @@ func BenchmarkParameterValidation(b *testing.B) {
 			// Test multiple validations
 			_, validationError := validator.ValidateRequiredString(params, "id")
 			if validationError != nil {
-				return fmt.Errorf("validation failed: %v", validationError.Content)
+				return fmt.Errorf(constants.ErrorFormatValidation, validationError.Content)
 			}
 
 			_, validationError = validator.ValidateEnum(params, "durum", constants.GetValidTaskStatuses()[:3], true)
 			if validationError != nil {
-				return fmt.Errorf("validation failed: %v", validationError.Content)
+				return fmt.Errorf(constants.ErrorFormatValidation, validationError.Content)
 			}
 
 			validator.ValidateNumber(params, "limit", constants.TestIterationLimit)
@@ -194,7 +194,7 @@ func BenchmarkConcurrentToolCalls(b *testing.B) {
 			}
 
 			if result.IsError {
-				return fmt.Errorf("tool error: %v", result.Content)
+				return fmt.Errorf(constants.ErrorFormatTool, result.Content)
 			}
 			return nil
 		},
@@ -317,7 +317,7 @@ func BenchmarkStressConcurrency(b *testing.B) {
 						return err
 					}
 					if result.IsError {
-						return fmt.Errorf("tool error: %v", result.Content)
+						return fmt.Errorf(constants.ErrorFormatTool, result.Content)
 					}
 					return nil
 				},
@@ -327,7 +327,7 @@ func BenchmarkStressConcurrency(b *testing.B) {
 						return err
 					}
 					if result.IsError {
-						return fmt.Errorf("tool error: %v", result.Content)
+						return fmt.Errorf(constants.ErrorFormatTool, result.Content)
 					}
 					return nil
 				},
@@ -337,7 +337,7 @@ func BenchmarkStressConcurrency(b *testing.B) {
 						return err
 					}
 					if result.IsError {
-						return fmt.Errorf("tool error: %v", result.Content)
+						return fmt.Errorf(constants.ErrorFormatTool, result.Content)
 					}
 					return nil
 				},
@@ -415,7 +415,7 @@ func BenchmarkRaceConditionDetection(b *testing.B) {
 							return
 						}
 						if result.IsError {
-							errors <- fmt.Errorf("tool error: %v", result.Content)
+							errors <- fmt.Errorf(constants.ErrorFormatTool, result.Content)
 							return
 						}
 					case 1:
@@ -425,7 +425,7 @@ func BenchmarkRaceConditionDetection(b *testing.B) {
 							return
 						}
 						if result.IsError {
-							errors <- fmt.Errorf("tool error: %v", result.Content)
+							errors <- fmt.Errorf(constants.ErrorFormatTool, result.Content)
 							return
 						}
 					case 2:
@@ -434,7 +434,7 @@ func BenchmarkRaceConditionDetection(b *testing.B) {
 						params := map[string]interface{}{"id": "test"}
 						_, validationError := validator.ValidateRequiredString(params, "id")
 						if validationError != nil {
-							errors <- fmt.Errorf("validation failed: %v", validationError.Content)
+							errors <- fmt.Errorf(constants.ErrorFormatValidation, validationError.Content)
 							return
 						}
 					}

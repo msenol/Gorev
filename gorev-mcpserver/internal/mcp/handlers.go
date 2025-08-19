@@ -897,7 +897,7 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 	}
 
 	if len(result_batch.Failed) > 0 {
-		response.WriteString("**❌ Başarısız Görevler:**\n")
+		response.WriteString("**" + constants.EmojiStatusCancelled + " Başarısız Görevler:**\n")
 		for _, failure := range result_batch.Failed {
 			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(failure.TaskID), failure.Error))
 		}
@@ -905,7 +905,7 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 	}
 
 	if len(result_batch.Warnings) > 0 {
-		response.WriteString("**⚠️ Uyarılar:**\n")
+		response.WriteString("**" + constants.EmojiPriorityAlert + " Uyarılar:**\n")
 	}
 
 	return mcp.NewToolResultText(response.String()), nil
@@ -1007,7 +1007,7 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	}
 
 	if len(result_batch.Failed) > 0 {
-		response.WriteString("**❌ Başarısız Görevler:**\n")
+		response.WriteString("**" + constants.EmojiStatusCancelled + " Başarısız Görevler:**\n")
 		for _, failure := range result_batch.Failed {
 			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(failure.TaskID), failure.Error))
 		}
@@ -1015,7 +1015,7 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	}
 
 	if len(result_batch.Warnings) > 0 {
-		response.WriteString("**⚠️ Uyarılar:**\n")
+		response.WriteString("**" + constants.EmojiPriorityAlert + " Uyarılar:**\n")
 		for _, warning := range result_batch.Warnings {
 			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(warning.TaskID), warning.Message))
 		}
@@ -1105,12 +1105,8 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 		output.WriteString(fmt.Sprintf("## %s\n\n", typeNames[suggestionType]))
 
 		for i, suggestion := range suggestions {
-			// Priority emoji
-			priorityEmoji := map[string]string{
-				"high":   "🔥",
-				"medium": "⚡",
-				"low":    "ℹ️",
-			}[suggestion.Priority]
+			// Priority emoji using constant helper
+			priorityEmoji := constants.GetSuggestionPriorityEmoji(suggestion.Priority)
 
 			output.WriteString(fmt.Sprintf("### %d. %s %s\n", i+1, priorityEmoji, suggestion.Title))
 			output.WriteString(fmt.Sprintf("**Açıklama:** %s\n", suggestion.Description))

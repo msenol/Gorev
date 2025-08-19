@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/constants"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // BatchProcessor handles batch operations on multiple tasks
@@ -118,7 +119,7 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: request.TaskID,
-				Error:  fmt.Sprintf("task not found: %v", err),
+				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
@@ -260,7 +261,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 			if err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
-					Error:  fmt.Sprintf("task not found: %v", err),
+					Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 				})
 			} else if !bp.validateStatusTransition(task.Durum, request.NewStatus) {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -281,7 +282,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
-				Error:  fmt.Sprintf("task not found: %v", err),
+				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
@@ -387,7 +388,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 			if _, err := bp.veriYonetici.GorevDetay(taskID); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
-					Error:  fmt.Sprintf("task not found: %v", err),
+					Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 				})
 			} else {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -403,7 +404,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
-				Error:  fmt.Sprintf("task not found: %v", err),
+				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
@@ -520,7 +521,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 			if _, err := bp.veriYonetici.GorevDetay(taskID); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
-					Error:  fmt.Sprintf("task not found: %v", err),
+					Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 				})
 			} else {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -536,7 +537,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
-				Error:  fmt.Sprintf("task not found: %v", err),
+				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
@@ -591,7 +592,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 func (bp *BatchProcessor) validateUpdateRequest(request BatchUpdateRequest) error {
 	// Check if task exists
 	if _, err := bp.veriYonetici.GorevDetay(request.TaskID); err != nil {
-		return fmt.Errorf("task not found: %v", err)
+		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	// Validate individual fields

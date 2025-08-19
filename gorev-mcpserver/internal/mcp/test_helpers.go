@@ -349,9 +349,9 @@ func ParameterTestCases() []ValidationTestCase {
 				Name:       "ValidStatus",
 				ShouldFail: false,
 			},
-			Params:        map[string]interface{}{"durum": "beklemede"},
+			Params:        map[string]interface{}{"durum": constants.TaskStatusPending},
 			ParamName:     "durum",
-			ExpectedValue: "beklemede",
+			ExpectedValue: constants.TaskStatusPending,
 			ValidOptions:  constants.GetValidTaskStatuses()[:3], // Exclude "iptal" for this test
 			Required:      false,
 		},

@@ -352,7 +352,7 @@ func TestConcurrentFormatterAccess(t *testing.T) {
 			formatter.FormatSuccessMessage(constants.TestActionName, constants.TestTaskTitleEN, constants.TestTaskShortID)
 			formatter.GetStatusEmoji(constants.TaskStatusPending)
 			formatter.GetPriorityEmoji(constants.PriorityHigh)
-			formatter.GetStatusEmoji("devam_ediyor")
+			formatter.GetStatusEmoji(constants.TaskStatusInProgress)
 			formatter.GetPriorityEmoji(constants.PriorityMedium)
 
 			return nil

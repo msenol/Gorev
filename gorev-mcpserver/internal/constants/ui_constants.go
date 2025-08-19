@@ -21,6 +21,11 @@ const (
 	// Alternative priority emojis
 	EmojiPriorityHighAlt = "🔥"  // yuksek (alternatif)
 	EmojiPriorityAlert   = "⚠️" // uyarı
+	
+	// Suggestion priority emojis (for AI suggestions)
+	EmojiSuggestionHigh   = "🔥"  // yuksek oneri
+	EmojiSuggestionMedium = "⚡"  // orta oneri
+	EmojiSuggestionLow    = "ℹ️"  // dusuk oneri
 )
 
 // Message prefix constants
@@ -170,4 +175,17 @@ func GetPriorityDisplay(priority string) string {
 		return display
 	}
 	return EmojiPriorityUnknown + " Bilinmeyen"
+}
+
+func GetSuggestionPriorityEmoji(priority string) string {
+	switch priority {
+	case "high":
+		return EmojiSuggestionHigh
+	case "medium":
+		return EmojiSuggestionMedium
+	case "low":
+		return EmojiSuggestionLow
+	default:
+		return EmojiPriorityUnknown
+	}
 }

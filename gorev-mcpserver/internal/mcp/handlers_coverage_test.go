@@ -1632,7 +1632,7 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 				SonTarih: func() *time.Time { t := now.AddDate(0, 0, -7); return &t }(),
 			},
 			projeGoster:    false,
-			expectContains: []string{"⚠️"},
+			expectContains: []string{constants.EmojiPriorityAlert},
 		},
 	}
 
