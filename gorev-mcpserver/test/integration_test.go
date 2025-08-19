@@ -48,6 +48,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 
 	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Varsayılan template'leri oluştur
 	err = veriYonetici.VarsayilanTemplateleriOlustur()
@@ -70,16 +71,29 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	}
 
 	// Test: Template ile görev oluştur (gorev_olustur artık deprecated)
-	// İlk template'i kullan (research template)
-	templateID := templates[0].ID
+	// Bug Raporu template'ini bul
+	var firstBugTemplate *gorev.GorevTemplate
+	for _, tmpl := range templates {
+		if tmpl.Isim == "Bug Raporu" {
+			firstBugTemplate = tmpl
+			break
+		}
+	}
+	if firstBugTemplate == nil {
+		t.Fatal("Bug Raporu template not found")
+	}
+
 	params := map[string]interface{}{
-		constants.ParamTemplateID: templateID,
+		constants.ParamTemplateID: firstBugTemplate.ID,
 		constants.ParamDegerler: map[string]interface{}{
-			"konu":      "Test görevi",
-			"amac":      "Bu bir test görevidir",
-			"sorular":   "Test soruları",
-			"kriterler": "Test kriterleri",
-			"oncelik":   "yuksek",
+			"baslik":   "Test Bug Görevi",
+			"aciklama": "Bu bir test bug raporu",
+			"modul":    "test-integration",
+			"ortam":    "development",
+			"adimlar":  "1. Test çalıştır",
+			"beklenen": "Başarı",
+			"mevcut":   "Hata",
+			"oncelik":  "yuksek",
 		},
 	}
 
@@ -88,7 +102,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	assert.False(t, result.IsError)
 	text := extractText(t, result)
 	assert.Contains(t, text, "✓ Template kullanılarak görev oluşturuldu")
-	assert.Contains(t, text, "Test görevi")
+	assert.Contains(t, text, "Test Bug Görevi")
 
 	// Test: Görevleri listele (sıralama ve filtreleme ile)
 	listParams := map[string]interface{}{
@@ -98,7 +112,8 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, listResult.IsError)
 	listText := extractText(t, listResult)
-	assert.Contains(t, listText, "Test görevi")
+	// Check for tasks that were created - the first test creates only one task
+	assert.Contains(t, listText, "Test Bug Görevi")
 	assert.Contains(t, listText, "Y") // Compact format for "yuksek" priority
 }
 
@@ -111,6 +126,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Önce bir görev oluştur
 	gorevObj, err := isYonetici.GorevOlustur("Durum test görevi", "", "orta", "", "", nil)
@@ -145,6 +161,7 @@ func TestProjeOlustur(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Proje oluştur
 	params := map[string]interface{}{
@@ -169,6 +186,7 @@ func TestOzetGoster(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Test verisi oluştur
 	_, err = isYonetici.ProjeOlustur("Proje 1", "")
@@ -206,17 +224,58 @@ func TestHataYonetimi(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
-	// Test: Deprecated GorevOlustur method
-	params := map[string]interface{}{
-		"aciklama": "Başlıksız görev",
+	// Varsayılan template'leri oluştur (idempotent)
+	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	require.NoError(t, err)
+
+	// Test projesi oluştur
+	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Test açıklaması")
+	require.NoError(t, err)
+
+	// Projeyi aktif yap
+	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	require.NoError(t, err)
+
+	// Get available templates
+	templates, err := veriYonetici.TemplateListele("")
+	require.NoError(t, err)
+	if len(templates) == 0 {
+		t.Fatal("No templates available for testing")
 	}
 
-	result, err := handlers.GorevOlustur(params)
+	// Find the "Bug Raporu" template specifically (templates are sorted by category, name)
+	var bugTemplate *gorev.GorevTemplate
+	for _, tmpl := range templates {
+		if tmpl.Isim == "Bug Raporu" {
+			bugTemplate = tmpl
+			break
+		}
+	}
+	if bugTemplate == nil {
+		t.Fatal("Bug Raporu template not found")
+	}
+
+	templateParams := map[string]interface{}{
+		constants.ParamTemplateID: bugTemplate.ID,
+		constants.ParamDegerler: map[string]interface{}{
+			"baslik":   "Integration Test Bug",
+			"aciklama": "Template ile oluşturulan test bug raporu",
+			"modul":    "integration-test",
+			"ortam":    "development",
+			"adimlar":  "1. Test çalıştır 2. Hatayı gözle",
+			"beklenen": "Test başarılı olması",
+			"mevcut":   "Test hata verdi",
+			"oncelik":  "orta",
+		},
+	}
+
+	result, err := handlers.TemplatedenGorevOlustur(templateParams)
 	require.NoError(t, err)
-	assert.True(t, result.IsError)
+	assert.False(t, result.IsError, "Template creation should succeed: %s", extractText(t, result))
 	text := extractText(t, result)
-	assert.Contains(t, text, "gorev_olustur artık kullanılmıyor")
+	assert.Contains(t, text, "Integration Test Bug")
 
 	// Test: Geçersiz ID ile güncelleme
 	updateParams := map[string]interface{}{
@@ -240,6 +299,7 @@ func TestGorevDetay(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Test verisi oluştur
 	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Proje açıklaması")
@@ -286,6 +346,7 @@ func TestGorevDuzenle(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Test görevi oluştur
 	gorevObj, err := isYonetici.GorevOlustur("Eski Başlık", "Eski açıklama", "orta", "", "", nil)
@@ -322,6 +383,7 @@ func TestGorevSil(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Test görevi oluştur
 	gorevObj, err := isYonetici.GorevOlustur("Silinecek Görev", "", "orta", "", "", nil)
@@ -362,6 +424,7 @@ func TestProjeListele(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Test projeleri oluştur
 	proje1, err := isYonetici.ProjeOlustur("Proje 1", "İlk proje")
@@ -404,6 +467,7 @@ func TestProjeGorevleri(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// Test projesi ve görevleri oluştur
 	proje, err := isYonetici.ProjeOlustur("Test Projesi", "")
@@ -457,6 +521,7 @@ func TestGorevBagimlilikEkle(t *testing.T) {
 	// İş yöneticisi ve handler'ları oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcphandlers.YeniHandlers(isYonetici)
+	defer handlers.Close()
 
 	// İki test görevi oluştur
 	gorev1, err := isYonetici.GorevOlustur("Kaynak Görev", "", "orta", "", "", nil)

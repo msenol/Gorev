@@ -478,6 +478,11 @@ func (fw *FileWatcher) Stop() error {
 	return fw.watcher.Close()
 }
 
+// Close is an alias for Stop() for consistent resource cleanup interface
+func (fw *FileWatcher) Close() error {
+	return fw.Stop()
+}
+
 // GetStats returns statistics about the file watcher
 func (fw *FileWatcher) GetStats() map[string]interface{} {
 	fw.mu.RLock()
