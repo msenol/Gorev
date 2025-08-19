@@ -477,7 +477,9 @@
       "gorev_ust_degistir": "Bir görevin üst görevini değiştirir veya kök seviyeye taşır.",
       "gorev_hiyerarsi_goster": "Bir görevin tüm hiyerarşisini gösterir. Üst görevler, alt görevler ve komşu görevler dahil tam ağaç yapısını görüntüler.",
       "gorev_bagimlilik_ekle": "İki görev arasında bağımlılık ilişkisi kurar.",
-      "ozet_goster": "Sistemin genel durumunu gösteren özet rapor. Toplam görev sayıları, proje istatistikleri, öncelik dağılımları ve son aktiviteleri içerir."
+      "ozet_goster": "Sistemin genel durumunu gösteren özet rapor. Toplam görev sayıları, proje istatistikleri, öncelik dağılımları ve son aktiviteleri içerir.",
+      "gorev_export": "Görevleri, projeleri ve ilişkili verileri JSON veya CSV formatında dosyaya dışa aktarır. Yedekleme ve veri paylaşımı için kullanılır.",
+      "gorev_import": "Daha önce dışa aktarılmış verileri sisteme geri aktarır. Çakışma çözümü ve seçici içe aktarma seçenekleri sunar."
     },
     "params": {
       "descriptions": {
@@ -512,7 +514,82 @@
         "query": "Doğal dil sorgusu",
         "updates": "Güncelleme listesi",
         "etiketler": "Virgülle ayrılmış etiket listesi"
+      },
+      "export": {
+        "output_path": "Dışa aktarılan dosyanın kaydedileceği yol",
+        "format": "Dışa aktarma formatı (json veya csv)",
+        "include_completed": "Tamamlanmış görevleri dahil et (varsayılan: true)",
+        "include_dependencies": "Görev bağımlılıklarını dahil et (varsayılan: true)",
+        "include_templates": "Template'leri dahil et (varsayılan: false)",
+        "include_ai_context": "AI context verilerini dahil et (varsayılan: false)",
+        "project_filter": "Sadece belirtilen projeleri dışa aktar",
+        "date_range": "Tarih aralığı filtresi",
+        "date_from": "Başlangıç tarihi (ISO 8601 formatında)",
+        "date_to": "Bitiş tarihi (ISO 8601 formatında)"
+      },
+      "import": {
+        "file_path": "İçe aktarılacak dosyanın yolu",
+        "import_mode": "İçe aktarma modu (merge: mevcut verilere ekle, replace: tümünü değiştir)",
+        "conflict_resolution": "Çakışma çözümü (skip: atla, overwrite: üzerine yaz, prompt: sor)",
+        "preserve_ids": "Orijinal ID'leri koru (varsayılan: false)",
+        "dry_run": "Sadece analiz et, değişiklik yapma (varsayılan: false)",
+        "project_mapping": "Proje ID eşleştirmesi (eski_id: yeni_id)"
       }
     }
+  },
+  "export": {
+    "success": "✅ Dışa aktarma başarılı!\n\n📄 **{{.Format}} formatında**: {{.Path}}\n📊 **İstatistikler**:\n- Görevler: {{.Tasks}}\n- Projeler: {{.Projects}}\n- Etiketler: {{.Tags}}\n- Template'ler: {{.Templates}}",
+    "generatedDescription": "Gorev MCP Sunucusu tarafından otomatik oluşturulan dışa aktarma"
+  },
+  "import": {
+    "success": "İçe aktarma başarıyla tamamlandı",
+    "dryRunResults": "Deneme modunda analiz sonuçları",
+    "statistics": "İstatistikler",
+    "importedTasks": "İçe aktarılan görevler",
+    "importedProjects": "İçe aktarılan projeler",
+    "importedTags": "İçe aktarılan etiketler",
+    "importedTemplates": "İçe aktarılan template'ler",
+    "conflicts": "Çakışmalar",
+    "conflictResolution": "çözümü",
+    "and": "ve",
+    "moreConflicts": "tane daha çakışma",
+    "errors": "Hatalar",
+    "warnings": "Uyarılar"
+  },
+  "error": {
+    "exportFailed": "Dışa aktarma başarısız: {{.Error}}",
+    "exportSaveFailed": "Dışa aktarma dosyası kaydedilemedi: {{.Error}}",
+    "importFailed": "İçe aktarma başarısız: {{.Error}}",
+    "invalidExportOptions": "Geçersiz dışa aktarma seçenekleri: {{.Error}}",
+    "invalidImportOptions": "Geçersiz içe aktarma seçenekleri: {{.Error}}",
+    "failedToExportProjects": "Projeler dışa aktarılamadı: {{.Error}}",
+    "failedToExportTasks": "Görevler dışa aktarılamadı: {{.Error}}",
+    "failedToExportTags": "Etiketler dışa aktarılamadı: {{.Error}}",
+    "failedToExportTemplates": "Template'ler dışa aktarılamadı: {{.Error}}",
+    "failedToExportTaskTags": "Görev etiketleri dışa aktarılamadı: {{.Error}}",
+    "failedToExportDependencies": "Bağımlılıklar dışa aktarılamadı: {{.Error}}",
+    "failedToLoadImportData": "İçe aktarma verisi yüklenemedi: {{.Error}}",
+    "failedToAnalyzeConflicts": "Çakışmalar analiz edilemedi: {{.Error}}",
+    "invalidImportData": "Geçersiz içe aktarma verisi: {{.Error}}",
+    "outputPathRequired": "Çıktı yolu gerekli",
+    "filePathRequired": "Dosya yolu gerekli",
+    "fileNotFound": "Dosya bulunamadı: {{.Path}}",
+    "invalidFormat": "Geçersiz format: {{.Format}}",
+    "invalidImportMode": "Geçersiz içe aktarma modu: {{.Mode}}",
+    "invalidConflictResolution": "Geçersiz çakışma çözümü: {{.Resolution}}",
+    "invalidDateRange": "Geçersiz tarih aralığı",
+    "failedToCreateDirectory": "Dizin oluşturulamadı {{.Path}}: {{.Error}}",
+    "failedToCreateFile": "Dosya oluşturulamadı {{.Path}}: {{.Error}}",
+    "failedToOpenFile": "Dosya açılamadı {{.Path}}: {{.Error}}",
+    "failedToWriteFile": "Dosyaya yazılamadı: {{.Error}}",
+    "failedToEncodeJSON": "JSON kodlanamadı: {{.Error}}",
+    "failedToDecodeJSON": "JSON çözümlenemedi: {{.Error}}",
+    "unsupportedExportFormat": "Desteklenmeyen dışa aktarma formatı: {{.Format}}",
+    "missingVersion": "Eksik versiyon bilgisi",
+    "invalidTaskProjectReference": "Geçersiz görev proje referansı - Görev {{.TaskID}} için proje {{.ProjectID}} bulunamadı",
+    "invalidTaskTagTaskReference": "Geçersiz görev etiketi görev referansı - Görev {{.TaskID}} bulunamadı",
+    "invalidTaskTagTagReference": "Geçersiz görev etiketi etiket referansı - Etiket {{.TagID}} bulunamadı",
+    "invalidDependencySourceReference": "Geçersiz bağımlılık kaynak referansı - Kaynak görev {{.SourceID}} bulunamadı",
+    "invalidDependencyTargetReference": "Geçersiz bağımlılık hedef referansı - Hedef görev {{.TargetID}} bulunamadı"
   }
 }
