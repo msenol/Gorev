@@ -249,6 +249,14 @@ func (m *MockVeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, err
 	return &GorevTemplate{}, nil
 }
 
+func (m *MockVeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, error) {
+	return &GorevTemplate{}, nil
+}
+
+func (m *MockVeriYonetici) TemplateIDVeyaAliasIleGetir(idOrAlias string) (*GorevTemplate, error) {
+	return &GorevTemplate{}, nil
+}
+
 func (m *MockVeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
 	return &Gorev{}, nil
 }

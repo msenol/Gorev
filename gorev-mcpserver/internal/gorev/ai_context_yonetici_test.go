@@ -237,6 +237,22 @@ func (m *MockVeriYoneticiAI) TemplateGetir(templateID string) (*GorevTemplate, e
 	return args.Get(0).(*GorevTemplate), args.Error(1)
 }
 
+func (m *MockVeriYoneticiAI) TemplateAliasIleGetir(alias string) (*GorevTemplate, error) {
+	args := m.Called(alias)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*GorevTemplate), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) TemplateIDVeyaAliasIleGetir(idOrAlias string) (*GorevTemplate, error) {
+	args := m.Called(idOrAlias)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*GorevTemplate), args.Error(1)
+}
+
 func (m *MockVeriYoneticiAI) VarsayilanTemplateleriOlustur() error {
 	args := m.Called()
 	return args.Error(0)

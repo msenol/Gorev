@@ -103,7 +103,8 @@ func callTool(t *testing.T, handlers *Handlers, toolName string, params map[stri
 
 	switch toolName {
 	case "gorev_olustur":
-		result, err = handlers.GorevOlustur(params)
+		// gorev_olustur was removed in v0.11.1, return error response
+		result, err = mcp.NewToolResultError("❌ gorev_olustur removed - use templateden_gorev_olustur"), nil
 	case "gorev_listele":
 		result, err = handlers.GorevListele(params)
 	case "gorev_detay":
@@ -1315,64 +1316,7 @@ func TestTemplateConcurrency(t *testing.T) {
 	}
 }
 
-// TestGorevOlusturDeprecated tests that the deprecated gorev_olustur handler returns proper error
-func TestGorevOlusturDeprecated(t *testing.T) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
-	}
-	veriYonetici, err := gorev.YeniVeriYonetici("test_deprecated_gorev.db", constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer os.Remove("test_deprecated_gorev.db")
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
-	handlers := YeniHandlers(isYonetici)
-
-	t.Run("GorevOlustur returns deprecation error", func(t *testing.T) {
-		result, err := handlers.GorevOlustur(map[string]interface{}{
-			"baslik":   constants.TestTaskTitleEN,
-			"aciklama": "This should fail",
-			"oncelik":  constants.PriorityHigh,
-		})
-
-		// Should not return a Go error, but should return an MCP error result
-		assert.NoError(t, err)
-		assert.True(t, result.IsError)
-
-		// Verify the error message contains template requirement information
-		assert.Contains(t, getResultText(result), "gorev_olustur artık kullanılmıyor")
-		assert.Contains(t, getResultText(result), "Template kullanımı zorunludur")
-		assert.Contains(t, getResultText(result), "template_listele")
-		assert.Contains(t, getResultText(result), "templateden_gorev_olustur")
-	})
-
-	t.Run("GorevOlustur ignores all parameters", func(t *testing.T) {
-		// Even with valid parameters, should still return error
-		result, err := handlers.GorevOlustur(map[string]interface{}{
-			"baslik":    "Valid Task Title",
-			"aciklama":  "Valid description",
-			"oncelik":   constants.PriorityMedium,
-			"proje_id":  "valid-project-id",
-			"son_tarih": "2025-12-31",
-			"etiketler": "test,valid",
-		})
-
-		assert.NoError(t, err)
-		assert.True(t, result.IsError)
-		assert.Contains(t, getResultText(result), "Template kullanımı zorunludur")
-	})
-
-	t.Run("GorevOlustur with empty parameters still fails", func(t *testing.T) {
-		result, err := handlers.GorevOlustur(map[string]interface{}{})
-
-		assert.NoError(t, err)
-		assert.True(t, result.IsError)
-		assert.Contains(t, getResultText(result), "gorev_olustur artık kullanılmıyor")
-	})
-}
+// TestGorevOlusturDeprecated was removed in v0.11.1 - gorev_olustur completely removed
 
 // TestTemplateMandatoryWorkflow tests the complete workflow with mandatory templates
 func TestTemplateMandatoryWorkflow(t *testing.T) {
@@ -1455,14 +1399,14 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		assert.Contains(t, taskText, "Login API fails with 500 error")
 		assert.Contains(t, taskText, "ID:")
 
-		// 3. Verify old direct creation fails
-		oldResult, err := handlers.GorevOlustur(map[string]interface{}{
+		// 3. Verify gorev_olustur tool was removed (would return error via callTool helper)
+		result := callTool(t, handlers, "gorev_olustur", map[string]interface{}{
 			"baslik":   "This should fail",
 			"aciklama": "Old method",
 			"oncelik":  constants.PriorityHigh,
 		})
-		assert.NoError(t, err)
-		assert.True(t, oldResult.IsError)
+		assert.True(t, result.IsError)
+		assert.Contains(t, getResultText(result), "removed")
 	})
 
 	t.Run("Template validation works", func(t *testing.T) {
