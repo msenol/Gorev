@@ -1,19 +1,12 @@
 # MCP Tools Reference
 
-Complete reference for all 25 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
+Complete reference for all 24 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
+
+**Note**: `gorev_olustur` was removed in v0.11.1 - use `templateden_gorev_olustur` with template aliases instead.
 
 ## Task Management
 
-### 1. gorev_olustur
-**DEPRECATED as of v0.10.0** - Use `templateden_gorev_olustur` instead
-- **Purpose**: Create new task 
-- **Parameters**: baslik, aciklama, oncelik, proje_id?, son_tarih?, etiketler?
-- **Notes**: 
-  - proje_id is optional; if not provided, uses active project
-  - son_tarih: optional due date in YYYY-MM-DD format
-  - etiketler: optional comma-separated tags
-
-### 2. gorev_listele
+### 1. gorev_listele
 - **Purpose**: List tasks
 - **Parameters**: durum?, tum_projeler?, sirala?, filtre?, etiket?, limit?, offset?
 - **Options**:
@@ -24,26 +17,26 @@ Complete reference for all 25 MCP tools implemented by the Gorev server, moved f
   - limit: maximum number of tasks to return (default: 50)
   - offset: number of tasks to skip for pagination (default: 0)
 
-### 3. gorev_detay
+### 2. gorev_detay
 - **Purpose**: Show detailed task info in markdown
 - **Parameters**: id
 - **Features**: Shows due dates, tags, and dependencies with status indicators
 
-### 4. gorev_guncelle
+### 3. gorev_guncelle
 - **Purpose**: Update task status
 - **Parameters**: id, durum
 - **Validation**: Dependencies must be completed before allowing "devam_ediyor" status
 
-### 5. gorev_duzenle
+### 4. gorev_duzenle
 - **Purpose**: Edit task properties
 - **Parameters**: id, baslik?, aciklama?, oncelik?, proje_id?, son_tarih?
 
-### 6. gorev_sil
+### 5. gorev_sil
 - **Purpose**: Delete task
 - **Parameters**: id, onay
 - **Safety**: Prevents deletion if task has subtasks
 
-### 7. gorev_bagimlilik_ekle
+### 6. gorev_bagimlilik_ekle
 - **Purpose**: Create task dependency
 - **Parameters**: kaynak_id, hedef_id, baglanti_tipi
 
@@ -78,7 +71,14 @@ Complete reference for all 25 MCP tools implemented by the Gorev server, moved f
 ### 12. templateden_gorev_olustur
 - **Purpose**: Create task from template (**PREFERRED METHOD**)
 - **Parameters**: template_id, degerler
-- **Notes**: degerler is an object with field values for the template
+- **Notes**: 
+  - template_id: Can be either UUID or alias (e.g., `bug`, `feature`, `research`)
+  - degerler: Object with field values for the template
+  - **Template Aliases Available**: `bug`, `bug2`, `feature`, `research`, `spike`, `security`, `performance`, `refactor`, `debt`
+- **Discovery**: Use `gorev template aliases` CLI command to see all shortcuts
+- **Examples**:
+  - Using alias: `template_id='bug'` 
+  - Using UUID: `template_id='550e8400-e29b-41d4-a716-446655440000'`
 
 ## Project Management
 

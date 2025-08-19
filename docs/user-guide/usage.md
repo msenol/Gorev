@@ -1,9 +1,9 @@
 # Kullanım Kılavuzu
 
-> **Versiyon**: Bu dokümantasyon v0.7.0-beta.1 için geçerlidir.  
-> **Son Güncelleme**: 29 June 2025
+> **Versiyon**: Bu dokümantasyon v0.11.1 için geçerlidir.  
+> **Son Güncelleme**: 19 August 2025
 
-Gorev ile görev yönetiminin temelleri.
+Gorev ile görev yönetiminin temelleri ve yeni template alias sistemi.
 
 ## 🎯 Temel Kavramlar
 
@@ -37,20 +37,54 @@ gorev serve --data-dir /path/to/data
 gorev version
 ```
 
+### Template Alias Sistemi (v0.11.1+)
+```bash
+# Template alias'larını görüntüle
+gorev template aliases
+
+# Template'leri listele
+gorev template list
+
+# Belirli template'i incele
+gorev template show bug
+```
+
+**Mevcut Template Alias'ları:**
+- `bug` - Bug Raporu
+- `bug2` - Gelişmiş Bug Raporu  
+- `feature` - Özellik İsteği
+- `research` - Araştırma Görevi
+- `spike` - Spike Araştırma
+- `security` - Güvenlik Düzeltmesi
+- `performance` - Performans Sorunu
+- `refactor` - Refactoring
+- `debt` - Teknik Borç
+
 ## 💬 Claude ile Kullanım
 
 ### Görev Oluşturma
 
-**Basit görev:**
+**⚠️ Önemli**: v0.10.0+ sürümlerinde tüm görevler template kullanılarak oluşturulmalıdır.
+
+**Template ile basit görev:**
 ```
-Yeni bir görev oluştur: "Dokümantasyonu güncelle"
+Bug template'i kullanarak görev oluştur:
+Başlık: Giriş sayfasında düğme çalışmıyor
+Açıklama: Ana sayfadaki giriş düğmesi tıklanmıyor
+Modül: Frontend
+Ortam: production
 ```
 
-**Detaylı görev:**
+**Template alias kullanarak:**
 ```
-Yüksek öncelikli bir görev oluştur:
-Başlık: API endpoint'lerini test et
-Açıklama: Tüm REST API endpoint'lerinin unit testlerini yaz
+"feature" template'i ile yeni özellik görevi oluştur:
+Başlık: Kullanıcı profil sayfası
+Açıklama: Kullanıcıların profillerini düzenleyebilecekleri sayfa
+```
+
+**Mevcut template'leri görmek için:**
+```
+Kullanılabilir template'leri listele
 ```
 
 ### Görevleri Listeleme

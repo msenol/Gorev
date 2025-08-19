@@ -29,6 +29,37 @@ This file contains the detailed development history and release notes for the Go
   - **Code Maintainability**: Dramatic improvement in codebase maintainability
   - **Rule 15 Compliance**: Zero tolerance for technical debt successfully implemented
 
+## MCP Server (v0.11.1 Phase 8) - Template Alias System & User Experience Enhancement (19 August 2025)
+- **Template Alias System**: Major user experience improvement for task creation
+  - **9 Template Shortcuts**: Added memorable aliases for common templates (`bug`, `feature`, `research`, `spike`, `security`, `performance`, `refactor`, `debt`, `bug2`)
+  - **New CLI Command**: `gorev template aliases` for easy discovery of shortcuts
+  - **Dual Access Pattern**: Templates accessible by both UUID and alias via `TemplateIDVeyaAliasIleGetir`
+  - **CLI Integration**: Template commands now support alias shortcuts
+  - **User-Friendly Help**: Comprehensive examples and quick-start guides in CLI help
+- **Deprecated Tool Cleanup**: Complete removal of legacy `gorev_olustur` tool (Rule 15 compliance)
+  - **Tool Registry**: Completely removed from MCP tool registration
+  - **Handler Removal**: `GorevOlustur` method eliminated from handlers
+  - **CLI Commands**: Updated to use template-based task creation exclusively
+  - **Test Infrastructure**: Updated mock objects and test helpers for new interface
+  - **Migration Path**: All functionality redirected to `templateden_gorev_olustur`
+- **i18n Infrastructure Completion**: Missing translation keys systematically added
+  - **15+ New Translation Keys**: Added to both `tr.json` and `en.json` locales
+  - **User-Facing Messages**: Error messages now fully localized with template data support
+  - **Consistent Formatting**: Standardized message patterns across all MCP tools
+- **Testing Infrastructure Enhancements**:
+  - **Mock Interface Updates**: Added `TemplateAliasIleGetir` and `TemplateIDVeyaAliasIleGetir` to test mocks
+  - **Build Verification**: Complete compilation and test suite success
+  - **Integration Testing**: Live MCP server and template creation validation
+- **User Experience Achievements**:
+  - **Template Discovery**: `gorev template aliases` shows all shortcuts with usage examples
+  - **Reduced Cognitive Load**: No more UUID memorization for template selection  
+  - **Improved Onboarding**: Enhanced help messages with practical examples
+  - **Command Consistency**: Unified template usage across CLI and MCP tools
+- **Rule 15 Compliance**: Comprehensive cleanup without workarounds
+  - **Zero Legacy Code**: No deprecated tool references remaining
+  - **Complete Migration**: All test infrastructure updated for new patterns
+  - **Production Ready**: Full backward compatibility with enhanced user experience
+
 ## MCP Server (v0.11.1) - DRY Patterns Implementation & Thread-Safety Enhancement (16 August 2025)
 - **Comprehensive DRY Patterns Implementation**: Major code quality enhancement addressing Rule 15 principles
   - **i18n DRY Patterns**: Created `internal/i18n/helpers.go` with reusable i18n helper functions
