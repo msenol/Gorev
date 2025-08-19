@@ -1,7 +1,7 @@
 # VS Code Extension Dokümantasyonu
 
-> **Versiyon**: Bu dokümantasyon v0.3.3 için geçerlidir.  
-> **Son Güncelleme**: 30 June 2025  
+> **Versiyon**: Bu dokümantasyon v0.5.1 için geçerlidir.  
+> **Son Güncelleme**: 20 August 2025  
 > **Marketplace**: [mehmetsenol.gorev-vscode](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
 Gorev VS Code Extension, MCP server'a görsel arayüz sağlayan TypeScript tabanlı bir VS Code eklentisidir.
@@ -24,6 +24,7 @@ Gorev VS Code Extension, kullanıcıların VS Code içinden doğrudan görev yö
 ### Temel Özellikler
 
 - **TreeView Panelleri**: Görev, proje ve şablon yönetimi
+- **Data Export/Import**: Kapsamlı veri dışa/içe aktarma sistem (NEW v0.5.1)
 - **Komut Paleti**: Hızlı erişim komutları
 - **Status Bar**: Anlık durum bilgisi
 - **Context Menüler**: Sağ tık işlemleri

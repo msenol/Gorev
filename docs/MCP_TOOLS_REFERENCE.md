@@ -171,6 +171,7 @@ Complete reference for all 31 MCP tools implemented by the Gorev server, moved f
   - project_filter: Array of project IDs to export (optional)
   - date_range: Object with "from" and "to" date fields in ISO 8601 format (optional)
 - **Use Cases**: Backup, data sharing, migration, reporting
+- **VS Code Integration**: Available through Extension commands - Export Data, Export Current View, Quick Export
 - **Output**: Creates export file with comprehensive task management data
 - **Example**:
   ```json
@@ -204,6 +205,7 @@ Complete reference for all 31 MCP tools implemented by the Gorev server, moved f
   - Project remapping capabilities
   - Detailed import statistics and error reporting
 - **Use Cases**: Data restoration, migration between instances, bulk data updates
+- **VS Code Integration**: Available through Extension Import Data command with multi-step wizard UI
 - **Example**:
   ```json
   {

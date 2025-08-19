@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 18 August 2025 | **Version:** v0.11.1
+**Last Updated:** 20 August 2025 | **Version:** v0.11.1
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,11 +10,14 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.11.1 - Data Export/Import & Thread-Safety Enhancement (19 Aug 2025)**
+**v0.11.1 - Data Export/Import & VS Code Integration (20 Aug 2025)**
+- **VS Code Extension Data Integration**: Complete visual interface for export/import (Phase 10)
+  - **4 New Commands**: Export Data, Import Data, Export Current View, Quick Export
+  - **Multi-Step UI**: WebView dialogs for export configuration and import wizards
+  - **100+ Test Cases**: Comprehensive testing across 3 new test files
 - **Data Export/Import System**: Complete data portability solution (Phase 9)
   - **`gorev_export`**: Export tasks, projects, dependencies to JSON/CSV with flexible filtering
   - **`gorev_import`**: Import with conflict resolution, dry run support, project remapping
-  - **20 comprehensive tests**: Complete test coverage for all export/import scenarios
 - **Template Alias System**: Major user experience enhancement (Phase 8)
   - **9 Template Shortcuts**: `bug`, `feature`, `research`, `spike`, `security`, `performance`, `refactor`, `debt`, `bug2`
   - **CLI Command**: `gorev template aliases` for easy discovery
@@ -153,6 +156,7 @@ gorev serve --lang=tr    # Turkish interface
 
 - **MCP Tools Reference**: @docs/MCP_TOOLS_REFERENCE.md
 - **Development History**: @docs/DEVELOPMENT_HISTORY.md  
+- **VS Code Data Export/Import**: @docs/user-guide/vscode-data-export-import.md
 - **Architecture Details**: Project structure above + clean architecture pattern
 - **Database Migrations**: @internal/veri/migrations/
 - **Testing Guide**: DRY patterns, table-driven tests, 81.3% server coverage, 100% extension coverage
