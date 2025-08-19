@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Complete reference for all 24 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
+Complete reference for all 31 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
 
 **Note**: `gorev_olustur` was removed in v0.11.1 - use `templateden_gorev_olustur` with template aliases instead.
 
@@ -155,6 +155,68 @@ Complete reference for all 24 MCP tools implemented by the Gorev server, moved f
   - Tag search: "etiket:bug" or "tag:frontend"
   - Status queries: "tamamlanmamış", "devam eden", "tamamlanan"
   - Time-based: "acil", "gecikmiş", "son oluşturulan"
+
+## Data Export/Import
+
+### 26. gorev_export
+- **Purpose**: Export tasks, projects and related data to file in JSON or CSV format
+- **Parameters**: output_path, format?, include_completed?, include_dependencies?, include_templates?, include_ai_context?, project_filter?, date_range?
+- **Options**:
+  - output_path: Path where the exported file will be saved (required)
+  - format: Export format - "json" or "csv" (default: "json")
+  - include_completed: Include completed tasks (default: true)
+  - include_dependencies: Include task dependencies (default: true)
+  - include_templates: Include templates (default: false)
+  - include_ai_context: Include AI context data (default: false)
+  - project_filter: Array of project IDs to export (optional)
+  - date_range: Object with "from" and "to" date fields in ISO 8601 format (optional)
+- **Use Cases**: Backup, data sharing, migration, reporting
+- **Output**: Creates export file with comprehensive task management data
+- **Example**:
+  ```json
+  {
+    "output_path": "/path/to/export.json",
+    "format": "json",
+    "include_completed": true,
+    "include_dependencies": true,
+    "project_filter": ["project-1", "project-2"],
+    "date_range": {
+      "from": "2025-01-01T00:00:00Z",
+      "to": "2025-12-31T23:59:59Z"
+    }
+  }
+  ```
+
+### 27. gorev_import
+- **Purpose**: Import previously exported data back into the system
+- **Parameters**: file_path, import_mode?, conflict_resolution?, preserve_ids?, dry_run?, project_mapping?
+- **Options**:
+  - file_path: Path to the file to import (required)
+  - import_mode: Import strategy - "merge" (add to existing) or "replace" (replace all) (default: "merge")
+  - conflict_resolution: How to handle conflicts - "skip", "overwrite", or "prompt" (default: "skip")
+  - preserve_ids: Preserve original IDs from export (default: false)
+  - dry_run: Only analyze, don't make changes (default: false)
+  - project_mapping: Object mapping old project IDs to new ones (optional)
+- **Features**:
+  - Conflict detection and resolution
+  - Data validation and integrity checks
+  - Dry run mode for safe preview
+  - Project remapping capabilities
+  - Detailed import statistics and error reporting
+- **Use Cases**: Data restoration, migration between instances, bulk data updates
+- **Example**:
+  ```json
+  {
+    "file_path": "/path/to/export.json",
+    "import_mode": "merge",
+    "conflict_resolution": "skip",
+    "preserve_ids": false,
+    "dry_run": true,
+    "project_mapping": {
+      "old-project-id": "new-project-id"
+    }
+  }
+  ```
 
 ## Implementation Notes
 

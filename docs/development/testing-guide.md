@@ -121,9 +121,10 @@ Located in `gorev-mcpserver/internal/gorev/`:
 - `veri_yonetici_test.go` - Data layer tests
 - `is_yonetici_test.go` - Business logic tests
 - `ai_context_yonetici_test.go` - AI context thread-safety tests
+- `export_import_test.go` - Data export/import functionality tests (570+ lines, 20 test cases)
 
 Located in `gorev-mcpserver/internal/mcp/`:
-- `handlers_test.go` - MCP protocol handler tests (all 25 tools)
+- `handlers_test.go` - MCP protocol handler tests (all 31 tools)
 - `server_test.go` - MCP server initialization tests
 - `test_helpers.go` - DRY test infrastructure (NEW)
 - `table_driven_test.go` - Table-driven test patterns (NEW)

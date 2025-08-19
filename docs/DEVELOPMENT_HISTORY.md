@@ -29,6 +29,35 @@ This file contains the detailed development history and release notes for the Go
   - **Code Maintainability**: Dramatic improvement in codebase maintainability
   - **Rule 15 Compliance**: Zero tolerance for technical debt successfully implemented
 
+## MCP Server (v0.11.1 Phase 9) - Data Export/Import System (19 August 2025)
+- **Comprehensive Data Export/Import System**: Complete task management data portability solution
+  - **Export Functionality (`gorev_export`)**: Export tasks, projects, dependencies, templates, and AI context to JSON or CSV
+    - **Flexible Filtering**: Include/exclude completed tasks, filter by project, date range support
+    - **Multiple Formats**: JSON (structured) and CSV (tabular) export formats
+    - **Comprehensive Data**: Tasks, projects, templates, dependencies, AI context with metadata
+    - **Output Path Control**: User-specified export file locations with format validation
+  - **Import Functionality (`gorev_import`)**: Restore previously exported data with conflict resolution
+    - **Conflict Resolution**: Skip, overwrite, or prompt strategies for handling data conflicts
+    - **Import Modes**: Merge with existing data or replace entire dataset
+    - **Data Validation**: Comprehensive integrity checks and compatibility verification
+    - **Dry Run Support**: Preview import operations without making changes
+    - **Project Remapping**: Map old project IDs to new ones during import
+    - **Detailed Statistics**: Import success/failure counts and error reporting
+- **Production-Ready Implementation**:
+  - **20 Comprehensive Unit Tests**: Complete test coverage for all export/import scenarios
+  - **Error Handling**: Proper validation, i18n error messages, graceful failure handling
+  - **MCP Tool Integration**: Full integration with existing MCP tool infrastructure
+  - **i18n Support**: Turkish and English localization for all user messages
+  - **Rule 15 Compliance**: No shortcuts, comprehensive solution with full test coverage
+- **Tool Count Update**: Total MCP tools now at 31 (including gorev_export, gorev_import, file watching tools, and advanced features)
+- **Use Cases**: Data backup, system migration, team collaboration, cross-instance data sharing
+- **Files Added**:
+  - `internal/gorev/export_import.go` - Core export/import business logic (400+ lines)
+  - `internal/gorev/export_import_test.go` - Comprehensive test suite (570+ lines)
+  - Updated `internal/mcp/handlers.go` - Added MCP tool handlers for export/import
+  - Updated `internal/mcp/tool_registry.go` - Registered new MCP tools with proper schemas
+  - Updated `docs/MCP_TOOLS_REFERENCE.md` - Complete documentation for new tools
+
 ## MCP Server (v0.11.1 Phase 8) - Template Alias System & User Experience Enhancement (19 August 2025)
 - **Template Alias System**: Major user experience improvement for task creation
   - **9 Template Shortcuts**: Added memorable aliases for common templates (`bug`, `feature`, `research`, `spike`, `security`, `performance`, `refactor`, `debt`, `bug2`)

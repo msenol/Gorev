@@ -10,7 +10,11 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.11.1 - Ultra-Detailed DRY Compliance & Thread-Safety (19 Aug 2025)**
+**v0.11.1 - Data Export/Import & Thread-Safety Enhancement (19 Aug 2025)**
+- **Data Export/Import System**: Complete data portability solution (Phase 9)
+  - **`gorev_export`**: Export tasks, projects, dependencies to JSON/CSV with flexible filtering
+  - **`gorev_import`**: Import with conflict resolution, dry run support, project remapping
+  - **20 comprehensive tests**: Complete test coverage for all export/import scenarios
 - **Template Alias System**: Major user experience enhancement (Phase 8)
   - **9 Template Shortcuts**: `bug`, `feature`, `research`, `spike`, `security`, `performance`, `refactor`, `debt`, `bug2`
   - **CLI Command**: `gorev template aliases` for easy discovery
@@ -19,7 +23,6 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
   - **700+ total violations eliminated** across 7 comprehensive phases
   - **Template & Parameter Constants**: All hardcoded `"template_id"`, `"degerler"` strings replaced with constants
   - **Magic Number Elimination**: Replaced all hardcoded test numbers with context-specific constants
-  - **Emoji Constants Enforcement**: All `"✅"` hardcoded emojis replaced with `constants.EmojiStatusCompleted`
   - **Zero DRY violations remaining**: Complete string duplication elimination
 - **Thread-Safety Enhancement**: AI Context Manager race condition fix
   - Added `sync.RWMutex` protection to `AIContextYonetici` struct
@@ -38,7 +41,7 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 1. **gorev-mcpserver**: Core MCP server (Go) - Task management for AI assistants
 2. **gorev-vscode**: Optional VS Code extension - Rich visual interface
 
-**Core Features**: 25 MCP tools, unlimited subtask hierarchy, task dependencies, template system, bilingual support (TR/EN), AI context management.
+**Core Features**: 31 MCP tools, unlimited subtask hierarchy, task dependencies, template system, data export/import, file watching, bilingual support (TR/EN), AI context management.
 
 ## 🏗️ Architecture
 
@@ -82,13 +85,15 @@ npm test                  # Run tests
 
 ## 🛠️ MCP Tools Summary
 
-**24 MCP Tools** organized in 6 categories:
+**31 MCP Tools** organized in 8 categories:
 - **Task Management**: 6 tools (gorev_listele, gorev_detay, etc.)
 - **Subtask Management**: 3 tools (gorev_altgorev_olustur, etc.) 
 - **Templates**: 2 tools (template_listele, templateden_gorev_olustur)
 - **Project Management**: 6 tools (proje_olustur, proje_listele, etc.)
 - **AI Context**: 6 tools (gorev_set_active, gorev_nlp_query, etc.)
-- **Reporting**: 1 tool (ozet_goster)
+- **Data Export/Import**: 2 tools (gorev_export, gorev_import)
+- **File Watching**: 4 tools (gorev_file_watch_add, etc.)
+- **Advanced**: 2 tools (gorev_intelligent_create, ozet_goster)
 
 > **💡 Template Aliases**: Use shortcuts like `bug`, `feature`, `research` with `templateden_gorev_olustur` (see `gorev template aliases`)
 
