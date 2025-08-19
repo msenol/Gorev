@@ -1146,7 +1146,7 @@ func TestTemplateHandlers(t *testing.T) {
 				"analiz":         "N+1 query problem, missing indexes",
 				"cozum":          "Add composite indexes, use JOIN instead of multiple queries",
 				"riskler":        "Potential data inconsistency during migration",
-				"iyilestirmeler": "50% reduction in page load time",
+				"iyilestirmeler": constants.TestPerformanceImprovement,
 				"sure":           "2-3 gün",
 				"oncelik":        constants.PriorityHigh,
 				"etiketler":      "teknik-borç,performance,database",

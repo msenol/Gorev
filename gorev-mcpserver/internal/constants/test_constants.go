@@ -187,6 +187,9 @@ const (
 
 	// TestEmptyString empty string for testing
 	TestEmptyString = ""
+
+	// TestPerformanceImprovement common test performance improvement text
+	TestPerformanceImprovement = "50% reduction in page load time"
 )
 
 // Test date constants

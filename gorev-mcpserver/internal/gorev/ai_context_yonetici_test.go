@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -950,7 +951,7 @@ func TestAIContextRaceCondition(t *testing.T) {
 
 	// Track errors from concurrent operations
 	errors := make(chan error, 100)
-	const numGoroutines = 50
+	const numGoroutines = constants.TestConcurrencyLarge
 	const operationsPerGoroutine = 10
 
 	// Function to perform concurrent operations

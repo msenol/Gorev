@@ -190,7 +190,7 @@ func TestConcurrentParameterValidation(t *testing.T) {
 			params := map[string]interface{}{
 				"id":     constants.TestIDConcurrent,
 				"durum":  constants.TaskStatusPending,
-				"limit":  float64(50),
+				"limit":  float64(constants.TestIterationMedium),
 				"offset": float64(0),
 			}
 
@@ -205,7 +205,7 @@ func TestConcurrentParameterValidation(t *testing.T) {
 				return fmt.Errorf("validation error: %v", err)
 			}
 
-			validator.ValidateNumber(params, "limit", 50)
+			validator.ValidateNumber(params, "limit", constants.TestIterationMedium)
 			validator.ValidateNumber(params, "offset", 0)
 
 			return nil
