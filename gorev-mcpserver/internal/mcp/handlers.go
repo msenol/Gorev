@@ -1891,6 +1891,10 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.GorevFileWatchList(params)
 	case "gorev_file_watch_stats":
 		return h.GorevFileWatchStats(params)
+	case "gorev_export":
+		return h.GorevExport(params)
+	case "gorev_import":
+		return h.GorevImport(params)
 	default:
 		return mcp.NewToolResultError(fmt.Sprintf("bilinmeyen araç: %s", toolName)), nil
 	}
@@ -2313,4 +2317,228 @@ func (h *Handlers) GorevFileWatchStats(params map[string]interface{}) (*mcp.Call
 	result.WriteString("\n💡 **İpucu:** Dosya izleme sistemi, ilişkili dosyalarda değişiklik olduğunda görev durumunu otomatik olarak 'devam_ediyor' durumuna geçirir.")
 
 	return mcp.NewToolResultText(result.String()), nil
+}
+
+// GorevExport exports task data to a file
+func (h *Handlers) GorevExport(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	if h.debug {
+		slog.Debug("GorevExport called", "params", params)
+	}
+
+	// Parse parameters
+	if params == nil {
+		return mcp.NewToolResultError(i18n.T("error.noArguments", nil)), nil
+	}
+
+	// Extract parameters
+	outputPath, _ := params["output_path"].(string)
+	if outputPath == "" {
+		return mcp.NewToolResultError(i18n.T("error.outputPathRequired", nil)), nil
+	}
+
+	format, _ := params["format"].(string)
+	if format == "" {
+		format = "json"
+	}
+
+	includeCompleted := true
+	if val, ok := params["include_completed"].(bool); ok {
+		includeCompleted = val
+	}
+
+	includeDependencies := true
+	if val, ok := params["include_dependencies"].(bool); ok {
+		includeDependencies = val
+	}
+
+	includeTemplates := false
+	if val, ok := params["include_templates"].(bool); ok {
+		includeTemplates = val
+	}
+
+	includeAIContext := false
+	if val, ok := params["include_ai_context"].(bool); ok {
+		includeAIContext = val
+	}
+
+	// Parse project filter
+	var projectFilter []string
+	if val, ok := params["project_filter"]; ok {
+		if filterInterface, ok := val.([]interface{}); ok {
+			for _, pid := range filterInterface {
+				if pidStr, ok := pid.(string); ok {
+					projectFilter = append(projectFilter, pidStr)
+				}
+			}
+		}
+	}
+
+	// Parse date range
+	var dateRange *gorev.DateRange
+	if val, ok := params["date_range"]; ok {
+		if rangeMap, ok := val.(map[string]interface{}); ok {
+			dateRange = &gorev.DateRange{}
+			if from, ok := rangeMap["from"].(string); ok && from != "" {
+				if parsedFrom, err := time.Parse(time.RFC3339, from); err == nil {
+					dateRange.From = &parsedFrom
+				}
+			}
+			if to, ok := rangeMap["to"].(string); ok && to != "" {
+				if parsedTo, err := time.Parse(time.RFC3339, to); err == nil {
+					dateRange.To = &parsedTo
+				}
+			}
+		}
+	}
+
+	// Create export options
+	options := gorev.ExportOptions{
+		Format:              format,
+		OutputPath:          outputPath,
+		DateRange:           dateRange,
+		ProjectFilter:       projectFilter,
+		IncludeCompleted:    includeCompleted,
+		IncludeDependencies: includeDependencies,
+		IncludeMetadata:     true,
+		IncludeAIContext:    includeAIContext,
+		IncludeTemplates:    includeTemplates,
+	}
+
+	// Export data
+	exportData, err := h.isYonetici.ExportData(options)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf(i18n.T("error.exportFailed", map[string]interface{}{"Error": err}))), nil
+	}
+
+	// Save to file
+	if err := h.isYonetici.SaveExportToFile(exportData, options); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf(i18n.T("error.exportSaveFailed", map[string]interface{}{"Error": err}))), nil
+	}
+
+	// Create summary
+	summary := fmt.Sprintf(i18n.T("export.success", map[string]interface{}{
+		"Format":    format,
+		"Path":      outputPath,
+		"Tasks":     exportData.Metadata.TotalTasks,
+		"Projects":  exportData.Metadata.TotalProjects,
+		"Tags":      len(exportData.Tags),
+		"Templates": len(exportData.Templates),
+	}))
+
+	return mcp.NewToolResultText(summary), nil
+}
+
+// GorevImport imports task data from a file
+func (h *Handlers) GorevImport(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	if h.debug {
+		slog.Debug("GorevImport called", "params", params)
+	}
+
+	// Parse parameters
+	if params == nil {
+		return mcp.NewToolResultError(i18n.T("error.noArguments", nil)), nil
+	}
+
+	// Extract parameters
+	filePath, _ := params["file_path"].(string)
+	if filePath == "" {
+		return mcp.NewToolResultError(i18n.T("error.filePathRequired", nil)), nil
+	}
+
+	importMode, _ := params["import_mode"].(string)
+	if importMode == "" {
+		importMode = "merge"
+	}
+
+	conflictResolution, _ := params["conflict_resolution"].(string)
+	if conflictResolution == "" {
+		conflictResolution = "skip"
+	}
+
+	preserveIDs := false
+	if val, ok := params["preserve_ids"].(bool); ok {
+		preserveIDs = val
+	}
+
+	dryRun := false
+	if val, ok := params["dry_run"].(bool); ok {
+		dryRun = val
+	}
+
+	// Parse project mapping
+	var projectMapping map[string]string
+	if val, ok := params["project_mapping"]; ok {
+		if mappingInterface, ok := val.(map[string]interface{}); ok {
+			projectMapping = make(map[string]string)
+			for k, v := range mappingInterface {
+				if vStr, ok := v.(string); ok {
+					projectMapping[k] = vStr
+				}
+			}
+		}
+	}
+
+	// Create import options
+	options := gorev.ImportOptions{
+		FilePath:           filePath,
+		ImportMode:         importMode,
+		ConflictResolution: conflictResolution,
+		PreserveIDs:        preserveIDs,
+		ProjectMapping:     projectMapping,
+		DryRun:             dryRun,
+	}
+
+	// Import data
+	result, err := h.isYonetici.ImportData(options)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf(i18n.T("error.importFailed", map[string]interface{}{"Error": err}))), nil
+	}
+
+	// Create summary
+	var summary strings.Builder
+	if dryRun {
+		summary.WriteString(fmt.Sprintf("🔍 **%s**\n\n", i18n.T("import.dryRunResults", nil)))
+	} else {
+		summary.WriteString(fmt.Sprintf("✅ **%s**\n\n", i18n.T("import.success", nil)))
+	}
+
+	summary.WriteString(fmt.Sprintf("📊 **%s**\n", i18n.T("import.statistics", nil)))
+	summary.WriteString(fmt.Sprintf("- %s: %d\n", i18n.T("import.importedTasks", nil), result.ImportedTasks))
+	summary.WriteString(fmt.Sprintf("- %s: %d\n", i18n.T("import.importedProjects", nil), result.ImportedProjects))
+	summary.WriteString(fmt.Sprintf("- %s: %d\n", i18n.T("import.importedTags", nil), result.ImportedTags))
+	summary.WriteString(fmt.Sprintf("- %s: %d\n", i18n.T("import.importedTemplates", nil), result.ImportedTemplates))
+
+	if len(result.Conflicts) > 0 {
+		summary.WriteString(fmt.Sprintf("\n⚠️ **%s (%d)**\n", i18n.T("import.conflicts", nil), len(result.Conflicts)))
+		for i, conflict := range result.Conflicts {
+			if i < 5 { // Show max 5 conflicts
+				summary.WriteString(fmt.Sprintf("- %s %s: %s\n",
+					strings.Title(conflict.Type),
+					i18n.T("import.conflictResolution", nil),
+					conflict.Resolution))
+			}
+		}
+		if len(result.Conflicts) > 5 {
+			summary.WriteString(fmt.Sprintf("... %s %d %s\n",
+				i18n.T("import.and", nil),
+				len(result.Conflicts)-5,
+				i18n.T("import.moreConflicts", nil)))
+		}
+	}
+
+	if len(result.Errors) > 0 {
+		summary.WriteString(fmt.Sprintf("\n❌ **%s**\n", i18n.T("import.errors", nil)))
+		for _, errMsg := range result.Errors {
+			summary.WriteString(fmt.Sprintf("- %s\n", errMsg))
+		}
+	}
+
+	if len(result.Warnings) > 0 {
+		summary.WriteString(fmt.Sprintf("\n⚠️ **%s**\n", i18n.T("import.warnings", nil)))
+		for _, warning := range result.Warnings {
+			summary.WriteString(fmt.Sprintf("- %s\n", warning))
+		}
+	}
+
+	return mcp.NewToolResultText(summary.String()), nil
 }

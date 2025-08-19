@@ -1,6 +1,8 @@
 package mcp
 
 import (
+	"fmt"
+
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/constants"
@@ -455,6 +457,9 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 
 // registerAdvancedTools registers advanced and hierarchy tools
 func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering advanced tools...")
+	}
 	// Alt görev oluştur
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_altgorev_olustur",
@@ -562,4 +567,120 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{},
 		},
 	}, tr.handlers.OzetGoster)
+
+	// Gorev Export - Data export tool
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering gorev_export tool...")
+	}
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_export",
+		Description: i18n.T("tools.descriptions.gorev_export", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"output_path": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.export.output_path", nil),
+				},
+				"format": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.export.format", nil),
+					"enum":        []string{"json", "csv"},
+					"default":     "json",
+				},
+				"include_completed": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_completed", nil),
+					"default":     true,
+				},
+				"include_dependencies": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_dependencies", nil),
+					"default":     true,
+				},
+				"include_templates": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_templates", nil),
+					"default":     false,
+				},
+				"include_ai_context": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_ai_context", nil),
+					"default":     false,
+				},
+				"project_filter": map[string]interface{}{
+					"type":        "array",
+					"description": i18n.T("tools.params.export.project_filter", nil),
+					"items": map[string]interface{}{
+						"type": "string",
+					},
+				},
+				"date_range": map[string]interface{}{
+					"type":        "object",
+					"description": i18n.T("tools.params.export.date_range", nil),
+					"properties": map[string]interface{}{
+						"from": map[string]interface{}{
+							"type":        "string",
+							"description": i18n.T("tools.params.export.date_from", nil),
+							"format":      "date-time",
+						},
+						"to": map[string]interface{}{
+							"type":        "string",
+							"description": i18n.T("tools.params.export.date_to", nil),
+							"format":      "date-time",
+						},
+					},
+				},
+			},
+			Required: []string{"output_path"},
+		},
+	}, tr.handlers.GorevExport)
+
+	// Gorev Import - Data import tool
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering gorev_import tool...")
+	}
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_import",
+		Description: i18n.T("tools.descriptions.gorev_import", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"file_path": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.import.file_path", nil),
+				},
+				"import_mode": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.import.import_mode", nil),
+					"enum":        []string{"merge", "replace"},
+					"default":     "merge",
+				},
+				"conflict_resolution": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.import.conflict_resolution", nil),
+					"enum":        []string{"skip", "overwrite", "prompt"},
+					"default":     "skip",
+				},
+				"preserve_ids": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.T("tools.params.import.preserve_ids", nil),
+					"default":     false,
+				},
+				"dry_run": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.T("tools.params.import.dry_run", nil),
+					"default":     false,
+				},
+				"project_mapping": map[string]interface{}{
+					"type":        "object",
+					"description": i18n.T("tools.params.import.project_mapping", nil),
+					"additionalProperties": map[string]interface{}{
+						"type": "string",
+					},
+				},
+			},
+			Required: []string{"file_path"},
+		},
+	}, tr.handlers.GorevImport)
 }

@@ -83,5 +83,7 @@ func ListTools() []Tool {
 		{Name: "gorev_file_watch_remove", Description: "Dosya izlemeyi kaldır"},
 		{Name: "gorev_file_watch_list", Description: "Dosya izleme durumunu listele"},
 		{Name: "gorev_file_watch_stats", Description: "Dosya izleme istatistikleri"},
+		{Name: "gorev_export", Description: "Görevleri, projeleri ve ilişkili verileri JSON veya CSV formatında dosyaya dışa aktarır"},
+		{Name: "gorev_import", Description: "Daha önce dışa aktarılan verileri sisteme geri yükler"},
 	}
 }
