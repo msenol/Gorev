@@ -10,7 +10,11 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.11.1 - Ultra-Detailed DRY Compliance & Thread-Safety (18 Aug 2025)**
+**v0.11.1 - Ultra-Detailed DRY Compliance & Thread-Safety (19 Aug 2025)**
+- **Template Alias System**: Major user experience enhancement (Phase 8)
+  - **9 Template Shortcuts**: `bug`, `feature`, `research`, `spike`, `security`, `performance`, `refactor`, `debt`, `bug2`
+  - **CLI Command**: `gorev template aliases` for easy discovery
+  - **Deprecated Tool Removal**: `gorev_olustur` completely eliminated (Rule 15 compliance)
 - **Phase 7 Ultra-DRY Implementation**: Industry-leading DRY compliance achieved
   - **700+ total violations eliminated** across 7 comprehensive phases
   - **Template & Parameter Constants**: All hardcoded `"template_id"`, `"degerler"` strings replaced with constants
@@ -78,15 +82,15 @@ npm test                  # Run tests
 
 ## 🛠️ MCP Tools Summary
 
-**25 MCP Tools** organized in 6 categories:
-- **Task Management**: 7 tools (gorev_listele, gorev_detay, etc.)
+**24 MCP Tools** organized in 6 categories:
+- **Task Management**: 6 tools (gorev_listele, gorev_detay, etc.)
 - **Subtask Management**: 3 tools (gorev_altgorev_olustur, etc.) 
 - **Templates**: 2 tools (template_listele, templateden_gorev_olustur)
 - **Project Management**: 6 tools (proje_olustur, proje_listele, etc.)
 - **AI Context**: 6 tools (gorev_set_active, gorev_nlp_query, etc.)
 - **Reporting**: 1 tool (ozet_goster)
 
-> **💡 Important**: Use `templateden_gorev_olustur` for task creation (gorev_olustur deprecated in v0.10.0)
+> **💡 Template Aliases**: Use shortcuts like `bug`, `feature`, `research` with `templateden_gorev_olustur` (see `gorev template aliases`)
 
 ## 🗄️ Database Schema
 
