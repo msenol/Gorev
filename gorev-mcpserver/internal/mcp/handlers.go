@@ -88,6 +88,14 @@ func YeniHandlersWithDebug(isYonetici *gorev.IsYonetici, debug bool) *Handlers {
 	}
 }
 
+// Close cleans up resources used by handlers
+func (h *Handlers) Close() error {
+	if h.fileWatcher != nil {
+		return h.fileWatcher.Close()
+	}
+	return nil
+}
+
 // gorevResponseSizeEstimate bir görev için tahmini response boyutunu hesaplar
 func (h *Handlers) gorevResponseSizeEstimate(gorev *gorev.Gorev) int {
 	// Tahmini karakter sayıları
@@ -366,27 +374,7 @@ func (h *Handlers) templateOrnekDegerler(template *gorev.GorevTemplate) string {
 }
 
 // GorevOlustur - DEPRECATED: Template kullanımı artık zorunludur
-func (h *Handlers) GorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
-	return mcp.NewToolResultError(`❌ gorev_olustur artık kullanılmıyor!
-
-Template kullanımı zorunludur. Lütfen şu adımları takip edin:
-
-1. Önce mevcut template'leri listeleyin:
-   template_listele
-
-2. Uygun template'i seçin ve görev oluşturun:
-   templateden_gorev_olustur template_id='bug_report_v2' baslik='...' ...
-
-Mevcut template kategorileri:
-• 🐛 Bug: bug_report, bug_report_v2
-• ✨ Feature: feature_request
-• 🔬 Araştırma: research_task, spike_research
-• ⚡ Performans: performance_issue
-• 🔒 Güvenlik: security_fix
-• ♻️ Teknik: technical_debt, refactoring
-
-Detaylı bilgi için: template_listele kategori='Bug'`), nil
-}
+// GorevOlustur was removed in v0.11.1 - use TemplatedenGorevOlustur instead
 
 // GorevListele görevleri listeler
 func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
@@ -571,11 +559,11 @@ func (h *Handlers) AktifProjeAyarla(params map[string]interface{}) (*mcp.CallToo
 func (h *Handlers) AktifProjeGoster(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	proje, err := h.isYonetici.AktifProjeGetir()
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("aktif proje getirilemedi: %v", err)), nil
+		return mcp.NewToolResultError(i18n.T("error.activeProjectRetrieve", map[string]interface{}{"Error": err.Error()})), nil
 	}
 
 	if proje == nil {
-		return mcp.NewToolResultText("Henüz aktif proje ayarlanmamış."), nil
+		return mcp.NewToolResultText(i18n.T("messages.noActiveProject")), nil
 	}
 
 	// Görev sayısını al
@@ -602,7 +590,7 @@ func (h *Handlers) AktifProjeKaldir(params map[string]interface{}) (*mcp.CallToo
 		return mcp.NewToolResultError(fmt.Sprintf("aktif proje kaldırılamadı: %v", err)), nil
 	}
 
-	return mcp.NewToolResultText("✓ Aktif proje ayarı kaldırıldı."), nil
+	return mcp.NewToolResultText(i18n.T("success.activeProjectRemoved")), nil
 }
 
 // GorevGuncelle görev durumunu günceller
@@ -732,7 +720,7 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 					if err == nil {
 						durum := constants.EmojiStatusCompleted
 						if kaynakGorev.Durum != constants.TaskStatusCompleted {
-							durum = "⏳"
+							durum = constants.EmojiStatusPending
 						}
 						oncekiler = append(oncekiler, fmt.Sprintf("%s %s (`%s`)", durum, kaynakGorev.Baslik, kaynakGorev.Durum))
 					}
@@ -1651,8 +1639,8 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 		return mcp.NewToolResultError("degerler parametresi gerekli ve obje tipinde olmalı"), nil
 	}
 
-	// Önce template'i kontrol et
-	template, err := h.isYonetici.VeriYonetici().TemplateGetir(templateID)
+	// Önce template'i ID veya alias ile kontrol et
+	template, err := h.isYonetici.VeriYonetici().TemplateIDVeyaAliasIleGetir(templateID)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("template bulunamadı: %v", err)), nil
 	}
@@ -1821,7 +1809,7 @@ func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.Cal
 	sb.WriteString(fmt.Sprintf("- **Toplam Alt Görev:** %d\n", hiyerarsi.ToplamAltGorev))
 	sb.WriteString(fmt.Sprintf("- **Tamamlanan:** %d ✓\n", hiyerarsi.TamamlananAlt))
 	sb.WriteString(fmt.Sprintf("- **Devam Eden:** %d 🔄\n", hiyerarsi.DevamEdenAlt))
-	sb.WriteString(fmt.Sprintf("- **Beklemede:** %d ⏳\n", hiyerarsi.BeklemedeAlt))
+	sb.WriteString(fmt.Sprintf("- **Beklemede:** %d %s\n", hiyerarsi.BeklemedeAlt, constants.EmojiStatusPending))
 	sb.WriteString(fmt.Sprintf("- **İlerleme:** %.1f%%\n\n", hiyerarsi.IlerlemeYuzdesi))
 
 	// Doğrudan alt görevler
@@ -1840,8 +1828,7 @@ func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.Cal
 // CallTool çağrı yapmak için yardımcı metod
 func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mcp.CallToolResult, error) {
 	switch toolName {
-	case "gorev_olustur":
-		return h.GorevOlustur(params)
+	// gorev_olustur was removed in v0.11.1, use templateden_gorev_olustur instead
 	case "gorev_listele":
 		return h.GorevListele(params)
 	case "gorev_detay":

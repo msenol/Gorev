@@ -154,7 +154,7 @@ func TestFormatterTableDriven(t *testing.T) {
 		{
 			Name:       "GetStatusEmoji",
 			Input:      "beklemede",
-			Expected:   "⏳",
+			Expected:   constants.EmojiStatusPending,
 			ShouldFail: false,
 		},
 		{
@@ -166,7 +166,7 @@ func TestFormatterTableDriven(t *testing.T) {
 		{
 			Name:       "GetUnknownStatusEmoji",
 			Input:      "unknown",
-			Expected:   "❓",
+			Expected:   constants.EmojiStatusUnknown,
 			ShouldFail: false,
 		},
 	}
