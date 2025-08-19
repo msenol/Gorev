@@ -242,32 +242,48 @@ func createMCPListTasksCommand() *cobra.Command {
 }
 
 func createMCPCreateTaskCommand() *cobra.Command {
+	var templateID string
 	var title string
 	var description string
 	var priority string
 	var projectID string
 
 	cmd := &cobra.Command{
-		Use:   "create-task",
+		Use:   "create-task --template=<template-id-or-alias>",
 		Short: i18n.T("cli.createTask"),
+		Long:  "Create task from template. Use 'gorev template aliases' to see available shortcuts.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if title == "" {
-				return fmt.Errorf(i18n.T("error.titleRequired"))
+			if templateID == "" {
+				return fmt.Errorf("template ID veya alias gerekli. Kullanım: --template=bug veya --template=feature\n" +
+					"Mevcut alias'ler için: gorev template aliases")
+			}
+
+			// Build template values
+			degerler := make(map[string]interface{})
+
+			if title != "" {
+				degerler["baslik"] = title
+			}
+			if description != "" {
+				degerler["aciklama"] = description
+			}
+			if priority != "" {
+				degerler["oncelik"] = priority
+			}
+			if projectID != "" {
+				degerler["proje_id"] = projectID
 			}
 
 			params := map[string]interface{}{
-				"baslik":   title,
-				"aciklama": description,
-				"oncelik":  priority,
-			}
-			if projectID != "" {
-				params["proje_id"] = projectID
+				constants.ParamTemplateID: templateID,
+				constants.ParamDegerler:   degerler,
 			}
 
-			return callMCPTool("gorev_olustur", params)
+			return callMCPTool("templateden_gorev_olustur", params)
 		},
 	}
 
+	cmd.Flags().StringVar(&templateID, "template", "", "Template ID or alias (required). Use 'gorev template aliases' to see shortcuts")
 	cmd.Flags().StringVar(&title, "title", "", i18n.T("flags.title"))
 	cmd.Flags().StringVar(&description, "description", "", i18n.T("flags.taskDescription"))
 	cmd.Flags().StringVar(&priority, "priority", constants.PriorityMedium, i18n.T("flags.priority"))

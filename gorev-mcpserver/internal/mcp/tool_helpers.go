@@ -116,7 +116,7 @@ func (tf *TaskFormatter) GetStatusEmoji(durum string) string {
 	case constants.TaskStatusCancelled:
 		return constants.EmojiStatusCancelled
 	default:
-		return "❓"
+		return constants.EmojiStatusUnknown
 	}
 }
 
@@ -356,7 +356,7 @@ func (sf *StatusFormatter) GetStatusEmoji(status string) string {
 	case constants.TaskStatusCancelled:
 		return constants.EmojiStatusCancelled
 	default:
-		return "❓"
+		return constants.EmojiStatusUnknown
 	}
 }
 

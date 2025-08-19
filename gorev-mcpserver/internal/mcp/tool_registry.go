@@ -31,15 +31,8 @@ func (tr *ToolRegistry) RegisterAllTools(s *server.MCPServer) {
 
 // registerTaskManagementTools registers core task management tools
 func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
-	// Görev oluştur (deprecated)
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_olustur",
-		Description: i18n.T("tools.descriptions.gorev_olustur", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-		},
-	}, tr.handlers.GorevOlustur)
+	// Note: gorev_olustur was deprecated in v0.10.0 and removed in v0.11.1
+	// Use templateden_gorev_olustur instead
 
 	// Görev listele
 	s.AddTool(mcp.Tool{

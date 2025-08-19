@@ -68,7 +68,7 @@ func TestCreateMCPCommand(t *testing.T) {
 	assert.NotEmpty(t, cmd.Long)
 
 	// Check that subcommands are added (check exact Use strings)
-	expectedSubcommands := []string{"list", "call <tool> [param=value...]", "list-tasks", "create-task", "task-detail <task-id>", "projects"}
+	expectedSubcommands := []string{"list", "call <tool> [param=value...]", "list-tasks", "create-task --template=<template-id-or-alias>", "task-detail <task-id>", "projects"}
 	actualSubcommands := make([]string, len(cmd.Commands()))
 	for i, subcmd := range cmd.Commands() {
 		actualSubcommands[i] = subcmd.Use
@@ -266,7 +266,7 @@ func TestMCPCreateTaskCommand(t *testing.T) {
 
 	cmd := createMCPCreateTaskCommand()
 
-	assert.Equal(t, "create-task", cmd.Use)
+	assert.Equal(t, "create-task --template=<template-id-or-alias>", cmd.Use)
 	assert.NotEmpty(t, cmd.Short)
 
 	// Check flags
