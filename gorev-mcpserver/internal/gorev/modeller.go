@@ -63,6 +63,7 @@ type GorevTemplate struct {
 	ID               string            `json:"id"`
 	Isim             string            `json:"isim"`
 	Tanim            string            `json:"tanim"`
+	Alias            string            `json:"alias"` // Kısa takma ad (örn: bug, feature, research)
 	VarsayilanBaslik string            `json:"varsayilan_baslik"`
 	AciklamaTemplate string            `json:"aciklama_template"`
 	Alanlar          []TemplateAlan    `json:"alanlar"`

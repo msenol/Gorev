@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	// "log"
 	"strings"
 	"time"
 
@@ -37,6 +36,7 @@ func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, erro
 }
 
 func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
+	// log.Printf("Migration path: %s", migrationsYolu)
 	driver, err := sqlite3.WithInstance(vy.db, &sqlite3.Config{})
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.migrationDriverFailed", map[string]interface{}{"Error": err}))
@@ -54,28 +54,29 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	// Hata ayıklama için versiyonları logla
 	_, _, err = m.Version()
 	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
-		// //log.Printf("Migration öncesi versiyon alınamadı: %v", err)
+		// log.Printf("Migration öncesi versiyon alınamadı: %v", err)
 	} else {
-		// //log.Printf("Migration öncesi veritabanı versiyonu: %d, dirty: %v", version, dirty)
+		// log.Printf("Migration öncesi veritabanı versiyonu: %d, dirty: %v", version, dirty)
 	}
 
 	err = m.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		// log.Printf("Migration failed: %v", err)
 		return fmt.Errorf(i18n.T("error.migrationProcessFailed", map[string]interface{}{"Error": err}))
 	}
 
 	_, _, err = m.Version()
 	if err != nil {
-		// //log.Printf("Migration sonrası versiyon alınamadı: %v", err)
+		// log.Printf("Migration sonrası versiyon alınamadı: %v", err)
 	} else {
-		// //log.Printf("Migration sonrası veritabanı versiyonu: %d, dirty: %v", version, dirty)
+		// log.Printf("Migration sonrası veritabanı versiyonu: %d, dirty: %v", version, dirty)
 	}
 
-	// //log.Println("Veritabanı başarıyla migrate edildi.")
+	// log.Println("Veritabanı başarıyla migrate edildi.")
 
 	// Varsayılan template'leri oluştur
 	if err := vy.VarsayilanTemplateleriOlustur(); err != nil {
-		// //log.Printf("Varsayılan template'ler oluşturulurken uyarı: %v", err)
+		// log.Printf("Varsayılan template'ler oluşturulurken uyarı: %v", err)
 		// Hata durumunda devam et, kritik değil
 	}
 

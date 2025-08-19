@@ -26,6 +26,8 @@ type VeriYoneticiInterface interface {
 	TemplateOlustur(template *GorevTemplate) error
 	TemplateListele(kategori string) ([]*GorevTemplate, error)
 	TemplateGetir(templateID string) (*GorevTemplate, error)
+	TemplateAliasIleGetir(alias string) (*GorevTemplate, error)
+	TemplateIDVeyaAliasIleGetir(idOrAlias string) (*GorevTemplate, error)
 	TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error)
 	VarsayilanTemplateleriOlustur() error
 	AltGorevleriGetir(parentID string) ([]*Gorev, error)
