@@ -582,6 +582,30 @@
         "title": "Export Template",
         "category": "Gorev",
         "icon": "$(export)"
+      },
+      {
+        "command": "gorev.exportData",
+        "title": "%command.exportData%",
+        "category": "Gorev",
+        "icon": "$(export)"
+      },
+      {
+        "command": "gorev.importData",
+        "title": "%command.importData%",
+        "category": "Gorev",
+        "icon": "$(import)"
+      },
+      {
+        "command": "gorev.exportCurrentView",
+        "title": "%command.exportCurrentView%",
+        "category": "Gorev",
+        "icon": "$(export)"
+      },
+      {
+        "command": "gorev.quickExport",
+        "title": "%command.quickExport%",
+        "category": "Gorev",
+        "icon": "$(export)"
       }
     ],
     "viewsContainers": {
@@ -656,6 +680,16 @@
           "command": "gorev.filterTasks",
           "when": "view == gorevTasks",
           "group": "navigation@6"
+        },
+        {
+          "command": "gorev.exportData",
+          "when": "view == gorevTasks",
+          "group": "navigation@7"
+        },
+        {
+          "command": "gorev.importData",
+          "when": "view == gorevTasks",
+          "group": "navigation@8"
         },
         {
           "command": "gorev.createProject",
@@ -783,6 +817,11 @@
           "command": "gorev.deleteTask",
           "when": "view == gorevTasks && viewItem == task:selected",
           "group": "4_delete"
+        },
+        {
+          "command": "gorev.exportCurrentView",
+          "when": "view == gorevTasks && (viewItem == task || viewItem == task:selected)",
+          "group": "5_export@1"
         },
         {
           "command": "gorev.createFromTemplate",

@@ -56,6 +56,10 @@
   "command.initDefaultTemplates": "Varsayılan Şablonları Başlat",
   "command.showTemplateDetails": "Şablon Detayını Göster",
   "command.exportTemplate": "Şablon Dışa Aktar",
+  "command.exportData": "Veri Dışa Aktar",
+  "command.importData": "Veri İçe Aktar",
+  "command.exportCurrentView": "Mevcut Görünümü Dışa Aktar",
+  "command.quickExport": "Hızlı Dışa Aktar",
 
   "view.tasks": "Görevler",
   "view.projects": "Projeler",
