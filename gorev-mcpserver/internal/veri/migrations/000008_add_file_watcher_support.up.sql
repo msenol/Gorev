@@ -3,7 +3,7 @@
 
 CREATE TABLE task_file_paths (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id INTEGER NOT NULL REFERENCES gorevler(id) ON DELETE CASCADE,
+    task_id TEXT NOT NULL REFERENCES gorevler(id) ON DELETE CASCADE,
     file_path TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -18,8 +18,8 @@ CREATE INDEX idx_task_file_paths_file_path ON task_file_paths(file_path);
 CREATE TABLE file_watcher_config (
     id INTEGER PRIMARY KEY DEFAULT 1,
     enabled BOOLEAN DEFAULT TRUE,
-    watched_extensions JSON,
-    ignore_patterns JSON,
+    watched_extensions TEXT,
+    ignore_patterns TEXT,
     auto_update_status BOOLEAN DEFAULT TRUE,
     debounce_duration_ms INTEGER DEFAULT 500,
     max_file_size_bytes INTEGER DEFAULT 10485760, -- 10MB
