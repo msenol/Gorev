@@ -29,10 +29,10 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 	}
 
 	sorgu := `INSERT INTO gorev_templateleri 
-		(id, isim, tanim, varsayilan_baslik, aciklama_template, alanlar, ornek_degerler, kategori, aktif)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		(id, isim, tanim, alias, varsayilan_baslik, aciklama_template, alanlar, ornek_degerler, kategori, aktif)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err = vy.db.Exec(sorgu, template.ID, template.Isim, template.Tanim,
+	_, err = vy.db.Exec(sorgu, template.ID, template.Isim, template.Tanim, template.Alias,
 		template.VarsayilanBaslik, template.AciklamaTemplate,
 		string(alanlarJSON), string(ornekDegerlerJSON), template.Kategori, template.Aktif)
 
@@ -49,12 +49,12 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 	var args []interface{}
 
 	if kategori != "" {
-		sorgu = `SELECT id, isim, tanim, varsayilan_baslik, aciklama_template, 
+		sorgu = `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
 				alanlar, ornek_degerler, kategori, aktif 
 				FROM gorev_templateleri WHERE aktif = 1 AND kategori = ? ORDER BY isim`
 		args = append(args, kategori)
 	} else {
-		sorgu = `SELECT id, isim, tanim, varsayilan_baslik, aciklama_template, 
+		sorgu = `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
 				alanlar, ornek_degerler, kategori, aktif 
 				FROM gorev_templateleri WHERE aktif = 1 ORDER BY kategori, isim`
 	}
@@ -70,7 +70,7 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 		template := &GorevTemplate{}
 		var alanlarJSON, ornekDegerlerJSON string
 
-		err := rows.Scan(&template.ID, &template.Isim, &template.Tanim,
+		err := rows.Scan(&template.ID, &template.Isim, &template.Tanim, &template.Alias,
 			&template.VarsayilanBaslik, &template.AciklamaTemplate,
 			&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
 		if err != nil {
@@ -98,12 +98,12 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
 
-	sorgu := `SELECT id, isim, tanim, varsayilan_baslik, aciklama_template, 
+	sorgu := `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
 			alanlar, ornek_degerler, kategori, aktif 
 			FROM gorev_templateleri WHERE id = ?`
 
 	err := vy.db.QueryRow(sorgu, templateID).Scan(
-		&template.ID, &template.Isim, &template.Tanim,
+		&template.ID, &template.Isim, &template.Tanim, &template.Alias,
 		&template.VarsayilanBaslik, &template.AciklamaTemplate,
 		&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
 
@@ -127,10 +127,56 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 	return template, nil
 }
 
+// TemplateAliasIleGetir alias ile template getirir
+func (vy *VeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, error) {
+	template := &GorevTemplate{}
+	var alanlarJSON, ornekDegerlerJSON string
+
+	sorgu := `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
+			alanlar, ornek_degerler, kategori, aktif 
+			FROM gorev_templateleri WHERE alias = ? AND aktif = 1`
+
+	err := vy.db.QueryRow(sorgu, alias).Scan(
+		&template.ID, &template.Isim, &template.Tanim, &template.Alias,
+		&template.VarsayilanBaslik, &template.AciklamaTemplate,
+		&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf(i18n.T("error.templateNotFoundAlias", map[string]interface{}{"Alias": alias}))
+		}
+		return nil, fmt.Errorf("template getirilemedi: %w", err)
+	}
+
+	// Alanları parse et
+	if err := json.Unmarshal([]byte(alanlarJSON), &template.Alanlar); err != nil {
+		return nil, fmt.Errorf("alanlar parse edilemedi: %w", err)
+	}
+
+	// Örnek değerleri parse et
+	if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
+		return nil, fmt.Errorf(i18n.T("error.exampleValuesParseFailed", map[string]interface{}{"Error": err}))
+	}
+
+	return template, nil
+}
+
+// TemplateIDVeyaAliasIleGetir ID veya alias ile template getirir
+func (vy *VeriYonetici) TemplateIDVeyaAliasIleGetir(idOrAlias string) (*GorevTemplate, error) {
+	// Önce ID olarak dene
+	template, err := vy.TemplateGetir(idOrAlias)
+	if err == nil {
+		return template, nil
+	}
+
+	// Sonra alias olarak dene
+	return vy.TemplateAliasIleGetir(idOrAlias)
+}
+
 // TemplatedenGorevOlustur template kullanarak görev oluşturur
 func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
-	// Template'i getir
-	template, err := vy.TemplateGetir(templateID)
+	// Template'i ID veya alias ile getir
+	template, err := vy.TemplateIDVeyaAliasIleGetir(templateID)
 	if err != nil {
 		return nil, err
 	}
@@ -237,6 +283,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Bug Raporu",
 			Tanim:            "Yazılım hatası bildirimi için detaylı template",
+			Alias:            "bug",
 			VarsayilanBaslik: "🐛 [{{modul}}] {{baslik}}",
 			AciklamaTemplate: `## 🐛 Hata Açıklaması
 {{aciklama}}
@@ -281,6 +328,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Özellik İsteği",
 			Tanim:            "Yeni özellik veya geliştirme isteği için template",
+			Alias:            "feature",
 			VarsayilanBaslik: "✨ {{baslik}}",
 			AciklamaTemplate: `## ✨ Özellik Açıklaması
 {{aciklama}}
@@ -323,6 +371,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Teknik Borç",
 			Tanim:            "Refaktöring veya teknik iyileştirme için template",
+			Alias:            "debt",
 			VarsayilanBaslik: "🔧 [{{alan}}] {{baslik}}",
 			AciklamaTemplate: `## 🔧 Teknik Borç Açıklaması
 {{aciklama}}
@@ -368,6 +417,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Araştırma Görevi",
 			Tanim:            "Teknoloji veya çözüm araştırması için template",
+			Alias:            "research",
 			VarsayilanBaslik: "🔍 {{konu}} Araştırması",
 			AciklamaTemplate: `## 🔍 Araştırma Konusu
 {{konu}}
@@ -407,6 +457,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Bug Raporu v2",
 			Tanim:            "Gelişmiş bug raporu - detaylı adımlar ve environment bilgisi",
+			Alias:            "bug2",
 			VarsayilanBaslik: "🐛 [{{severity}}] {{modul}}: {{baslik}}",
 			AciklamaTemplate: `## 🐛 Hata Özeti
 {{aciklama}}
@@ -459,6 +510,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Spike Araştırma",
 			Tanim:            "Time-boxed teknik araştırma ve proof-of-concept çalışmaları",
+			Alias:            "spike",
 			VarsayilanBaslik: "🔬 [SPIKE] {{research_question}}",
 			AciklamaTemplate: `## 🔬 Araştırma Sorusu
 {{research_question}}
@@ -497,6 +549,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Performans Sorunu",
 			Tanim:            "Performans problemleri ve optimizasyon görevleri",
+			Alias:            "performance",
 			VarsayilanBaslik: "⚡ [PERF] {{metric_affected}}: {{baslik}}",
 			AciklamaTemplate: `## ⚡ Performans Sorunu
 {{aciklama}}
@@ -544,6 +597,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Güvenlik Düzeltmesi",
 			Tanim:            "Güvenlik açıkları ve düzeltmeleri için özel template",
+			Alias:            "security",
 			VarsayilanBaslik: "🔒 [SEC-{{severity}}] {{vulnerability_type}}: {{baslik}}",
 			AciklamaTemplate: `## 🔒 Güvenlik Açığı
 {{aciklama}}
@@ -595,6 +649,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		{
 			Isim:             "Refactoring",
 			Tanim:            "Kod kalitesi ve mimari iyileştirmeler",
+			Alias:            "refactor",
 			VarsayilanBaslik: "♻️ [REFACTOR] {{code_smell}}: {{baslik}}",
 			AciklamaTemplate: `## ♻️ Refactoring Özeti
 {{aciklama}}
@@ -649,11 +704,30 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 	}
 
 	for _, template := range templates {
-		if err := vy.TemplateOlustur(template); err != nil {
-			// Template zaten varsa hata verme
-			if !strings.Contains(err.Error(), "UNIQUE constraint") {
-				return fmt.Errorf(fmt.Sprintf("varsayılan template oluşturulamadı (%s): %v", template.Isim, err))
+		// Generate UUID for template
+		template.ID = uuid.New().String()
+
+		// Check if template with this name already exists
+		existingTemplates, err := vy.TemplateListele("")
+		if err != nil {
+			return fmt.Errorf("mevcut template'ler kontrol edilemedi: %v", err)
+		}
+
+		exists := false
+		for _, existing := range existingTemplates {
+			if existing.Isim == template.Isim {
+				exists = true
+				break
 			}
+		}
+
+		if exists {
+			// Template already exists, skip creation
+			continue
+		}
+
+		if err := vy.TemplateOlustur(template); err != nil {
+			return fmt.Errorf("varsayılan template oluşturulamadı (%s): %v", template.Isim, err)
 		}
 	}
 
