@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
@@ -12,7 +13,7 @@ import (
 )
 
 var (
-	version   = "dev"
+	version   = "v0.11.1"
 	buildTime = "unknown"
 	gitCommit = "unknown"
 	langFlag  string
@@ -206,15 +207,17 @@ func main() {
 	}
 
 	rootCmd := &cobra.Command{
-		Use:   "gorev",
-		Short: i18n.T("cli.appDescription"),
-		Long: `Gorev, Model Context Protocol (MCP) üzerinden AI asistanlarına
-görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
+		Use:     "gorev",
+		Short:   i18n.T("cli.appDescription"),
+		Long:    i18n.T("cli.appLongDescription"),
+		Example: i18n.T("cli.appExamples"),
 	}
 
 	serveCmd := &cobra.Command{
-		Use:   "serve",
-		Short: i18n.T("cli.serve"),
+		Use:     "serve",
+		Short:   i18n.T("cli.serve"),
+		Long:    i18n.T("cli.serveLongDescription"),
+		Example: i18n.T("cli.serveExamples"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Re-initialize i18n if language flag was provided
 			if langFlag != "" {
@@ -225,7 +228,6 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 			return runServer()
 		},
 	}
-	serveCmd.PersistentFlags().StringVar(&langFlag, "lang", "", "Language preference (tr, en)")
 	serveCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, i18n.T("cli.debug"))
 
 	versionCmd := &cobra.Command{
@@ -275,10 +277,21 @@ görev yönetimi yetenekleri sağlayan modern bir sunucudur.`,
 		},
 	}
 
-	templateCmd.AddCommand(templateListCmd, templateShowCmd, templateInitCmd)
+	templateAliasesCmd := &cobra.Command{
+		Use:   "aliases",
+		Short: i18n.T("cli.templateAliases"),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return listTemplateAliases()
+		},
+	}
+
+	templateCmd.AddCommand(templateListCmd, templateShowCmd, templateInitCmd, templateAliasesCmd)
 
 	// MCP test commands
 	mcpCmd := createMCPCommand()
+
+	// Global flags
+	rootCmd.PersistentFlags().StringVar(&langFlag, "lang", "", i18n.T("flags.language"))
 
 	rootCmd.AddCommand(serveCmd, versionCmd, templateCmd, mcpCmd)
 
@@ -349,9 +362,16 @@ func listTemplates(kategori string) error {
 	for kat, tmpls := range kategoriMap {
 		fmt.Printf("\n=== %s ===\n", kat)
 		for _, tmpl := range tmpls {
-			fmt.Printf("\n%s (ID: %s)\n", tmpl.Isim, tmpl.ID)
+			aliasInfo := ""
+			if tmpl.Alias != "" {
+				aliasInfo = fmt.Sprintf(" [alias: %s]", tmpl.Alias)
+			}
+			fmt.Printf("\n%s%s\n", tmpl.Isim, aliasInfo)
 			fmt.Printf("  %s\n", tmpl.Tanim)
 			fmt.Printf("  Başlık: %s\n", tmpl.VarsayilanBaslik)
+			if tmpl.Alias != "" {
+				fmt.Printf("  Hızlı kullanım: gorev task create --template=%s\n", tmpl.Alias)
+			}
 		}
 	}
 
@@ -367,14 +387,17 @@ func showTemplate(templateID string) error {
 	}
 	defer veriYonetici.Kapat()
 
-	// Template'i getir
-	template, err := veriYonetici.TemplateGetir(templateID)
+	// Template'i ID veya alias ile getir
+	template, err := veriYonetici.TemplateIDVeyaAliasIleGetir(templateID)
 	if err != nil {
 		return fmt.Errorf("template bulunamadı: %w", err)
 	}
 
 	fmt.Printf("\n=== %s ===\n", template.Isim)
 	fmt.Printf("ID: %s\n", template.ID)
+	if template.Alias != "" {
+		fmt.Printf("Alias: %s\n", template.Alias)
+	}
 	fmt.Printf("Kategori: %s\n", template.Kategori)
 	fmt.Printf("Açıklama: %s\n", template.Tanim)
 	fmt.Printf("\nBaşlık Şablonu: %s\n", template.VarsayilanBaslik)
@@ -416,5 +439,54 @@ func initTemplates() error {
 	}
 
 	fmt.Println("✓ Varsayılan template'ler başarıyla oluşturuldu.")
+	return nil
+}
+
+func listTemplateAliases() error {
+	// Veritabanını başlat
+	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
+	if err != nil {
+		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
+	}
+	defer veriYonetici.Kapat()
+
+	// Template'leri listele
+	templates, err := veriYonetici.TemplateListele("")
+	if err != nil {
+		return fmt.Errorf("template'ler listelenemedi: %w", err)
+	}
+
+	if len(templates) == 0 {
+		fmt.Println("Henüz template bulunmuyor.")
+		return nil
+	}
+
+	fmt.Println("📋 Template Aliases (Hızlı Erişim)")
+	fmt.Println("=" + strings.Repeat("=", 40))
+
+	// Alias'leri topla
+	aliases := make(map[string]*gorev.GorevTemplate)
+	for _, tmpl := range templates {
+		if tmpl.Alias != "" {
+			aliases[tmpl.Alias] = tmpl
+		}
+	}
+
+	if len(aliases) == 0 {
+		fmt.Println("Henüz alias tanımlanmış template bulunmuyor.")
+		return nil
+	}
+
+	// Alias'leri alfabetik sırala ve göster
+	for alias, tmpl := range aliases {
+		fmt.Printf("\n🏷️  %s\n", alias)
+		fmt.Printf("   → %s (%s)\n", tmpl.Isim, tmpl.Kategori)
+		fmt.Printf("   📝 %s\n", tmpl.Tanim)
+		fmt.Printf("   💡 Kullanım: gorev mcp call templateden_gorev_olustur template_id=%s degerler='{...}'\n", alias)
+	}
+
+	fmt.Println("\n📖 Detaylı template bilgisi için: gorev template show <alias>")
+	fmt.Println("📋 Tüm template'ler için: gorev template list")
+
 	return nil
 }

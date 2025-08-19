@@ -53,7 +53,7 @@ func ListTools() []Tool {
 	// This is a placeholder - we need to implement this based on registered tools
 	// For now, return a hardcoded list
 	return []Tool{
-		{Name: "gorev_olustur", Description: "Yeni bir görev oluştur"},
+		// gorev_olustur removed in v0.11.1, use templateden_gorev_olustur
 		{Name: "gorev_listele", Description: "Görevleri listele"},
 		{Name: "gorev_detay", Description: "Görev detayını göster"},
 		{Name: "gorev_guncelle", Description: "Görev durumunu güncelle"},
