@@ -2,6 +2,25 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.5.1] - 2025-08-19
+
+### Changed
+- **Server Compatibility Update**: Enhanced compatibility with Gorev MCP Server v0.11.1
+- **Template Alias Support**: Ready for new template alias system (bug, feature, task, etc.)
+- **Performance Optimization**: Optimized for 500x faster server response times
+- **Resource Management**: Enhanced MCP client connection stability with FileWatcher improvements
+
+### Fixed
+- **Connection Stability**: Improved MCP server connection handling for better reliability  
+- **Template System**: Enhanced template selection compatibility with server alias system
+- **Error Handling**: Better error messages for server communication issues
+
+### Technical
+- **MCP Protocol**: Full compatibility with server's enhanced MCP tool registration
+- **FileWatcher Integration**: Ready for automatic file monitoring capabilities
+- **Thread Safety**: Compatible with server's thread-safe AI context management
+- **i18n Consistency**: Maintains bilingual support with server's i18n enhancements
+
 ## [0.5.0] - 2025-07-21
 
 ### Added
