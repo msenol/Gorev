@@ -13,6 +13,7 @@ import { registerTemplateCommands } from './templateCommands';
 import { registerEnhancedGorevCommands } from './enhancedGorevCommands';
 import { registerInlineEditCommands } from './inlineEditCommands';
 import { registerFilterCommands } from './filterCommands';
+import { registerDataCommands } from './dataCommands';
 
 export interface CommandContext {
   gorevTreeProvider: EnhancedGorevTreeProvider;
@@ -33,6 +34,7 @@ export function registerCommands(
   registerTemplateCommands(context, mcpClient, providers);
   registerEnhancedGorevCommands(context, mcpClient, providers);
   registerInlineEditCommands(context, mcpClient, providers);
+  registerDataCommands(context, mcpClient, providers);
   
   if (providers.filterToolbar) {
     registerFilterCommands(context, mcpClient, providers);

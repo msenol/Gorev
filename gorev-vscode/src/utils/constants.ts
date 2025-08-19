@@ -83,6 +83,12 @@ export const COMMANDS = {
   INIT_DEFAULT_TEMPLATES: 'gorev.initDefaultTemplates',
   SHOW_TEMPLATE_DETAILS: 'gorev.showTemplateDetails',
   EXPORT_TEMPLATE: 'gorev.exportTemplate',
+  
+  // Data export/import commands
+  EXPORT_DATA: 'gorev.exportData',
+  IMPORT_DATA: 'gorev.importData',
+  EXPORT_CURRENT_VIEW: 'gorev.exportCurrentView',
+  QUICK_EXPORT: 'gorev.quickExport',
 } as const;
 
 export const VIEWS = {
