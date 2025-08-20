@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 20 August 2025 | **Version:** v0.11.1
+**Last Updated:** 20 August 2025 | **Version:** v0.12.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,7 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.11.1 - Data Export/Import & VS Code Integration (20 Aug 2025)**
+**v0.12.0 - Data Export/Import & VS Code Integration (20 Aug 2025)**
 - **VS Code Extension Data Integration**: Complete visual interface for export/import (Phase 10)
   - **4 New Commands**: Export Data, Import Data, Export Current View, Quick Export
   - **Multi-Step UI**: WebView dialogs for export configuration and import wizards

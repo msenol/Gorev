@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2025-08-20 - VS Code Data Export/Import Integration
+
+### Added
+- **🎨 VS Code Extension v0.6.0 - Complete Data Export/Import Integration**
+  - **4 New Commands**: Export Data, Import Data, Export Current View, Quick Export
+  - **Multi-Step Export Dialog**: WebView-based 4-step export configuration wizard
+  - **Multi-Step Import Wizard**: WebView-based 4-step import process with conflict resolution
+  - **Progress Tracking**: Real-time progress reporting with VS Code progress API
+  - **File Format Support**: JSON (structured) and CSV (tabular) export/import formats
+  - **Advanced Filtering**: Project-specific filtering, date range support, data type selection
+  - **Conflict Resolution**: Skip, overwrite, merge strategies with dry run preview
+  - **70+ Localization Strings**: Complete Turkish/English localization for all export/import UI
+
+- **🔧 MCP Server Enhancements**
+  - **Template Alias System**: 9 memorable shortcuts (`bug`, `feature`, `research`, etc.)
+  - **CLI Command**: `gorev template aliases` for easy discovery
+  - **DRY Compliance**: Eliminated 700+ code duplication violations across 7 phases
+  - **Enhanced Error Handling**: Improved i18n error messages and validation
+
+### Changed
+- **⚡ Performance & Quality Improvements**
+  - **Thread-Safety**: Added comprehensive mutex protection to AI Context Manager
+  - **Code Architecture**: Refactored handlers.go from 3,060 to 2,362 lines (-23% reduction)
+  - **Test Coverage**: Enhanced VS Code extension to 100% test coverage
+  - **Documentation Structure**: Optimized CLAUDE.md and enhanced user guides
+
+### Fixed
+- **🐛 Critical Fixes**
+  - **Race Conditions**: Resolved AI context manager concurrency issues
+  - **TypeScript Compilation**: Fixed ESLint and compilation errors in WSL environment
+  - **Template Usage**: Complete migration from deprecated `gorev_olustur` to template-based creation
+
+### Breaking Changes
+- **🚨 Template System Mandatory**: All task creation must use `templateden_gorev_olustur` with templates
+- **Deprecated Tool Removal**: `gorev_olustur` tool completely removed from MCP registry
+
+### Technical Achievements
+- **Complete Feature Integration**: VS Code extension now provides full visual interface for all MCP server export/import capabilities
+- **Production-Ready UI**: WebView security, proper error handling, user experience optimization
+- **Rule 15 Compliance**: Zero technical debt, comprehensive solution without shortcuts
+- **Bilingual Excellence**: Consistent Turkish/English support across all components
+
 ## [0.11.1] - 2025-07-21 - Documentation Optimization Release
 
 ### Added
