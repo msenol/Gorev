@@ -53,11 +53,8 @@ jobs:
 
     - name: Build binary
       working-directory: ./gorev-mcpserver
-      run: |
-        go build \
-          -ldflags "-X main.version=${{ steps.version.outputs.version }} -X main.buildTime=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -X main.gitCommit=${{ github.sha }}" \
-          -o ../dist/${{ matrix.name }} \
-          ./cmd/gorev
+      run: go build -ldflags "-X main.version=${{ steps.version.outputs.version }} -X main.buildTime=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -X main.gitCommit=${{ github.sha }}" -o ../dist/${{ matrix.name }} ./cmd/gorev
+      shell: bash
       env:
         CGO_ENABLED: 1
         GOOS: ${{ matrix.goos }}
