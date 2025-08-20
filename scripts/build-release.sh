@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Build script for Gorev v0.10.2 release
+# Build script for Gorev v0.12.0 release
 # This script builds binaries for all supported platforms
 
 set -e
 
-VERSION="v0.10.2"
+VERSION="v0.12.0"
 BUILD_DIR="release-${VERSION}"
 
 echo "🚀 Building Gorev ${VERSION} for all platforms..."
@@ -69,7 +69,7 @@ cd ..
 
 # Copy release notes
 echo "📝 Copying release notes..."
-cp RELEASE_NOTES_v0.10.2.md ${BUILD_DIR}/
+cp CHANGELOG.md ${BUILD_DIR}/
 
 echo "✅ Build complete! Release artifacts in ${BUILD_DIR}/"
 echo ""
