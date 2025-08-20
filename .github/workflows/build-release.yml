@@ -1,0 +1,117 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v0.12.1)'
+        required: true
+        type: string
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            suffix: ''
+            name: 'gorev-linux-amd64'
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            suffix: '.exe'
+            name: 'gorev-windows-amd64.exe'
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            suffix: ''
+            name: 'gorev-darwin-amd64'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Get version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Build binary
+      working-directory: ./gorev-mcpserver
+      run: |
+        CGO_ENABLED=1 go build \
+          -ldflags "-X main.version=${{ steps.version.outputs.version }} -X main.buildTime=$(date -u +"%Y-%m-%dT%H:%M:%SZ") -X main.gitCommit=${{ github.sha }}" \
+          -o ../dist/${{ matrix.name }} \
+          ./cmd/gorev
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+
+    - name: Test binary
+      run: |
+        ./dist/${{ matrix.name }} version
+      shell: bash
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.name }}
+        path: dist/${{ matrix.name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Prepare release files
+      run: |
+        mkdir -p dist
+        cp artifacts/gorev-linux-amd64/gorev-linux-amd64 dist/
+        cp artifacts/gorev-windows-amd64.exe/gorev-windows-amd64.exe dist/
+        cp artifacts/gorev-darwin-amd64/gorev-darwin-amd64 dist/
+        cd dist
+        sha256sum * > checksums.txt
+
+    - name: Get version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: "Gorev ${{ steps.version.outputs.version }}"
+        files: |
+          dist/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

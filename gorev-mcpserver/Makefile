@@ -16,20 +16,12 @@ LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X 
 all: clean test build
 
 build:
-	CGO_ENABLED=1 $(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BINARY_NAME) ./cmd/gorev
+	$(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BINARY_NAME) ./cmd/gorev
 
 build-all:
-	# Linux with CGO enabled (native)
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-linux-amd64 ./cmd/gorev
-	# macOS and Windows without CGO (cross-compile friendly, note: may have SQLite limitations)
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-darwin-amd64 ./cmd/gorev
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-windows-amd64.exe ./cmd/gorev
-
-# Alternative: Build all with CGO (requires platform-specific toolchains)
-build-all-cgo:
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-linux-amd64-cgo ./cmd/gorev
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC=o64-clang CXX=o64-clang++ $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-darwin-amd64-cgo ./cmd/gorev || echo "macOS CGO build failed, need osxcross"
-	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-windows-amd64-cgo.exe ./cmd/gorev || echo "Windows CGO build failed, need mingw"
+	GOOS=linux GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-linux-amd64 ./cmd/gorev
+	GOOS=darwin GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-darwin-amd64 ./cmd/gorev
+	GOOS=windows GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-windows-amd64.exe ./cmd/gorev
 
 run: build
 	./$(BINARY_NAME) serve
