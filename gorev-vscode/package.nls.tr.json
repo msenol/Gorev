@@ -1,6 +1,6 @@
 {
   "displayName": "Gorev - AI Asistanları için Görev Yönetimi",
-  "description": "MCP protokolü ile güçlendirilmiş, sınırsız alt görev hiyerarşisi, bağımlılık görselleştirme ve akıllı ilerleme takibi ile VS Code için güçlü görev yönetimi",
+  "description": "Sınırsız alt görev hiyerarşisi, bağımlılık görselleştirme, akıllı ilerleme takibi ve kapsamlı veri export/import özellikleri ile güçlü görev yönetimi. MCP uyumlu AI asistanları (Claude, VS Code, Windsurf, Cursor) ile kusursuz entegrasyon ve çift dil (Türkçe/İngilizce) desteği.",
   
   "command.createTask": "Görev Oluştur",
   "command.refreshTasks": "Görevleri Yenile",

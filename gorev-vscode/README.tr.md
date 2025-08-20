@@ -6,11 +6,19 @@
 
 > ⚠️ **BREAKING CHANGE (v0.4.0)**: Template kullanımı artık zorunludur! Doğrudan görev oluşturma kaldırıldı. Tüm görevler template kullanılarak oluşturulmalıdır. [Detaylar](#breaking-change-template-zorunluluğu)
 
-> 🌐 **v0.5.0'da YENİ**: Tam iki dilli destek! Extension artık VS Code dil ayarınıza göre otomatik olarak Türkçe veya İngilizce görüntülenir.
+> 🎉 **v0.6.0'da YENİ**: Kapsamlı veri export/import sistemi! Görevlerinizi JSON/CSV formatlarında export edin ve çakışma çözümü ile import edin. Tam çift dil desteği ve Claude, Windsurf, Cursor ile MCP entegrasyonu.
 
 Gorev için güçlü ve kullanıcı dostu VS Code extension'ı. MCP protokolü üzerinden Gorev sunucusuyla iletişim kurarak gelişmiş görev yönetimi özellikleri sunar.
 
 ## 🚀 Özellikler
+
+### 📥📤 Veri Export/Import (v0.6.0+)
+- **4 Export Komutu**: Export Data, Import Data, Export Current View, Quick Export
+- **Çok Adımlı Sihirbazlar**: Rehberli export yapılandırması ve çakışma çözümü ile import
+- **Çoklu Format**: JSON (yapısal) ve CSV (tablo) export seçenekleri
+- **Gelişmiş Filtreleme**: Proje, tarih aralığı, durum ve tamamlanma durumuna göre export
+- **Çakışma Çözümü**: Import sırasında atla, üzerine yaz veya birleştir stratejileri
+- **İlerleme Takibi**: VS Code bildirimleri ile gerçek zamanlı ilerleme
 
 ### 🌍 İki Dilli Destek (v0.5.0+)
 - **Otomatik Dil Algılama**: VS Code dil ayarına göre arayüz dili

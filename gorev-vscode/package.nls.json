@@ -1,6 +1,6 @@
 {
   "displayName": "Gorev - Task Management for AI Assistants",
-  "description": "Powerful task management with unlimited subtask hierarchy, dependency visualization, and smart progress tracking for VS Code powered by MCP protocol",
+  "description": "Powerful task management with unlimited subtask hierarchy, dependency visualization, smart progress tracking, and comprehensive data export/import capabilities. Seamlessly integrates with MCP-compatible AI assistants (Claude, VS Code, Windsurf, Cursor) with bilingual Turkish/English support.",
   
   "command.createTask": "Create Task",
   "command.refreshTasks": "Refresh Tasks", 

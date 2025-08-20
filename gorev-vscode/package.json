@@ -26,7 +26,16 @@
     "claude",
     "turkish",
     "template",
-    "progress tracking"
+    "progress tracking",
+    "export",
+    "import",
+    "data export",
+    "csv",
+    "json",
+    "bilingual",
+    "windsurf",
+    "cursor",
+    "conflict resolution"
   ],
   "repository": {
     "type": "git",

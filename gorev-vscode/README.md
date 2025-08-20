@@ -8,18 +8,26 @@
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-[![Version](https://img.shields.io/badge/Version-0.5.1-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+[![Version](https://img.shields.io/badge/Version-0.6.0-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**Powerful task management extension for VS Code with unlimited subtask hierarchy, dependency visualization, and AI assistant integration**
+**Powerful task management extension for VS Code with unlimited subtask hierarchy, dependency visualization, comprehensive data export/import, and AI assistant integration**
 
-> 🌐 **NEW in v0.5.0**: Full bilingual support! The extension now automatically displays in English or Turkish based on your VS Code language settings.
+> 🎉 **NEW in v0.6.0**: Complete data export/import system! Export your tasks to JSON/CSV formats and import with conflict resolution. Full bilingual support and MCP integration with Claude, Windsurf, and Cursor.
 
 </div>
 
 ## ✨ Key Features
+
+### 📥📤 **Data Export/Import** (v0.6.0+)
+- **4 Export Commands**: Export Data, Import Data, Export Current View, Quick Export
+- **Multi-Step Wizards**: Guided export configuration and import with conflict resolution
+- **Multiple Formats**: JSON (structured) and CSV (tabular) export options
+- **Advanced Filtering**: Export by project, date range, status, and completion
+- **Conflict Resolution**: Skip, overwrite, or merge strategies during import
+- **Progress Tracking**: Real-time progress with VS Code notifications
 
 ### 🌍 **Bilingual Support** (v0.5.0+)
 - Automatic language detection based on VS Code settings
