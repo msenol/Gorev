@@ -24,7 +24,7 @@ func setupTestEnvironment(t *testing.T) (*server.MCPServer, *Handlers, func()) {
 	// Create test environment using standardized helpers with temp file database
 	config := &testinghelpers.TestDatabaseConfig{
 		UseTempFile:     true, // Use temp file for handlers_test.go compatibility
-		MigrationsPath:  constants.TestMigrationsPath,
+		MigrationsPath:  constants.TestMigrationsPathMCP, // Correct path for MCP tests
 		CreateTemplates: true,
 		InitializeI18n:  true,
 	}

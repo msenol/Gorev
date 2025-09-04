@@ -3,6 +3,7 @@ package mcp
 import (
 	"testing"
 
+	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	testinghelpers "github.com/msenol/gorev/internal/testing"
 	"github.com/stretchr/testify/assert"
@@ -10,8 +11,14 @@ import (
 )
 
 func TestYeniMCPSunucu(t *testing.T) {
-	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	// Create test environment using standardized helpers with MCP path
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPathMCP, // MCP package path
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 
 	// Create MCP server
@@ -26,8 +33,14 @@ func TestYeniMCPSunucu(t *testing.T) {
 }
 
 func TestMCPServerIntegration(t *testing.T) {
-	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	// Create test environment using standardized helpers with MCP path
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPathMCP, // MCP package path
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 
 	// Create and test MCP server
@@ -49,8 +62,14 @@ func TestMCPServerIntegration(t *testing.T) {
 
 // Test MCP server configuration and metadata
 func TestMCPServerMetadata(t *testing.T) {
-	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	// Create test environment using standardized helpers with MCP path
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPathMCP, // MCP package path
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 	server, err := YeniMCPSunucu(isYonetici)
 	require.NoError(t, err)
@@ -62,8 +81,14 @@ func TestMCPServerMetadata(t *testing.T) {
 
 // Test handler creation and initialization
 func TestHandlerCreation(t *testing.T) {
-	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	// Create test environment using standardized helpers with MCP path
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPathMCP, // MCP package path
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 
 	// Test handler creation
