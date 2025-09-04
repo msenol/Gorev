@@ -2,6 +2,8 @@ module github.com/msenol/gorev
 
 go 1.23.2
 
+toolchain go1.23.5
+
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/golang-migrate/migrate/v4 v4.17.0
