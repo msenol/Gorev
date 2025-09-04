@@ -30,7 +30,8 @@ type Handlers struct {
 	debug             bool
 }
 
-func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
+// initializeHandlerComponents initializes common handler components
+func initializeHandlerComponents(isYonetici *gorev.IsYonetici, debug bool) (*gorev.AIContextYonetici, *gorev.FileWatcher, *ToolHelpers) {
 	var aiContextYonetici *gorev.AIContextYonetici
 	var fileWatcher *gorev.FileWatcher
 
@@ -42,13 +43,23 @@ func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 		if fw, err := gorev.NewFileWatcher(isYonetici.VeriYonetici(), gorev.DefaultFileWatcherConfig()); err == nil {
 			fileWatcher = fw
 		} else {
-			// Log error but continue without file watcher
-			fmt.Printf("Warning: Failed to initialize file watcher: %v\n", err)
+			// Handle file watcher initialization error based on debug mode
+			if debug {
+				fmt.Printf("DEBUG: Failed to initialize file watcher: %v\n", err)
+			} else {
+				fmt.Printf("Warning: Failed to initialize file watcher: %v\n", err)
+			}
 		}
 	}
 
 	// Initialize tool helpers with shared utilities
 	toolHelpers := NewToolHelpers()
+
+	return aiContextYonetici, fileWatcher, toolHelpers
+}
+
+func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
+	aiContextYonetici, fileWatcher, toolHelpers := initializeHandlerComponents(isYonetici, false)
 
 	return &Handlers{
 		isYonetici:        isYonetici,
@@ -61,24 +72,7 @@ func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 
 // YeniHandlersWithDebug creates handlers with debug support
 func YeniHandlersWithDebug(isYonetici *gorev.IsYonetici, debug bool) *Handlers {
-	var aiContextYonetici *gorev.AIContextYonetici
-	var fileWatcher *gorev.FileWatcher
-
-	// Create AI context manager using the same data manager if isYonetici is not nil
-	if isYonetici != nil {
-		aiContextYonetici = gorev.YeniAIContextYonetici(isYonetici.VeriYonetici())
-
-		// Initialize file watcher with default configuration
-		if fw, err := gorev.NewFileWatcher(isYonetici.VeriYonetici(), gorev.DefaultFileWatcherConfig()); err == nil {
-			fileWatcher = fw
-		} else if debug {
-			// In debug mode, log the error
-			fmt.Printf("DEBUG: Failed to initialize file watcher: %v\n", err)
-		}
-	}
-
-	// Initialize tool helpers with shared utilities
-	toolHelpers := NewToolHelpers()
+	aiContextYonetici, fileWatcher, toolHelpers := initializeHandlerComponents(isYonetici, debug)
 
 	return &Handlers{
 		isYonetici:        isYonetici,

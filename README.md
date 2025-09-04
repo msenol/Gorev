@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** August 20, 2025 | **Version:** v0.12.0
+**Last Updated:** September 4, 2025 | **Version:** v0.13.1
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 

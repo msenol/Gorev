@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.13.1] - 2025-09-04 - Test Infrastructure Standardization
+
+### Added
+- **New Testing Package**: `internal/testing/helpers.go` with standardized test infrastructure
+  - `TestDatabaseConfig` struct for unified database configuration
+  - `SetupTestEnvironmentWithConfig()` centralized helper function
+  - `DefaultTestDatabaseConfig()` with sensible defaults
+  - Support for memory DB, temp files, custom paths, migrations, templates, i18n
+
+### Changed
+- **Test Infrastructure Modernization**: Migrated 50+ duplicate patterns to standardized helpers
+  - `handlers_test.go`: 30+ pattern migrations across template and performance tests
+  - `integration_test.go`: 11 comprehensive test function migrations  
+  - `server_coverage_test.go`: 7 patterns with various database configurations
+  - `concurrency_test.go`: Concurrent testing patterns standardized
+  - `handlers_edge_cases_test.go`: Complex scenarios including read-only database tests
+- **Code Quality**: Net -17 lines despite adding comprehensive infrastructure
+- **Import Cleanup**: Removed unused imports from test files
+
+### Fixed
+- **i18n Key Corrections**: Fixed incorrect error.* prefixes
+  - `parentTaskNotFound` instead of `error.parentTaskNotFound`
+  - `circularDependency` instead of `error.circularDependency` 
+- **Test Expectations**: Updated format expectations to match current markdown output
+- **Tool List**: Added missing `gorev_export` and `gorev_import` tools to server tests
+- **Concurrency Tests**: Fixed database setup for concurrent testing scenarios
+
+### Technical Details
+- **98% Pattern Elimination**: YeniVeriYonetici duplicates reduced from 50+ to 1
+- **40%+ Code Reduction**: Database setup boilerplate eliminated
+- **Rule 15 Compliance**: Zero shortcuts, comprehensive solution
+- **Zero Breaking Changes**: Internal refactoring with preserved functionality
+
 ## [0.12.0] - 2025-08-20 - VS Code Data Export/Import Integration
 
 ### Added

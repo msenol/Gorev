@@ -236,10 +236,16 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 		exportData.Templates = templates
 	}
 
-	// Export AI context if requested (skip for now as we don't have access to aiContextYonetici)
+	// Export AI context if requested
 	if options.IncludeAIContext {
-		// TODO: Implement AI context export when aiContextYonetici is accessible
-		fmt.Printf("Note: AI context export not implemented yet\n")
+		aiContext, err := iy.exportAIContext(filteredTasks)
+		if err != nil {
+			// Log warning but continue with export - AI context is optional
+			fmt.Printf("Warning: AI context export failed: %v\n", err)
+			exportData.AIContext = []*AIEtkilemasim{}
+		} else {
+			exportData.AIContext = aiContext
+		}
 	}
 
 	return exportData, nil
