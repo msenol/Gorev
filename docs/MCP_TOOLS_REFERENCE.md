@@ -1,8 +1,12 @@
 # MCP Tools Reference
 
-Complete reference for all 31 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
+Complete reference for all 36 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
 
 **Note**: `gorev_olustur` was removed in v0.11.1 - use `templateden_gorev_olustur` with template aliases instead.
+
+## 🆕 NEW: IDE Management Tools (v0.12.0)
+
+The Gorev MCP server now includes comprehensive IDE extension management capabilities. These tools enable automatic detection, installation, updating, and management of the Gorev VS Code extension across multiple IDEs.
 
 ## Task Management
 
@@ -156,9 +160,60 @@ Complete reference for all 31 MCP tools implemented by the Gorev server, moved f
   - Status queries: "tamamlanmamış", "devam eden", "tamamlanan"
   - Time-based: "acil", "gecikmiş", "son oluşturulan"
 
+## IDE Management
+
+### 27. gorev_ide_detect
+- **Purpose**: Detect installed IDEs on the system (VS Code, Cursor, Windsurf)
+- **Parameters**: (none)
+- **Features**: 
+  - Automatically discovers IDE installations across all platforms
+  - Returns detailed information including executable paths and versions
+  - Detects configuration and extension directories
+  - Cross-platform support (Windows, macOS, Linux)
+
+### 28. gorev_ide_install
+- **Purpose**: Install Gorev extension to specified IDE(s)
+- **Parameters**: ide_type
+- **Options**:
+  - ide_type: "vscode", "cursor", "windsurf", or "all"
+  - "all" installs to all detected IDEs
+- **Features**:
+  - Downloads latest extension version from GitHub releases
+  - Automatic VSIX file management with cleanup
+  - Version checking to avoid duplicate installations
+  - Progress reporting and error handling
+
+### 29. gorev_ide_uninstall
+- **Purpose**: Remove Gorev extension from specified IDE
+- **Parameters**: ide_type, extension_id?
+- **Options**:
+  - ide_type: "vscode", "cursor", or "windsurf"
+  - extension_id: Extension identifier (default: mehmetsenol.gorev-vscode)
+- **Features**: Safe extension removal with confirmation
+
+### 30. gorev_ide_status
+- **Purpose**: Check installation status of Gorev extension in all detected IDEs
+- **Parameters**: (none)
+- **Features**:
+  - Shows installation status for each detected IDE
+  - Displays installed versions vs latest available version
+  - Identifies outdated installations requiring updates
+  - Version comparison with GitHub releases
+
+### 31. gorev_ide_update
+- **Purpose**: Update Gorev extension to latest version
+- **Parameters**: ide_type
+- **Options**:
+  - ide_type: "vscode", "cursor", "windsurf", or "all"
+  - "all" updates all detected IDEs with outdated extensions
+- **Features**:
+  - Automatic latest version detection from GitHub
+  - Selective or bulk update operations
+  - Version verification and rollback support
+
 ## Data Export/Import
 
-### 26. gorev_export
+### 32. gorev_export
 - **Purpose**: Export tasks, projects and related data to file in JSON or CSV format
 - **Parameters**: output_path, format?, include_completed?, include_dependencies?, include_templates?, include_ai_context?, project_filter?, date_range?
 - **Options**:
@@ -188,7 +243,7 @@ Complete reference for all 31 MCP tools implemented by the Gorev server, moved f
   }
   ```
 
-### 27. gorev_import
+### 33. gorev_import
 - **Purpose**: Import previously exported data back into the system
 - **Parameters**: file_path, import_mode?, conflict_resolution?, preserve_ids?, dry_run?, project_mapping?
 - **Options**:
