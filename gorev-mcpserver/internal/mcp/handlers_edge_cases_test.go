@@ -12,21 +12,23 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
-	"github.com/msenol/gorev/internal/i18n"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // setupTestEnvironmentWithTemplate sets up test environment with a simple template and active project
 func setupTestEnvironmentWithTemplate(t *testing.T) (*server.MCPServer, *Handlers, string, func()) {
-	// Use temporary file database for testing
-	tempDB := "test_mcp_edge_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
-	cleanup := func() {
-		os.Remove(tempDB)
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false, // Use temp file for edge cases
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: false, // We'll create our own template
+		InitializeI18n:  true,
 	}
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
-	require.NoError(t, err)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	veriYonetici := isYonetici.VeriYonetici()
 
 	// Create simple template for edge case testing
 	template := &gorev.GorevTemplate{
@@ -45,7 +47,7 @@ func setupTestEnvironmentWithTemplate(t *testing.T) (*server.MCPServer, *Handler
 		Aktif:    true,
 	}
 
-	err = veriYonetici.TemplateOlustur(template)
+	err := veriYonetici.TemplateOlustur(template)
 	require.NoError(t, err)
 
 	// Create and set active project
@@ -59,7 +61,6 @@ func setupTestEnvironmentWithTemplate(t *testing.T) (*server.MCPServer, *Handler
 	err = veriYonetici.AktifProjeAyarla(proje.ID)
 	require.NoError(t, err)
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	mcpServer, err := YeniMCPSunucu(isYonetici)
 	require.NoError(t, err)
 	handlers := YeniHandlers(isYonetici)
@@ -595,21 +596,18 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 
 // TestTemplatedenGorevOlustur_EdgeCases tests edge cases for template-based task creation
 func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false, // Use temp file for edge cases
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true, // Create default templates
+		InitializeI18n:  true,
 	}
 
-	// Setup with default templates
-	veriYonetici, err := gorev.YeniVeriYonetici("test_template_edge.db", constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer os.Remove("test_template_edge.db")
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
 
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
+	veriYonetici := isYonetici.VeriYonetici()
 
 	// Create and set active project
 	proje := &gorev.Proje{
@@ -617,12 +615,11 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 		Isim:  "Test Template Edge Project",
 		Tanim: "Test project for template edge cases",
 	}
-	err = veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
 	err = veriYonetici.AktifProjeAyarla(proje.ID)
 	require.NoError(t, err)
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := YeniHandlers(isYonetici)
 
 	// Test 1: Empty template ID
@@ -877,17 +874,21 @@ func TestErrorPropagation(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Try to create handlers with read-only database
-		migrationPath := constants.TestMigrationsPath
-		vy, err := gorev.YeniVeriYonetici(dbPath, migrationPath)
+		// Try to create VeriYonetici directly with read-only database
+		// This should fail during migration
+		veriYonetici, err := gorev.YeniVeriYonetici(dbPath, constants.TestMigrationsPath)
 		if err != nil {
 			// This is expected for read-only database
 			t.Logf("Expected error with read-only database: %v", err)
+			assert.Contains(t, err.Error(), "migrationFailed")
 			return
 		}
+		defer veriYonetici.Kapat()
 
-		iy := gorev.YeniIsYonetici(vy)
-		handlers := YeniHandlers(iy)
+		// If we reach here, migration somehow succeeded, which is unexpected
+		t.Errorf("Expected migration to fail with read-only database, but it succeeded")
+		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		handlers := YeniHandlers(isYonetici)
 
 		// Try operations that should fail
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{

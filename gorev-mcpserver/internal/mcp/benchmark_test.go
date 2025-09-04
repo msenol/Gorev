@@ -8,8 +8,8 @@ import (
 
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/constants"
-	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 )
 
 // DRY benchmark helper structure
@@ -53,26 +53,22 @@ func RunConcurrentBenchmark(b *testing.B, config BenchmarkConfig) {
 	})
 }
 
-// setupBenchmarkEnvironment - DRY setup for all benchmarks
+// setupBenchmarkEnvironment - DRY setup for all benchmarks using standardized helpers
 func setupBenchmarkEnvironment() (*Handlers, func()) {
-	// Initialize i18n for consistent environment
-	i18n.Initialize(constants.DefaultTestLanguage)
-
-	// Setup data manager
-	dataManager, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
-	if err != nil {
-		panic("Failed to create data manager: " + err.Error())
+	// Create test environment using standardized helpers
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  "", // Empty for benchmark performance
+		CreateTemplates: false,
+		InitializeI18n:  true,
 	}
 
-	// Create business logic manager
-	isYonetici := gorev.YeniIsYonetici(dataManager)
+	// Create a minimal testing.T for helper compatibility
+	t := &testing.T{}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 
 	// Create handlers
 	handlers := YeniHandlers(isYonetici)
-
-	cleanup := func() {
-		// Cleanup resources
-	}
 
 	return handlers, cleanup
 }
@@ -82,10 +78,7 @@ func BenchmarkToolRegistration(b *testing.B) {
 	config := BenchmarkConfig{
 		Name: "ToolRegistration",
 		Setup: func() interface{} {
-			i18n.Initialize(constants.DefaultTestLanguage)
-			dataManager, _ := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
-			isYonetici := gorev.YeniIsYonetici(dataManager)
-			handlers := YeniHandlers(isYonetici)
+			handlers, _ := setupBenchmarkEnvironment()
 			return handlers
 		},
 		Cleanup: func() {},
@@ -265,10 +258,8 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 
 // BenchmarkRegistryPatterns compares old vs new registry patterns
 func BenchmarkRegistryPatterns(b *testing.B) {
-	i18n.Initialize(constants.DefaultTestLanguage)
-	dataManager, _ := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
-	isYonetici := gorev.YeniIsYonetici(dataManager)
-	handlers := YeniHandlers(isYonetici)
+	handlers, cleanup := setupBenchmarkEnvironment()
+	defer cleanup()
 
 	b.Run("NewRegistryPattern", func(b *testing.B) {
 		config := BenchmarkConfig{

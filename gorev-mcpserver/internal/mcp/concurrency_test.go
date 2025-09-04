@@ -9,8 +9,8 @@ import (
 
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/constants"
-	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 )
 
 // DRY concurrency test helper structure
@@ -116,39 +116,41 @@ func RunConcurrencyTest(t *testing.T, config ConcurrencyTestConfig) ConcurrencyT
 	return result
 }
 
-// setupConcurrencyTestEnvironment - DRY setup for concurrency tests
-func setupConcurrencyTestEnvironment() (*Handlers, func()) {
-	// Initialize i18n for consistent environment
-	i18n.Initialize(constants.DefaultTestLanguage)
-
-	// Setup data manager with thread-safe in-memory DB
-	dataManager, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
-	if err != nil {
-		// Gracefully handle migration errors in tests
-		return nil, func() {}
+// setupConcurrencyTestEnvironment - DRY setup for concurrency tests using standardized helpers
+func setupConcurrencyTestEnvironment(t *testing.T) (*Handlers, func()) {
+	// Create test environment using standardized helpers
+	// Use temp file instead of memory database for better concurrency support
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true, // Templates needed for concurrency tests
+		InitializeI18n:  true,
 	}
 
-	// Create business logic manager
-	isYonetici := gorev.YeniIsYonetici(dataManager)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 
 	// Create handlers
 	handlers := YeniHandlers(isYonetici)
-
-	cleanup := func() {
-		// Cleanup resources
-	}
 
 	return handlers, cleanup
 }
 
 // TestConcurrentToolRegistration tests concurrent tool registration
 func TestConcurrentToolRegistration(t *testing.T) {
-	config := ConcurrencyTestConfig{
+	// Setup test environment once before running concurrent operations
+	// Use temp file instead of memory database for better concurrency support
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
+
+	concurrencyConfig := ConcurrencyTestConfig{
 		Name: "ConcurrentToolRegistration",
 		Setup: func() interface{} {
-			i18n.Initialize(constants.DefaultTestLanguage)
-			dataManager, _ := gorev.YeniVeriYonetici(constants.TestDatabaseURI, "")
-			isYonetici := gorev.YeniIsYonetici(dataManager)
 			handlers := YeniHandlers(isYonetici)
 			return handlers
 		},
@@ -168,7 +170,7 @@ func TestConcurrentToolRegistration(t *testing.T) {
 		AllowedFailures:        0,
 	}
 
-	result := RunConcurrencyTest(t, config)
+	result := RunConcurrencyTest(t, concurrencyConfig)
 
 	// Validate performance expectations
 	if result.ExecutionTime > constants.TestTimeoutMediumSeconds*time.Second {
@@ -222,7 +224,7 @@ func TestConcurrentParameterValidation(t *testing.T) {
 
 // TestConcurrentToolCalls tests concurrent MCP tool calls
 func TestConcurrentToolCalls(t *testing.T) {
-	handlers, cleanup := setupConcurrencyTestEnvironment()
+	handlers, cleanup := setupConcurrencyTestEnvironment(t)
 	defer cleanup()
 
 	// Skip test if setup failed
@@ -373,7 +375,7 @@ func TestStressConcurrencyMixed(t *testing.T) {
 		t.Skip("Skipping stress test in short mode")
 	}
 
-	handlers, cleanup := setupConcurrencyTestEnvironment()
+	handlers, cleanup := setupConcurrencyTestEnvironment(t)
 	defer cleanup()
 
 	// Skip test if setup failed

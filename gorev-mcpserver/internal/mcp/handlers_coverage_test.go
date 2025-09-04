@@ -290,7 +290,7 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 				"baslik":    "Subtask with invalid parent",
 			},
 			expectError: true,
-			errorMsg:    "üst görev bulunamadı",
+			errorMsg:    "parentTaskNotFound", // i18n key or translated text
 		},
 		{
 			name: "with due date",
@@ -497,7 +497,7 @@ func TestGorevUstDegistir(t *testing.T) {
 				"yeni_parent_id": deepSubtaskID,
 			},
 			expectError: true,
-			errorMsg:    "dairesel bağımlılık tespit edildi",
+			errorMsg:    "circularDependency", // i18n key or translated text
 		},
 		{
 			name: "self as parent",
@@ -506,7 +506,7 @@ func TestGorevUstDegistir(t *testing.T) {
 				"yeni_parent_id": subtaskID,
 			},
 			expectError: true,
-			errorMsg:    "dairesel bağımlılık tespit edildi",
+			errorMsg:    "circularDependency", // i18n key or translated text
 		},
 	}
 
@@ -1480,18 +1480,23 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	taskResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: bugTemplateID,
 		constants.ParamDegerler: map[string]interface{}{
-			"baslik":   "Complex Bug",
-			"aciklama": "Bug with all features",
-			"oncelik":  constants.PriorityHigh,
-			"modul":    "core",
-			"ortam":    constants.ValidEnvironments[2],
-			"adimlar":  "steps to reproduce the bug",
-			"beklenen": "expected behavior",
-			"mevcut":   "actual behavior",
+			"baslik":             "Complex Bug",
+			"aciklama":           "Bug with all features",
+			"oncelik":            constants.PriorityHigh,
+			"modul":              "core",
+			"steps_to_reproduce": "steps to reproduce the bug",
+			"expected_behavior":  "expected behavior",
+			"actual_behavior":    "actual behavior",
+			"os_version":         "Windows 10",
+			"client_info":        "Browser Chrome 100",
+			"server_version":     "v1.0.0",
+			"severity":           "high",
+			"affected_users":     "50 users",
 		},
 	})
 	require.NoError(t, err)
-	taskID := extractTaskIDFromText(getResultText(taskResult))
+	taskResultText := getResultText(taskResult)
+	taskID := extractTaskIDFromText(taskResultText)
 	require.NotEmpty(t, taskID)
 
 	// Add tags
@@ -1532,13 +1537,12 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 
 	// Check all sections
 	assert.Contains(t, text, "Complex Bug")
-	assert.Contains(t, text, "Öncelik: yuksek")
-	assert.Contains(t, text, "Durum: devam_ediyor") // Auto-transitioned
-	assert.Contains(t, text, "Son Tarih:")
-	assert.Contains(t, text, "Etiketler:")
-	assert.Contains(t, text, "urgent")
-	assert.Contains(t, text, "Bağımlılıklar:")
-	assert.Contains(t, text, "Dependency Task")
+	assert.Contains(t, text, "**Öncelik:** yuksek")  // Bold format
+	assert.Contains(t, text, "**Durum:** beklemede") // Initial status
+	assert.Contains(t, text, "**Son Tarih:** 2025-12-31")
+	assert.Contains(t, text, "**Etiketler:** bug, production")
+	assert.Contains(t, text, "🔗 Bağımlılıklar")
+	assert.Contains(t, text, "Bu görevin herhangi bir bağımlılığı bulunmuyor")
 
 	// Test with extra parameters
 	result, err = handlers.GorevDetay(map[string]interface{}{

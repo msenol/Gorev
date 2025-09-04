@@ -6,17 +6,11 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
-	"github.com/msenol/gorev/internal/i18n"
 	mcphandlers "github.com/msenol/gorev/internal/mcp"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// setupIntegrationTestI18n initializes the i18n system for integration tests
-func setupIntegrationTestI18n() {
-	// Initialize i18n with Turkish (default) for tests
-	i18n.Initialize(constants.DefaultTestLanguage)
-}
 
 // Helper function to extract text from MCP result
 func extractText(t *testing.T, result *mcp.CallToolResult) string {
@@ -37,33 +31,30 @@ func extractText(t *testing.T, result *mcp.CallToolResult) string {
 }
 
 func TestGorevOlusturVeListele(t *testing.T) {
-	setupIntegrationTestI18n() // Initialize i18n for tests
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
-
-	// İş yöneticisi oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Create test environment using standardized helpers
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPathIntegration,
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
 
 	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
-
-	// Varsayılan template'leri oluştur
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
 
 	// Test projesi oluştur
 	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Test açıklaması")
 	require.NoError(t, err)
 
 	// Projeyi aktif yap
-	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	err = isYonetici.VeriYonetici().AktifProjeAyarla(proje.ID)
 	require.NoError(t, err)
 
 	// Test: Template listesini kontrol et
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := isYonetici.VeriYonetici().TemplateListele("")
 	require.NoError(t, err)
 	t.Logf("Available templates: %d", len(templates))
 	for _, tmpl := range templates {
@@ -118,13 +109,11 @@ func TestGorevOlusturVeListele(t *testing.T) {
 }
 
 func TestGorevDurumGuncelle(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
@@ -153,13 +142,11 @@ func TestGorevDurumGuncelle(t *testing.T) {
 }
 
 func TestProjeOlustur(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
@@ -178,18 +165,16 @@ func TestProjeOlustur(t *testing.T) {
 }
 
 func TestOzetGoster(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
 	// Test verisi oluştur
-	_, err = isYonetici.ProjeOlustur("Proje 1", "")
+	_, err := isYonetici.ProjeOlustur("Proje 1", "")
 	require.NoError(t, err)
 
 	_, err = isYonetici.GorevOlustur("Görev 1", "", "yuksek", "", "", nil)
@@ -216,18 +201,16 @@ func TestOzetGoster(t *testing.T) {
 }
 
 func TestHataYonetimi(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
 	// Varsayılan template'leri oluştur (idempotent)
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	err := isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
 	require.NoError(t, err)
 
 	// Test projesi oluştur
@@ -235,11 +218,11 @@ func TestHataYonetimi(t *testing.T) {
 	require.NoError(t, err)
 
 	// Projeyi aktif yap
-	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	err = isYonetici.VeriYonetici().AktifProjeAyarla(proje.ID)
 	require.NoError(t, err)
 
 	// Get available templates
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := isYonetici.VeriYonetici().TemplateListele("")
 	require.NoError(t, err)
 	if len(templates) == 0 {
 		t.Fatal("No templates available for testing")
@@ -291,13 +274,11 @@ func TestHataYonetimi(t *testing.T) {
 }
 
 func TestGorevDetay(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
@@ -338,13 +319,11 @@ func TestGorevDetay(t *testing.T) {
 }
 
 func TestGorevDuzenle(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
@@ -375,13 +354,11 @@ func TestGorevDuzenle(t *testing.T) {
 }
 
 func TestGorevSil(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
@@ -415,14 +392,17 @@ func TestGorevSil(t *testing.T) {
 }
 
 func TestProjeListele(t *testing.T) {
-	setupIntegrationTestI18n() // Initialize i18n for tests
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPathIntegration,
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
@@ -459,13 +439,11 @@ func TestProjeListele(t *testing.T) {
 }
 
 func TestProjeGorevleri(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
@@ -513,13 +491,11 @@ func TestProjeGorevleri(t *testing.T) {
 }
 
 func TestGorevBagimlilikEkle(t *testing.T) {
-	// Test veritabanı oluştur
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
-	// İş yöneticisi ve handler'ları oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Handler'ları oluştur
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 

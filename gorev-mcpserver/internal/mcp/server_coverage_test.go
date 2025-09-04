@@ -6,6 +6,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,10 +14,15 @@ import (
 // Test for ServeSunucu
 func TestServeSunucu(t *testing.T) {
 	// Create a test server
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: false,
+		InitializeI18n:  true,
+	}
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
 	mcpServer, err := YeniMCPSunucu(isYonetici)
 	require.NoError(t, err)
 
@@ -33,10 +39,16 @@ func TestServeSunucu(t *testing.T) {
 // Test for NewServer
 func TestNewServer(t *testing.T) {
 	// Create test handlers
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: false,
+		InitializeI18n:  true,
+	}
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
+
 	handlers := YeniHandlers(isYonetici)
 
 	// Test NewServer
@@ -70,7 +82,6 @@ func TestListTools(t *testing.T) {
 
 	// Expected tool names
 	expectedTools := []string{
-		"gorev_olustur",
 		"gorev_listele",
 		"gorev_detay",
 		"gorev_guncelle",
@@ -100,6 +111,8 @@ func TestListTools(t *testing.T) {
 		"gorev_file_watch_remove",
 		"gorev_file_watch_list",
 		"gorev_file_watch_stats",
+		"gorev_export",
+		"gorev_import",
 	}
 
 	// Create a map for easier lookup
@@ -164,8 +177,15 @@ func TestYeniMCPSunucu_EdgeCases(t *testing.T) {
 		{
 			name: "valid is yonetici",
 			setupFunc: func() *gorev.IsYonetici {
-				veriYonetici, _ := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-				return gorev.YeniIsYonetici(veriYonetici)
+				config := &testinghelpers.TestDatabaseConfig{
+					UseMemoryDB:     true,
+					MigrationsPath:  constants.TestMigrationsPath,
+					CreateTemplates: false,
+					InitializeI18n:  true,
+				}
+				t := &testing.T{}
+				isYonetici, _ := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+				return isYonetici
 			},
 			expectError: false,
 		},
@@ -204,10 +224,15 @@ func TestYeniMCPSunucu_EdgeCases(t *testing.T) {
 // Test server initialization and tool registration
 func TestServerToolRegistration(t *testing.T) {
 	// Create handlers
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: false,
+		InitializeI18n:  true,
+	}
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
 	handlers := YeniHandlers(isYonetici)
 
 	// Create server
@@ -225,10 +250,15 @@ func TestServerToolRegistration(t *testing.T) {
 // Test concurrent server creation
 func TestConcurrentServerCreation(t *testing.T) {
 	// Create shared veri yonetici
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: false,
+		InitializeI18n:  true,
+	}
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
 
 	// Test concurrent server creation
 	serverCount := constants.TestIterationSmall
@@ -261,27 +291,32 @@ func TestConcurrentServerCreation(t *testing.T) {
 // Test server with different configurations
 func TestServerConfigurations(t *testing.T) {
 	// Test with in-memory database
-	veriYonetici1, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
-	isYonetici1 := gorev.YeniIsYonetici(veriYonetici1)
+	config1 := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: false,
+		InitializeI18n:  true,
+	}
+
+	isYonetici1, cleanup1 := testinghelpers.SetupTestEnvironmentWithConfig(t, config1)
+	defer cleanup1()
+
 	handlers1 := YeniHandlers(isYonetici1)
 	server1 := NewServer(handlers1)
 	assert.NotNil(t, server1)
 
 	// Test with file database
-	tempDB := "test_server_config.db"
-	defer func() {
-		// Clean up
-		_ = veriYonetici1.Kapat()
-	}()
+	config2 := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false,
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: false,
+		InitializeI18n:  true,
+	}
 
-	veriYonetici2, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer func() {
-		_ = veriYonetici2.Kapat()
-	}()
+	isYonetici2, cleanup2 := testinghelpers.SetupTestEnvironmentWithConfig(t, config2)
+	defer cleanup2()
 
-	isYonetici2 := gorev.YeniIsYonetici(veriYonetici2)
 	handlers2 := YeniHandlers(isYonetici2)
 	server2 := NewServer(handlers2)
 	assert.NotNil(t, server2)

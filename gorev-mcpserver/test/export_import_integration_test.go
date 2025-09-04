@@ -10,24 +10,19 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
-	"github.com/msenol/gorev/internal/i18n"
 	mcphandlers "github.com/msenol/gorev/internal/mcp"
-	"github.com/stretchr/testify/require"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 )
 
-// setupTestDB creates a test database and returns VeriYonetici
+// setupTestDB creates a test database and returns VeriYonetici (legacy helper - use testinghelpers instead)
 func setupTestDB(t *testing.T) *gorev.VeriYonetici {
-	// Initialize i18n for tests
-	i18n.Initialize(constants.DefaultTestLanguage)
-
-	// Create test database
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPathIntegration)
-	require.NoError(t, err)
-
-	// Create default templates
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
-
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  constants.TestMigrationsPathIntegration,
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+	veriYonetici, _ := testinghelpers.SetupTestDatabase(t, config)
 	return veriYonetici
 }
 

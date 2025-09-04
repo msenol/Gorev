@@ -3,19 +3,16 @@ package mcp
 import (
 	"testing"
 
-	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestYeniMCPSunucu(t *testing.T) {
-	// Create a test data manager
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
 	// Create MCP server
 	server, err := YeniMCPSunucu(isYonetici)
@@ -29,12 +26,9 @@ func TestYeniMCPSunucu(t *testing.T) {
 }
 
 func TestMCPServerIntegration(t *testing.T) {
-	// Create test environment
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
 	// Create and test MCP server
 	server, err := YeniMCPSunucu(isYonetici)
@@ -55,11 +49,9 @@ func TestMCPServerIntegration(t *testing.T) {
 
 // Test MCP server configuration and metadata
 func TestMCPServerMetadata(t *testing.T) {
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 	server, err := YeniMCPSunucu(isYonetici)
 	require.NoError(t, err)
 
@@ -70,11 +62,9 @@ func TestMCPServerMetadata(t *testing.T) {
 
 // Test handler creation and initialization
 func TestHandlerCreation(t *testing.T) {
-	veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer veriYonetici.Kapat()
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Create test environment using standardized helpers
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	defer cleanup()
 
 	// Test handler creation
 	handlers := YeniHandlers(isYonetici)

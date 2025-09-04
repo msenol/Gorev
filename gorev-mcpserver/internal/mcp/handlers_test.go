@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -13,32 +12,24 @@ import (
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
+	testinghelpers "github.com/msenol/gorev/internal/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // Test utility functions
 
-// setupTestEnvironment creates a test MCP server with in-memory database
+// setupTestEnvironment creates a test MCP server with standardized database
 func setupTestEnvironment(t *testing.T) (*server.MCPServer, *Handlers, func()) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
+	// Create test environment using standardized helpers with temp file database
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true, // Use temp file for handlers_test.go compatibility
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true,
+		InitializeI18n:  true,
 	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 
-	// Use temporary file database for testing
-	tempDB := "test_mcp_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
-	cleanup := func() {
-		os.Remove(tempDB)
-	}
-
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
-	require.NoError(t, err)
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	mcpServer, err := YeniMCPSunucu(isYonetici)
 	require.NoError(t, err)
 
@@ -147,33 +138,20 @@ func callTool(t *testing.T, handlers *Handlers, toolName string, params map[stri
 // Test cases for all 16 MCP tools
 
 func TestMCPHandlers_Integration(t *testing.T) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
+	// Create test environment using standardized helpers with temp file
+	config := &testinghelpers.TestDatabaseConfig{
+		UseTempFile:     true, // Use temp file for this specific test
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true,
+		InitializeI18n:  true,
 	}
-
-	// Setup test environment with templates
-	tempDB := "test_mcp_integration_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
-	cleanup := func() {
-		os.Remove(tempDB)
-	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
-	require.NoError(t, err)
-
-	// Initialize default templates
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := isYonetici.VeriYonetici().TemplateListele("")
 	require.NoError(t, err)
 	require.NotEmpty(t, templates)
 	templateID := templates[0].ID
@@ -439,29 +417,19 @@ func TestMCPHandlers_TemplateIntegration(t *testing.T) {
 }
 
 func TestMCPHandlers_ProjectManagement(t *testing.T) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
+	// Setup test environment with templates
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false, // Use temp file
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true, // Initialize default templates
+		InitializeI18n:  true,
 	}
 
-	// Setup test environment with templates
-	tempDB := "test_mcp_proj_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
-	cleanup := func() {
-		os.Remove(tempDB)
-	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
-	require.NoError(t, err)
-
-	// Initialize default templates
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
-
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	veriYonetici := isYonetici.VeriYonetici()
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
@@ -545,27 +513,19 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 }
 
 func TestMCPHandlers_TaskDependencies(t *testing.T) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
+	// Setup test environment with templates
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false, // Use temp file
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true, // Initialize default templates
+		InitializeI18n:  true,
 	}
 
-	// Setup test environment with templates
-	tempDB := "test_mcp_dep_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
-	cleanup := func() {
-		os.Remove(tempDB)
-	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
-	require.NoError(t, err)
-
-	// Initialize default templates
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
+	veriYonetici := isYonetici.VeriYonetici()
 
 	// Create and set active project
 	proje := &gorev.Proje{
@@ -573,12 +533,11 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 		Isim:  "Test Dependency Project",
 		Tanim: "Test project for dependencies",
 	}
-	err = veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
 	err = veriYonetici.AktifProjeAyarla(proje.ID)
 	require.NoError(t, err)
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
@@ -709,27 +668,19 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		t.Skip("Skipping performance test in short mode")
 	}
 
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
+	// Setup test environment with templates
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false, // Use temp file for performance testing
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true, // Initialize default templates
+		InitializeI18n:  true,
 	}
 
-	// Setup test environment with templates
-	tempDB := "test_mcp_perf_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
-	cleanup := func() {
-		os.Remove(tempDB)
-	}
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 	defer cleanup()
 
-	veriYonetici, err := gorev.YeniVeriYonetici(tempDB, constants.TestMigrationsPath)
-	require.NoError(t, err)
-
-	// Initialize default templates
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
+	veriYonetici := isYonetici.VeriYonetici()
 
 	// Create and set active project
 	proje := &gorev.Proje{
@@ -737,12 +688,11 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		Isim:  "Test Performance Project",
 		Tanim: "Test project for performance testing",
 	}
-	err = veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
 	err = veriYonetici.AktifProjeAyarla(proje.ID)
 	require.NoError(t, err)
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
@@ -801,12 +751,17 @@ func TestTemplateHandlers(t *testing.T) {
 	}
 	t.Run("List Templates Empty", func(t *testing.T) {
 		// Create fresh database without templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_empty.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_empty.db")
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: false, // Don't initialize default templates
+			InitializeI18n:  true,
+		}
 
-		// Don't initialize default templates
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
+
 		handlers := YeniHandlers(isYonetici)
 
 		// List templates when none exist
@@ -822,16 +777,18 @@ func TestTemplateHandlers(t *testing.T) {
 	})
 
 	t.Run("Initialize Default Templates", func(t *testing.T) {
-		// Initialize default templates through veri_yonetici
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_init.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_init.db")
+		// Initialize default templates through helper
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: true, // Initialize default templates
+			InitializeI18n:  true,
+		}
 
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
-		require.NoError(t, err)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
 
-		// Create handlers with initialized database
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
 		handlers := YeniHandlers(isYonetici)
 
 		// List all templates
@@ -851,14 +808,17 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("List Templates By Category", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_category.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_category.db")
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: true, // Initialize default templates
+			InitializeI18n:  true,
+		}
 
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
-		require.NoError(t, err)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
 
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
 		handlers := YeniHandlers(isYonetici)
 
 		// List only "Teknik" category templates
@@ -876,12 +836,18 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Bug Report", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_bug.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_bug.db")
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: true, // Initialize default templates
+			InitializeI18n:  true,
+		}
 
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
-		require.NoError(t, err)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
+
+		veriYonetici := isYonetici.VeriYonetici()
 
 		// Create and set active project
 		proje := &gorev.Proje{
@@ -889,7 +855,7 @@ func TestTemplateHandlers(t *testing.T) {
 			Isim:  "Test Bug Project",
 			Tanim: "Test project for bug reports",
 		}
-		err = veriYonetici.ProjeKaydet(proje)
+		err := veriYonetici.ProjeKaydet(proje)
 		require.NoError(t, err)
 		err = veriYonetici.AktifProjeAyarla(proje.ID)
 		require.NoError(t, err)
@@ -907,7 +873,6 @@ func TestTemplateHandlers(t *testing.T) {
 		}
 		require.NotEmpty(t, bugTemplateID)
 
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
 		handlers := YeniHandlers(isYonetici)
 
 		// Create task from bug report template
@@ -967,12 +932,18 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Missing Required Fields", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_missing.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_missing.db")
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: true, // Initialize default templates
+			InitializeI18n:  true,
+		}
 
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
-		require.NoError(t, err)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
+
+		veriYonetici := isYonetici.VeriYonetici()
 
 		// Get bug report template ID
 		templates, err := veriYonetici.TemplateListele("Teknik")
@@ -987,7 +958,6 @@ func TestTemplateHandlers(t *testing.T) {
 		}
 		require.NotEmpty(t, bugTemplateID)
 
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
 		handlers := YeniHandlers(isYonetici)
 
 		// Try to create task without required fields
@@ -1024,12 +994,18 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Feature Request", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_feature.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_feature.db")
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: true, // Initialize default templates
+			InitializeI18n:  true,
+		}
 
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
-		require.NoError(t, err)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
+
+		veriYonetici := isYonetici.VeriYonetici()
 
 		// Get feature request template ID
 		templates, err := veriYonetici.TemplateListele("Özellik")
@@ -1044,7 +1020,6 @@ func TestTemplateHandlers(t *testing.T) {
 		}
 		require.NotEmpty(t, featureTemplateID)
 
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
 		handlers := YeniHandlers(isYonetici)
 
 		// Create a project for the feature
@@ -1100,12 +1075,18 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Create Task From Template - Technical Debt", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_tech_debt.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_tech_debt.db")
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: true, // Initialize default templates
+			InitializeI18n:  true,
+		}
 
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
-		require.NoError(t, err)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
+
+		veriYonetici := isYonetici.VeriYonetici()
 
 		// Create and set active project
 		proje := &gorev.Proje{
@@ -1113,7 +1094,7 @@ func TestTemplateHandlers(t *testing.T) {
 			Isim:  "Test Tech Debt Project",
 			Tanim: "Test project for technical debt",
 		}
-		err = veriYonetici.ProjeKaydet(proje)
+		err := veriYonetici.ProjeKaydet(proje)
 		require.NoError(t, err)
 		err = veriYonetici.AktifProjeAyarla(proje.ID)
 		require.NoError(t, err)
@@ -1131,7 +1112,6 @@ func TestTemplateHandlers(t *testing.T) {
 		}
 		require.NotEmpty(t, techDebtTemplateID)
 
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
 		handlers := YeniHandlers(isYonetici)
 
 		// Create task from technical debt template
@@ -1176,14 +1156,17 @@ func TestTemplateHandlers(t *testing.T) {
 
 	t.Run("Template Field Validation", func(t *testing.T) {
 		// Setup with default templates
-		veriYonetici, err := gorev.YeniVeriYonetici("test_template_validation.db", constants.TestMigrationsPath)
-		require.NoError(t, err)
-		defer os.Remove("test_template_validation.db")
+		config := &testinghelpers.TestDatabaseConfig{
+			UseMemoryDB:     false,
+			UseTempFile:     true,
+			MigrationsPath:  constants.TestMigrationsPath,
+			CreateTemplates: true, // Initialize default templates
+			InitializeI18n:  true,
+		}
 
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
-		require.NoError(t, err)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		defer cleanup()
 
-		isYonetici := gorev.YeniIsYonetici(veriYonetici)
 		handlers := YeniHandlers(isYonetici)
 
 		// List templates to verify field information
@@ -1234,20 +1217,19 @@ func TestTemplateHandlers(t *testing.T) {
 
 // TestTemplateConcurrency tests template operations under concurrent access
 func TestTemplateConcurrency(t *testing.T) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
-	}
 	// Setup with default templates
-	veriYonetici, err := gorev.YeniVeriYonetici("test_template_concurrent.db", constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer os.Remove("test_template_concurrent.db")
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false,
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true, // Initialize default templates
+		InitializeI18n:  true,
+	}
 
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
+
+	veriYonetici := isYonetici.VeriYonetici()
 
 	// Create and set active project for template tests
 	proje := &gorev.Proje{
@@ -1255,7 +1237,7 @@ func TestTemplateConcurrency(t *testing.T) {
 		Isim:  "Test Concurrent Project",
 		Tanim: "Test project for concurrent operations",
 	}
-	err = veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
 	err = veriYonetici.AktifProjeAyarla(proje.ID)
 	require.NoError(t, err)
@@ -1273,7 +1255,6 @@ func TestTemplateConcurrency(t *testing.T) {
 	}
 	require.NotEmpty(t, bugTemplateID)
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := YeniHandlers(isYonetici)
 
 	// Test concurrent task creation from template
@@ -1320,22 +1301,18 @@ func TestTemplateConcurrency(t *testing.T) {
 
 // TestTemplateMandatoryWorkflow tests the complete workflow with mandatory templates
 func TestTemplateMandatoryWorkflow(t *testing.T) {
-	// Initialize i18n system for tests
-	if !i18n.IsInitialized() {
-		err := i18n.Initialize(constants.DefaultTestLanguage)
-		if err != nil {
-			t.Logf("Warning: i18n initialization failed: %v", err)
-		}
-	}
 	// Setup with default templates
-	veriYonetici, err := gorev.YeniVeriYonetici("test_template_mandatory.db", constants.TestMigrationsPath)
-	require.NoError(t, err)
-	defer os.Remove("test_template_mandatory.db")
+	config := &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     false,
+		UseTempFile:     true,
+		MigrationsPath:  constants.TestMigrationsPath,
+		CreateTemplates: true, // Initialize default templates
+		InitializeI18n:  true,
+	}
 
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
-	require.NoError(t, err)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	defer cleanup()
 
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := YeniHandlers(isYonetici)
 
 	// First, set up a project
@@ -1356,7 +1333,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		assert.Contains(t, templatesText, "Teknik Borç")
 
 		// Get Bug Raporu template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := isYonetici.VeriYonetici().TemplateListele("Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
@@ -1411,7 +1388,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 	t.Run("Template validation works", func(t *testing.T) {
 		// Get Bug Raporu template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := isYonetici.VeriYonetici().TemplateListele("Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
