@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -209,7 +210,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, altGorev)
-		assert.Contains(t, err.Error(), "üst görev bulunamadı")
+		assert.Contains(t, err.Error(), "parentTaskNotFound")
 	})
 
 	t.Run("Change Parent Task", func(t *testing.T) {
@@ -259,7 +260,11 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 
 		err := iy.GorevSil(anaGorev.ID)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "alt görev silinmeli")
+		// Check for i18n key or translated text
+		errMsg := err.Error()
+		if !strings.Contains(errMsg, "taskHasSubtasksCannotDelete") && !strings.Contains(errMsg, "bu görev silinemez") {
+			t.Errorf("Expected subtask deletion error, got: %s", errMsg)
+		}
 	})
 
 	t.Run("Complete Task with Incomplete Subtasks Should Fail", func(t *testing.T) {
@@ -278,6 +283,10 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 
 		err := iy.GorevDurumGuncelle(anaGorev.ID, "tamamlandi")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "tüm alt görevler tamamlanmalı")
+		// Check for i18n key or translated text
+		errMsg := err.Error()
+		if !strings.Contains(errMsg, "taskCannotCompleteSubtasks") && !strings.Contains(errMsg, "bu görev tamamlanamaz") {
+			t.Errorf("Expected subtask completion error, got: %s", errMsg)
+		}
 	})
 }

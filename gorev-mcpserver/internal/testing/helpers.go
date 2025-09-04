@@ -26,7 +26,7 @@ type TestDatabaseConfig struct {
 func DefaultTestDatabaseConfig() *TestDatabaseConfig {
 	return &TestDatabaseConfig{
 		UseMemoryDB:     true,
-		MigrationsPath:  constants.TestMigrationsPath,
+		MigrationsPath:  constants.TestMigrationsPathIntegration,
 		CreateTemplates: true,
 		InitializeI18n:  true,
 	}
