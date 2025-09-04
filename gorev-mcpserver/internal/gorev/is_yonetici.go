@@ -488,7 +488,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	// Parent görevi kontrol et
 	parent, err := iy.veriYonetici.GorevGetir(parentID)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.T("error.parentTaskNotFound", map[string]interface{}{"Error": err}))
+		return nil, fmt.Errorf(i18n.T("parentTaskNotFound"))
 	}
 
 	var sonTarih *time.Time
@@ -543,7 +543,7 @@ func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
 	if yeniParentID != "" {
 		parent, err := iy.veriYonetici.GorevGetir(yeniParentID)
 		if err != nil {
-			return fmt.Errorf(i18n.T("error.parentTaskNotFound", map[string]interface{}{"Error": err}))
+			return fmt.Errorf(i18n.T("parentTaskNotFound"))
 		}
 
 		// Circular dependency kontrolü
@@ -552,7 +552,7 @@ func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
 			return fmt.Errorf(i18n.T("error.circularDependencyCheckFailed", map[string]interface{}{"Error": err}))
 		}
 		if circular {
-			return fmt.Errorf(i18n.T("error.circularDependency"))
+			return fmt.Errorf(i18n.T("circularDependency"))
 		}
 
 		// Alt görev ve üst görev aynı projede olmalı
