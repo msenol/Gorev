@@ -21,11 +21,11 @@ const (
 	// Alternative priority emojis
 	EmojiPriorityHighAlt = "🔥"  // yuksek (alternatif)
 	EmojiPriorityAlert   = "⚠️" // uyarı
-	
+
 	// Suggestion priority emojis (for AI suggestions)
 	EmojiSuggestionHigh   = "🔥"  // yuksek oneri
 	EmojiSuggestionMedium = "⚡"  // orta oneri
-	EmojiSuggestionLow    = "ℹ️"  // dusuk oneri
+	EmojiSuggestionLow    = "ℹ️" // dusuk oneri
 )
 
 // Message prefix constants
