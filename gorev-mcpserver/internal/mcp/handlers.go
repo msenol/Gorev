@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -2537,4 +2538,299 @@ func (h *Handlers) GorevImport(params map[string]interface{}) (*mcp.CallToolResu
 	}
 
 	return mcp.NewToolResultText(summary.String()), nil
+}
+
+// IDEDetect detects all installed IDEs on the system
+func (h *Handlers) IDEDetect(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	detector := gorev.NewIDEDetector()
+
+	detectedIDEs, err := detector.DetectAllIDEs()
+	if err != nil {
+		return nil, fmt.Errorf("IDE detection failed: %w", err)
+	}
+
+	if len(detectedIDEs) == 0 {
+		return mcp.NewToolResultText(i18n.T("display.noIDEsDetected")), nil
+	}
+
+	var result strings.Builder
+	result.WriteString("# 🔍 Detected IDEs\n\n")
+
+	for ideType, ide := range detectedIDEs {
+		result.WriteString(fmt.Sprintf("## %s %s\n", getIDEIcon(ideType), ide.Name))
+		result.WriteString(fmt.Sprintf("- **Type**: %s\n", ideType))
+		result.WriteString(fmt.Sprintf("- **Executable**: %s\n", ide.ExecutablePath))
+		result.WriteString(fmt.Sprintf("- **Config Path**: %s\n", ide.ConfigPath))
+		result.WriteString(fmt.Sprintf("- **Extensions Path**: %s\n", ide.ExtensionsPath))
+		if ide.Version != "unknown" && ide.Version != "" {
+			result.WriteString(fmt.Sprintf("- **Version**: %s\n", ide.Version))
+		}
+		result.WriteString("\n")
+	}
+
+	return mcp.NewToolResultText(result.String()), nil
+}
+
+// IDEInstallExtension installs the Gorev extension to specified IDE(s)
+func (h *Handlers) IDEInstallExtension(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+
+	// Parse parameters
+	ideType, exists := params["ide_type"].(string)
+	if !exists {
+		return nil, fmt.Errorf(i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"}))
+	}
+
+	installToAll := false
+	if ideType == "all" {
+		installToAll = true
+	}
+
+	// Create detector and installer
+	detector := gorev.NewIDEDetector()
+	detector.DetectAllIDEs()
+
+	installer := gorev.NewExtensionInstaller(detector)
+	defer installer.Cleanup()
+
+	// Get latest extension info from GitHub
+	extensionInfo, err := installer.GetLatestExtensionInfo(ctx, "msenol", "Gorev")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get extension info: %w", err)
+	}
+
+	var results []gorev.InstallResult
+	var err2 error
+
+	if installToAll {
+		results, err2 = installer.InstallToAllIDEs(ctx, extensionInfo)
+	} else {
+		result, err := installer.InstallExtension(ctx, gorev.IDEType(ideType), extensionInfo)
+		if result != nil {
+			results = append(results, *result)
+		}
+		err2 = err
+	}
+
+	// Format results
+	var output strings.Builder
+	output.WriteString("# 📦 Extension Installation Results\n\n")
+
+	successCount := 0
+	for _, result := range results {
+		icon := "❌"
+		if result.Success {
+			icon = "✅"
+			successCount++
+		}
+
+		output.WriteString(fmt.Sprintf("## %s %s\n", icon, result.IDE))
+		output.WriteString(fmt.Sprintf("- **Extension**: %s\n", result.Extension))
+		if result.Version != "" {
+			output.WriteString(fmt.Sprintf("- **Version**: %s\n", result.Version))
+		}
+		output.WriteString(fmt.Sprintf("- **Status**: %s\n\n", result.Message))
+	}
+
+	if len(results) > 0 {
+		output.WriteString(fmt.Sprintf("**Summary**: %d/%d installations successful\n", successCount, len(results)))
+	}
+
+	if err2 != nil && len(results) == 0 {
+		return nil, err2
+	}
+
+	return mcp.NewToolResultText(output.String()), nil
+}
+
+// IDEUninstallExtension removes the Gorev extension from specified IDE
+func (h *Handlers) IDEUninstallExtension(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Parse parameters
+	ideType, exists := params["ide_type"].(string)
+	if !exists {
+		return nil, fmt.Errorf(i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"}))
+	}
+
+	extensionID, exists := params["extension_id"].(string)
+	if !exists {
+		extensionID = "mehmetsenol.gorev-vscode" // default
+	}
+
+	// Create detector and installer
+	detector := gorev.NewIDEDetector()
+	detector.DetectAllIDEs()
+
+	installer := gorev.NewExtensionInstaller(detector)
+
+	result, err := installer.UninstallExtension(gorev.IDEType(ideType), extensionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var output strings.Builder
+	output.WriteString("# 🗑️ Extension Uninstallation Result\n\n")
+
+	icon := "❌"
+	if result.Success {
+		icon = "✅"
+	}
+
+	output.WriteString(fmt.Sprintf("## %s %s\n", icon, result.IDE))
+	output.WriteString(fmt.Sprintf("- **Extension**: %s\n", result.Extension))
+	output.WriteString(fmt.Sprintf("- **Status**: %s\n", result.Message))
+
+	return mcp.NewToolResultText(output.String()), nil
+}
+
+// IDEExtensionStatus checks the installation status of Gorev extension in IDEs
+func (h *Handlers) IDEExtensionStatus(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+
+	// Create detector and installer
+	detector := gorev.NewIDEDetector()
+	detectedIDEs, err := detector.DetectAllIDEs()
+	if err != nil {
+		return nil, err
+	}
+
+	installer := gorev.NewExtensionInstaller(detector)
+
+	// Get latest version from GitHub
+	extensionInfo, err := installer.GetLatestExtensionInfo(ctx, "msenol", "Gorev")
+	var latestVersion string
+	if err == nil {
+		latestVersion = extensionInfo.Version
+	}
+
+	var output strings.Builder
+	output.WriteString("# 📊 Extension Status Report\n\n")
+
+	if latestVersion != "" {
+		output.WriteString(fmt.Sprintf("**Latest Available Version**: v%s\n\n", latestVersion))
+	}
+
+	for ideType, ide := range detectedIDEs {
+		output.WriteString(fmt.Sprintf("## %s %s\n", getIDEIcon(ideType), ide.Name))
+
+		// Check if extension is installed
+		isInstalled, err := detector.IsExtensionInstalled(ideType, "mehmetsenol.gorev-vscode")
+		if err != nil {
+			output.WriteString(fmt.Sprintf("- **Status**: ❌ Error checking installation: %s\n", err))
+		} else if !isInstalled {
+			output.WriteString("- **Status**: ❌ Not installed\n")
+		} else {
+			// Get installed version
+			installedVersion, err := detector.GetExtensionVersion(ideType, "mehmetsenol.gorev-vscode")
+			if err != nil {
+				output.WriteString("- **Status**: ✅ Installed (version unknown)\n")
+			} else {
+				statusIcon := "✅"
+				updateStatus := ""
+
+				if latestVersion != "" && installedVersion != latestVersion {
+					statusIcon = "⚠️"
+					updateStatus = fmt.Sprintf(" (Update available: v%s)", latestVersion)
+				}
+
+				output.WriteString(fmt.Sprintf("- **Status**: %s Installed v%s%s\n", statusIcon, installedVersion, updateStatus))
+			}
+		}
+		output.WriteString("\n")
+	}
+
+	return mcp.NewToolResultText(output.String()), nil
+}
+
+// IDEUpdateExtension updates the Gorev extension to latest version
+func (h *Handlers) IDEUpdateExtension(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	ctx := context.Background()
+
+	// Parse parameters
+	ideType, exists := params["ide_type"].(string)
+	if !exists {
+		return nil, fmt.Errorf(i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"}))
+	}
+
+	updateAll := false
+	if ideType == "all" {
+		updateAll = true
+	}
+
+	// Create detector and installer
+	detector := gorev.NewIDEDetector()
+	detector.DetectAllIDEs()
+
+	installer := gorev.NewExtensionInstaller(detector)
+	defer installer.Cleanup()
+
+	// Get latest extension info
+	extensionInfo, err := installer.GetLatestExtensionInfo(ctx, "msenol", "Gorev")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get extension info: %w", err)
+	}
+
+	var results []gorev.InstallResult
+	var err2 error
+
+	if updateAll {
+		// Update all detected IDEs
+		allIDEs := detector.GetAllDetectedIDEs()
+		for ideTypeKey := range allIDEs {
+			result, err := installer.InstallExtension(ctx, ideTypeKey, extensionInfo)
+			if result != nil {
+				results = append(results, *result)
+			}
+			if err != nil && err2 == nil {
+				err2 = err // Keep first error
+			}
+		}
+	} else {
+		result, err := installer.InstallExtension(ctx, gorev.IDEType(ideType), extensionInfo)
+		if result != nil {
+			results = append(results, *result)
+		}
+		err2 = err
+	}
+
+	// Format results
+	var output strings.Builder
+	output.WriteString(fmt.Sprintf("# 🔄 Extension Update Results (v%s)\n\n", extensionInfo.Version))
+
+	successCount := 0
+	for _, result := range results {
+		icon := "❌"
+		if result.Success {
+			icon = "✅"
+			successCount++
+		}
+
+		output.WriteString(fmt.Sprintf("## %s %s\n", icon, result.IDE))
+		output.WriteString(fmt.Sprintf("- **Extension**: %s\n", result.Extension))
+		output.WriteString(fmt.Sprintf("- **Version**: v%s\n", result.Version))
+		output.WriteString(fmt.Sprintf("- **Status**: %s\n\n", result.Message))
+	}
+
+	if len(results) > 0 {
+		output.WriteString(fmt.Sprintf("**Summary**: %d/%d updates successful\n", successCount, len(results)))
+	}
+
+	if err2 != nil && len(results) == 0 {
+		return nil, err2
+	}
+
+	return mcp.NewToolResultText(output.String()), nil
+}
+
+// getIDEIcon returns an appropriate emoji icon for the IDE type
+func getIDEIcon(ideType gorev.IDEType) string {
+	switch ideType {
+	case gorev.IDETypeVSCode:
+		return "🔵"
+	case gorev.IDETypeCursor:
+		return "🖱️"
+	case gorev.IDETypeWindsurf:
+		return "🌊"
+	default:
+		return "💻"
+	}
 }

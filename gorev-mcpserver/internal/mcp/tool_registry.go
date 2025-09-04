@@ -683,4 +683,99 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Required: []string{"file_path"},
 		},
 	}, tr.handlers.GorevImport)
+
+	// ========================================
+	// IDE Management Tools
+	// ========================================
+
+	// IDE Detect - Detect installed IDEs
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering gorev_ide_detect tool...")
+	}
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ide_detect",
+		Description: i18n.T("tools.descriptions.ide_detect", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type:       "object",
+			Properties: map[string]interface{}{},
+		},
+	}, tr.handlers.IDEDetect)
+
+	// IDE Install Extension - Install Gorev extension to IDEs
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering gorev_ide_install tool...")
+	}
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ide_install",
+		Description: i18n.T("tools.descriptions.ide_install", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"ide_type": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.ide_type", nil),
+					"enum":        []string{"vscode", "cursor", "windsurf", "all"},
+				},
+			},
+			Required: []string{"ide_type"},
+		},
+	}, tr.handlers.IDEInstallExtension)
+
+	// IDE Uninstall Extension - Remove Gorev extension from IDEs
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering gorev_ide_uninstall tool...")
+	}
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ide_uninstall",
+		Description: i18n.T("tools.descriptions.ide_uninstall", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"ide_type": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.ide_type", nil),
+					"enum":        []string{"vscode", "cursor", "windsurf"},
+				},
+				"extension_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.extension_id", nil),
+					"default":     "mehmetsenol.gorev-vscode",
+				},
+			},
+			Required: []string{"ide_type"},
+		},
+	}, tr.handlers.IDEUninstallExtension)
+
+	// IDE Extension Status - Check extension installation status
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering gorev_ide_status tool...")
+	}
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ide_status",
+		Description: i18n.T("tools.descriptions.ide_status", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type:       "object",
+			Properties: map[string]interface{}{},
+		},
+	}, tr.handlers.IDEExtensionStatus)
+
+	// IDE Update Extension - Update Gorev extension to latest version
+	if tr.handlers.debug {
+		fmt.Println("DEBUG: Registering gorev_ide_update tool...")
+	}
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ide_update",
+		Description: i18n.T("tools.descriptions.ide_update", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"ide_type": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.ide_type", nil),
+					"enum":        []string{"vscode", "cursor", "windsurf", "all"},
+				},
+			},
+			Required: []string{"ide_type"},
+		},
+	}, tr.handlers.IDEUpdateExtension)
 }

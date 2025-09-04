@@ -16,6 +16,15 @@
     "templateShow": "Template detaylarını göster",
     "templateInit": "Varsayılan template'leri yeniden oluştur",
     "templateAliases": "Template alias'larını listele",
+    "ide": "IDE extension yönetimi",
+    "ideDescription": "VS Code, Cursor ve Windsurf IDE'leri için Gorev extension kurulumu ve yönetimi",
+    "ideDetect": "Sistemdeki IDE'leri algıla",
+    "ideInstall": "Gorev extension'ını IDE'ye kur",
+    "ideUninstall": "Gorev extension'ını IDE'den kaldır",
+    "ideStatus": "Extension kurulum durumunu kontrol et",
+    "ideUpdate": "Extension'ı en son sürüme güncelle",
+    "ideConfig": "IDE yönetim ayarlarını görüntüle",
+    "ideConfigSet": "IDE yönetim ayarını değiştir",
     "mcpTest": "MCP araçlarını test et",
     "mcpDescription": "MCP (Model Context Protocol) araçlarını doğrudan komut satırından test etmek için kullanılır.",
     "debug": "Debug modunu etkinleştir",
@@ -126,7 +135,19 @@
     "taskNotFoundFileWatch": "Görev bulunamadı: {{.Error}}",
     "fileWatchAddFailed": "Dosya izleme eklenemedi: {{.Error}}",
     "fileWatchRemoveFailed": "Dosya izleme kaldırılamadı: {{.Error}}",
-    "activeProjectRetrieve": "aktif proje getirilemedi: {{.Error}}"
+    "activeProjectRetrieve": "aktif proje getirilemedi: {{.Error}}",
+    "ide": {
+      "unsupportedType": "Desteklenmeyen IDE türü: {{.Type}}",
+      "notFound": "{{.IDE}} bulunamadı",
+      "notDetected": "{{.IDE}} algılanamadı",
+      "extensionsPathNotFound": "{{.IDE}} için extension yolu bulunamadı",
+      "cannotReadExtensions": "Extension dizini okunamadı {{.Path}}: {{.Error}}",
+      "extensionNotInstalled": "{{.Extension}} extension'ı {{.IDE}}'de kurulu değil",
+      "downloadFailed": "{{.Extension}} indirilemedi: {{.Error}}",
+      "installFailed": "{{.Extension}} {{.IDE}}'de kurulamadı: {{.Error}}",
+      "uninstallFailed": "{{.Extension}} {{.IDE}}'den kaldırılamadı: {{.Error}}",
+      "noIDEsDetected": "Hiç IDE algılanamadı"
+    }
   },
   "success": {
     "activeProjectSet": "✓ Aktif proje ayarlandı: {{.Project}}",
@@ -143,7 +164,12 @@
     "activeTaskSet": "{{.Title}} başarıyla aktif görev olarak ayarlandı",
     "defaultTemplatesCreated": "✓ Varsayılan template'ler başarıyla oluşturuldu.",
     "fileWatchAdded": "✅ Görev '{{.TaskTitle}}' için '{{.FilePath}}' dosya yolu izlemeye eklendi.\n\nDosya değişiklikleri otomatik olarak takip edilecek ve görev durumu gerektiğinde güncellenecek.",
-    "fileWatchRemoved": "✅ Görev ID {{.TaskID}} için '{{.FilePath}}' dosya yolu izlemeden kaldırıldı."
+    "fileWatchRemoved": "✅ Görev ID {{.TaskID}} için '{{.FilePath}}' dosya yolu izlemeden kaldırıldı.",
+    "ide": {
+      "extensionAlreadyInstalled": "{{.Extension}} zaten {{.IDE}}'de kurulu (v{{.Version}})",
+      "extensionInstalled": "✓ {{.Extension}} başarıyla {{.IDE}}'de kuruldu (v{{.Version}})",
+      "extensionUninstalled": "✓ {{.Extension}} başarıyla {{.IDE}}'den kaldırıldı"
+    }
   },
   "display": {
     "noTemplates": "Henüz template bulunmuyor.",
@@ -249,7 +275,8 @@
     "noTasksInThisProject": "{{.Name}} - Görev yok",
     "moreTasksLimit": "*... ve {{.Count}} görev daha (boyut limiti)*",
     "templateListHeader": "## 📋 Görev Template'leri",
-    "templateUsageTip": "💡 **Kullanım:** `templateden_gorev_olustur` komutunu template ID'si ve alan değerleriyle kullanın."
+    "templateUsageTip": "💡 **Kullanım:** `templateden_gorev_olustur` komutunu template ID'si ve alan değerleriyle kullanın.",
+    "noIDEsDetected": "Henüz IDE algılanamadı."
   },
   "common": {
     "validation": {
@@ -479,7 +506,12 @@
       "gorev_bagimlilik_ekle": "İki görev arasında bağımlılık ilişkisi kurar.",
       "ozet_goster": "Sistemin genel durumunu gösteren özet rapor. Toplam görev sayıları, proje istatistikleri, öncelik dağılımları ve son aktiviteleri içerir.",
       "gorev_export": "Görevleri, projeleri ve ilişkili verileri JSON veya CSV formatında dosyaya dışa aktarır. Yedekleme ve veri paylaşımı için kullanılır.",
-      "gorev_import": "Daha önce dışa aktarılmış verileri sisteme geri aktarır. Çakışma çözümü ve seçici içe aktarma seçenekleri sunar."
+      "gorev_import": "Daha önce dışa aktarılmış verileri sisteme geri aktarır. Çakışma çözümü ve seçici içe aktarma seçenekleri sunar.",
+      "ide_detect": "Sistemdeki IDE'leri algılar (VS Code, Cursor, Windsurf)",
+      "ide_install": "Gorev extension'ını belirtilen IDE'ye kurar",
+      "ide_uninstall": "Gorev extension'ını belirtilen IDE'den kaldırır",
+      "ide_status": "IDE'lerdeki extension kurulum durumunu kontrol eder",
+      "ide_update": "Gorev extension'ını en son sürüme günceller"
     },
     "params": {
       "descriptions": {
@@ -534,6 +566,10 @@
         "preserve_ids": "Orijinal ID'leri koru (varsayılan: false)",
         "dry_run": "Sadece analiz et, değişiklik yapma (varsayılan: false)",
         "project_mapping": "Proje ID eşleştirmesi (eski_id: yeni_id)"
+      },
+      "ide": {
+        "ide_type": "IDE türü (vscode, cursor, windsurf veya all - tümü için)",
+        "extension_id": "Extension ID (varsayılan: mehmetsenol.gorev-vscode)"
       }
     }
   },

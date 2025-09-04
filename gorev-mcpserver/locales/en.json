@@ -16,6 +16,15 @@
     "templateShow": "Show template details",
     "templateInit": "Recreate default templates",
     "templateAliases": "List template aliases",
+    "ide": "IDE extension management",
+    "ideDescription": "Gorev extension installation and management for VS Code, Cursor and Windsurf IDEs",
+    "ideDetect": "Detect IDEs on the system",
+    "ideInstall": "Install Gorev extension to IDE",
+    "ideUninstall": "Remove Gorev extension from IDE",
+    "ideStatus": "Check extension installation status",
+    "ideUpdate": "Update extension to latest version",
+    "ideConfig": "View IDE management settings",
+    "ideConfigSet": "Set IDE management setting",
     "mcpTest": "Test MCP tools",
     "mcpDescription": "Test MCP (Model Context Protocol) tools directly from command line.",
     "debug": "Enable debug mode",
@@ -227,7 +236,8 @@
     "noTasksInThisProject": "{{.Name}} - No tasks",
     "moreTasksLimit": "*... and {{.Count}} more tasks (size limit)*",
     "templateListHeader": "## 📋 Task Templates",
-    "templateUsageTip": "💡 **Usage:** Use `templateden_gorev_olustur` command with template ID and field values."
+    "templateUsageTip": "💡 **Usage:** Use `templateden_gorev_olustur` command with template ID and field values.",
+    "noIDEsDetected": "No IDEs detected yet."
   },
   "common": {
     "validation": {
@@ -455,7 +465,12 @@
       "gorev_bagimlilik_ekle": "Creates a dependency relationship between two tasks.",
       "ozet_goster": "Summary report showing system status. Includes total task counts, project statistics, priority distributions and recent activities.",
       "gorev_export": "Export tasks, projects and related data to file in JSON or CSV format. Used for backup and data sharing.",
-      "gorev_import": "Import previously exported data back into the system. Offers conflict resolution and selective import options."
+      "gorev_import": "Import previously exported data back into the system. Offers conflict resolution and selective import options.",
+      "ide_detect": "Detect IDEs on the system (VS Code, Cursor, Windsurf)",
+      "ide_install": "Install Gorev extension to specified IDE",
+      "ide_uninstall": "Remove Gorev extension from specified IDE",
+      "ide_status": "Check extension installation status in IDEs",
+      "ide_update": "Update Gorev extension to latest version"
     },
     "params": {
       "descriptions": {
@@ -510,6 +525,10 @@
         "preserve_ids": "Preserve original IDs (default: false)",
         "dry_run": "Only analyze, don't make changes (default: false)",
         "project_mapping": "Project ID mapping (old_id: new_id)"
+      },
+      "ide": {
+        "ide_type": "IDE type (vscode, cursor, windsurf or all for all)",
+        "extension_id": "Extension ID (default: mehmetsenol.gorev-vscode)"
       }
     }
   },
@@ -566,6 +585,25 @@
     "invalidTaskTagTaskReference": "Invalid task-tag task reference - Task {{.TaskID}} not found",
     "invalidTaskTagTagReference": "Invalid task-tag tag reference - Tag {{.TagID}} not found",
     "invalidDependencySourceReference": "Invalid dependency source reference - Source task {{.SourceID}} not found",
-    "invalidDependencyTargetReference": "Invalid dependency target reference - Target task {{.TargetID}} not found"
+    "invalidDependencyTargetReference": "Invalid dependency target reference - Target task {{.TargetID}} not found",
+    "ide": {
+      "unsupportedType": "Unsupported IDE type: {{.Type}}",
+      "notFound": "{{.IDE}} not found",
+      "notDetected": "{{.IDE}} not detected",
+      "extensionsPathNotFound": "Extensions path not found for {{.IDE}}",
+      "cannotReadExtensions": "Cannot read extensions directory {{.Path}}: {{.Error}}",
+      "extensionNotInstalled": "{{.Extension}} extension is not installed in {{.IDE}}",
+      "downloadFailed": "Failed to download {{.Extension}}: {{.Error}}",
+      "installFailed": "Failed to install {{.Extension}} in {{.IDE}}: {{.Error}}",
+      "uninstallFailed": "Failed to uninstall {{.Extension}} from {{.IDE}}: {{.Error}}",
+      "noIDEsDetected": "No IDEs detected"
+    }
+  },
+  "success": {
+    "ide": {
+      "extensionAlreadyInstalled": "{{.Extension}} is already installed in {{.IDE}} (v{{.Version}})",
+      "extensionInstalled": "✓ {{.Extension}} successfully installed in {{.IDE}} (v{{.Version}})",
+      "extensionUninstalled": "✓ {{.Extension}} successfully uninstalled from {{.IDE}}"
+    }
   }
 }
