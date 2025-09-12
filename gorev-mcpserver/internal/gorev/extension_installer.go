@@ -47,7 +47,9 @@ type ExtensionInstaller struct {
 func NewExtensionInstaller(detector *IDEDetector) *ExtensionInstaller {
 	// Create temp directory for downloads
 	tempDir := filepath.Join(os.TempDir(), "gorev-extensions")
-	os.MkdirAll(tempDir, 0755)
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		fmt.Printf("Warning: failed to create temp dir %s: %v\n", tempDir, err)
+	}
 
 	return &ExtensionInstaller{
 		detector:     detector,
@@ -103,7 +105,7 @@ func (ei *ExtensionInstaller) InstallExtension(ctx context.Context, ideType IDET
 		})
 		return result, err
 	}
-	defer os.Remove(vsixPath) // Cleanup
+	defer func() { _ = os.Remove(vsixPath) }() // Cleanup
 
 	// Install using IDE CLI
 	err = ei.installVSIX(ide, vsixPath)
@@ -208,7 +210,7 @@ func (ei *ExtensionInstaller) downloadVSIX(ctx context.Context, extensionInfo *E
 			}
 		}
 		// Remove invalid file
-		os.Remove(filePath)
+		_ = os.Remove(filePath)
 	}
 
 	// Create request with context
@@ -225,7 +227,7 @@ func (ei *ExtensionInstaller) downloadVSIX(ctx context.Context, extensionInfo *E
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("download failed with status: %d", resp.StatusCode)
@@ -236,12 +238,16 @@ func (ei *ExtensionInstaller) downloadVSIX(ctx context.Context, extensionInfo *E
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("Warning: failed to close file %s: %v\n", filePath, err)
+		}
+	}()
 
 	// Copy data
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
-		os.Remove(filePath)
+		_ = os.Remove(filePath)
 		return "", err
 	}
 
@@ -249,7 +255,7 @@ func (ei *ExtensionInstaller) downloadVSIX(ctx context.Context, extensionInfo *E
 	if extensionInfo.Checksum != "" {
 		valid, err := ei.verifyChecksum(filePath, extensionInfo.Checksum)
 		if err != nil || !valid {
-			os.Remove(filePath)
+			_ = os.Remove(filePath)
 			return "", fmt.Errorf("checksum verification failed")
 		}
 	}
@@ -263,7 +269,7 @@ func (ei *ExtensionInstaller) verifyChecksum(filePath, expectedChecksum string) 
 	if err != nil {
 		return false, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
@@ -369,7 +375,7 @@ func (ei *ExtensionInstaller) GetLatestExtensionInfo(ctx context.Context, repoOw
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GitHub API request failed with status: %d", resp.StatusCode)

@@ -322,7 +322,11 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			// best-effort close
+		}
+	}()
 
 	var gorevler []*Gorev
 	for rows.Next() {
@@ -376,7 +380,11 @@ func (vy *VeriYonetici) gorevEtiketleriniGetir(gorevID string) ([]*Etiket, error
 		// Muhtemelen tablo yok, boş dön
 		return []*Etiket{}, nil
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			// best-effort close
+		}
+	}()
 
 	var etiketler []*Etiket
 	for rows.Next() {
@@ -395,19 +403,19 @@ func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket,
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.transactionFailed", map[string]interface{}{"Error": err}))
 	}
-	defer tx.Rollback() // Hata durumunda geri al
+	defer func() { _ = tx.Rollback() }() // Hata durumunda geri al
 
 	stmtSelect, err := tx.Prepare("SELECT id, isim FROM etiketler WHERE isim = ?")
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.selectPrepFailed", map[string]interface{}{"Error": err}))
 	}
-	defer stmtSelect.Close()
+	defer func() { _ = stmtSelect.Close() }()
 
 	stmtInsert, err := tx.Prepare("INSERT INTO etiketler (id, isim) VALUES (?, ?)")
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
 	}
-	defer stmtInsert.Close()
+	defer func() { _ = stmtInsert.Close() }()
 
 	for _, isim := range isimler {
 		if strings.TrimSpace(isim) == "" {
@@ -435,7 +443,10 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.transactionFailed", map[string]interface{}{"Error": err}))
 	}
-	defer tx.Rollback()
+	defer func() {
+		// Silently ignore rollback errors as transaction may already be committed
+		_ = tx.Rollback()
+	}()
 
 	// Mevcut bağlantıları sil
 	if _, err := tx.Exec("DELETE FROM gorev_etiketleri WHERE gorev_id = ?", gorevID); err != nil {
@@ -447,7 +458,9 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
 	}
-	defer stmt.Close()
+	defer func() {
+		_ = stmt.Close()
+	}()
 
 	for _, etiket := range etiketler {
 		if _, err := stmt.Exec(gorevID, etiket.ID); err != nil {
@@ -527,7 +540,9 @@ func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var projeler []*Proje
 	for rows.Next() {
@@ -576,7 +591,9 @@ func (vy *VeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var gorevler []*Gorev
 	for rows.Next() {
@@ -619,7 +636,9 @@ func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var baglantilar []*Baglanti
 	for rows.Next() {
@@ -641,7 +660,9 @@ func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var gorevler []*Gorev
 	for rows.Next() {
@@ -706,7 +727,9 @@ func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var gorevler []*Gorev
 	for rows.Next() {
@@ -773,7 +796,9 @@ func (vy *VeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	var gorevler []*Gorev
 	for rows.Next() {
@@ -952,7 +977,9 @@ func (vy *VeriYonetici) BulkBagimlilikSayilariGetir(gorevIDs []string) (map[stri
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	result := make(map[string]int)
 	for rows.Next() {
@@ -993,7 +1020,7 @@ func (vy *VeriYonetici) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []stri
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result := make(map[string]int)
 	for rows.Next() {
@@ -1034,7 +1061,9 @@ func (vy *VeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	result := make(map[string]int)
 	for rows.Next() {
@@ -1165,7 +1194,7 @@ func (vy *VeriYonetici) AIInteractionlariGetir(limit int) ([]*AIInteraction, err
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.interactionQueryFailed", map[string]interface{}{"Error": err}))
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var interactions []*AIInteraction
 	for rows.Next() {
@@ -1201,7 +1230,7 @@ func (vy *VeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) 
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.todayInteractionQueryFailed", map[string]interface{}{"Error": err}))
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var interactions []*AIInteraction
 	for rows.Next() {

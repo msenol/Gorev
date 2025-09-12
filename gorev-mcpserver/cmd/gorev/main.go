@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -310,9 +311,9 @@ func runServer() error {
 	// Veritabanını başlat
 	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.dataManagerInit", map[string]interface{}{"Error": err}))
+		return errors.New(i18n.T("error.dataManagerInit", map[string]interface{}{"Error": err}))
 	}
-	defer veriYonetici.Kapat()
+	defer func() { _ = veriYonetici.Kapat() }()
 
 	// İş mantığı servisini oluştur
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
@@ -325,7 +326,7 @@ func runServer() error {
 	// MCP sunucusunu başlat (debug desteği ile)
 	sunucu, err := mcp.YeniMCPSunucuWithDebug(isYonetici, debugFlag)
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.mcpServerCreate", map[string]interface{}{"Error": err}))
+		return errors.New(i18n.T("error.mcpServerCreate", map[string]interface{}{"Error": err}))
 	}
 
 	// Debug mode mesajı
@@ -337,7 +338,7 @@ func runServer() error {
 	// Sunucuyu çalıştır
 	// fmt.Fprintln(os.Stderr, "Gorev MCP sunucusu başlatılıyor...")
 	if err := mcp.ServeSunucu(sunucu); err != nil {
-		return fmt.Errorf(i18n.T("error.serverStart", map[string]interface{}{"Error": err}))
+		return errors.New(i18n.T("error.serverStart", map[string]interface{}{"Error": err}))
 	}
 
 	return nil
@@ -359,7 +360,11 @@ func checkAndPromptIDEExtensions() {
 	}
 
 	installer := gorev.NewExtensionInstaller(detector)
-	defer installer.Cleanup()
+	defer func() {
+		if err := installer.Cleanup(); err != nil {
+			fmt.Fprintf(os.Stderr, "Cleanup error: %v\n", err)
+		}
+	}()
 
 	// Kurulu olmayan IDE'leri bul
 	var uninstalledIDEs []gorev.IDEType
@@ -415,7 +420,7 @@ func listTemplates(kategori string) error {
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
-	defer veriYonetici.Kapat()
+	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Template'leri listele
 	templates, err := veriYonetici.TemplateListele(kategori)
@@ -461,7 +466,7 @@ func showTemplate(templateID string) error {
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
-	defer veriYonetici.Kapat()
+	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Template'i ID veya alias ile getir
 	template, err := veriYonetici.TemplateIDVeyaAliasIleGetir(templateID)
@@ -506,7 +511,7 @@ func initTemplates() error {
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
-	defer veriYonetici.Kapat()
+	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Varsayılan template'leri oluştur
 	err = veriYonetici.VarsayilanTemplateleriOlustur()
@@ -524,7 +529,7 @@ func listTemplateAliases() error {
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
-	defer veriYonetici.Kapat()
+	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Template'leri listele
 	templates, err := veriYonetici.TemplateListele("")
@@ -684,10 +689,16 @@ func runIDEDetect() error {
 // runIDEInstall installs extension to IDE(s)
 func runIDEInstall(ideType string) error {
 	detector := gorev.NewIDEDetector()
-	detector.DetectAllIDEs()
+	if _, err := detector.DetectAllIDEs(); err != nil {
+		return err
+	}
 
 	installer := gorev.NewExtensionInstaller(detector)
-	defer installer.Cleanup()
+	defer func() {
+		if err := installer.Cleanup(); err != nil {
+			fmt.Fprintf(os.Stderr, "Cleanup error: %v\n", err)
+		}
+	}()
 
 	// Get latest extension info
 	ctx := context.Background()
@@ -733,7 +744,9 @@ func runIDEInstall(ideType string) error {
 // runIDEUninstall uninstalls extension from IDE
 func runIDEUninstall(ideType string) error {
 	detector := gorev.NewIDEDetector()
-	detector.DetectAllIDEs()
+	if _, err := detector.DetectAllIDEs(); err != nil {
+		return err
+	}
 
 	installer := gorev.NewExtensionInstaller(detector)
 
@@ -810,10 +823,16 @@ func runIDEStatus() error {
 // runIDEUpdate updates extension to latest version
 func runIDEUpdate(ideType string) error {
 	detector := gorev.NewIDEDetector()
-	detector.DetectAllIDEs()
+	if _, err := detector.DetectAllIDEs(); err != nil {
+		return err
+	}
 
 	installer := gorev.NewExtensionInstaller(detector)
-	defer installer.Cleanup()
+	defer func() {
+		if err := installer.Cleanup(); err != nil {
+			fmt.Fprintf(os.Stderr, "Cleanup error: %v\n", err)
+		}
+	}()
 
 	// Get latest extension info
 	ctx := context.Background()
