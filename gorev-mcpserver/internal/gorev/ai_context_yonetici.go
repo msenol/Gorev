@@ -2,6 +2,7 @@ package gorev
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -70,7 +71,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	// Validate task exists
 	gorev, err := acy.veriYonetici.GorevGetir(taskID)
 	if err != nil {
-		return fmt.Errorf(i18n.TEntityNotFound("task", err))
+	return errors.New(i18n.TEntityNotFound("task", err))
 	}
 
 	// Get current context
@@ -97,7 +98,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 
 	// Save context
 	if err := acy.saveContextUnsafe(context); err != nil {
-		return fmt.Errorf(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
+	return errors.New(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Record interaction

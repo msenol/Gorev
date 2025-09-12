@@ -75,12 +75,14 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 
 	// Record the interaction
 	if asm.aiContextManager != nil {
-		asm.aiContextManager.recordInteraction(taskID, "auto_transition_start", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction(taskID, "auto_transition_start", map[string]interface{}{
 			"from_status": constants.TaskStatusPending,
 			"to_status":   constants.TaskStatusInProgress,
 			"reason":      "task_accessed",
 			"timestamp":   time.Now(),
-		})
+		}); recErr != nil {
+			log.Printf("Failed to record AI interaction (auto_transition_start): taskID=%s, error=%v", taskID, recErr)
+		}
 	}
 
 	// Start inactivity timer
@@ -115,13 +117,15 @@ func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 
 	// Record the interaction
 	if asm.aiContextManager != nil {
-		asm.aiContextManager.recordInteraction(taskID, "auto_transition_pause", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction(taskID, "auto_transition_pause", map[string]interface{}{
 			"from_status": constants.TaskStatusInProgress,
 			"to_status":   constants.TaskStatusPending,
 			"reason":      "inactivity_timeout",
 			"timeout":     asm.inactivityTimer.String(),
 			"timestamp":   time.Now(),
-		})
+		}); recErr != nil {
+			log.Printf("Failed to record AI interaction (auto_transition_pause): taskID=%s, error=%v", taskID, recErr)
+		}
 	}
 
 	// Clear inactivity timer
@@ -180,11 +184,13 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 
 			// Record the interaction
 			if asm.aiContextManager != nil {
-				asm.aiContextManager.recordInteraction(parentID, "auto_complete_parent", map[string]interface{}{
+				if recErr := asm.aiContextManager.recordInteraction(parentID, "auto_complete_parent", map[string]interface{}{
 					"reason":        "all_subtasks_completed",
 					"subtask_count": len(subtasks),
 					"timestamp":     time.Now(),
-				})
+				}); recErr != nil {
+					log.Printf("Failed to record AI interaction (auto_complete_parent): parentID=%s, error=%v", parentID, recErr)
+				}
 			}
 
 			log.Printf("Auto-completed parent task: parentID=%s, subtaskCount=%d, reason=all_subtasks_completed", parentID, len(subtasks))
@@ -316,12 +322,14 @@ func (asm *AutoStateManager) ProcessNaturalLanguageQuery(query string, lang stri
 
 	// Record the query in AI context
 	if asm.aiContextManager != nil {
-		asm.aiContextManager.recordInteraction("system", "nlp_query", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction("system", "nlp_query", map[string]interface{}{
 			"query":      query,
 			"intent":     intent,
 			"confidence": intent.Confidence,
 			"timestamp":  time.Now(),
-		})
+		}); recErr != nil {
+			log.Printf("Failed to record AI interaction (nlp_query): error=%v", recErr)
+		}
 	}
 
 	// Execute the action based on intent
@@ -440,11 +448,13 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 
 	// Record the creation
 	if asm.aiContextManager != nil {
-		asm.aiContextManager.recordInteraction(taskID, "nlp_create", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction(taskID, "nlp_create", map[string]interface{}{
 			"original_query":    intent.Raw,
 			"extracted_content": content,
 			"timestamp":         time.Now(),
-		})
+		}); recErr != nil {
+			log.Printf("Failed to record AI interaction (nlp_create): taskID=%s, error=%v", taskID, recErr)
+		}
 	}
 
 	return title, nil

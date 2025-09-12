@@ -215,7 +215,9 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 
 			// Record interaction
 			if bp.aiContextManager != nil {
-				bp.aiContextManager.RecordInteraction(request.TaskID, "batch_update", request.Updates)
+				if recErr := bp.aiContextManager.RecordInteraction(request.TaskID, "batch_update", request.Updates); recErr != nil {
+					log.Printf("Failed to record AI interaction (batch_update): taskID=%s, error=%v", request.TaskID, recErr)
+				}
 			}
 		}
 
@@ -339,10 +341,12 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 
 		// Record interaction
 		if bp.aiContextManager != nil {
-			bp.aiContextManager.RecordInteraction(taskID, "bulk_status_change", map[string]interface{}{
+			if recErr := bp.aiContextManager.RecordInteraction(taskID, "bulk_status_change", map[string]interface{}{
 				"old_status": task.Durum,
 				"new_status": request.NewStatus,
-			})
+			}); recErr != nil {
+				log.Printf("Failed to record AI interaction (bulk_status_change): taskID=%s, error=%v", taskID, recErr)
+			}
 		}
 	}
 
@@ -475,10 +479,12 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 
 			// Record interaction
 			if bp.aiContextManager != nil {
-				bp.aiContextManager.RecordInteraction(taskID, "bulk_tag_operation", map[string]interface{}{
+				if recErr := bp.aiContextManager.RecordInteraction(taskID, "bulk_tag_operation", map[string]interface{}{
 					"operation": request.Operation,
 					"tags":      request.Tags,
-				})
+				}); recErr != nil {
+					log.Printf("Failed to record AI interaction (bulk_tag_operation): taskID=%s, error=%v", taskID, recErr)
+				}
 			}
 		} else {
 			result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -533,7 +539,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 		}
 
 		// Check if task exists
-		task, err := bp.veriYonetici.GorevDetay(taskID)
+		_, err := bp.veriYonetici.GorevDetay(taskID)
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
@@ -570,10 +576,13 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 
 		// Record interaction
 		if bp.aiContextManager != nil {
-			bp.aiContextManager.RecordInteraction(taskID, "bulk_delete", map[string]interface{}{
-				"task_title": task.Baslik,
-				"force":      request.Force,
-			})
+			if err := bp.aiContextManager.RecordInteraction(taskID, "bulk_delete", map[string]interface{}{
+				"batch_operation": true,
+				"deleted":         true,
+			}); err != nil {
+				// Log error but continue processing
+				log.Printf("Failed to record AI interaction for bulk delete: taskID=%s, error=%v", taskID, err)
+			}
 		}
 	}
 
