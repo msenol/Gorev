@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/msenol/gorev/internal/i18n"
 )
@@ -32,6 +33,7 @@ type IDEInfo struct {
 
 // IDEDetector handles IDE detection and path discovery
 type IDEDetector struct {
+	mu           sync.RWMutex
 	detectedIDEs map[IDEType]*IDEInfo
 }
 
@@ -44,6 +46,9 @@ func NewIDEDetector() *IDEDetector {
 
 // DetectAllIDEs detects all supported IDEs on the system
 func (d *IDEDetector) DetectAllIDEs() (map[IDEType]*IDEInfo, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	
 	// Clear previous detections
 	d.detectedIDEs = make(map[IDEType]*IDEInfo)
 
@@ -57,18 +62,35 @@ func (d *IDEDetector) DetectAllIDEs() (map[IDEType]*IDEInfo, error) {
 		}
 	}
 
-	return d.detectedIDEs, nil
+	// Return a copy to avoid sharing the map reference
+	result := make(map[IDEType]*IDEInfo)
+	for k, v := range d.detectedIDEs {
+		result[k] = v
+	}
+
+	return result, nil
 }
 
 // GetDetectedIDE returns information about a specific IDE if detected
 func (d *IDEDetector) GetDetectedIDE(ideType IDEType) (*IDEInfo, bool) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	
 	ide, exists := d.detectedIDEs[ideType]
 	return ide, exists
 }
 
 // GetAllDetectedIDEs returns all detected IDEs
 func (d *IDEDetector) GetAllDetectedIDEs() map[IDEType]*IDEInfo {
-	return d.detectedIDEs
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	
+	// Return a copy to avoid sharing the map reference
+	result := make(map[IDEType]*IDEInfo)
+	for k, v := range d.detectedIDEs {
+		result[k] = v
+	}
+	return result
 }
 
 // detectIDE detects a specific IDE type
