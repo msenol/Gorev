@@ -280,7 +280,11 @@ func (iy *IsYonetici) saveAsJSON(exportData *ExportFormat, outputPath string) er
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.failedToCreateFile", map[string]interface{}{"Path": outputPath, "Error": err}))
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			fmt.Printf("Warning: failed to close file %s: %v\n", outputPath, cerr)
+		}
+	}()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
@@ -297,7 +301,11 @@ func (iy *IsYonetici) saveAsCSV(exportData *ExportFormat, outputPath string) err
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.failedToCreateFile", map[string]interface{}{"Path": outputPath, "Error": err}))
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			fmt.Printf("Warning: failed to close file %s: %v\n", outputPath, cerr)
+		}
+	}()
 
 	// Write CSV header
 	header := "ID,Title,Description,Status,Priority,Project,Created,Updated,Tags\n"
@@ -597,7 +605,11 @@ func (iy *IsYonetici) loadImportData(filePath string) (*ExportFormat, error) {
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.failedToOpenFile", map[string]interface{}{"Path": filePath, "Error": err}))
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			fmt.Printf("Warning: failed to close file %s: %v\n", filePath, cerr)
+		}
+	}()
 
 	var importData ExportFormat
 	decoder := json.NewDecoder(file)

@@ -63,7 +63,11 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 	if err != nil {
 		return nil, fmt.Errorf("template'ler getirilemedi: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("Warning: rows.Close failed: %v\n", err)
+		}
+	}()
 
 	var templates []*GorevTemplate
 	for rows.Next() {

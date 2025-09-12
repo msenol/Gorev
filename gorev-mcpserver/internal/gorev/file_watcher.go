@@ -175,7 +175,9 @@ func (fw *FileWatcher) RemoveTaskPath(taskID string, path string) error {
 			}
 
 			if !stillNeeded {
-				fw.watcher.Remove(watchPath)
+				if err := fw.watcher.Remove(watchPath); err != nil {
+					log.Printf("Failed to remove watch path %s: %v", watchPath, err)
+				}
 			}
 		} else {
 			fw.watchedPaths[cleanPath] = newTasks
