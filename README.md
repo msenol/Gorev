@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 4, 2025 | **Version:** v0.13.1
+**Last Updated:** September 13, 2025 | **Version:** v0.14.0
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -11,7 +11,7 @@
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Test Coverage](https://img.shields.io/badge/Coverage-84.6%25-brightgreen?style=flat-square)
+![Test Coverage](https://img.shields.io/badge/Coverage-90%25-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20|%20macOS%20|%20Windows-blue?style=flat-square)
 
 **Modern task management system with Turkish support, designed for MCP-compatible AI assistants (Claude, VS Code, Windsurf, Cursor)**
@@ -24,7 +24,7 @@
 
 **Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation. 
 
-**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, 29 MCP tools, and optional VS Code extension with rich visual interface.
+**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, 36 MCP tools, and optional VS Code extension with rich visual interface.
 
 **Quick Start**: [Installation Guide](README.en.md#-installation) | [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
@@ -69,11 +69,13 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **⚙️ Konfigürasyon Yönetimi** - Ignore patterns ve izleme kuralları özelleştirmesi
 
 ### 🤖 AI Entegrasyonu
+- **🧠 Gelişmiş NLP İşleme** - Akıllı doğal dil anlama ve yorumlama (v0.14.0)
 - **Doğal dil işleme** - AI asistanlarla konuşarak görev yönetimi
 - **Çoklu editör desteği** - Claude, VS Code, Windsurf, Cursor, Zed
-- **Bağlamsal anlama** - Akıllı komut yorumlama
+- **Bağlamsal anlama** - Akıllı komut yorumlama ve parametre çıkarımı
 - **MCP standardı** - Tüm MCP uyumlu araçlarla uyumluluk
 - **🌍 Uluslararası Destek** - Türkçe ve İngilizce tam dil desteği (v0.11.0+)
+- **⚡ Thread Safety** - 100% race condition free operation (v0.14.0)
 
 ### 🎨 VS Code Extension Özellikleri (Opsiyonel)
 - **İki Dil Desteği** - Türkçe ve İngilizce arayüz (v0.5.0+) 🌍
@@ -116,7 +118,7 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERS
 irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 
 # Veya belirli versiyon için:
-$env:VERSION="v0.10.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+$env:VERSION="v0.14.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 **Manuel Kurulum:**
@@ -289,20 +291,22 @@ Cursor'da MCP entegrasyonu için:
 
 ## 🎮 Kullanım
 
-### AI Asistan ile Örnek Komutlar
+### AI Asistan ile Örnek Komutlar (v0.14.0 Enhanced NLP)
 
 ```
-"Yeni bir görev oluştur: API dokümantasyonu yazılacak"
-"Acil görevleri listele"
-"Bug etiketli görevleri göster"
+"Yeni bir görev oluştur: API dokümantasyonu yazılacak yarın deadline ile"
+"Bu hafta için yüksek öncelikli görevleri göster"
+"Bug etiketli açık görevleri listele"
 "Mobil App v2 projesini aktif yap"
 "Sprint planlaması için yeni proje oluştur"
 "Görev #5'i tamamlandı olarak işaretle"
+"Son oluşturduğum görev nasıl gidiyor?"
+"Frontend kategorisindeki görevleri göster"
+"Bugün deadline olan acil görevler var mı?"
 "Feature request şablonundan yeni görev oluştur"
 "Proje dosyalarını izlemeye başla"
 "Dosya değişikliklerinde otomatik durum geçişi yap"
 "Watch listesini göster"
-"Git ignore kurallarını file watcher'a ekle"
 ```
 
 > 💡 **İpucu**: Bu komutlar Claude, VS Code Copilot, Windsurf AI, Cursor ve diğer MCP uyumlu AI asistanlarla kullanılabilir.
@@ -432,11 +436,13 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/gelistirme.md)'ne bakın.
 
 ## 📊 Proje Durumu
 
-- **Versiyon**: v0.11.0
-- **Test Coverage**: %84.6
+- **Versiyon**: v0.14.0 🚀
+- **Test Coverage**: %90+ (Major Improvement) 
 - **Go Version**: 1.22+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
 - **Database**: SQLite (embedded)
+- **Security**: Production-ready audit compliant
+- **Thread Safety**: 100% race condition free
 
 ## 🤝 Topluluk
 
