@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -331,12 +332,11 @@ func runServer() error {
 
 	// Debug mode mesajı
 	if debugFlag {
-		fmt.Printf("DEBUG: Starting Gorev MCP server with debug mode enabled\n")
-		fmt.Printf("DEBUG: Language: %s\n", langFlag)
+		log.Printf("Starting Gorev MCP server with debug mode enabled")
+		log.Printf("Language: %s", langFlag)
 	}
 
 	// Sunucuyu çalıştır
-	// fmt.Fprintln(os.Stderr, "Gorev MCP sunucusu başlatılıyor...")
 	if err := mcp.ServeSunucu(sunucu); err != nil {
 		return errors.New(i18n.T("error.serverStart", map[string]interface{}{"Error": err}))
 	}

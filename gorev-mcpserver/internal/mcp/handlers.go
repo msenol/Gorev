@@ -45,11 +45,11 @@ func initializeHandlerComponents(isYonetici *gorev.IsYonetici, debug bool) (*gor
 		if fw, err := gorev.NewFileWatcher(isYonetici.VeriYonetici(), gorev.DefaultFileWatcherConfig()); err == nil {
 			fileWatcher = fw
 		} else {
-			// Handle file watcher initialization error based on debug mode
+			// Handle file watcher initialization error with proper logging
 			if debug {
-				fmt.Printf("DEBUG: Failed to initialize file watcher: %v\n", err)
+				slog.Debug("Failed to initialize file watcher", "error", err)
 			} else {
-				fmt.Printf("Warning: Failed to initialize file watcher: %v\n", err)
+				slog.Warn("File watcher initialization failed", "error", err)
 			}
 		}
 	}

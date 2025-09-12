@@ -1,7 +1,7 @@
 package mcp
 
 import (
-	"fmt"
+	"log/slog"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -458,7 +458,7 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 // registerAdvancedTools registers advanced and hierarchy tools
 func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering advanced tools...")
+		slog.Debug("Registering advanced tools")
 	}
 	// Alt görev oluştur
 	s.AddTool(mcp.Tool{
@@ -570,7 +570,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 
 	// Gorev Export - Data export tool
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering gorev_export tool...")
+		slog.Debug("Registering gorev_export tool")
 	}
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_export",
@@ -638,7 +638,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 
 	// Gorev Import - Data import tool
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering gorev_import tool...")
+		slog.Debug("Registering gorev_import tool")
 	}
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_import",
@@ -690,7 +690,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 
 	// IDE Detect - Detect installed IDEs
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering gorev_ide_detect tool...")
+		slog.Debug("Registering gorev_ide_detect tool")
 	}
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_ide_detect",
@@ -703,7 +703,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 
 	// IDE Install Extension - Install Gorev extension to IDEs
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering gorev_ide_install tool...")
+		slog.Debug("Registering gorev_ide_install tool")
 	}
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_ide_install",
@@ -723,7 +723,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 
 	// IDE Uninstall Extension - Remove Gorev extension from IDEs
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering gorev_ide_uninstall tool...")
+		slog.Debug("Registering gorev_ide_uninstall tool")
 	}
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_ide_uninstall",
@@ -748,7 +748,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 
 	// IDE Extension Status - Check extension installation status
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering gorev_ide_status tool...")
+		slog.Debug("Registering gorev_ide_status tool")
 	}
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_ide_status",
@@ -761,7 +761,7 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 
 	// IDE Update Extension - Update Gorev extension to latest version
 	if tr.handlers.debug {
-		fmt.Println("DEBUG: Registering gorev_ide_update tool...")
+		slog.Debug("Registering gorev_ide_update tool")
 	}
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_ide_update",
