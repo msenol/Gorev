@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	version   = "v0.14.0"
+	version   = "v0.14.1-dev"
 	buildTime = "unknown"
 	gitCommit = "unknown"
 	langFlag  string
@@ -234,7 +234,7 @@ func main() {
 	}
 	serveCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, i18n.T("cli.debug"))
 
-	versionCmd := &cobra.Command{
+	version   = "v0.14.1-dev"
 		Use:   "version",
 		Short: i18n.T("cli.version"),
 		Run: func(cmd *cobra.Command, args []string) {
