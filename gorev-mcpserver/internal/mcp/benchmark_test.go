@@ -202,7 +202,7 @@ func BenchmarkI18nHelpers(b *testing.B) {
 	config := BenchmarkConfig{
 		Name: "I18nHelpers",
 		Setup: func() interface{} {
-			i18n.Initialize(constants.DefaultTestLanguage)
+			_ = i18n.Initialize(constants.DefaultTestLanguage)
 			return nil
 		},
 		Cleanup: func() {},

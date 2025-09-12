@@ -333,7 +333,7 @@ func TestGorevImportMCPTool(t *testing.T) {
 func TestExportImportRoundTrip(t *testing.T) {
 	// Kaynak database
 	sourceVY := setupTestDB(t)
-	defer sourceVY.Kapat()
+	defer func() { _ = sourceVY.Kapat() }()
 
 	sourceIY := gorev.YeniIsYonetici(sourceVY)
 	sourceHandlers := mcphandlers.YeniHandlers(sourceIY)
@@ -361,7 +361,7 @@ func TestExportImportRoundTrip(t *testing.T) {
 
 	// Hedef database
 	targetVY := setupTestDB(t)
-	defer targetVY.Kapat()
+	defer func() { _ = targetVY.Kapat() }()
 	targetIY := gorev.YeniIsYonetici(targetVY)
 	targetHandlers := mcphandlers.YeniHandlers(targetIY)
 
@@ -453,7 +453,7 @@ func TestExportImportWithLargeDataset(t *testing.T) {
 
 	// Import test için yeni database
 	targetVY := setupTestDB(t)
-	defer targetVY.Kapat()
+	defer func() { _ = targetVY.Kapat() }()
 
 	targetIY := gorev.YeniIsYonetici(targetVY)
 	targetHandlers := mcphandlers.YeniHandlers(targetIY)

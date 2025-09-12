@@ -76,7 +76,7 @@ func TestGorevGetActive(t *testing.T) {
 		// Create and set active task
 		proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 		gorevTest, _ := h.isYonetici.GorevOlustur(constants.TestTaskActive, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
-		h.GorevSetActive(map[string]interface{}{"task_id": gorevTest.ID})
+	_, _ = h.GorevSetActive(map[string]interface{}{"task_id": gorevTest.ID})
 
 		result, _ := h.GorevGetActive(map[string]interface{}{})
 
@@ -155,8 +155,8 @@ func TestGorevContextSummary(t *testing.T) {
 
 	// Create test data
 	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-	h.isYonetici.GorevOlustur(constants.TestTaskHighPriority, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
-	h.isYonetici.GorevOlustur(constants.TestTaskNormal, constants.TestTaskDescriptionEN, constants.PriorityMedium, proje.ID, "", nil)
+	_, _ = h.isYonetici.GorevOlustur(constants.TestTaskHighPriority, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
+	_, _ = h.isYonetici.GorevOlustur(constants.TestTaskNormal, constants.TestTaskDescriptionEN, constants.PriorityMedium, proje.ID, "", nil)
 
 	result, _ := h.GorevContextSummary(map[string]interface{}{})
 
@@ -273,7 +273,7 @@ func TestGorevNLPQuery(t *testing.T) {
 
 	// Create test tasks
 	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-	h.isYonetici.GorevOlustur("Yüksek Öncelikli Görev", "Acil", "yuksek", proje.ID, "", []string{"bug"})
+	_, _ = h.isYonetici.GorevOlustur("Yüksek Öncelikli Görev", "Acil", "yuksek", proje.ID, "", []string{"bug"})
 	h.isYonetici.GorevOlustur("Normal Görev", "Normal açıklama", "orta", proje.ID, "", []string{"feature"})
 	h.isYonetici.GorevOlustur("Test Görevi", "Test için", "dusuk", proje.ID, "", nil)
 

@@ -16,7 +16,9 @@ func TestExportData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
-	defer vy.Kapat()
+	defer func() {
+		_ = vy.Kapat()
+	}()
 
 	iy := YeniIsYonetici(vy)
 
@@ -135,7 +137,9 @@ func TestSaveExportToFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
-	defer vy.Kapat()
+	defer func() {
+		_ = vy.Kapat()
+	}()
 
 	iy := YeniIsYonetici(vy)
 
@@ -243,7 +247,9 @@ func TestImportData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
-	defer vy.Kapat()
+	defer func() {
+		_ = vy.Kapat()
+	}()
 
 	iy := YeniIsYonetici(vy)
 
@@ -263,7 +269,9 @@ func TestImportData(t *testing.T) {
 	if err2 != nil {
 		t.Fatalf("Failed to create target database: %v", err2)
 	}
-	defer vy2.Kapat()
+	defer func() {
+		_ = vy2.Kapat()
+	}()
 
 	iy2 := YeniIsYonetici(vy2)
 

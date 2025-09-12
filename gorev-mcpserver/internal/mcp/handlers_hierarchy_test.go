@@ -364,7 +364,7 @@ func TestHierarchyWithPagination(t *testing.T) {
 				// Create grandchildren for first subtask
 				if j == 0 {
 					for k := 0; k < 2; k++ {
-						handlers.GorevAltGorevOlustur(map[string]interface{}{
+						_, _ = handlers.GorevAltGorevOlustur(map[string]interface{}{
 							"parent_id": subID,
 							"baslik":    fmt.Sprintf("Grandchild %d-%d-%d", i, j, k),
 						})

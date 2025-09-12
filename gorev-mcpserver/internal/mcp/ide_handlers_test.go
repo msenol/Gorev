@@ -105,14 +105,14 @@ func TestIDEUninstallExtension(t *testing.T) {
 	handlers := &Handlers{}
 
 	// Test missing required parameter
-	result, err := handlers.IDEUninstallExtension(map[string]interface{}{})
+	_, err := handlers.IDEUninstallExtension(map[string]interface{}{})
 
 	if err == nil {
 		t.Error("Should return error for missing ide_type parameter")
 	}
 
 	// Test with parameters
-	result, err = handlers.IDEUninstallExtension(map[string]interface{}{
+	result, err := handlers.IDEUninstallExtension(map[string]interface{}{
 		"ide_type": "vscode",
 	})
 

@@ -299,7 +299,7 @@ func TestConcurrentI18nAccess(t *testing.T) {
 	config := ConcurrencyTestConfig{
 		Name: "ConcurrentI18nAccess",
 		Setup: func() interface{} {
-			i18n.Initialize(constants.DefaultTestLanguage)
+			_ = i18n.Initialize(constants.DefaultTestLanguage)
 			return nil
 		},
 		Cleanup: func() {},

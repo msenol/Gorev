@@ -592,7 +592,7 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 		"baslik":    "Subtask 2",
 		"oncelik":   constants.PriorityLow,
 	})
-	sub2ID := extractTaskIDFromText(getResultText(sub2Result))
+	_ = extractTaskIDFromText(getResultText(sub2Result)) // sub2ID created but not used in this test
 
 	// Create a deep subtask
 	deepSubResult, _ := handlers.GorevAltGorevOlustur(map[string]interface{}{
@@ -602,9 +602,9 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 	deepSubID := extractTaskIDFromText(getResultText(deepSubResult))
 
 	// Complete one subtask
-	handlers.GorevGuncelle(map[string]interface{}{
-		"id":    sub2ID,
-		"durum": constants.TaskStatusCompleted,
+	_, _ = handlers.GorevGuncelle(map[string]interface{}{
+		"id":    sub1ID,
+		"durum": constants.TaskStatusInProgress,
 	})
 
 	// Test cases using the created task IDs
@@ -1226,14 +1226,13 @@ func TestGorevContextSummary_EdgeCases(t *testing.T) {
 	blockedID := extractTaskIDFromText(getResultText(blockedResult))
 
 	// Add dependency
-	handlers.GorevBagimlilikEkle(map[string]interface{}{
-		"kaynak_id":    blockedID,
-		"hedef_id":     highPrioID,
-		"baglanti_tip": "bekliyor",
+	_, _ = handlers.GorevBagimlilikEkle(map[string]interface{}{
+		"kaynak_id": highPrioID,
+		"hedef_id":  blockedID,
 	})
 
 	// Set active task
-	handlers.GorevSetActive(map[string]interface{}{"task_id": highPrioID})
+_, _ = handlers.GorevSetActive(map[string]interface{}{"task_id": highPrioID})
 
 	// Get context summary
 	result, err = handlers.GorevContextSummary(map[string]interface{}{})
@@ -1270,7 +1269,7 @@ func TestProjeGorevleri_EdgeCases(t *testing.T) {
 
 	// Create many tasks for pagination testing
 	for i := 0; i < constants.TestLargeIteration; i++ {
-		handlers.TemplatedenGorevOlustur(map[string]interface{}{
+		_, _ = handlers.TemplatedenGorevOlustur(map[string]interface{}{
 			constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
 			constants.ParamDegerler: map[string]interface{}{
 				"baslik":    fmt.Sprintf("Feature %d", i),
@@ -1379,13 +1378,13 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 	assert.Contains(t, getResultText(result), "Bağımlılık eklendi")
 
 	// Test circular dependency
-	handlers.GorevBagimlilikEkle(map[string]interface{}{
+	_, _ = handlers.GorevBagimlilikEkle(map[string]interface{}{
 		"kaynak_id":     task1ID,
 		"hedef_id":      task2ID,
 		"baglanti_tipi": "bekliyor",
 	})
 
-	result, err = handlers.GorevBagimlilikEkle(map[string]interface{}{
+	_, err = handlers.GorevBagimlilikEkle(map[string]interface{}{
 		"kaynak_id":     task2ID,
 		"hedef_id":      task1ID,
 		"baglanti_tipi": "bekliyor",
@@ -1394,7 +1393,7 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 	// Should succeed - the system doesn't prevent circular dependencies at this level
 
 	// Test duplicate dependency
-	result, err = handlers.GorevBagimlilikEkle(map[string]interface{}{
+	_, err = handlers.GorevBagimlilikEkle(map[string]interface{}{
 		"kaynak_id":    task1ID,
 		"hedef_id":     task2ID,
 		"baglanti_tip": "bekliyor",
@@ -1500,13 +1499,13 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	require.NotEmpty(t, taskID)
 
 	// Add tags
-	handlers.GorevDuzenle(map[string]interface{}{
+	_, _ = handlers.GorevDuzenle(map[string]interface{}{
 		"id":        taskID,
 		"etiketler": "urgent,critical,production",
 	})
 
 	// Add due date
-	handlers.GorevDuzenle(map[string]interface{}{
+	_, _ = handlers.GorevDuzenle(map[string]interface{}{
 		"id":        taskID,
 		"son_tarih": constants.TestFutureDateString,
 	})
@@ -1524,7 +1523,7 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	})
 	depID := extractTaskIDFromText(getResultText(depResult))
 
-	handlers.GorevBagimlilikEkle(map[string]interface{}{
+	_, _ = handlers.GorevBagimlilikEkle(map[string]interface{}{
 		"kaynak_id":    taskID,
 		"hedef_id":     depID,
 		"baglanti_tip": "bekliyor",

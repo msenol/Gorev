@@ -28,20 +28,20 @@ func captureOutput(f func()) (string, string) {
 
 	go func() {
 		var buf strings.Builder
-		io.Copy(&buf, rOut)
+		_, _ = io.Copy(&buf, rOut)
 		outChan <- buf.String()
 	}()
 
 	go func() {
 		var buf strings.Builder
-		io.Copy(&buf, rErr)
+		_, _ = io.Copy(&buf, rErr)
 		errChan <- buf.String()
 	}()
 
 	f()
 
-	wOut.Close()
-	wErr.Close()
+	_ = wOut.Close()
+	_ = wErr.Close()
 	os.Stdout = oldStdout
 	os.Stderr = oldStderr
 

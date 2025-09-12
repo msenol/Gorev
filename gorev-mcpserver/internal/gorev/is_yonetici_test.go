@@ -13,7 +13,7 @@ import (
 // setupTestI18n initializes the i18n system for tests
 func setupTestI18n() {
 	// Initialize i18n with Turkish (default) for tests
-	i18n.Initialize(constants.DefaultTestLanguage)
+	_ = i18n.Initialize(constants.DefaultTestLanguage)
 }
 
 // MockVeriYonetici is a mock implementation of VeriYonetici for testing

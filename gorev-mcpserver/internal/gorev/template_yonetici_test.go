@@ -16,7 +16,9 @@ func TestTemplateOperationsSimple(t *testing.T) {
 		defer os.Remove(tempDB)
 		veriYonetici, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
 		require.NoError(t, err)
-		defer veriYonetici.Kapat()
+		defer func() {
+			_ = veriYonetici.Kapat()
+		}()
 
 		// Create bug template for testing
 		err = veriYonetici.VarsayilanTemplateleriOlustur()
@@ -51,7 +53,9 @@ func TestTemplateOperationsSimple(t *testing.T) {
 		defer os.Remove(tempDB)
 		veriYonetici, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
 		require.NoError(t, err)
-		defer veriYonetici.Kapat()
+		defer func() {
+			_ = veriYonetici.Kapat()
+		}()
 
 		// Try to get non-existent template
 		_, err = veriYonetici.TemplateGetir("non-existent-id")
@@ -74,7 +78,9 @@ func TestTemplateOperationsSimple(t *testing.T) {
 		defer os.Remove(tempDB)
 		veriYonetici, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
 		require.NoError(t, err)
-		defer veriYonetici.Kapat()
+		defer func() {
+			_ = veriYonetici.Kapat()
+		}()
 
 		// Create default templates 
 		err = veriYonetici.VarsayilanTemplateleriOlustur()

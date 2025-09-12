@@ -76,7 +76,7 @@ func TestExtensionInstaller_GetLatestExtensionInfo(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/releases/latest") {
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(responseBody)
+			_, _ = w.Write(responseBody)
 		} else {
 			w.WriteHeader(404)
 		}
@@ -150,7 +150,7 @@ func TestExtensionInstaller_downloadVSIX(t *testing.T) {
 			setupServer: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "application/zip")
-					w.Write([]byte("fake-vsix-content"))
+					_, _ = w.Write([]byte("fake-vsix-content"))
 				}))
 			},
 			expectError: false,
@@ -169,7 +169,7 @@ func TestExtensionInstaller_downloadVSIX(t *testing.T) {
 			setupServer: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					time.Sleep(100 * time.Millisecond) // Simulate slow response
-					w.Write([]byte("content"))
+					_, _ = w.Write([]byte("content"))
 				}))
 			},
 			expectError: true, // Should timeout with short context deadline
@@ -215,7 +215,7 @@ func TestExtensionInstaller_downloadVSIX(t *testing.T) {
 				}
 
 				// Cleanup
-				os.Remove(filePath)
+				_ = os.Remove(filePath)
 			}
 		})
 	}
@@ -227,11 +227,11 @@ func TestExtensionInstaller_verifyChecksum(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tempFile.Name())
+	defer func() { _ = os.Remove(tempFile.Name()) }()
 
 	testContent := "test content"
-	tempFile.WriteString(testContent)
-	tempFile.Close()
+	_, _ = tempFile.WriteString(testContent)
+	_ = tempFile.Close()
 
 	// Calculate expected checksum (SHA256 of "test content")
 	expectedChecksum := "6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72"
@@ -538,7 +538,7 @@ func BenchmarkExtensionInstaller_GetLatestExtensionInfo(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// This will fail but we're measuring the overhead
-		installer.GetLatestExtensionInfo(ctx, "test", "repo")
+		_, _ = installer.GetLatestExtensionInfo(ctx, "test", "repo")
 	}
 }
 
@@ -548,10 +548,10 @@ func BenchmarkExtensionInstaller_verifyChecksum(b *testing.B) {
 	if err != nil {
 		b.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tempFile.Name())
+	defer func() { _ = os.Remove(tempFile.Name()) }()
 
-	tempFile.WriteString("test content")
-	tempFile.Close()
+	_, _ = tempFile.WriteString("test content")
+	_ = tempFile.Close()
 
 	detector := NewIDEDetector()
 	installer := NewExtensionInstaller(detector)
@@ -559,7 +559,7 @@ func BenchmarkExtensionInstaller_verifyChecksum(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		installer.verifyChecksum(tempFile.Name(), checksum)
+		_, _ = installer.verifyChecksum(tempFile.Name(), checksum)
 	}
 }
 
