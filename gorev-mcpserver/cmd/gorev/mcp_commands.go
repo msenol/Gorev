@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -58,9 +59,9 @@ func createMCPListCommand() *cobra.Command {
 			// Initialize managers
 			veriYonetici, err := gorev.YeniVeriYonetici(dbPath, migrationsPath)
 			if err != nil {
-				return fmt.Errorf(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
+				return errors.New(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
 			}
-			defer veriYonetici.Kapat()
+			defer func() { _ = veriYonetici.Kapat() }()
 
 			// Get registered tools
 			tools := mcp.ListTools()
@@ -163,9 +164,9 @@ func createMCPCallCommand() *cobra.Command {
 			// Initialize managers
 			veriYonetici, err := gorev.YeniVeriYonetici(dbPath, migrationsPath)
 			if err != nil {
-				return fmt.Errorf(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
+				return errors.New(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
 			}
-			defer veriYonetici.Kapat()
+			defer func() { _ = veriYonetici.Kapat() }()
 
 			isYonetici := gorev.YeniIsYonetici(veriYonetici)
 			handlers := mcp.YeniHandlers(isYonetici)
@@ -173,19 +174,19 @@ func createMCPCallCommand() *cobra.Command {
 			// Call the tool
 			result, err := handlers.CallTool(toolName, params)
 			if err != nil {
-				return fmt.Errorf(i18n.T("error.toolCallFailed", map[string]interface{}{"Error": err}))
+				return errors.New(i18n.T("error.toolCallFailed", map[string]interface{}{"Error": err}))
 			}
 
 			// Display result
 			if jsonOutput {
 				jsonData, err := json.MarshalIndent(result, "", "  ")
 				if err != nil {
-					return fmt.Errorf(i18n.T("error.jsonOutputFailed", map[string]interface{}{"Error": err}))
+				return errors.New(i18n.T("error.jsonOutputFailed", map[string]interface{}{"Error": err}))
 				}
 				fmt.Println(string(jsonData))
 			} else {
 				// Pretty print for text content
-				if result.Content != nil && len(result.Content) > 0 {
+				if len(result.Content) > 0 {
 					for _, content := range result.Content {
 						// Just convert to JSON and extract text
 						jsonData, _ := json.Marshal(content)
@@ -330,7 +331,7 @@ func callMCPTool(toolName string, params map[string]interface{}) error {
 	if err != nil {
 		return fmt.Errorf("veri yönetici oluşturulamadı: %w", err)
 	}
-	defer veriYonetici.Kapat()
+			defer func() { _ = veriYonetici.Kapat() }()
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcp.YeniHandlers(isYonetici)
@@ -346,7 +347,7 @@ func callMCPTool(toolName string, params map[string]interface{}) error {
 	}
 
 	// Display result
-	if result.Content != nil && len(result.Content) > 0 {
+	if len(result.Content) > 0 {
 		for _, content := range result.Content {
 			if debugMode {
 				fmt.Fprintf(os.Stderr, "Debug: Content type: %T\n", content)

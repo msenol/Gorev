@@ -12,6 +12,8 @@ import (
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // min returns the minimum of two integers
@@ -1180,13 +1182,15 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 
 	// Record interaction with AI context
 	if h.aiContextYonetici != nil && response.MainTask != nil {
-		h.aiContextYonetici.RecordInteraction(response.MainTask.ID, "intelligent_create", map[string]interface{}{
+		if err := h.aiContextYonetici.RecordInteraction(response.MainTask.ID, "intelligent_create", map[string]interface{}{
 			"auto_split":       autoSplit,
 			"estimate_time":    estimateTime,
 			"smart_priority":   smartPriority,
 			"suggest_template": suggestTemplate,
 			"subtasks_created": len(response.Subtasks),
-		})
+		}); err != nil {
+			slog.Warn("Failed to record AI interaction for intelligent create", "taskID", response.MainTask.ID, "error", err)
+		}
 	}
 
 	// Format response
@@ -1195,7 +1199,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	output.WriteString("🧠 **Akıllı Görev Oluşturuldu**\n\n")
 
 	// Main task info
-	output.WriteString(fmt.Sprintf("### 📋 Ana Görev\n"))
+	output.WriteString("### 📋 Ana Görev\n")
 	output.WriteString(fmt.Sprintf("**Başlık:** %s\n", response.MainTask.Baslik))
 	output.WriteString(fmt.Sprintf("**ID:** %s\n", response.MainTask.ID))
 
@@ -1227,10 +1231,10 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 
 	// Template recommendation
 	if response.RecommendedTemplate != "" {
-		output.WriteString(fmt.Sprintf("### 📋 Önerilen Template\n"))
+		output.WriteString("### 📋 Önerilen Template\n")
 		output.WriteString(fmt.Sprintf("**Template:** %s (güven: %.1f%%)\n",
 			response.RecommendedTemplate, response.Confidence.TemplateConfidence*100))
-		output.WriteString(fmt.Sprintf("**Kullanım:** `template_listele` ile detayları görün\n\n"))
+		output.WriteString("**Kullanım:** `template_listele` ile detayları görün\n\n")
 	}
 
 	// Similar tasks
@@ -1258,7 +1262,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	// Performance info
 	output.WriteString("### 📊 Performans\n")
 	output.WriteString(fmt.Sprintf("**İşlem Süresi:** %v\n", response.ExecutionTime))
-	output.WriteString(fmt.Sprintf("**Güven Skorları:**\n"))
+	output.WriteString("**Güven Skorları:**\n")
 	if response.SuggestedPriority != "" {
 		output.WriteString(fmt.Sprintf("  - Öncelik: %.1f%%\n", response.Confidence.PriorityConfidence*100))
 	}
@@ -1448,11 +1452,11 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 				beklemedeEnd = 0
 			}
 		}
-		start = len(devamEdiyor) + len(beklemede)
+		// Pagination index no longer needed after this point
 	} else {
 		beklemedeStart = len(beklemede)
 		beklemedeEnd = len(beklemede)
-		start -= len(beklemede)
+		// Pagination index updated for next section
 	}
 
 	if beklemedeEnd > beklemedeStart && estimatedSize < maxResponseSize {
@@ -1765,9 +1769,9 @@ func (h *Handlers) GorevUstDegistir(params map[string]interface{}) (*mcp.CallToo
 	}
 
 	if yeniParentID == "" {
-		return mcp.NewToolResultText(fmt.Sprintf("✓ Görev kök seviyeye taşındı")), nil
+	return mcp.NewToolResultText("✓ Görev kök seviyeye taşındı"), nil
 	}
-	return mcp.NewToolResultText(fmt.Sprintf("✓ Görev yeni üst göreve taşındı")), nil
+	return mcp.NewToolResultText("✓ Görev yeni üst göreve taşındı"), nil
 }
 
 // GorevHiyerarsiGoster bir görevin tam hiyerarşisini gösterir
@@ -2504,7 +2508,7 @@ func (h *Handlers) GorevImport(params map[string]interface{}) (*mcp.CallToolResu
 		for i, conflict := range result.Conflicts {
 			if i < 5 { // Show max 5 conflicts
 				summary.WriteString(fmt.Sprintf("- %s %s: %s\n",
-					strings.Title(conflict.Type),
+					cases.Title(language.Und).String(conflict.Type),
 					i18n.T("import.conflictResolution", nil),
 					conflict.Resolution))
 			}
@@ -2582,10 +2586,16 @@ func (h *Handlers) IDEInstallExtension(params map[string]interface{}) (*mcp.Call
 
 	// Create detector and installer
 	detector := gorev.NewIDEDetector()
-	detector.DetectAllIDEs()
+	if _, err := detector.DetectAllIDEs(); err != nil {
+		return nil, fmt.Errorf("IDE detection failed: %w", err)
+	}
 
 	installer := gorev.NewExtensionInstaller(detector)
-	defer installer.Cleanup()
+	defer func() {
+		if cerr := installer.Cleanup(); cerr != nil {
+			slog.Warn("Installer cleanup failed", "error", cerr)
+		}
+	}()
 
 	// Get latest extension info from GitHub
 	extensionInfo, err := installer.GetLatestExtensionInfo(ctx, "msenol", "Gorev")
@@ -2652,7 +2662,9 @@ func (h *Handlers) IDEUninstallExtension(params map[string]interface{}) (*mcp.Ca
 
 	// Create detector and installer
 	detector := gorev.NewIDEDetector()
-	detector.DetectAllIDEs()
+	if _, err := detector.DetectAllIDEs(); err != nil {
+		return nil, fmt.Errorf("IDE detection failed: %w", err)
+	}
 
 	installer := gorev.NewExtensionInstaller(detector)
 
@@ -2752,10 +2764,16 @@ func (h *Handlers) IDEUpdateExtension(params map[string]interface{}) (*mcp.CallT
 
 	// Create detector and installer
 	detector := gorev.NewIDEDetector()
-	detector.DetectAllIDEs()
+	if _, err := detector.DetectAllIDEs(); err != nil {
+		return nil, fmt.Errorf("IDE detection failed: %w", err)
+	}
 
 	installer := gorev.NewExtensionInstaller(detector)
-	defer installer.Cleanup()
+	defer func() {
+		if cerr := installer.Cleanup(); cerr != nil {
+			slog.Warn("Installer cleanup failed", "error", cerr)
+		}
+	}()
 
 	// Get latest extension info
 	extensionInfo, err := installer.GetLatestExtensionInfo(ctx, "msenol", "Gorev")
