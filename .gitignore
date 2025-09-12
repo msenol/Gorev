@@ -77,3 +77,7 @@ temp/
 gorev-mcpserver/release-*/
 *.sha256
 *.vsix
+
+# Development artifacts and build outputs
+gorev-mcpserver/artifacts/
+*/artifacts/

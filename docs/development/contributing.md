@@ -1,55 +1,56 @@
-# Gorev Geliştirici Rehberi
+# Contributing to Gorev
 
-> **Versiyon**: Bu dokümantasyon v0.7.0-beta.1 için geçerlidir.  
-> **Son Güncelleme**: 29 June 2025
+> **Version**: This documentation is valid for v0.11.0+  
+> **Last Updated**: August 13, 2025
 
-Bu dokümanda Gorev projesine katkıda bulunmak isteyenler için geliştirme ortamı kurulumu, kod standartları ve katkı süreçleri açıklanmaktadır.
+This document explains the development environment setup, code standards, and contribution processes for those who want to contribute to the Gorev project.
 
-## İçindekiler
+## Table of Contents
 
-- [Geliştirme Ortamı Kurulumu](#geliştirme-ortamı-kurulumu)
-- [Proje Yapısı](#proje-yapısı)
-- [Kod Standartları](#kod-standartları)
-- [Test Yazma](#test-yazma)
-- [Yeni Özellik Ekleme](#yeni-özellik-ekleme)
-- [MCP Tool Ekleme](#mcp-tool-ekleme)
+- [Development Environment Setup](#development-environment-setup)
+- [Project Structure](#project-structure)
+- [Code Standards](#code-standards)
+- [Writing Tests](#writing-tests)
+- [Adding New Features](#adding-new-features)
+- [Adding MCP Tools](#adding-mcp-tools)
 - [Debugging](#debugging)
-- [Katkıda Bulunma](#katkıda-bulunma)
+- [VS Code Extension Development](#vs-code-extension-development)
+- [Contributing Process](#contributing-process)
 
-## Geliştirme Ortamı Kurulumu
+## Development Environment Setup
 
-### Gereksinimler
+### Requirements
 
-- Go 1.22 veya üzeri
+- Go 1.22 or higher
 - Git
-- Make (opsiyonel, Makefile kullanımı için)
-- golangci-lint (kod kalitesi için)
-- Docker (opsiyonel, konteyner testleri için)
+- Make (optional, for Makefile usage)
+- golangci-lint (for code quality)
+- Docker (optional, for container tests)
 
-### Kurulum Adımları
+### Installation Steps
 
 ```bash
-# Projeyi klonla
+# Clone the project
 git clone https://github.com/msenol/gorev.git
 cd gorev/gorev-mcpserver
 
-# Bağımlılıkları indir
+# Download dependencies
 make deps
-# veya
+# or
 go mod download
 
-# Projeyi derle
+# Build the project
 make build
-# veya
+# or
 go build -o gorev cmd/gorev/main.go
 
-# Testleri çalıştır
+# Run tests
 make test
-# veya
+# or
 go test ./...
 ```
 
-### IDE Ayarları
+### IDE Settings
 
 #### VS Code
 `.vscode/settings.json`:
@@ -69,73 +70,75 @@ go test ./...
 - GOROOT: System Go installation
 - Run gofmt on save: Enable
 
-## Proje Yapısı
+## Project Structure
 
 ```
 gorev/
-├── gorev-mcpserver/             # MCP server projesi
+├── gorev-mcpserver/             # MCP server project
 │   ├── cmd/
 │   │   └── gorev/
-│   │       └── main.go          # Ana uygulama giriş noktası
+│   │       └── main.go          # Main application entry point
 │   ├── internal/
 │   │   ├── gorev/               # Domain logic
-│   │   │   ├── modeller.go      # Veri modelleri
+│   │   │   ├── modeller.go      # Data models
 │   │   │   ├── is_yonetici.go   # Business logic
 │   │   │   ├── veri_yonetici.go # Data access layer
-│   │   │   ├── template_yonetici.go # Template yönetimi
-│   │   │   └── *_test.go        # Unit testler
-│   │   └── mcp/                 # MCP protokol katmanı
-│   │       ├── server.go        # MCP server
-│   │       └── handlers.go      # Tool handler'ları
-│   ├── migrations/              # Veritabanı migration'ları
-│   └── test/                    # Integration testler
+│   │   │   ├── template_yonetici.go # Template management
+│   │   │   └── *_test.go        # Unit tests
+│   │   ├── mcp/                 # MCP protocol layer
+│   │   │   ├── server.go        # MCP server
+│   │   │   └── handlers.go      # Tool handlers
+│   │   └── i18n/                # Internationalization
+│   ├── migrations/              # Database migrations
+│   └── test/                    # Integration tests
 ├── gorev-vscode/                # VS Code extension
-├── docs/                        # Dokümantasyon
-└── scripts/                     # Yardımcı scriptler
+├── docs/                        # Documentation
+└── scripts/                     # Helper scripts
 ```
 
-### Paket Açıklamaları
+### Package Descriptions
 
-- **cmd/gorev**: CLI komutları ve server başlatma
-- **internal/gorev**: Core business logic ve domain modelleri
-- **internal/mcp**: MCP protokol implementasyonu
-- **migrations**: SQL migration dosyaları (golang-migrate formatı)
+- **cmd/gorev**: CLI commands and server startup
+- **internal/gorev**: Core business logic and domain models
+- **internal/mcp**: MCP protocol implementation
+- **internal/i18n**: Internationalization support (Turkish/English)
+- **migrations**: SQL migration files (golang-migrate format)
 
-## Kod Standartları
+## Code Standards
 
-### Genel Kurallar
+### General Rules
 
-1. **Go idiomlarını takip et**: Effective Go ve Go Code Review Comments'i oku
-2. **Türkçe domain terimleri**: Görev, proje, durum gibi domain terimlerini Türkçe kullan
-3. **İngilizce teknik terimler**: Kod yorumları ve teknik terimler İngilizce
-4. **Error handling**: Explicit error döndür, panic kullanma
+1. **Follow Go idioms**: Read Effective Go and Go Code Review Comments
+2. **Turkish domain terms**: Use Turkish for domain terms like Görev, Proje, Durum
+3. **English technical terms**: Use English for code comments and technical terms
+4. **Error handling**: Return explicit errors, don't use panic
 
 ### Naming Conventions
 
 ```go
-// Domain modelleri - Türkçe
+// Domain models - Turkish
 type Gorev struct { ... }
 type Proje struct { ... }
 
-// Interface'ler - Türkçe + -ci/-ici eki
+// Interfaces - Turkish + -ci/-ici suffix
 type VeriYonetici interface { ... }
 type IsYonetici interface { ... }
 
-// Method isimleri - Türkçe fiil + İngilizce nesne (gerekirse)
+// Method names - Turkish verb + English object (if needed)
 func (v *veriYonetici) GorevOlustur(...) { ... }
 func (v *veriYonetici) ProjeListele(...) { ... }
 
-// Sabitler - UPPER_SNAKE_CASE
+// Constants - UPPER_SNAKE_CASE
 const VERITABANI_VERSIYON = "1.2.0"
 
-// Private değişkenler - camelCase
+// Private variables - camelCase
 var aktifProjeID int
 ```
 
 ### Code Style
 
 ```go
-// İyi: Kısa ve açık fonksiyonlar
+// Good: Short and clear functions
 func (v *veriYonetici) GorevSil(id int) error {
     result, err := v.db.Exec("DELETE FROM gorevler WHERE id = ?", id)
     if err != nil {
@@ -153,29 +156,24 @@ func (v *veriYonetici) GorevSil(id int) error {
     
     return nil
 }
-
-// Kötü: Uzun ve karmaşık fonksiyonlar
-func (v *veriYonetici) HepsiniYap(id int) error {
-    // 100+ satır kod...
-}
 ```
 
 ### Error Messages
 
 ```go
-// Türkçe kullanıcı mesajları
+// Turkish user messages (translated via i18n system)
 return fmt.Errorf("görev bulunamadı: %d", id)
 return fmt.Errorf("geçersiz durum değeri: %s", durum)
 
-// Context ile wrap etme
+// Context wrapping
 if err != nil {
     return fmt.Errorf("veritabanı bağlantısı kurulamadı: %w", err)
 }
 ```
 
-## Test Yazma
+## Writing Tests
 
-### Unit Test Yapısı
+### Unit Test Structure
 
 ```go
 func TestGorevOlustur(t *testing.T) {
@@ -192,13 +190,13 @@ func TestGorevOlustur(t *testing.T) {
         wantErr bool
     }{
         {
-            name:    "başarılı oluşturma",
-            baslik:  "Test görevi",
+            name:    "successful creation",
+            baslik:  "Test task",
             oncelik: "orta",
             wantErr: false,
         },
         {
-            name:    "boş başlık",
+            name:    "empty title",
             baslik:  "",
             oncelik: "orta",
             wantErr: true,
@@ -212,149 +210,94 @@ func TestGorevOlustur(t *testing.T) {
             
             // Assert
             if tc.wantErr && err == nil {
-                t.Error("hata beklendi ama nil döndü")
+                t.Error("expected error but got nil")
             }
             if !tc.wantErr && err != nil {
-                t.Errorf("beklenmeyen hata: %v", err)
+                t.Errorf("unexpected error: %v", err)
             }
         })
     }
 }
 ```
 
-### Test Utilities
+## Adding New Features
 
-```go
-// test/test_helpers.go
-func setupTestDB(t *testing.T) *sql.DB {
-    db, err := sql.Open("sqlite3", ":memory:")
-    if err != nil {
-        t.Fatalf("test db açılamadı: %v", err)
-    }
-    
-    // Migration'ları çalıştır
-    if err := runMigrations(db); err != nil {
-        t.Fatalf("migration başarısız: %v", err)
-    }
-    
-    return db
-}
-```
-
-### Integration Test
-
-```go
-// test/integration_test.go
-func TestMCPToolIntegration(t *testing.T) {
-    // MCP server başlat
-    server := setupTestServer(t)
-    defer server.Close()
-    
-    // Tool çağrısı yap
-    response, err := server.CallTool("gorev_olustur", map[string]interface{}{
-        "baslik":  "Integration test",
-        "oncelik": "yuksek",
-    })
-    
-    // Sonucu kontrol et
-    assert.NoError(t, err)
-    assert.Contains(t, response.Text, "başarıyla oluşturuldu")
-}
-```
-
-## Yeni Özellik Ekleme
-
-### 1. Domain Model Güncelleme
+### 1. Update Domain Model
 
 ```go
 // internal/gorev/modeller.go
 type Gorev struct {
-    // Mevcut alanlar...
-    YeniAlan string `json:"yeni_alan,omitempty"`
+    // Existing fields...
+    NewField string `json:"new_field,omitempty"`
 }
 ```
 
-### 2. Migration Ekleme
+### 2. Add Migration
 
 ```sql
--- migrations/004_yeni_alan.up.sql
-ALTER TABLE gorevler ADD COLUMN yeni_alan TEXT DEFAULT '';
+-- migrations/004_new_field.up.sql
+ALTER TABLE gorevler ADD COLUMN new_field TEXT DEFAULT '';
 
--- migrations/004_yeni_alan.down.sql
-ALTER TABLE gorevler DROP COLUMN yeni_alan;
+-- migrations/004_new_field.down.sql
+ALTER TABLE gorevler DROP COLUMN new_field;
 ```
 
-### 3. Data Layer Güncelleme
+### 3. Update Data Layer
 
 ```go
 // internal/gorev/veri_yonetici.go
 func (v *veriYonetici) gorevleriTara(rows *sql.Rows) ([]Gorev, error) {
-    // Scan'e yeni alan ekle
+    // Add new field to scan
     err := rows.Scan(
         &gorev.ID,
-        // diğer alanlar...
-        &gorev.YeniAlan,
+        // other fields...
+        &gorev.NewField,
     )
 }
 ```
 
-### 4. Business Logic Güncelleme
+## Adding MCP Tools
 
-```go
-// internal/gorev/is_yonetici.go
-func (i *isYonetici) GorevOlustur(..., yeniAlan string) (*Gorev, error) {
-    // Validation ekle
-    if err := validateYeniAlan(yeniAlan); err != nil {
-        return nil, err
-    }
-    
-    // Veri katmanını çağır
-    return i.veriYonetici.GorevOlustur(..., yeniAlan)
-}
-```
-
-## MCP Tool Ekleme
-
-### 1. Handler Fonksiyonu Yaz
+### 1. Write Handler Function
 
 ```go
 // internal/mcp/handlers.go
-func (h *Handler) handleYeniTool(args map[string]interface{}) (*ToolResult, error) {
-    // Parametreleri parse et
+func (h *Handler) handleNewTool(args map[string]interface{}) (*ToolResult, error) {
+    // Parse parameters
     param1, ok := args["param1"].(string)
     if !ok {
-        return nil, fmt.Errorf("param1 gerekli")
+        return nil, fmt.Errorf("param1 is required")
     }
     
-    // Business logic çağır
-    result, err := h.isYonetici.YeniIslem(param1)
+    // Call business logic
+    result, err := h.isYonetici.NewOperation(param1)
     if err != nil {
         return nil, mcp.NewToolResultError(err.Error())
     }
     
-    // Sonucu döndür
+    // Return result
     return &ToolResult{
         Content: []Content{{
             Type: "text",
-            Text: fmt.Sprintf("✅ İşlem başarılı: %v", result),
+            Text: fmt.Sprintf("✅ Operation successful: %v", result),
         }},
     }, nil
 }
 ```
 
-### 2. Tool'u Kaydet
+### 2. Register Tool
 
 ```go
 // internal/mcp/handlers.go - RegisterTools()
 tools = append(tools, Tool{
-    Name:        "yeni_tool",
-    Description: "Yeni işlem yapar",
+    Name:        "new_tool",
+    Description: "Performs new operation",
     InputSchema: InputSchema{
         Type: "object",
         Properties: map[string]Property{
             "param1": {
                 Type:        "string",
-                Description: "Parametre açıklaması",
+                Description: "Parameter description",
             },
         },
         Required: []string{"param1"},
@@ -362,28 +305,15 @@ tools = append(tools, Tool{
 })
 ```
 
-### 3. Dokümantasyon Ekle
-
-`docs/mcp-araclari.md` dosyasına yeni tool'u ekle.
-
-### 4. Test Yaz
-
-```go
-// test/integration_test.go
-func TestYeniTool(t *testing.T) {
-    // Test senaryoları...
-}
-```
-
 ## Debugging
 
 ### Debug Mode
 
 ```bash
-# Debug log'ları aktif
+# Enable debug logs
 ./gorev serve --debug
 
-# Veya environment variable
+# Or environment variable
 DEBUG=true ./gorev serve
 ```
 
@@ -393,124 +323,54 @@ DEBUG=true ./gorev serve
 import "log/slog"
 
 // Debug log
-slog.Debug("işlem başladı", "id", gorevID, "durum", durum)
+slog.Debug("operation started", "id", gorevID, "status", durum)
 
 // Error log
-slog.Error("veritabanı hatası", "error", err)
+slog.Error("database error", "error", err)
 ```
 
-### Profiling
+## VS Code Extension Development
 
-```go
-import _ "net/http/pprof"
-
-// main.go'da
-go func() {
-    log.Println(http.ListenAndServe("localhost:6060", nil))
-}()
-```
-
-## VS Code Extension Geliştirme
-
-### Extension Kurulumu
+### Extension Setup
 
 ```bash
 cd gorev-vscode
 
-# Bağımlılıkları yükle
+# Install dependencies
 npm install
 
-# TypeScript derle
+# Compile TypeScript
 npm run compile
 
-# Watch mode (geliştirme için)
+# Watch mode (for development)
 npm run watch
 ```
 
-### Extension Test Etme
+### Testing Extension
 
-1. VS Code'da `gorev-vscode` klasörünü aç
-2. F5 tuşuna bas (veya Run > Start Debugging)
-3. Yeni VS Code penceresi açılacak (Extension Development Host)
-4. Extension'ı test et
+1. Open `gorev-vscode` folder in VS Code
+2. Press F5 (or Run > Start Debugging)
+3. New VS Code window will open (Extension Development Host)
+4. Test the extension
 
-### Extension Yapısı
+## Contributing Process
 
-```
-gorev-vscode/
-├── src/
-│   ├── extension.ts          # Ana giriş noktası
-│   ├── mcp/
-│   │   ├── client.ts        # MCP client implementasyonu
-│   │   └── types.ts         # TypeScript tipleri
-│   ├── commands/            # Komut handler'ları
-│   ├── providers/           # TreeView provider'ları
-│   └── models/              # Data modelleri
-├── package.json             # Extension manifest
-└── tsconfig.json           # TypeScript config
-```
+### Pull Request Workflow
 
-### Yeni Komut Ekleme
-
-1. **package.json'a komut ekle**:
-```json
-{
-  "contributes": {
-    "commands": [
-      {
-        "command": "gorev.newCommand",
-        "title": "Gorev: New Command"
-      }
-    ]
-  }
-}
-```
-
-2. **Command handler ekle**:
-```typescript
-// src/commands/newCommand.ts
-export async function newCommand() {
-    // Komut implementasyonu
-}
-```
-
-3. **Extension.ts'de kaydet**:
-```typescript
-context.subscriptions.push(
-    vscode.commands.registerCommand('gorev.newCommand', newCommand)
-);
-```
-
-### Extension Debugging
-
-1. **Output Channel kullan**:
-```typescript
-const outputChannel = vscode.window.createOutputChannel('Gorev');
-outputChannel.appendLine('Debug mesajı');
-```
-
-2. **Breakpoint koy**: VS Code'da TypeScript dosyalarına breakpoint ekle
-
-3. **Debug Console**: Extension Development Host'ta Debug Console'u kontrol et
-
-## Katkıda Bulunma
-
-### Pull Request Süreci
-
-1. **Issue Aç**: Önce bir issue açarak ne yapmak istediğini açıkla
-2. **Fork & Branch**: Projeyi fork'la ve feature branch oluştur
+1. **Open Issue**: First open an issue explaining what you want to do
+2. **Fork & Branch**: Fork the project and create a feature branch
    ```bash
-   git checkout -b feature/yeni-ozellik
+   git checkout -b feature/new-feature
    ```
-3. **Kod Yaz**: Kod standartlarına uygun şekilde geliştir
-4. **Test Yaz**: %80+ coverage hedefle
-5. **Commit**: Anlamlı commit mesajları kullan
+3. **Write Code**: Develop according to code standards
+4. **Write Tests**: Target 80%+ coverage
+5. **Commit**: Use meaningful commit messages
    ```bash
-   git commit -m "feat: yeni özellik ekle"
-   git commit -m "fix: hata düzelt"
-   git commit -m "docs: dokümantasyon güncelle"
+   git commit -m "feat: add new feature"
+   git commit -m "fix: resolve bug"
+   git commit -m "docs: update documentation"
    ```
-6. **Push & PR**: Branch'i push'la ve PR aç
+6. **Push & PR**: Push branch and open PR
 
 ### Commit Message Format
 
@@ -523,35 +383,35 @@ outputChannel.appendLine('Debug mesajı');
 ```
 
 Types:
-- `feat`: Yeni özellik
-- `fix`: Hata düzeltme
-- `docs`: Dokümantasyon
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation
 - `style`: Formatting, missing semi-colons, etc.
-- `refactor`: Kod düzenleme
-- `test`: Test ekleme/düzeltme
+- `refactor`: Code refactoring
+- `test`: Adding/fixing tests
 - `chore`: Maintenance
 
 ### Code Review Checklist
 
-- [ ] Testler yazıldı ve geçiyor
-- [ ] Dokümantasyon güncellendi
-- [ ] Kod standartlarına uygun
-- [ ] Breaking change yok (varsa dokümante edildi)
-- [ ] Performance etkileri düşünüldü
+- [ ] Tests written and passing
+- [ ] Documentation updated
+- [ ] Code follows standards
+- [ ] No breaking changes (or documented)
+- [ ] Performance implications considered
 
-## Sık Karşılaşılan Sorunlar
+## Common Issues
 
 ### SQLite Locked Error
 
 ```go
-// Çözüm: WAL mode kullan
+// Solution: Use WAL mode
 db.Exec("PRAGMA journal_mode=WAL")
 ```
 
 ### Import Cycle
 
 ```go
-// Çözüm: Interface kullan
+// Solution: Use interfaces
 type VeriYoneticiInterface interface {
     GorevOlustur(...) (*Gorev, error)
 }
@@ -560,7 +420,7 @@ type VeriYoneticiInterface interface {
 ### Test Isolation
 
 ```go
-// Her test için yeni DB
+// New DB for each test
 func TestXXX(t *testing.T) {
     db := setupTestDB(t)
     defer db.Close()
@@ -568,24 +428,24 @@ func TestXXX(t *testing.T) {
 }
 ```
 
-## Faydalı Kaynaklar
+## Useful Resources
 
 - [Effective Go](https://golang.org/doc/effective_go.html)
 - [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
 - [MCP Specification](https://modelcontextprotocol.io/docs)
 - [SQLite Best Practices](https://www.sqlite.org/bestpractice.html)
 
-## İlgili Dokümantasyon
+## Related Documentation
 
-- [Sistem Mimarisi](mimari.md)
-- [API Referansı](api-referans.md)
-- [MCP Araçları](mcp-araclari.md)
-- [VS Code Extension](vscode-extension.md)
+- [System Architecture](docs/en/development/architecture.md)
+- [API Reference](docs/en/api/reference.md)
+- [MCP Tools](docs/en/user-guide/mcp-tools.md)
+- [VS Code Extension](docs/en/user-guide/vscode-extension.md)
 
 ---
 
 <div align="center">
 
-*💻 Bu geliştirici rehberi Claude (Anthropic) ile işbirliği içinde oluşturulmuştur - AI & İnsan: Mükemmel dokümantasyon takımı!*
+*💻 This developer guide was created in collaboration with Claude (Anthropic) - AI & Human: The perfect documentation team!*
 
 </div>
