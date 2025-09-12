@@ -283,8 +283,9 @@ export function registerEnhancedGorevCommands(
   // Deselect All Command
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.DESELECT_ALL, () => {
-      // TODO: Implement deselect all
-      vscode.window.showInformationMessage(vscode.l10n.t('notImplemented.deselectAll'));
+      // Clear all selections in the tree provider
+      treeProvider.clearSelection();
+      vscode.window.showInformationMessage(vscode.l10n.t('selectAll.allCleared'));
     })
   );
 

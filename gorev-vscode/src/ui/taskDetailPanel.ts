@@ -913,20 +913,41 @@ export class TaskDetailPanel {
     }
     
     private renderBreadcrumb(): string {
-        // TODO: Implement actual hierarchy fetching
-        return `
-            <div class="breadcrumb-navigation">
-                <a href="#" class="breadcrumb-item">
-                    <i class="codicon codicon-home"></i> Ana Sayfa
-                </a>
+        // Build breadcrumb from hierarchy info and project data
+        let breadcrumbHtml = `<div class="breadcrumb-navigation">`;
+        
+        // Home link
+        breadcrumbHtml += `
+            <a href="#" class="breadcrumb-item">
+                <i class="codicon codicon-home"></i> Ana Sayfa
+            </a>
+            <i class="codicon codicon-chevron-right"></i>`;
+        
+        // Project breadcrumb - use actual project name if available
+        const projectName = this.task.proje_id && this.projects?.get(this.task.proje_id)?.isim || 'Projeler';
+        breadcrumbHtml += `<a href="#" class="breadcrumb-item">${this.escapeHtml(projectName)}</a>`;
+        
+        // Add parent task chain if available from hierarchy info
+        if (this.hierarchyInfo && this.hierarchyInfo.ust_gorevler && this.hierarchyInfo.ust_gorevler.length > 0) {
+            for (const parentTask of this.hierarchyInfo.ust_gorevler) {
+                breadcrumbHtml += `
+                    <i class="codicon codicon-chevron-right"></i>
+                    <a href="#" class="breadcrumb-item">${this.escapeHtml(parentTask.baslik)}</a>`;
+            }
+        } else if (this.task.parent_id) {
+            // Fallback: indicate there's a parent but we don't have full hierarchy
+            breadcrumbHtml += `
                 <i class="codicon codicon-chevron-right"></i>
-                <a href="#" class="breadcrumb-item">Projeler</a>
-                <i class="codicon codicon-chevron-right"></i>
-                <a href="#" class="breadcrumb-item">Frontend</a>
-                <i class="codicon codicon-chevron-right"></i>
-                <span class="breadcrumb-current">${this.escapeHtml(this.task.baslik)}</span>
-            </div>
-        `;
+                <a href="#" class="breadcrumb-item">Üst Görev</a>`;
+        }
+        
+        // Current task
+        breadcrumbHtml += `
+            <i class="codicon codicon-chevron-right"></i>
+            <span class="breadcrumb-current">${this.escapeHtml(this.task.baslik)}</span>
+        </div>`;
+        
+        return breadcrumbHtml;
     }
     
     private renderEnhancedHierarchySection(): string {

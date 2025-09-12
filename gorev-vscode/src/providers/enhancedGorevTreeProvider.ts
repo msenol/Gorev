@@ -231,8 +231,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             this.config.sortAscending
         );
 
-        // Show all tasks (temporarily disable root filtering due to subtask hierarchy issues)
-        const rootTasks = sortedTasks; // TODO: Fix subtask hierarchy display
+        // Filter to show only root tasks (tasks without parent_id)
+        const rootTasks = sortedTasks.filter(task => !task.parent_id);
         
         Logger.debug(`[EnhancedGorevTreeProvider] Group ${group.groupKey} has ${sortedTasks.length} sorted tasks`);
         Logger.debug(`[EnhancedGorevTreeProvider] After filtering for root tasks: ${rootTasks.length} tasks`);
