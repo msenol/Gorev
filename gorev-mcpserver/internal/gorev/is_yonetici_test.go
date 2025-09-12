@@ -113,12 +113,12 @@ func (m *MockVeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gore
 	if m.shouldReturnError {
 		return nil, m.errorToReturn
 	}
-	
+
 	// If allTasks is populated (for tests), use that
 	if len(m.allTasks) > 0 {
 		return m.allTasks, nil
 	}
-	
+
 	// Otherwise, use the map
 	var result []*Gorev
 	for _, gorev := range m.gorevler {
@@ -137,7 +137,7 @@ func (m *MockVeriYonetici) GorevGuncelle(taskID string, params interface{}) erro
 	if !ok {
 		return errors.New("görev bulunamadı")
 	}
-	
+
 	// Apply updates from params map
 	if updateParams, ok := params.(map[string]interface{}); ok {
 		for key, value := range updateParams {
@@ -548,7 +548,6 @@ func (m *MockVeriYonetici) GorevOlustur(params map[string]interface{}) (string, 
 func (m *MockVeriYonetici) GorevBagimlilikGetir(gorevID string) ([]*Gorev, error) {
 	return nil, nil
 }
-
 
 func (m *MockVeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map[string]int, error) {
 	result := make(map[string]int)

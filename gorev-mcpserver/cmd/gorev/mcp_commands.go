@@ -181,7 +181,7 @@ func createMCPCallCommand() *cobra.Command {
 			if jsonOutput {
 				jsonData, err := json.MarshalIndent(result, "", "  ")
 				if err != nil {
-				return errors.New(i18n.T("error.jsonOutputFailed", map[string]interface{}{"Error": err}))
+					return errors.New(i18n.T("error.jsonOutputFailed", map[string]interface{}{"Error": err}))
 				}
 				fmt.Println(string(jsonData))
 			} else {
@@ -331,7 +331,7 @@ func callMCPTool(toolName string, params map[string]interface{}) error {
 	if err != nil {
 		return fmt.Errorf("veri yönetici oluşturulamadı: %w", err)
 	}
-			defer func() { _ = veriYonetici.Kapat() }()
+	defer func() { _ = veriYonetici.Kapat() }()
 
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 	handlers := mcp.YeniHandlers(isYonetici)

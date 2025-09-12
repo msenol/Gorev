@@ -30,7 +30,7 @@ func TestTemplateOperationsSimple(t *testing.T) {
 
 		// Use first template for validation test
 		bugTemplate := templates[0]
-		
+
 		// Try to create task without required fields
 		degerler := map[string]string{
 			"baslik": "Test bug",
@@ -82,7 +82,7 @@ func TestTemplateOperationsSimple(t *testing.T) {
 			_ = veriYonetici.Kapat()
 		}()
 
-		// Create default templates 
+		// Create default templates
 		err = veriYonetici.VarsayilanTemplateleriOlustur()
 		require.NoError(t, err)
 

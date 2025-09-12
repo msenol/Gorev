@@ -296,14 +296,14 @@ func (asm *AutoStateManager) getSubtasks(parentID string) ([]*Gorev, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var subtasks []*Gorev
 	for _, task := range allTasks {
 		if task.ParentID == parentID {
 			subtasks = append(subtasks, task)
 		}
 	}
-	
+
 	return subtasks, nil
 }
 

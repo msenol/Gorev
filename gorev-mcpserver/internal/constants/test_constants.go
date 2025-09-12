@@ -16,7 +16,7 @@ const (
 
 	// TestMigrationsPathIntegration for integration test files
 	TestMigrationsPathIntegration = "file://../internal/veri/migrations"
-	
+
 	// TestMigrationsPathMCP for MCP package tests (2 levels up)
 	TestMigrationsPathMCP = "file://../../internal/veri/migrations"
 )

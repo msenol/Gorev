@@ -923,8 +923,8 @@ export class TaskDetailPanel {
             </a>
             <i class="codicon codicon-chevron-right"></i>`;
         
-        // Project breadcrumb - use actual project name if available
-        const projectName = this.task.proje_id && this.projects?.get(this.task.proje_id)?.isim || 'Projeler';
+        // Project breadcrumb - use project ID as fallback since project names are not cached in this panel
+        const projectName = this.task.proje_id ? `Proje ${this.task.proje_id}` : 'Projeler';
         breadcrumbHtml += `<a href="#" class="breadcrumb-item">${this.escapeHtml(projectName)}</a>`;
         
         // Add parent task chain if available from hierarchy info

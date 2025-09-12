@@ -327,14 +327,14 @@ func TestHierarchyWithPagination(t *testing.T) {
 	// Create a large hierarchy
 	var taskIDs []string
 
-	// Get first available template for task creation  
+	// Get first available template for task creation
 	templates, _ := handlers.TemplateListele(map[string]interface{}{})
 	templateList := getResultText(templates)
 	if !strings.Contains(templateList, "ID:") {
 		t.Skip("No templates available - skipping pagination test")
 		return
 	}
-	
+
 	// Create multiple root tasks
 	for i := 0; i < constants.TestIterationSmall; i++ {
 		rootResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{

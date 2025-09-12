@@ -1769,7 +1769,7 @@ func (h *Handlers) GorevUstDegistir(params map[string]interface{}) (*mcp.CallToo
 	}
 
 	if yeniParentID == "" {
-	return mcp.NewToolResultText("✓ Görev kök seviyeye taşındı"), nil
+		return mcp.NewToolResultText("✓ Görev kök seviyeye taşındı"), nil
 	}
 	return mcp.NewToolResultText("✓ Görev yeni üst göreve taşındı"), nil
 }

@@ -9,14 +9,14 @@ import (
 func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 	// Create mock VeriYonetici
 	vy := NewMockVeriYonetici()
-	
+
 	// Create BatchProcessor
 	bp := NewBatchProcessor(vy)
-	
+
 	// Create AI Context Manager
 	acy := YeniAIContextYonetici(vy)
 	bp.SetAIContextManager(acy)
-	
+
 	// Create test tasks
 	task1 := &Gorev{
 		ID:              "task-1",
@@ -27,7 +27,7 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 		GuncellemeTarih: time.Now().Add(-1 * time.Hour),
 		Etiketler:       []*Etiket{},
 	}
-	
+
 	task2 := &Gorev{
 		ID:              "task-2",
 		Baslik:          "Task 2",
@@ -37,7 +37,7 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 		GuncellemeTarih: time.Now().Add(-2 * time.Hour),
 		Etiketler:       []*Etiket{},
 	}
-	
+
 	task3 := &Gorev{
 		ID:              "task-3",
 		Baslik:          "Task 3",
@@ -47,7 +47,7 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 		GuncellemeTarih: time.Now().Add(-3 * time.Hour),
 		Etiketler:       []*Etiket{},
 	}
-	
+
 	// Add existing tag to task3
 	existingTag := &Etiket{
 		ID:   "tag-existing",
@@ -55,12 +55,12 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 	}
 	task3.Etiketler = []*Etiket{existingTag}
 	vy.tags["existing"] = existingTag
-	
+
 	// Add tasks to mock
 	vy.gorevler["task-1"] = task1
 	vy.gorevler["task-2"] = task2
 	vy.gorevler["task-3"] = task3
-	
+
 	// Test cases for BulkTagOperation
 	testCases := []struct {
 		name           string
@@ -215,7 +215,7 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 			description: "Should handle non-existent tasks gracefully",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset task tags for consistent test state
@@ -226,37 +226,37 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 				// Ensure task3 has the existing tag
 				task3.Etiketler = []*Etiket{existingTag}
 			}
-			
+
 			result, err := bp.BulkTagOperation(tc.request)
-			
+
 			if tc.expectedResult.errorResult {
 				if err == nil {
 					t.Errorf("Expected error but got none for %s", tc.description)
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error for %s: %v", tc.description, err)
 				return
 			}
-			
+
 			// Check result counts
 			if len(result.Successful) != tc.expectedResult.successful {
-				t.Errorf("Expected %d successful operations, got %d for %s", 
+				t.Errorf("Expected %d successful operations, got %d for %s",
 					tc.expectedResult.successful, len(result.Successful), tc.description)
 			}
-			
+
 			if len(result.Failed) != tc.expectedResult.failed {
-				t.Errorf("Expected %d failed operations, got %d for %s", 
+				t.Errorf("Expected %d failed operations, got %d for %s",
 					tc.expectedResult.failed, len(result.Failed), tc.description)
 			}
-			
+
 			if len(result.Warnings) != tc.expectedResult.warnings {
-				t.Errorf("Expected %d warnings, got %d for %s", 
+				t.Errorf("Expected %d warnings, got %d for %s",
 					tc.expectedResult.warnings, len(result.Warnings), tc.description)
 			}
-			
+
 			// Verify task tags were updated correctly
 			if !tc.request.DryRun && tc.expectedResult.errorResult == false {
 				switch tc.request.Operation {
@@ -273,12 +273,12 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 								}
 							}
 							if !found {
-								t.Errorf("Tag %s was not added to task %s for %s", 
+								t.Errorf("Tag %s was not added to task %s for %s",
 									tagName, taskID, tc.description)
 							}
 						}
 					}
-					
+
 				case "remove":
 					// Check that tags were removed for successful tasks
 					for _, taskID := range result.Successful {
@@ -286,24 +286,24 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 						for _, tagName := range tc.request.Tags {
 							for _, tag := range task.Etiketler {
 								if tag.Isim == tagName {
-									t.Errorf("Tag %s was not removed from task %s for %s", 
+									t.Errorf("Tag %s was not removed from task %s for %s",
 										tagName, taskID, tc.description)
 								}
 							}
 						}
 					}
-					
+
 				case "replace":
 					// Check that tags were replaced for successful tasks
 					for _, taskID := range result.Successful {
 						task := vy.gorevler[taskID]
-						
+
 						// Check tag count matches
 						if len(task.Etiketler) != len(tc.request.Tags) {
-							t.Errorf("Expected %d tags, got %d for task %s in %s", 
+							t.Errorf("Expected %d tags, got %d for task %s in %s",
 								len(tc.request.Tags), len(task.Etiketler), taskID, tc.description)
 						}
-						
+
 						// Check each tag exists
 						for _, tagName := range tc.request.Tags {
 							found := false
@@ -314,7 +314,7 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 								}
 							}
 							if !found {
-								t.Errorf("Tag %s was not found in replaced tags for task %s in %s", 
+								t.Errorf("Tag %s was not found in replaced tags for task %s in %s",
 									tagName, taskID, tc.description)
 							}
 						}
@@ -329,14 +329,14 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 func TestBatchProcessor_BulkDelete(t *testing.T) {
 	// Create mock VeriYonetici
 	vy := NewMockVeriYonetici()
-	
+
 	// Create BatchProcessor
 	bp := NewBatchProcessor(vy)
-	
+
 	// Create AI Context Manager
 	acy := YeniAIContextYonetici(vy)
 	bp.SetAIContextManager(acy)
-	
+
 	// Create test tasks
 	task1 := &Gorev{
 		ID:              "task-1",
@@ -346,7 +346,7 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 		OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
 		GuncellemeTarih: time.Now().Add(-1 * time.Hour),
 	}
-	
+
 	task2 := &Gorev{
 		ID:              "task-2",
 		Baslik:          "Task 2",
@@ -355,7 +355,7 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 		OlusturmaTarih:  time.Now().Add(-2 * time.Hour),
 		GuncellemeTarih: time.Now().Add(-2 * time.Hour),
 	}
-	
+
 	// Parent task with subtasks
 	parentTask := &Gorev{
 		ID:              "parent-task",
@@ -365,7 +365,7 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 		OlusturmaTarih:  time.Now().Add(-3 * time.Hour),
 		GuncellemeTarih: time.Now().Add(-3 * time.Hour),
 	}
-	
+
 	// Child task
 	childTask := &Gorev{
 		ID:              "child-task",
@@ -376,13 +376,13 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 		OlusturmaTarih:  time.Now().Add(-3 * time.Hour),
 		GuncellemeTarih: time.Now().Add(-3 * time.Hour),
 	}
-	
+
 	// Add tasks to mock
 	vy.gorevler["task-1"] = task1
 	vy.gorevler["task-2"] = task2
 	vy.gorevler["parent-task"] = parentTask
 	vy.gorevler["child-task"] = childTask
-	
+
 	// Test cases for BulkDelete
 	testCases := []struct {
 		name           string
@@ -536,7 +536,7 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 			description: "Should handle non-existent tasks gracefully",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset tasks for each test
@@ -544,43 +544,43 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 			vy.gorevler["task-2"] = task2
 			vy.gorevler["parent-task"] = parentTask
 			vy.gorevler["child-task"] = childTask
-			
+
 			result, err := bp.BulkDelete(tc.request)
-			
+
 			if tc.expectedResult.errorResult {
 				if err == nil {
 					t.Errorf("Expected error but got none for %s", tc.description)
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error for %s: %v", tc.description, err)
 				return
 			}
-			
+
 			// Check result counts
 			if len(result.Successful) != tc.expectedResult.successful {
-				t.Errorf("Expected %d successful operations, got %d for %s", 
+				t.Errorf("Expected %d successful operations, got %d for %s",
 					tc.expectedResult.successful, len(result.Successful), tc.description)
 			}
-			
+
 			if len(result.Failed) != tc.expectedResult.failed {
-				t.Errorf("Expected %d failed operations, got %d for %s", 
+				t.Errorf("Expected %d failed operations, got %d for %s",
 					tc.expectedResult.failed, len(result.Failed), tc.description)
 			}
-			
+
 			if len(result.Warnings) != tc.expectedResult.warnings {
-				t.Errorf("Expected %d warnings, got %d for %s", 
+				t.Errorf("Expected %d warnings, got %d for %s",
 					tc.expectedResult.warnings, len(result.Warnings), tc.description)
 			}
-			
+
 			// Verify tasks were actually deleted
 			if !tc.request.DryRun && tc.expectedResult.errorResult == false {
 				for _, taskID := range tc.request.TaskIDs {
 					_, exists := vy.gorevler[taskID]
 					shouldExist := true
-					
+
 					// Check if this task should have been deleted
 					for _, successfulID := range result.Successful {
 						if successfulID == taskID {
@@ -588,12 +588,12 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 							break
 						}
 					}
-					
+
 					// Skip verification for non-existent tasks since they were never added to the mock
 					if taskID == "non-existent" {
 						continue
 					}
-					
+
 					if shouldExist && !exists {
 						t.Errorf("Task %s was unexpectedly deleted for %s", taskID, tc.description)
 					} else if !shouldExist && exists {

@@ -76,7 +76,7 @@ func TestGorevGetActive(t *testing.T) {
 		// Create and set active task
 		proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 		gorevTest, _ := h.isYonetici.GorevOlustur(constants.TestTaskActive, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
-	_, _ = h.GorevSetActive(map[string]interface{}{"task_id": gorevTest.ID})
+		_, _ = h.GorevSetActive(map[string]interface{}{"task_id": gorevTest.ID})
 
 		result, _ := h.GorevGetActive(map[string]interface{}{})
 

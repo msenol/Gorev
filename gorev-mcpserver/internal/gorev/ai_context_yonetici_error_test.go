@@ -12,7 +12,7 @@ import (
 func TestAIContextYonetici_addToRecentTasks(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	testCases := []struct {
 		name           string
 		taskID         string
@@ -36,7 +36,7 @@ func TestAIContextYonetici_addToRecentTasks(t *testing.T) {
 		},
 		{
 			name:           "Add duplicate task (should move to front)",
-			taskID:         "task-1", 
+			taskID:         "task-1",
 			existingTasks:  []string{"task-2", "task-1", "task-3"},
 			expectedTasks:  []string{"task-1", "task-2", "task-3"},
 			expectedLength: 3,
@@ -45,7 +45,7 @@ func TestAIContextYonetici_addToRecentTasks(t *testing.T) {
 			name:           "Add task when at limit (should remove oldest)",
 			taskID:         "task-new",
 			existingTasks:  make([]string, 10), // Fill to limit
-			expectedLength: 10, // Should stay at limit
+			expectedLength: 10,                 // Should stay at limit
 		},
 		{
 			name:           "Add empty task ID",
@@ -55,7 +55,7 @@ func TestAIContextYonetici_addToRecentTasks(t *testing.T) {
 			expectedLength: 2,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Set up initial state
@@ -66,17 +66,17 @@ func TestAIContextYonetici_addToRecentTasks(t *testing.T) {
 				}
 				tc.expectedTasks = append([]string{tc.taskID}, tc.existingTasks[:9]...)
 			}
-			
+
 			vy.aiContext.RecentTasks = tc.existingTasks
-			
+
 			// Call addToRecentTasks
 			acy.addToRecentTasks(tc.taskID)
-			
+
 			// Verify results
 			if len(vy.aiContext.RecentTasks) != tc.expectedLength {
 				t.Errorf("Expected length %d, got %d", tc.expectedLength, len(vy.aiContext.RecentTasks))
 			}
-			
+
 			if tc.expectedTasks != nil && len(tc.expectedTasks) <= 5 {
 				// Only check exact order for smaller lists
 				for i, expected := range tc.expectedTasks {
@@ -89,7 +89,7 @@ func TestAIContextYonetici_addToRecentTasks(t *testing.T) {
 					}
 				}
 			}
-			
+
 			// Verify new task is at front (unless empty case)
 			if tc.taskID != "" && len(vy.aiContext.RecentTasks) > 0 {
 				if vy.aiContext.RecentTasks[0] != tc.taskID {
@@ -104,16 +104,16 @@ func TestAIContextYonetici_addToRecentTasks(t *testing.T) {
 func TestAIContextYonetici_GetContext_ErrorHandling(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	// Set up error condition
 	vy.shouldReturnError = true
 	vy.errorToReturn = errors.New("database connection failed")
-	
+
 	_, err := acy.GetContext()
 	if err == nil {
 		t.Error("Expected error but got none")
 	}
-	
+
 	if err.Error() != "database connection failed" {
 		t.Errorf("Expected 'database connection failed', got %s", err.Error())
 	}
@@ -123,17 +123,17 @@ func TestAIContextYonetici_GetContext_ErrorHandling(t *testing.T) {
 func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	// Add test task for valid updates
 	testTask := &Gorev{
-		ID:              "task-1",
+		ID:             "task-1",
 		Baslik:         "Test Task",
 		Durum:          constants.TaskStatusPending,
 		Oncelik:        constants.PriorityMedium,
 		OlusturmaTarih: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
-	
+
 	testCases := []struct {
 		name               string
 		updates            []BatchUpdate
@@ -148,7 +148,7 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 				{
 					ID: "task-1",
 					Updates: map[string]interface{}{
-						"durum": constants.TaskStatusInProgress,
+						"durum":   constants.TaskStatusInProgress,
 						"oncelik": constants.PriorityHigh,
 					},
 				},
@@ -172,8 +172,8 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 			expectedFailed:     1,
 		},
 		{
-			name: "Empty updates list",
-			updates: []BatchUpdate{},
+			name:               "Empty updates list",
+			updates:            []BatchUpdate{},
 			expectSuccess:      true,
 			expectedSuccessful: 0,
 			expectedFailed:     0,
@@ -213,27 +213,27 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 			expectedFailed:     1,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset mock state
 			vy.shouldReturnError = false
 			vy.errorToReturn = nil
-			
+
 			// Set up error condition if specified
 			if tc.setupError != nil {
 				tc.setupError(vy)
 			}
-			
+
 			result, err := acy.BatchUpdate(tc.updates)
-			
+
 			if tc.expectSuccess && err != nil {
 				t.Errorf("Expected success but got error: %v", err)
 			}
 			if !tc.expectSuccess && err == nil {
 				t.Error("Expected error but got success")
 			}
-			
+
 			if tc.expectSuccess && result != nil {
 				if len(result.Successful) != tc.expectedSuccessful {
 					t.Errorf("Expected %d successful updates, got %d", tc.expectedSuccessful, len(result.Successful))
@@ -250,10 +250,10 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 func TestAIContextYonetici_NLPQueryError(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	// Create test tasks with various attributes
 	task1 := &Gorev{
-		ID:              "task-1",
+		ID:             "task-1",
 		Baslik:         "Task with ąćęłńóśźż unicode",
 		Aciklama:       "Description with special chars: @#$%^&*()",
 		Durum:          constants.TaskStatusPending,
@@ -261,9 +261,9 @@ func TestAIContextYonetici_NLPQueryError(t *testing.T) {
 		OlusturmaTarih: time.Now(),
 		Etiketler:      []*Etiket{{ID: "tag-1", Isim: "tag with spaces"}},
 	}
-	
+
 	task2 := &Gorev{
-		ID:              "task-2",
+		ID:             "task-2",
 		Baslik:         "UPPERCASE TITLE",
 		Aciklama:       "lowercase description",
 		Durum:          constants.TaskStatusCompleted,
@@ -271,29 +271,29 @@ func TestAIContextYonetici_NLPQueryError(t *testing.T) {
 		OlusturmaTarih: time.Now(),
 		Etiketler:      []*Etiket{{ID: "tag-2", Isim: "MixedCase"}},
 	}
-	
+
 	task3 := &Gorev{
-		ID:              "task-3",
-		Baslik:         "",  // Empty title
-		Aciklama:       "",  // Empty description
+		ID:             "task-3",
+		Baslik:         "", // Empty title
+		Aciklama:       "", // Empty description
 		Durum:          constants.TaskStatusInProgress,
 		Oncelik:        constants.PriorityMedium,
 		OlusturmaTarih: time.Now(),
 		Etiketler:      []*Etiket{}, // No tags
 	}
-	
+
 	// Add tasks to mock
 	vy.gorevler["task-1"] = task1
 	vy.gorevler["task-2"] = task2
 	vy.gorevler["task-3"] = task3
 	vy.allTasks = []*Gorev{task1, task2, task3}
-	
+
 	testCases := []struct {
-		name         string
-		query        string
-		expectedLen  int
-		expectError  bool
-		description  string
+		name        string
+		query       string
+		expectedLen int
+		expectError bool
+		description string
 	}{
 		{
 			name:        "Unicode search",
@@ -356,18 +356,18 @@ func TestAIContextYonetici_NLPQueryError(t *testing.T) {
 			description: "Should handle single character searches",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tasks, err := acy.NLPQuery(tc.query)
-			
+
 			if tc.expectError && err == nil {
 				t.Error("Expected error but got none")
 			}
 			if !tc.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}
-			
+
 			if len(tasks) != tc.expectedLen {
 				t.Errorf("Expected %d tasks, got %d. %s", tc.expectedLen, len(tasks), tc.description)
 			}
@@ -379,14 +379,14 @@ func TestAIContextYonetici_NLPQueryError(t *testing.T) {
 func TestAIContextYonetici_GetActiveTask_EdgeCases(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	testCases := []struct {
-		name            string
-		setupContext    func(*AIContext)
-		setupError      func(*MockVeriYonetici)
-		expectTask      bool
-		expectError     bool
-		expectedTaskID  string
+		name           string
+		setupContext   func(*AIContext)
+		setupError     func(*MockVeriYonetici)
+		expectTask     bool
+		expectError    bool
+		expectedTaskID string
 	}{
 		{
 			name: "Context with empty active task",
@@ -420,34 +420,34 @@ func TestAIContextYonetici_GetActiveTask_EdgeCases(t *testing.T) {
 			expectedTaskID: "task-1",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset mock state
 			vy.shouldReturnError = false
 			vy.errorToReturn = nil
-			
+
 			// Add a test task to mock
 			testTask := &Gorev{
-				ID:              "task-1",
+				ID:             "task-1",
 				Baslik:         "Test Task",
 				Durum:          constants.TaskStatusPending,
 				OlusturmaTarih: time.Now(),
 			}
 			vy.gorevler["task-1"] = testTask
-			
+
 			// Set up context if specified
 			if tc.setupContext != nil {
 				tc.setupContext(vy.aiContext)
 			}
-			
+
 			// Set up error condition if specified
 			if tc.setupError != nil {
 				tc.setupError(vy)
 			}
-			
+
 			task, err := acy.GetActiveTask()
-			
+
 			if tc.expectError && err == nil {
 				t.Error("Expected error but got none")
 			}
@@ -467,11 +467,11 @@ func TestAIContextYonetici_GetActiveTask_EdgeCases(t *testing.T) {
 	}
 }
 
-// TestAIContextYonetici_recordInteraction_EdgeCases tests recordInteraction with edge cases  
+// TestAIContextYonetici_recordInteraction_EdgeCases tests recordInteraction with edge cases
 func TestAIContextYonetici_recordInteraction_EdgeCases(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	testCases := []struct {
 		name        string
 		taskID      string
@@ -522,20 +522,20 @@ func TestAIContextYonetici_recordInteraction_EdgeCases(t *testing.T) {
 			expectError: true,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset mock state
-			vy.shouldReturnError = false  
+			vy.shouldReturnError = false
 			vy.errorToReturn = nil
-			
+
 			// Set up error condition if specified
 			if tc.setupError != nil {
 				tc.setupError(vy)
 			}
-			
+
 			err := acy.recordInteraction(tc.taskID, tc.actionType, tc.context)
-			
+
 			if tc.expectError && err == nil {
 				t.Error("Expected error but got none")
 			}

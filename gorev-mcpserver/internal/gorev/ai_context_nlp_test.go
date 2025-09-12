@@ -13,10 +13,10 @@ import (
 func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	// Create various test tasks with different properties
 	now := time.Now()
-	
+
 	// Create tasks with different statuses
 	pendingTask := &Gorev{
 		ID:              "pending-1",
@@ -31,7 +31,7 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 		},
 		TamamlanmamisBagimlilikSayisi: 1, // Blocked task
 	}
-	
+
 	inProgressTask := &Gorev{
 		ID:              "progress-1",
 		Baslik:          "Implement feature",
@@ -44,7 +44,7 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			{ID: "feature", Isim: "feature"},
 		},
 	}
-	
+
 	completedTask := &Gorev{
 		ID:              "completed-1",
 		Baslik:          "Write documentation",
@@ -57,7 +57,7 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			{ID: "docs", Isim: "docs"},
 		},
 	}
-	
+
 	recentTask := &Gorev{
 		ID:              "recent-1",
 		Baslik:          "Recent task",
@@ -70,30 +70,30 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			{ID: "backend", Isim: "backend"},
 		},
 	}
-	
+
 	// Add tasks to mock
 	vy.gorevler["pending-1"] = pendingTask
 	vy.gorevler["progress-1"] = inProgressTask
 	vy.gorevler["completed-1"] = completedTask
 	vy.gorevler["recent-1"] = recentTask
-	
+
 	// Add today's interactions for "bugün" query
 	todayInteractions := []*AIInteraction{
 		{
-			ID:             "int-1",
-			GorevID:        "pending-1",
+			ID:         "int-1",
+			GorevID:    "pending-1",
 			ActionType: "view",
 			Timestamp:  now.Add(-1 * time.Hour),
 		},
 		{
-			ID:             "int-2",
-			GorevID:        "progress-1",
+			ID:         "int-2",
+			GorevID:    "progress-1",
 			ActionType: "update",
 			Timestamp:  now.Add(-30 * time.Minute),
 		},
 	}
 	vy.todayInteractions = todayInteractions
-	
+
 	testCases := []struct {
 		name           string
 		query          string
@@ -131,10 +131,10 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			},
 		},
 		{
-		name:          "Recently created tasks query",
-		query:         "son oluşturulan",
-		expectedCount: 4, // All tasks, limited by constants.RecentlyCreatedCount (5)
-		expectedTasks: []string{}, // Order may vary, so don't enforce specific IDs
+			name:          "Recently created tasks query",
+			query:         "son oluşturulan",
+			expectedCount: 4,          // All tasks, limited by constants.RecentlyCreatedCount (5)
+			expectedTasks: []string{}, // Order may vary, so don't enforce specific IDs
 			description:   "Should return recently created tasks in chronological order",
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				if len(tasks) == 0 {
@@ -151,18 +151,18 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			},
 		},
 		{
-		name:          "High priority query",
-		query:         "yüksek öncelik",
-		expectedCount: 2, // Returns pending tasks (mock behavior)
-		expectedTasks: []string{},
-		description:   "Should return high priority tasks",
+			name:          "High priority query",
+			query:         "yüksek öncelik",
+			expectedCount: 2, // Returns pending tasks (mock behavior)
+			expectedTasks: []string{},
+			description:   "Should return high priority tasks",
 		},
 		{
-		name:          "Incomplete tasks query",
-		query:         "tamamlanmamış",
-		expectedCount: 2, // Returns pending tasks (mock behavior)
-		expectedTasks: []string{},
-		description:   "Should return incomplete tasks",
+			name:          "Incomplete tasks query",
+			query:         "tamamlanmamış",
+			expectedCount: 2, // Returns pending tasks (mock behavior)
+			expectedTasks: []string{},
+			description:   "Should return incomplete tasks",
 		},
 		{
 			name:          "In progress tasks query",
@@ -207,18 +207,18 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			},
 		},
 		{
-		name:          "Urgent tasks query",
-		query:         "acil",
-		expectedCount: 4, // Mock returns all tasks for unknown filter
-		expectedTasks: []string{},
-		description:   "Should return urgent tasks",
+			name:          "Urgent tasks query",
+			query:         "acil",
+			expectedCount: 4, // Mock returns all tasks for unknown filter
+			expectedTasks: []string{},
+			description:   "Should return urgent tasks",
 		},
 		{
-		name:          "Overdue tasks query",
-		query:         "gecikmiş",
-		expectedCount: 4, // Mock returns all tasks for unknown filter
-		expectedTasks: []string{},
-		description:   "Should return overdue tasks",
+			name:          "Overdue tasks query",
+			query:         "gecikmiş",
+			expectedCount: 4, // Mock returns all tasks for unknown filter
+			expectedTasks: []string{},
+			description:   "Should return overdue tasks",
 		},
 		{
 			name:          "Tag-based query",
@@ -315,8 +315,8 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			description:   "Should match tasks containing all search terms",
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				for _, task := range tasks {
-				taskText := task.Baslik + " " + task.Aciklama
-				if !(containsText(taskText, "feature") && containsText(taskText, "implementation")) {
+					taskText := task.Baslik + " " + task.Aciklama
+					if !(containsText(taskText, "feature") && containsText(taskText, "implementation")) {
 						t.Errorf("Expected task to contain both 'feature' and 'implementation' for query '%s'", query)
 					}
 				}
@@ -344,33 +344,33 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			description:   "Should perform case-insensitive search",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result, err := acy.NLPQuery(tc.query)
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error for query '%s': %v", tc.query, err)
 				return
 			}
-			
+
 			if len(result) != tc.expectedCount {
-				t.Errorf("Expected %d tasks for query '%s', got %d. Description: %s", 
+				t.Errorf("Expected %d tasks for query '%s', got %d. Description: %s",
 					tc.expectedCount, tc.query, len(result), tc.description)
 			}
-			
+
 			// Run custom validation if provided
 			if tc.validateResult != nil {
 				tc.validateResult(t, result, tc.query)
 			}
-			
+
 			// Verify expected task IDs are present
 			if len(tc.expectedTasks) > 0 {
 				resultIDs := make(map[string]bool)
 				for _, task := range result {
 					resultIDs[task.ID] = true
 				}
-				
+
 				for _, expectedID := range tc.expectedTasks {
 					if !resultIDs[expectedID] {
 						t.Errorf("Expected task '%s' in results for query '%s'", expectedID, tc.query)
@@ -385,12 +385,12 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 func TestAIContextYonetici_NLPQueryWithAutoStateManager(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	// Set up AutoStateManager
 	asm := YeniAutoStateManager(vy)
 	acy.SetAutoStateManager(asm)
 	asm.SetAIContextManager(acy)
-	
+
 	// Create a test task
 	testTask := &Gorev{
 		ID:              "auto-test-1",
@@ -402,20 +402,20 @@ func TestAIContextYonetici_NLPQueryWithAutoStateManager(t *testing.T) {
 		GuncellemeTarih: time.Now(),
 	}
 	vy.gorevler["auto-test-1"] = testTask
-	
+
 	// Test with AutoStateManager integration
 	result, err := acy.NLPQuery("show me all tasks")
-	
+
 	if err != nil {
 		t.Errorf("Unexpected error with AutoStateManager: %v", err)
 		return
 	}
-	
+
 	// Should get structured result from AutoStateManager
 	if len(result) == 0 {
 		t.Error("Expected results from AutoStateManager integration")
 	}
-	
+
 	// Test fallback when AutoStateManager fails
 	// This is harder to test without modifying the AutoStateManager to fail
 	// In real scenario, we'd test this by making the AutoStateManager return an error
@@ -425,9 +425,9 @@ func TestAIContextYonetici_NLPQueryWithAutoStateManager(t *testing.T) {
 func TestAIContextYonetici_BasicNLPQueryFallback(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	// Don't set AutoStateManager - should fall back to basicNLPQuery
-	
+
 	// Create test tasks
 	task := &Gorev{
 		ID:              "fallback-1",
@@ -439,14 +439,14 @@ func TestAIContextYonetici_BasicNLPQueryFallback(t *testing.T) {
 		GuncellemeTarih: time.Now(),
 	}
 	vy.gorevler["fallback-1"] = task
-	
+
 	result, err := acy.NLPQuery("fallback test")
-	
+
 	if err != nil {
 		t.Errorf("Unexpected error in fallback: %v", err)
 		return
 	}
-	
+
 	if len(result) != 1 || result[0].ID != "fallback-1" {
 		t.Error("Expected fallback to basic NLP processing")
 	}
@@ -456,7 +456,7 @@ func TestAIContextYonetici_BasicNLPQueryFallback(t *testing.T) {
 func TestAIContextYonetici_NLPQueryEdgeCases(t *testing.T) {
 	vy := NewMockVeriYonetici()
 	acy := YeniAIContextYonetici(vy)
-	
+
 	testCases := []struct {
 		name        string
 		query       string
@@ -493,7 +493,7 @@ func TestAIContextYonetici_NLPQueryEdgeCases(t *testing.T) {
 			description: "Should handle Unicode characters",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.setupError {
@@ -502,22 +502,22 @@ func TestAIContextYonetici_NLPQueryEdgeCases(t *testing.T) {
 			} else {
 				vy.shouldReturnError = false
 			}
-			
+
 			result, err := acy.NLPQuery(tc.query)
-			
+
 			if tc.expectError {
 				if err == nil {
 					t.Errorf("Expected error for %s", tc.description)
 				}
 			} else {
-			if err != nil {
-				t.Errorf("Unexpected error for %s: %v", tc.description, err)
+				if err != nil {
+					t.Errorf("Unexpected error for %s: %v", tc.description, err)
+				}
+				// Result can be empty, that's fine for edge cases, but should not be nil
+				// Note: Some edge cases might return nil, so we'll be lenient here
+				_ = result // Just acknowledge the result
 			}
-			// Result can be empty, that's fine for edge cases, but should not be nil
-			// Note: Some edge cases might return nil, so we'll be lenient here
-			_ = result // Just acknowledge the result
-			}
-			
+
 			// Reset error state
 			vy.shouldReturnError = false
 		})

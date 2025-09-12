@@ -48,7 +48,7 @@ func NewIDEDetector() *IDEDetector {
 func (d *IDEDetector) DetectAllIDEs() (map[IDEType]*IDEInfo, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	
+
 	// Clear previous detections
 	d.detectedIDEs = make(map[IDEType]*IDEInfo)
 
@@ -75,7 +75,7 @@ func (d *IDEDetector) DetectAllIDEs() (map[IDEType]*IDEInfo, error) {
 func (d *IDEDetector) GetDetectedIDE(ideType IDEType) (*IDEInfo, bool) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	
+
 	ide, exists := d.detectedIDEs[ideType]
 	return ide, exists
 }
@@ -84,7 +84,7 @@ func (d *IDEDetector) GetDetectedIDE(ideType IDEType) (*IDEInfo, bool) {
 func (d *IDEDetector) GetAllDetectedIDEs() map[IDEType]*IDEInfo {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	
+
 	// Return a copy to avoid sharing the map reference
 	result := make(map[IDEType]*IDEInfo)
 	for k, v := range d.detectedIDEs {

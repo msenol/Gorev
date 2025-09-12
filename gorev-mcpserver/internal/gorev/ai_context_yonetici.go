@@ -3,7 +3,6 @@ package gorev
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -71,7 +70,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	// Validate task exists
 	gorev, err := acy.veriYonetici.GorevGetir(taskID)
 	if err != nil {
-	return errors.New(i18n.TEntityNotFound("task", err))
+		return errors.New(i18n.TEntityNotFound("task", err))
 	}
 
 	// Get current context
@@ -98,19 +97,19 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 
 	// Save context
 	if err := acy.saveContextUnsafe(context); err != nil {
-	return errors.New(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
+		return errors.New(i18n.T("error.contextSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Record interaction
 	if err := acy.recordInteraction(taskID, "set_active", nil); err != nil {
-		return fmt.Errorf(i18n.T("error.interactionSaveFailed", map[string]interface{}{"Error": err}))
+		return errors.New(i18n.T("error.interactionSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Auto-transition to constants.TaskStatusInProgress if task is in constants.TaskStatusPending
 	if gorev.Durum == constants.TaskStatusPending {
 		gorev.Durum = constants.TaskStatusInProgress
 		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": constants.TaskStatusInProgress}); err != nil {
-			return fmt.Errorf(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
+			return errors.New(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
 
@@ -234,7 +233,7 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 	if gorev.Durum == constants.TaskStatusPending {
 		gorev.Durum = constants.TaskStatusInProgress
 		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": constants.TaskStatusInProgress}); err != nil {
-			return fmt.Errorf(i18n.T("error.autoStatusUpdateFailed", map[string]interface{}{"Error": err}))
+			return errors.New(i18n.T("error.autoStatusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 		// Record the state change
 		if err := acy.recordInteraction(taskID, "updated", map[string]interface{}{

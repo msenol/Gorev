@@ -589,6 +589,16 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     }
 
     /**
+     * Tüm seçimleri temizler
+     */
+    clearSelection(): void {
+        this.selection.selectedTasks.clear();
+        this.selection.lastSelectedTask = undefined;
+        this.selection.anchorTask = undefined;
+        this._onDidChangeTreeData.fire();
+    }
+
+    /**
      * Event handler'ları ayarlar
      */
     setEventHandlers(events: TreeViewEvents): void {

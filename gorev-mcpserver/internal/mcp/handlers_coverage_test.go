@@ -1232,7 +1232,7 @@ func TestGorevContextSummary_EdgeCases(t *testing.T) {
 	})
 
 	// Set active task
-_, _ = handlers.GorevSetActive(map[string]interface{}{"task_id": highPrioID})
+	_, _ = handlers.GorevSetActive(map[string]interface{}{"task_id": highPrioID})
 
 	// Get context summary
 	result, err = handlers.GorevContextSummary(map[string]interface{}{})
@@ -1621,9 +1621,9 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 			projeGoster: true,
 			expectContains: []string{
 				"Full Task",
-				"(D)",  // durum
+				"(D)",      // durum
 				"3 etiket", // tags count format
-				"🔒",   // dependency indicator
+				"🔒",        // dependency indicator
 			},
 		},
 		{
