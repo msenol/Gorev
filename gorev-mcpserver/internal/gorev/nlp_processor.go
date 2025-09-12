@@ -98,7 +98,7 @@ func (nlp *NLPProcessor) parseAction(query string) string {
 		},
 		"update": {
 			"güncelle", "değiştir", "düzenle", "revize et",
-			"update", "modify", "edit", "change",
+			"update task", "modify", "edit", "change",
 		},
 		"complete": {
 			"tamamla", "bitir", "kapat", "hallettim", "bitti",
@@ -118,8 +118,39 @@ func (nlp *NLPProcessor) parseAction(query string) string {
 		},
 	}
 
+	// First check for more specific multi-word patterns
+	specificPatterns := []struct {
+		action  string
+		pattern string
+	}{
+		{"create", "create task"},
+		{"create", "new task"},
+		{"create", "add task"},
+		{"create", "make task"},
+		{"create", "görev oluştur"},
+		{"create", "yeni görev"},
+		{"update", "update task"},
+		{"list", "show tasks"},
+		{"list", "list tasks"},
+		{"list", "görevleri göster"},
+		{"complete", "complete task"},
+		{"delete", "delete task"},
+	}
+
+	// Check specific patterns first
+	for _, sp := range specificPatterns {
+		if strings.Contains(query, sp.pattern) {
+			return sp.action
+		}
+	}
+
+	// Then check single word patterns
 	for action, patterns := range actionPatterns {
 		for _, pattern := range patterns {
+			// Skip patterns that have already been checked as multi-word
+			if len(strings.Fields(pattern)) > 1 {
+				continue
+			}
 			if strings.Contains(query, pattern) {
 				return action
 			}

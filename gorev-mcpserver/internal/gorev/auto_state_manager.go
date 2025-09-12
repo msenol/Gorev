@@ -291,9 +291,20 @@ func (asm *AutoStateManager) checkDependenciesCompleted(taskID string) (bool, er
 
 // getSubtasks returns all subtasks for a given parent task
 func (asm *AutoStateManager) getSubtasks(parentID string) ([]*Gorev, error) {
-	// This would need to be implemented based on your existing subtask querying logic
-	// For now, returning empty slice - you'll need to add the actual implementation
-	return []*Gorev{}, nil
+	// Query all tasks and filter by ParentID
+	allTasks, err := asm.veriYonetici.GorevleriGetir("", "", "")
+	if err != nil {
+		return nil, err
+	}
+	
+	var subtasks []*Gorev
+	for _, task := range allTasks {
+		if task.ParentID == parentID {
+			subtasks = append(subtasks, task)
+		}
+	}
+	
+	return subtasks, nil
 }
 
 // Cleanup stops all active timers
