@@ -454,7 +454,7 @@ func SetupI18nTest(lang string) (*I18nTestHelper, func()) {
 	cleanup := func() {
 		// Restore original language if needed
 		if helper.OriginalLang != "" {
-			i18n.SetLanguage(helper.OriginalLang)
+			_ = i18n.SetLanguage(helper.OriginalLang)
 		}
 	}
 

@@ -24,6 +24,13 @@ type MockVeriYonetici struct {
 	aktifProjeID  string
 	aktifProjeSet bool
 
+	// AI Context specific data for tests
+	aiContext         *AIContext
+	interactions      []*AIInteraction
+	todayInteractions []*AIInteraction
+	allTasks          []*Gorev
+	tags              map[string]*Etiket
+
 	// Control behavior
 	shouldFailGorevKaydet    bool
 	shouldFailGorevGetir     bool
@@ -36,13 +43,20 @@ type MockVeriYonetici struct {
 	shouldFailGorevListele   bool
 	shouldFailAktifProje     bool
 	shouldFailBaglantiEkle   bool
+	shouldReturnError        bool
+	errorToReturn            error
 }
 
 func NewMockVeriYonetici() *MockVeriYonetici {
 	return &MockVeriYonetici{
-		gorevler:    make(map[string]*Gorev),
-		projeler:    make(map[string]*Proje),
-		baglantilar: make([]*Baglanti, 0),
+		gorevler:          make(map[string]*Gorev),
+		projeler:          make(map[string]*Proje),
+		baglantilar:       make([]*Baglanti, 0),
+		tags:              make(map[string]*Etiket),
+		aiContext:         &AIContext{RecentTasks: []string{}, SessionData: make(map[string]interface{})},
+		interactions:      []*AIInteraction{},
+		todayInteractions: []*AIInteraction{},
+		shouldReturnError: false,
 	}
 }
 func (m *MockVeriYonetici) AktifProjeAyarla(projeID string) error {
@@ -96,6 +110,16 @@ func (m *MockVeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gore
 	if m.shouldFailGorevleriGetir {
 		return nil, errors.New("mock error: gorevleri getir failed")
 	}
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	
+	// If allTasks is populated (for tests), use that
+	if len(m.allTasks) > 0 {
+		return m.allTasks, nil
+	}
+	
+	// Otherwise, use the map
 	var result []*Gorev
 	for _, gorev := range m.gorevler {
 		if durum == "" || gorev.Durum == durum {
@@ -109,11 +133,46 @@ func (m *MockVeriYonetici) GorevGuncelle(taskID string, params interface{}) erro
 	if m.shouldFailGorevGuncelle {
 		return errors.New("mock error: gorev guncelle failed")
 	}
-	if _, ok := m.gorevler[taskID]; !ok {
+	gorev, ok := m.gorevler[taskID]
+	if !ok {
 		return errors.New("görev bulunamadı")
 	}
-	// In a real implementation, params would be used to update the task
-	// For mock, we just keep the existing task
+	
+	// Apply updates from params map
+	if updateParams, ok := params.(map[string]interface{}); ok {
+		for key, value := range updateParams {
+			switch key {
+			case "baslik":
+				if val, ok := value.(string); ok {
+					gorev.Baslik = val
+				}
+			case "aciklama":
+				if val, ok := value.(string); ok {
+					gorev.Aciklama = val
+				}
+			case "durum":
+				if val, ok := value.(string); ok {
+					gorev.Durum = val
+				}
+			case "oncelik":
+				if val, ok := value.(string); ok {
+					gorev.Oncelik = val
+				}
+			case "proje_id":
+				if val, ok := value.(string); ok {
+					gorev.ProjeID = val
+				}
+			case "parent_id":
+				if val, ok := value.(string); ok {
+					gorev.ParentID = val
+				}
+			case "guncelleme_tarih":
+				if val, ok := value.(time.Time); ok {
+					gorev.GuncellemeTarih = val
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -208,13 +267,71 @@ func (m *MockVeriYonetici) Kapat() error {
 	return nil
 }
 
+func (m *MockVeriYonetici) EtiketleriGetir() ([]*Etiket, error) {
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	var result []*Etiket
+	for _, tag := range m.tags {
+		result = append(result, tag)
+	}
+	return result, nil
+}
+
+func (m *MockVeriYonetici) EtiketOlustur(isim string) (*Etiket, error) {
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	tag := &Etiket{ID: "tag-" + isim, Isim: isim}
+	m.tags[tag.ID] = tag
+	return tag, nil
+}
+
 func (m *MockVeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error) {
-	// Mock implementation
-	return []*Etiket{}, nil
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	var result []*Etiket
+	for _, isim := range isimler {
+		// Try to find existing tag
+		var found *Etiket
+		for _, tag := range m.tags {
+			if tag.Isim == isim {
+				found = tag
+				break
+			}
+		}
+		if found != nil {
+			result = append(result, found)
+		} else {
+			// Create new tag
+			tag, _ := m.EtiketOlustur(isim)
+			result = append(result, tag)
+		}
+	}
+	return result, nil
+}
+
+func (m *MockVeriYonetici) GorevEtiketleriniGetir(gorevID string) ([]*Etiket, error) {
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	gorev, exists := m.gorevler[gorevID]
+	if !exists {
+		return nil, errors.New("task not found")
+	}
+	return gorev.Etiketler, nil
 }
 
 func (m *MockVeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
-	// Mock implementation
+	if m.shouldReturnError {
+		return m.errorToReturn
+	}
+	gorev, exists := m.gorevler[gorevID]
+	if !exists {
+		return errors.New("task not found")
+	}
+	gorev.Etiketler = etiketler
 	return nil
 }
 
@@ -327,27 +444,43 @@ func (m *MockVeriYonetici) DaireBagimliligiKontrolEt(gorevID, hedefParentID stri
 
 // AI Context Management methods
 func (m *MockVeriYonetici) AIContextGetir() (*AIContext, error) {
-	return &AIContext{
-		RecentTasks: []string{},
-		SessionData: make(map[string]interface{}),
-		LastUpdated: time.Now(),
-	}, nil
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	return m.aiContext, nil
 }
 
 func (m *MockVeriYonetici) AIContextKaydet(context *AIContext) error {
+	if m.shouldReturnError {
+		return m.errorToReturn
+	}
+	m.aiContext = context
 	return nil
 }
 
 func (m *MockVeriYonetici) AIInteractionKaydet(interaction *AIInteraction) error {
+	if m.shouldReturnError {
+		return m.errorToReturn
+	}
+	m.interactions = append(m.interactions, interaction)
 	return nil
 }
 
 func (m *MockVeriYonetici) AIInteractionlariGetir(limit int) ([]*AIInteraction, error) {
-	return []*AIInteraction{}, nil
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	if limit <= 0 || limit >= len(m.interactions) {
+		return m.interactions, nil
+	}
+	return m.interactions[:limit], nil
 }
 
 func (m *MockVeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) {
-	return []*AIInteraction{}, nil
+	if m.shouldReturnError {
+		return nil, m.errorToReturn
+	}
+	return m.todayInteractions, nil
 }
 
 func (m *MockVeriYonetici) AILastInteractionGuncelle(taskID string, timestamp time.Time) error {
@@ -415,6 +548,7 @@ func (m *MockVeriYonetici) GorevOlustur(params map[string]interface{}) (string, 
 func (m *MockVeriYonetici) GorevBagimlilikGetir(gorevID string) ([]*Gorev, error) {
 	return nil, nil
 }
+
 
 func (m *MockVeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map[string]int, error) {
 	result := make(map[string]int)
