@@ -911,10 +911,10 @@ The NLP Processor represents a significant advancement in Gorev's natural langua
 
 ### 📚 Additional Resources
 
-- **[API Documentation](../api/nlp-endpoints.md)**: REST API endpoints
+- **[API Documentation](../api/reference.md)**: REST API endpoints
 - **[Testing Guide](testing-strategy.md)**: Comprehensive testing documentation  
-- **[Performance Tuning](performance-optimization.md)**: Optimization techniques
-- **[Contributing](../contributing/nlp-contributions.md)**: How to contribute to NLP development
+- **[Performance Tuning](testing-strategy.md)**: Optimization techniques
+- **[Contributing](contributing.md)**: How to contribute to NLP development
 
 ---
 

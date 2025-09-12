@@ -304,8 +304,8 @@ DRY Compliance Score: 95% ✅
 **Example of Excellent DRY Implementation:**
 ```markdown
 <!-- ✅ GOOD: Single source referenced multiple times -->
-For installation instructions, see [Installation Guide](../installation.md)
-For AI setup, see [AI Integration](ai-integration.md#setup)
+For installation instructions, see [Installation Guide](../guides/getting-started/installation.md)
+For AI setup, see [Usage Guide](../guides/user/usage.md)
 
 <!-- ❌ AVOIDED: Duplicate installation instructions in multiple files -->
 ```

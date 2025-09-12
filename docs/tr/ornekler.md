@@ -273,9 +273,9 @@ gorev_bagimlilik_ekle(kaynak_id=47, hedef_id=45, baglanti_tipi="tamamlanmali")
 
 ## İlgili Dokümantasyon
 
-- [MCP Araçları Referansı](mcp-araclari.md)
-- [Kullanım Kılavuzu](kullanim.md)
-- [API Referansı](api-referans.md)
+- [MCP Araçları Referansı](../guides/user/mcp-tools.md)
+- [Kullanım Kılavuzu](../guides/user/usage.md)
+- [API Referansı](../api/reference.md)
 
 ---
 

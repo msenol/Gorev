@@ -7,8 +7,8 @@
 🇹🇷 **Türkçe** | **[🇺🇸 English Documentation](../en/README.md)**
 
 [![Kapsam](https://img.shields.io/badge/Kapsam-90%25-brightgreen?style=flat-square)](../development/testing-strategy.md)
-[![Güvenlik](https://img.shields.io/badge/Güvenlik-A+-green?style=flat-square)](../security/compliance-report.md)
-[![Performans](https://img.shields.io/badge/Yanıt-25ms-blue?style=flat-square)](../performance/benchmarks.md)
+[![Güvenlik](https://img.shields.io/badge/Güvenlik-A+-green?style=flat-square)](../security/thread-safety.md)
+[![Performans](https://img.shields.io/badge/Yanıt-25ms-blue?style=flat-square)](../development/testing-strategy.md)
 
 **Doğal Dil İşleme ile AI Destekli Görev Yönetimi**
 
@@ -46,9 +46,9 @@ gorev serve
 - **[Konfigürasyon](konfigürasyon.md)** - Sistem yapılandırması ve özelleştirme
 
 ### 👤 **Kullanıcı Rehberleri**
-- **[MCP Araçları Referansı](../user-guide/mcp-tools.md)** - Kapsamlı MCP araç dokümantasyonu
-- **[VS Code Eklentisi](../user-guide/vscode-extension.md)** - VS Code entegrasyonu rehberi
-- **[AI Entegrasyonu](../user-guide/ai-integration.md)** - Claude, GPT ve AI asistan kurulumu
+- **[MCP Araçları Referansı](../guides/user/mcp-tools.md)** - Kapsamlı MCP araç dokümantasyonu
+- **[VS Code Eklentisi](../guides/user/vscode-extension.md)** - VS Code entegrasyonu rehberi
+- **[AI Entegrasyonu](../guides/user/usage.md)** - Claude, GPT ve AI asistan kullanımı
 - **[Doğal Dil İşleme](nlp-kullanimi.md)** - NLP özelliklerini etkili kullanma
 - **[Şablonlar ve İş Akışları](sablonlar.md)** - Şablon sistemi ve iş akışı otomasyonu
 - **[Proje Yönetimi](proje-yonetimi.md)** - Gelişmiş proje organizasyonu
@@ -62,16 +62,16 @@ gorev serve
 - **[Geliştirme Kurulumu](gelistirme-kurulumu.md)** - Geliştirici ortamı yapılandırması
 
 ### 🔐 **Güvenlik ve Performans**
-- **[Güvenlik Uyumluluğu](../security/compliance-report.md)** - Güvenlik denetimi ve uyumluluk
-- **[Performans Optimizasyonu](../performance/optimization.md)** - Performans ayarlama rehberi
-- **[İzleme ve Gözlemlenebilirlik](../monitoring/observability.md)** - Sistem izleme kurulumu
+- **[Güvenlik Rehberi](../security/thread-safety.md)** - Güvenlik en iyi uygulamaları
+- **[Test Stratejisi](../development/testing-strategy.md)** - Performans ve test stratejileri
+- **[Hata Ayıklama](../debugging/)** - Sistem hata ayıklama rehberi
 - **[En İyi Uygulamalar](en-iyi-uygulamalar.md)** - Production dağıtım en iyi uygulamaları
 
 ### 🚀 **Dağıtım ve Operasyonlar**
-- **[Production Dağıtımı](../deployment/production.md)** - Production dağıtım rehberi
-- **[Docker ve Kubernetes](../deployment/containers.md)** - Konteyner dağıtımı
-- **[Bulut Dağıtımı](../deployment/cloud.md)** - AWS, Azure, GCP dağıtımı
-- **[Yedekleme ve Kurtarma](../deployment/backup.md)** - Veri yedekleme ve kurtarma
+- **[Geliştirme Rehberi](../development/contributing.md)** - Production dağıtım rehberi
+- **[Mimari Rehberi](../architecture/technical-specification-v2.md)** - Sistem mimarisi
+- **[API Referansı](../api/MCP_TOOLS_REFERENCE.md)** - MCP araçları referansı
+- **[Mimari İnceleme](../architecture/architecture-v2.md)** - Sistem mimarisi detayları
 
 ---
 
@@ -152,14 +152,14 @@ func GorevOlusturKotu(baslik string) *Gorev {
 ### 🆕 **Yeni Kullanıcılar**
 1. **[Kurulum Rehberi](kurulum.md)** - Gorev'i çalışır hale getirin
 2. **[İlk Adımlar](ilk-adimlar.md)** - İlk görevlerinizi oluşturun
-3. **[VS Code Eklentisi](../user-guide/vscode-extension.md)** - Görsel arayüz kurulumu
-4. **[AI Entegrasyonu](../user-guide/ai-integration.md)** - Claude/GPT ile bağlantı
+3. **[VS Code Eklentisi](../guides/user/vscode-extension.md)** - Görsel arayüz kurulumu
+4. **[Kullanım Rehberi](../guides/user/usage.md)** - AI entegrasyonu ve kullanım
 
 ### 💼 **İleri Düzey Kullanıcılar**
 1. **[Proje Yönetimi](proje-yonetimi.md)** - Gelişmiş organizasyon
 2. **[Şablonlar ve İş Akışları](sablonlar.md)** - Otomasyon ve verimlilik
 3. **[Doğal Dil İşleme](nlp-kullanimi.md)** - Gelişmiş NLP özellikleri
-4. **[Performans Optimizasyonu](../performance/optimization.md)** - Ölçek için ayarlama
+4. **[Test ve Performans](../development/testing-strategy.md)** - Ölçek için ayarlama
 
 ### 👩‍💻 **Geliştiriciler**
 1. **[Sistem Mimarisi](../development/architecture-v2.md)** - Sistemi anlayın
@@ -168,10 +168,10 @@ func GorevOlusturKotu(baslik string) *Gorev {
 4. **[Katkıda Bulunma Rehberi](../development/contributing.md)** - Katkı yapın
 
 ### 🏢 **Sistem Yöneticileri**
-1. **[Production Dağıtımı](../deployment/production.md)** - Kurumsal dağıtım
-2. **[Güvenlik Uyumluluğu](../security/compliance-report.md)** - Güvenlik gereksinimleri
-3. **[İzleme Kurulumu](../monitoring/observability.md)** - Operasyonel izleme
-4. **[Yedekleme ve Kurtarma](../deployment/backup.md)** - Veri koruması
+1. **[Kurulum Rehberi](../guides/getting-started/installation.md)** - Kurumsal kurulum
+2. **[Güvenlik Rehberi](../security/thread-safety.md)** - Güvenlik gereksinimleri
+3. **[Hata Ayıklama](../debugging/)** - Operasyonel hata ayıklama
+4. **[Geliştirme Rehberi](../development/contributing.md)** - Veri koruması ve geliştirme
 
 ---
 
@@ -182,18 +182,18 @@ func GorevOlusturKotu(baslik string) *Gorev {
 #### **Göreve Göre**
 - **Kurulum**: [Kurulum Rehberi](kurulum.md)
 - **Görev Oluşturma**: [İlk Adımlar](ilk-adimlar.md#gorev-olusturma)
-- **AI Kullanımı**: [AI Entegrasyonu](../user-guide/ai-integration.md)
+- **AI Kullanımı**: [Kullanım Rehberi](../guides/user/usage.md)
 - **Sorun Giderme**: [Sorun Giderme Rehberi](sorun-giderme.md)
 
 #### **Teknolojiye Göre**
-- **VS Code**: [Eklenti Rehberi](../user-guide/vscode-extension.md)
-- **Claude Desktop**: [Claude Kurulumu](../user-guide/ai-integration.md#claude-desktop)
-- **Docker**: [Konteyner Dağıtımı](../deployment/containers.md)
-- **Kubernetes**: [K8s Dağıtımı](../deployment/containers.md#kubernetes)
+- **VS Code**: [Eklenti Rehberi](../guides/user/vscode-extension.md)
+- **Claude Desktop**: [Kullanım Rehberi](../guides/user/usage.md)
+- **Docker**: [Kurulum Rehberi](../guides/getting-started/installation.md)
+- **API**: [MCP Araçları](../api/MCP_TOOLS_REFERENCE.md)
 
 #### **Konuya Göre**
-- **Performans**: [Optimizasyon Rehberi](../performance/optimization.md)
-- **Güvenlik**: [Güvenlik Uyumluluğu](../security/compliance-report.md)
+- **Performans**: [Test Stratejisi](../development/testing-strategy.md)
+- **Güvenlik**: [Güvenlik Rehberi](../security/thread-safety.md)
 - **Test**: [Test Stratejisi](../development/testing-strategy.md)
 - **Mimari**: [Sistem Tasarımı](../development/architecture-v2.md)
 
@@ -204,19 +204,19 @@ func GorevOlusturKotu(baslik string) *Gorev {
 ### 🤖 **AI Asistanları**
 | Asistan | Durum | Kurulum Rehberi | Özellikler |
 |---------|-------|-----------------|------------|
-| **Claude Desktop** | ✅ Tam Destek | [Kurulum Rehberi](../user-guide/ai-integration.md#claude-desktop) | NLP, Ses Komutları |
-| **VS Code Copilot** | ✅ Tam Destek | [Kurulum Rehberi](../user-guide/ai-integration.md#vs-code) | Kod Entegrasyonu |
-| **ChatGPT** | 🚧 Beta | [Kurulum Rehberi](../user-guide/ai-integration.md#chatgpt) | Temel Komutlar |
-| **Windsurf** | ✅ Tam Destek | [Kurulum Rehberi](../user-guide/ai-integration.md#windsurf) | MCP Entegrasyonu |
-| **Cursor** | ✅ Tam Destek | [Kurulum Rehberi](../user-guide/ai-integration.md#cursor) | Kod Asistanı |
+| **Claude Desktop** | ✅ Tam Destek | [Kullanım Rehberi](../guides/user/usage.md) | NLP, AI Entegrasyon |
+| **VS Code Extension** | ✅ Tam Destek | [VS Code Rehberi](../guides/user/vscode-extension.md) | Kod Entegrasyonu |
+| **MCP Araçları** | ✅ Tam Destek | [MCP Referansı](../api/MCP_TOOLS_REFERENCE.md) | Temel Komutlar |
+| **API Kullanımı** | ✅ Tam Destek | [API Referansı](../api/reference.md) | MCP Entegrasyonu |
+| **Cursor** | ✅ Tam Destek | [Kullanım Rehberi](../guides/user/usage.md) | Kod Asistanı |
 
 ### 💻 **Geliştirme Araçları**
 | Araç | Entegrasyon | Dokümantasyon | Amaç |
 |------|-------------|---------------|------|
-| **VS Code** | Native Eklenti | [Eklenti Rehberi](../user-guide/vscode-extension.md) | Görsel Arayüz |
+| **VS Code** | Native Eklenti | [Eklenti Rehberi](../guides/user/vscode-extension.md) | Görsel Arayüz |
 | **CLI** | Dahili | [CLI Referansı](cli-referansi.md) | Komut Satırı |
 | **REST API** | Mevcut | [API Referansı](api-referansi.md) | Özel Entegrasyon |
-| **Docker** | Resmi İmajlar | [Konteyner Rehberi](../deployment/containers.md) | Konteynerleştirme |
+| **Docker** | Resmi İmajlar | [Kurulum Rehberi](../guides/getting-started/installation.md) | Konteynerleştirme |
 
 ---
 
@@ -292,11 +292,11 @@ Dokümantasyon değişikliklerini göndermeden önce:
 ### 🚀 **Hızlı Başlangıç Yolu (30 dakika)**
 1. ⚡ [Kurulum](kurulum.md) (10 dk)
 2. 📝 [İlk görev oluşturma](ilk-adimlar.md) (10 dk)
-3. 🤖 [AI entegrasyonu](../user-guide/ai-integration.md) (10 dk)
+3. 🤖 [AI kullanımı](../guides/user/usage.md) (10 dk)
 
 ### 📚 **Kapsamlı Öğrenme Yolu (2 saat)**
 1. 📖 [Temel kavramlar](temel-kavramlar.md) (20 dk)
-2. 🎨 [VS Code eklentisi](../user-guide/vscode-extension.md) (30 dk)
+2. 🎨 [VS Code eklentisi](../guides/user/vscode-extension.md) (30 dk)
 3. 🧠 [NLP kullanımı](nlp-kullanimi.md) (30 dk)
 4. 📋 [Şablonlar ve otomatizasyon](sablonlar.md) (40 dk)
 
@@ -307,10 +307,10 @@ Dokümantasyon değişikliklerini göndermeden önce:
 4. 🤝 [İlk katkı](../development/contributing.md) (2 saat)
 
 ### 🏢 **Yönetici Yolu (4 saat)**
-1. 🚀 [Production dağıtımı](../deployment/production.md) (1.5 saat)
-2. 🔐 [Güvenlik yapılandırması](../security/compliance-report.md) (1 saat)
-3. 📊 [İzleme kurulumu](../monitoring/observability.md) (1 saat)
-4. 💾 [Yedekleme stratejisi](../deployment/backup.md) (30 dk)
+1. 🚀 [Kurulum rehberi](../guides/getting-started/installation.md) (1.5 saat)
+2. 🔐 [Güvenlik rehberi](../security/thread-safety.md) (1 saat)
+3. 📊 [Hata ayıklama](../debugging/) (1 saat)
+4. 💾 [Test stratejisi](../development/testing-strategy.md) (30 dk)
 
 ---
 

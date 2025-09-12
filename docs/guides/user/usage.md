@@ -283,6 +283,6 @@ Görevler arası bağımlılıklar tanımlayabilirsiniz:
 
 ## 🚀 Sonraki Adımlar
 
-- [MCP Araçları Referansı](mcp-araclari.md) - Tüm komutların detaylı açıklaması
-- [Örnekler](ornekler.md) - Gerçek kullanım senaryoları
-- [Mimari](mimari.md) - Sistem nasıl çalışır?
+- [MCP Araçları Referansı](mcp-tools.md) - Tüm komutların detaylı açıklaması
+- [Örnekler](../../tr/ornekler.md) - Gerçek kullanım senaryoları
+- [Mimari](../../architecture/technical-specification-v2.md) - Sistem nasıl çalışır?

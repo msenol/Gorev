@@ -1079,10 +1079,10 @@ Gorev v0.14.0's architecture represents a **mature, production-ready system** th
 
 ### 📚 Additional Resources
 
-- **[Performance Benchmarking](performance-benchmarking.md)**: Detailed performance analysis
-- **[Security Guidelines](../security/security-implementation.md)**: Security implementation details
-- **[Deployment Guide](../deployment/production-deployment.md)**: Production deployment strategies
-- **[Monitoring Setup](../monitoring/observability-setup.md)**: Comprehensive monitoring configuration
+- **[Performance Analysis](../development/testing-strategy.md)**: Detailed performance analysis
+- **[Security Guidelines](../security/thread-safety.md)**: Security implementation details
+- **[Installation Guide](../guides/getting-started/installation.md)**: Production deployment strategies
+- **[Debugging Guide](../debugging/)**: Comprehensive monitoring configuration
 
 ---
 

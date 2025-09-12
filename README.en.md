@@ -191,20 +191,20 @@ gorev help                 # Help
 
 For detailed documentation, see the [docs/](docs/) folder:
 
-- 📦 [Installation Guide](docs/getting-started/installation.md) - Platform-specific installation instructions
-- 📖 [Usage Guide](docs/user-guide/usage.md) - Detailed usage examples
-- 🛠 [MCP Tools](docs/user-guide/mcp-tools.md) - Complete reference for 29 MCP tools
-- 🤖 [AI MCP Tools](docs/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
-- 🏗 [System Architecture](docs/development/architecture.md) - Technical details
+- 📦 [Installation Guide](docs/guides/getting-started/installation.md) - Platform-specific installation instructions
+- 📖 [Usage Guide](docs/guides/user/usage.md) - Detailed usage examples
+- 🛠 [MCP Tools](docs/guides/user/mcp-tools.md) - Complete reference for 36 MCP tools
+- 🤖 [AI MCP Tools](docs/tr/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
+- 🏗 [System Architecture](docs/architecture/architecture-v2.md) - Technical details
 - 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
 - 💻 [Contributing Guide](docs/development/contributing.md) - How to contribute
-- 🎨 [VS Code Extension](docs/user-guide/vscode-extension.md) - Extension documentation
+- 🎨 [VS Code Extension](docs/guides/user/vscode-extension.md) - Extension documentation
 
 ### AI Assistant Documentation
 - 🌍 [CLAUDE.en.md](CLAUDE.en.md) - English AI assistant guidance
 - 🤖 [CLAUDE.md](CLAUDE.md) - Turkish AI assistant guidance
-- 📋 [MCP Tools Reference](docs/MCP_TOOLS_REFERENCE.md) - Detailed MCP tool documentation
-- 📚 [Development History](docs/DEVELOPMENT_HISTORY.md) - Complete project history
+- 📋 [MCP Tools Reference](docs/api/MCP_TOOLS_REFERENCE.md) - Detailed MCP tool documentation
+- 📚 [Development History](docs/development/TASKS.md) - Complete project history
 
 ## 🏗 Architecture
 

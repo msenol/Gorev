@@ -139,10 +139,10 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## 📚 Documentation Updates
 
 ### 📖 New Documentation
-- **[NLP Processor Guide](docs/development/nlp-processor.md)**: Comprehensive NLP documentation
-- **[Testing Strategy](docs/development/testing-strategy.md)**: Testing methodology and best practices
-- **[Security Compliance](docs/security/compliance-report.md)**: Security audit and compliance guide
-- **[Architecture v2.0](docs/development/architecture-v2.md)**: Updated system architecture
+- **[NLP Processor Guide](../development/nlp-processor.md)**: Comprehensive NLP documentation
+- **[Testing Strategy](../development/testing-strategy.md)**: Testing methodology and best practices
+- **[Security Compliance](../security/thread-safety.md)**: Security audit and compliance guide
+- **[Architecture v2.0](../architecture/architecture-v2.md)**: Updated system architecture
 
 ### 🌍 Bilingual Support
 - **Turkish Documentation**: Complete Turkish language documentation
@@ -250,7 +250,7 @@ Special thanks to all contributors who made v0.14.0 possible:
 - **[📚 Complete Documentation](https://github.com/msenol/gorev/tree/main/docs)**
 - **[🤖 Claude Integration Guide](CLAUDE.md)**
 - **[🛡️ Security Report](SECURITY_PERFORMANCE_REPORT.md)**
-- **[📈 Architecture Overview](docs/development/architecture-v2.md)**
+- **[📈 Architecture Overview](../architecture/architecture-v2.md)**
 
 ### Support
 - **[🐛 Bug Reports](https://github.com/msenol/gorev/issues)**

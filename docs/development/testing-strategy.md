@@ -1657,10 +1657,10 @@ Gorev v0.14.0's testing strategy represents a **comprehensive approach to softwa
 
 ### 📚 Additional Resources
 
-- **[Performance Benchmarking Guide](performance-benchmarking.md)**: Detailed performance testing strategies
-- **[CI/CD Best Practices](cicd-testing.md)**: Continuous integration testing patterns
-- **[Mock and Stub Guidelines](mocking-strategies.md)**: Testing with external dependencies
-- **[Security Testing](../security/security-testing.md)**: Security validation testing
+- **[Performance Analysis Guide](testing-guide.md)**: Detailed performance testing strategies
+- **[Development Guide](contributing.md)**: Continuous integration testing patterns
+- **[Testing Guidelines](testing-guide.md)**: Testing with external dependencies
+- **[Security Testing](../security/thread-safety.md)**: Security validation testing
 
 ---
 

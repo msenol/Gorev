@@ -473,6 +473,6 @@ Output panelinde "Gorev" kanalını seçerek detaylı logları görüntüleyebil
 
 <div align="center">
 
-📚 Daha fazla bilgi için [ana dokümantasyona](../README.md) bakın.
+📚 Daha fazla bilgi için [ana dokümantasyona](../../README.md) bakın.
 
 </div>

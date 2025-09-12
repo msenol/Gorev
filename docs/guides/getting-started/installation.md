@@ -340,10 +340,10 @@ rm -rf ~/.gorev  # WARNING: This deletes all your data
 
 After installation:
 
-1. **[Quick Start Guide](../user-guide/usage.md)** - Learn basic usage
-2. **[MCP Tools Reference](../user-guide/mcp-tools.md)** - Complete tool documentation
-3. **[VS Code Extension Guide](../user-guide/vscode-extension.md)** - Visual interface
-4. **[Troubleshooting](../user-guide/troubleshooting.md)** - Common issues and solutions
+1. **[Quick Start Guide](../user/usage.md)** - Learn basic usage
+2. **[MCP Tools Reference](../user/mcp-tools.md)** - Complete tool documentation
+3. **[VS Code Extension Guide](../user/vscode-extension.md)** - Visual interface
+4. **[Troubleshooting](../../debugging/)** - Common issues and solutions
 
 ## 💬 Support
 

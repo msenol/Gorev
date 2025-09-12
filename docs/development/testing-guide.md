@@ -724,5 +724,5 @@ func TestToolRegistryCategories(t *testing.T) {
 - [Go Testing Guide](https://go.dev/doc/tutorial/add-a-test)
 - [Mocha Documentation](https://mochajs.org/)
 - [Sinon.js Documentation](https://sinonjs.org/)
-- [Architecture Guide](architecture.md) - Refactoring patterns and improvements
+- [Architecture Guide](../architecture/architecture-v2.md) - Refactoring patterns and improvements
 - [Concurrency Guide](concurrency-guide.md) - Thread-safety testing patterns

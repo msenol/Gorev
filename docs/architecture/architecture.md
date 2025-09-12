@@ -440,8 +440,8 @@ func FormatInvalidValue(param, value, expected string) string
 
 ## 📚 İlgili Dokümantasyon
 
-- [API Referansı](api-referans.md) - Detaylı API dokümantasyonu
-- [Geliştirici Rehberi](gelistirme.md) - Katkıda bulunma
+- [API Referansı](../api/reference.md) - Detaylı API dokümantasyonu
+- [Geliştirici Rehberi](../development/contributing.md) - Katkıda bulunma
 - [MCP Protokolü](https://modelcontextprotocol.io) - MCP spesifikasyonu
 - [Thread-Safety Guide](../security/thread-safety.md) - Concurrency patterns
-- [Testing Guide](testing-guide.md) - Comprehensive testing strategies
+- [Testing Guide](../development/testing-strategy.md) - Comprehensive testing strategies

@@ -4,7 +4,7 @@ Gorev'in sağladığı 29 MCP tool'unun detaylı açıklaması.
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` artık kullanılamaz! Template kullanımı zorunludur. Detaylar için [templateden_gorev_olustur](#templateden_gorev_olustur) bölümüne bakın.
 
-> **Not**: AI Context Management araçları için [AI MCP Araçları Dokümantasyonu](../mcp-araclari-ai.md)'na bakın.
+> **Not**: AI Context Management araçları için [AI MCP Araçları Dokümantasyonu](../../tr/mcp-araclari-ai.md)'na bakın.
 
 ## 📋 Araç Listesi
 
@@ -45,7 +45,7 @@ Gorev'in sağladığı 29 MCP tool'unun detaylı açıklaması.
 24. [gorev_batch_update](#ai-araçları) - Toplu görev güncelleme
 25. [gorev_nlp_query](#ai-araçları) - Doğal dil ile görev arama
 
-> **Detaylı bilgi için**: [AI MCP Araçları Dokümantasyonu](../mcp-araclari-ai.md)
+> **Detaylı bilgi için**: [AI MCP Araçları Dokümantasyonu](../../tr/mcp-araclari-ai.md)
 
 ---
 
@@ -927,6 +927,6 @@ Bir görevin tüm hiyerarşisini (üst görevler ve alt görevler) gösterir.
 
 ## 📚 İlgili Dokümantasyon
 
-- [Kullanım Kılavuzu](kullanim.md) - Pratik kullanım örnekleri
-- [Örnekler](ornekler.md) - Gerçek dünya senaryoları
-- [API Referansı](api-referans.md) - Programatik erişim
+- [Kullanım Kılavuzu](usage.md) - Pratik kullanım örnekleri
+- [Örnekler](../../tr/ornekler.md) - Gerçek dünya senaryoları
+- [API Referansı](../../api/reference.md) - Programatik erişim

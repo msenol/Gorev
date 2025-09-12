@@ -5,20 +5,20 @@ Welcome to the English documentation for Gorev! This section contains comprehens
 ## 📁 Documentation Structure
 
 ### 🚀 [Getting Started](getting-started/)
-- [Installation Guide](getting-started/installation.md) - Platform-specific installation instructions
-- [Quick Start](getting-started/quickstart.md) - Get up and running in minutes
-- [First Steps](getting-started/first-steps.md) - Basic usage walkthrough
+- [Installation Guide](../guides/getting-started/installation.md) - Platform-specific installation instructions
+- [Quick Start](../guides/user/usage.md) - Get up and running in minutes
+- [First Steps](../guides/user/usage.md) - Basic usage walkthrough
 
 ### 👥 [User Guide](user-guide/)
-- [Usage Guide](user-guide/usage.md) - Detailed usage examples and workflows
-- [MCP Tools Reference](user-guide/mcp-tools.md) - Complete reference for all 25 MCP tools
-- [VS Code Extension](user-guide/vscode-extension.md) - Visual interface documentation
-- [Troubleshooting](user-guide/troubleshooting.md) - Common issues and solutions
+- [Usage Guide](../guides/user/usage.md) - Detailed usage examples and workflows
+- [MCP Tools Reference](../guides/user/mcp-tools.md) - Complete reference for all 36 MCP tools
+- [VS Code Extension](../guides/user/vscode-extension.md) - Visual interface documentation
+- [Troubleshooting](../debugging/) - Common issues and solutions
 
 ### 🛠 [Development](development/)
-- [Architecture](development/architecture.md) - System design and technical overview
-- [Contributing](development/contributing.md) - How to contribute to the project
-- [Testing Guide](development/testing-guide.md) - Testing strategies and guidelines
+- [Architecture](../architecture/architecture-v2.md) - System design and technical overview
+- [Contributing](../development/contributing.md) - How to contribute to the project
+- [Testing Guide](../development/testing-strategy.md) - Testing strategies and guidelines
 - [API Development](development/api-development.md) - Extending Gorev with new features
 
 ### 📚 [API Reference](api/)

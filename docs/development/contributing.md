@@ -437,10 +437,10 @@ func TestXXX(t *testing.T) {
 
 ## Related Documentation
 
-- [System Architecture](docs/en/development/architecture.md)
-- [API Reference](docs/en/api/reference.md)
-- [MCP Tools](docs/en/user-guide/mcp-tools.md)
-- [VS Code Extension](docs/en/user-guide/vscode-extension.md)
+- [System Architecture](../architecture/architecture-v2.md)
+- [API Reference](../api/reference.md)
+- [MCP Tools](../guides/user/mcp-tools.md)
+- [VS Code Extension](../guides/user/vscode-extension.md)
 
 ---
 
