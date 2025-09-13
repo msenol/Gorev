@@ -337,8 +337,8 @@
   "inlineEdit.editTagsPrompt": "Etiketleri düzenle (virgülle ayırın)",
   "inlineEdit.tagsTooLong": "Etiketler 50 karakterden uzun olamaz",
   "inlineEdit.tagsInvalidChars": "Etiketler sadece harf, rakam, tire ve alt çizgi içerebilir",
-  "inlineEdit.tagsFeatureComingSoon": "Etiket güncelleme özelliği yakında eklenecek"
-  
+  "inlineEdit.tagsFeatureComingSoon": "Etiket güncelleme özelliği yakında eklenecek",
+
   "mcpDebug.toggleMessage": "Gorev debug modu {0}. Değişikliklerin uygulanması için lütfen VS Code'u yeniden başlatın.",
   "mcpDebug.enabled": "etkinleştirildi",
   "mcpDebug.disabled": "devre dışı bırakıldı",

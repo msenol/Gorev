@@ -21,17 +21,18 @@ let templateTreeProvider: TemplateTreeProvider;
 let context: vscode.ExtensionContext;
 
 export async function activate(extensionContext: vscode.ExtensionContext) {
-  console.log('[GOREV-L10N] 1. Extension activating at:', new Date().toISOString());
   context = extensionContext;
 
+  // Set debug logging FIRST
+  Logger.setLogLevel(LogLevel.Debug);
+
+  Logger.debug('[GOREV-L10N] 1. Extension activating at:', new Date().toISOString());
+
   // Initialize L10n system first
-  console.log('[GOREV-L10N] 2. About to initialize L10n system');
+  Logger.debug('[GOREV-L10N] 2. About to initialize L10n system');
   await initializeL10n(context);
 
   Logger.info('Extension starting...');
-
-  // Set debug logging
-  Logger.setLogLevel(LogLevel.Debug);
 
   // Check if we're in development mode
   const isDevelopment = extensionContext.extensionMode === vscode.ExtensionMode.Development;

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as l10n from '@vscode/l10n';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { Logger } from './logger';
 
 /**
  * Enhanced L10n manager for Gorev VS Code extension
@@ -26,40 +27,23 @@ export class L10nManager {
      * Initialize the L10n system
      */
     public async initialize(context: vscode.ExtensionContext): Promise<void> {
-        console.log('[GOREV-L10N] 2. L10n manager initializing at:', new Date().toISOString());
-        console.log('[GOREV-L10N] 3. Extension path:', context.extensionPath);
+        Logger.debug('[GOREV-L10N] 2. L10n manager initializing at:', new Date().toISOString());
+        Logger.debug('[GOREV-L10N] 3. Extension path:', context.extensionPath);
 
         if (this.initialized) {
-            console.log('[GOREV-L10N] 4. Already initialized, skipping');
+            Logger.debug('[GOREV-L10N] 4. Already initialized, skipping');
             return;
         }
 
         // Get current locale
         this.currentLocale = vscode.env.language || 'en';
-        console.log('[GOREV-L10N] 5. Current locale:', this.currentLocale);
+        Logger.debug('[GOREV-L10N] 5. Current locale:', this.currentLocale);
 
         // Load bundles
         await this.loadBundles(context);
 
-        // Configure @vscode/l10n
-        const bundleUri = this.getBundleUri(context, this.currentLocale);
-        if (bundleUri && existsSync(bundleUri.fsPath)) {
-            try {
-                const bundleContent = readFileSync(bundleUri.fsPath, 'utf8');
-                const bundle = JSON.parse(bundleContent);
-                l10n.config({
-                    contents: bundle
-                });
-                console.log('[GOREV-L10N] 6. VS Code l10n configured successfully');
-            } catch (error) {
-                console.log('[GOREV-L10N] 6. Failed to configure @vscode/l10n:', error);
-            }
-        } else {
-            console.log('[GOREV-L10N] 6. No bundle URI found for VS Code l10n');
-        }
-
         this.initialized = true;
-        console.log('[GOREV-L10N] 7. L10n initialization completed');
+        Logger.debug('[GOREV-L10N] 6. L10n initialization completed');
     }
 
     /**
@@ -67,33 +51,33 @@ export class L10nManager {
      */
     private async loadBundles(context: vscode.ExtensionContext): Promise<void> {
         const l10nPath = join(context.extensionPath, 'l10n');
-        console.log('[GOREV-L10N] 8. L10n path:', l10nPath);
+        Logger.debug('[GOREV-L10N] 8. L10n path:', l10nPath);
 
         // Load English bundle (fallback)
         const enBundlePath = join(l10nPath, 'bundle.l10n.json');
-        console.log('[GOREV-L10N] 9. EN bundle exists:', existsSync(enBundlePath));
+        Logger.debug('[GOREV-L10N] 9. EN bundle exists:', existsSync(enBundlePath));
         if (existsSync(enBundlePath)) {
             try {
                 const content = readFileSync(enBundlePath, 'utf8');
                 const bundle = JSON.parse(content);
                 this.bundles.set('en', bundle);
-                console.log('[GOREV-L10N] 10. EN bundle loaded with', Object.keys(bundle).length, 'keys');
+                Logger.debug('[GOREV-L10N] 10. EN bundle loaded with', Object.keys(bundle).length, 'keys');
             } catch (error) {
-                console.log('[GOREV-L10N] 10. Failed to load English bundle:', error);
+                Logger.debug('[GOREV-L10N] 10. Failed to load English bundle:', error instanceof Error ? error.message : String(error));
             }
         }
 
         // Load Turkish bundle
         const trBundlePath = join(l10nPath, 'bundle.l10n.tr.json');
-        console.log('[GOREV-L10N] 11. TR bundle exists:', existsSync(trBundlePath));
+        Logger.debug('[GOREV-L10N] 11. TR bundle exists:', existsSync(trBundlePath));
         if (existsSync(trBundlePath)) {
             try {
                 const content = readFileSync(trBundlePath, 'utf8');
                 const bundle = JSON.parse(content);
                 this.bundles.set('tr', bundle);
-                console.log('[GOREV-L10N] 12. TR bundle loaded with', Object.keys(bundle).length, 'keys');
+                Logger.debug('[GOREV-L10N] 12. TR bundle loaded with', Object.keys(bundle).length, 'keys');
             } catch (error) {
-                console.log('[GOREV-L10N] 12. Failed to load Turkish bundle:', error);
+                Logger.debug('[GOREV-L10N] 12. Failed to load Turkish bundle:', error instanceof Error ? error.message : String(error));
             }
         }
     }
@@ -119,11 +103,11 @@ export class L10nManager {
      */
     public t(key: string, ...args: (string | number | boolean | Record<string, any>)[]): string {
         if (!this.initialized) {
-            console.log('[GOREV-L10N] 13. Manager not initialized, returning key:', key);
+            Logger.debug('[GOREV-L10N] 13. Manager not initialized, returning key:', key);
             return key;
         }
 
-        console.log('[GOREV-L10N] 14. Translating key:', key, 'with', args.length, 'args');
+        Logger.debug('[GOREV-L10N] 14. Translating key:', key, 'with', args.length, 'args');
         return this.manualLookup(key, args);
     }
 
@@ -132,37 +116,22 @@ export class L10nManager {
      */
     private manualLookup(key: string, args: (string | number | boolean | Record<string, any>)[]): string {
         const simpleLocale = this.getSimpleLocale(this.currentLocale);
-        console.log('[GOREV-L10N] 15. Looking up key:', key, 'for locale:', simpleLocale);
-        console.log('[GOREV-L10N] 16. Available bundles:', Array.from(this.bundles.keys()));
+        Logger.debug('[GOREV-L10N] 15. Looking up key:', key, 'for locale:', simpleLocale);
 
-        // Try current locale first
-        let bundle = this.bundles.get(simpleLocale);
-        if (!bundle) {
-            console.log('[GOREV-L10N] 17. No bundle for locale', simpleLocale, ', trying English');
-            // Fallback to English
-            bundle = this.bundles.get('en');
-        }
+        // Simple fallback chain: current locale → English → key
+        const bundle = this.bundles.get(simpleLocale) || this.bundles.get('en');
 
         if (!bundle) {
-            console.log('[GOREV-L10N] 18. No bundle found at all, returning key:', key);
+            Logger.debug('[GOREV-L10N] 16. No bundle found, returning key:', key);
             return key;
         }
 
-        let translation = bundle[key];
-        if (!translation) {
-            // Try English as fallback
-            const enBundle = this.bundles.get('en');
-            translation = enBundle?.[key] || key;
-            console.log('[GOREV-L10N] 19. Translation not found in primary bundle, EN fallback result:', translation);
-        } else {
-            console.log('[GOREV-L10N] 20. Translation found:', translation);
-        }
+        const translation = bundle[key] || key;
+        Logger.debug('[GOREV-L10N] 17. Translation result:', translation);
 
-        // Replace placeholders
+        // Replace placeholders if needed
         if (args.length > 0) {
-            const result = this.replacePlaceholders(translation, args);
-            console.log('[GOREV-L10N] 21. Final result after placeholder replacement:', result);
-            return result;
+            return this.replacePlaceholders(translation, args);
         }
 
         return translation;

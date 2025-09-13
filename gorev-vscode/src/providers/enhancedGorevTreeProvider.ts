@@ -110,9 +110,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      * Alt elemanları döndürür
      */
     async getChildren(element?: EnhancedTreeViewItem): Promise<EnhancedTreeViewItem[]> {
-        Logger.debug('[EnhancedGorevTreeProvider] getChildren called with element:', element);
-        Logger.debug('[EnhancedGorevTreeProvider] Current tasks count:', this.tasks.length);
-        Logger.debug('[EnhancedGorevTreeProvider] Current filtered tasks count:', this.filteredTasks.length);
+        // Root level getChildren call
         
         if (!this.mcpClient.isConnected()) {
             Logger.warn('[EnhancedGorevTreeProvider] MCP client not connected');
@@ -121,11 +119,9 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
         // Root level
         if (!element) {
-            Logger.debug('[EnhancedGorevTreeProvider] Loading root items...');
             try {
                 await this.loadTasks();
                 const items = this.createRootItems();
-                Logger.debug('[EnhancedGorevTreeProvider] Returning', items.length, 'root items');
                 return items;
             } catch (error) {
                 Logger.error('Failed to load tasks:', error);
@@ -135,13 +131,11 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
         // Grup altındaki görevler
         if (element instanceof GroupTreeViewItem) {
-            Logger.debug('[EnhancedGorevTreeProvider] Loading children for group:', element.groupKey);
             return this.createTaskItems(element);
         }
 
         // Task altındaki alt görevler
         if (element instanceof TaskTreeViewItem && element.task.alt_gorevler && element.task.alt_gorevler.length > 0) {
-            Logger.debug('[EnhancedGorevTreeProvider] Loading subtasks for task:', element.task.id);
             return this.createSubtaskItems(element.task);
         }
 
@@ -154,23 +148,18 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     private createRootItems(): EnhancedTreeViewItem[] {
         // Filtreleme uygula
         this.filteredTasks = TreeViewUtils.filterTasks(this.tasks, this.config.filters);
-        Logger.debug('[EnhancedGorevTreeProvider] After filtering:', this.filteredTasks.length, 'tasks');
-
         // Tamamlanmış görevleri gizle
         if (!this.config.showCompleted) {
             this.filteredTasks = this.filteredTasks.filter(
                 task => task.durum !== GorevDurum.Tamamlandi
             );
-            Logger.debug('[EnhancedGorevTreeProvider] After hiding completed:', this.filteredTasks.length, 'tasks');
         }
 
         if (this.filteredTasks.length === 0) {
-            Logger.debug('[EnhancedGorevTreeProvider] No tasks to show, returning empty message');
             return [new EmptyTreeViewItem(this.getEmptyMessage())];
         }
 
         // Gruplama yoksa direkt görevleri göster
-        Logger.debug('[EnhancedGorevTreeProvider] Grouping strategy:', this.config.grouping);
         if (this.config.grouping === GroupingStrategy.None) {
             const sortedTasks = TreeViewUtils.sortTasks(
                 this.filteredTasks, 
@@ -184,25 +173,19 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
         // Görevleri grupla
         const groups = TreeViewUtils.groupTasks(this.filteredTasks, this.config.grouping);
-        Logger.debug('[EnhancedGorevTreeProvider] Created groups:', groups.size, 'groups');
-        Logger.debug('[EnhancedGorevTreeProvider] Group keys:', Array.from(groups.keys()));
-        
         const groupItems: EnhancedTreeViewItem[] = [];
 
         // Grupları sırala
-        const sortedGroupKeys = Array.from(groups.keys()).sort((a, b) => 
+        const sortedGroupKeys = Array.from(groups.keys()).sort((a, b) =>
             GroupingStrategyProvider.compareGroups(a, b, this.config.grouping)
         );
-        Logger.debug('[EnhancedGorevTreeProvider] Sorted group keys:', sortedGroupKeys);
 
         // Grup item'larını oluştur
         for (const groupKey of sortedGroupKeys) {
             const tasksInGroup = groups.get(groupKey)!;
-            Logger.debug(`[EnhancedGorevTreeProvider] Group ${groupKey} has ${tasksInGroup.length} tasks`);
-            
+
             // Boş grupları gizle
             if (!this.config.showEmptyGroups && tasksInGroup.length === 0) {
-                Logger.debug(`[EnhancedGorevTreeProvider] Skipping empty group: ${groupKey}`);
                 continue;
             }
 
@@ -217,7 +200,6 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             groupItems.push(groupItem);
         }
 
-        Logger.debug('[EnhancedGorevTreeProvider] Total group items created:', groupItems.length);
         return groupItems;
     }
 
@@ -304,7 +286,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     private async loadTasks(): Promise<void> {
         try {
             // Önce projeleri yükle
-            Logger.debug('[EnhancedGorevTreeProvider] Loading projects...');
+            // Loading projects
             const projectsResult = await this.mcpClient.callTool('proje_listele', {});
             if (projectsResult && projectsResult.content && projectsResult.content[0]) {
                 const projectsText = projectsResult.content[0].text;
@@ -335,7 +317,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                         const idMatch = activeProjectText.match(/ID:\s*([a-f0-9-]+)/);
                         if (idMatch) {
                             activeProjectId = idMatch[1];
-                            Logger.debug('[EnhancedGorevTreeProvider] Active project ID:', activeProjectId);
+                            // Active project loaded
                         }
                     }
                 } catch (err) {
@@ -351,7 +333,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             
             // Fetch all tasks with pagination
             while (hasMoreTasks) {
-                Logger.debug('[EnhancedGorevTreeProvider] Fetching tasks with offset:', offset, 'limit:', pageSize);
+                // Fetching tasks
                 
                 const result = await this.mcpClient.callTool('gorev_listele', {
                     tum_projeler: showAllProjects,
@@ -416,13 +398,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             }
             
             if (this.tasks.length > 0) {
-                Logger.debug('[EnhancedGorevTreeProvider] First task:', JSON.stringify(this.tasks[0], null, 2));
+                // Tasks loaded successfully
                 
                 const tasksWithProjectId = this.tasks.filter(t => t.proje_id);
                 const tasksWithoutProjectId = this.tasks.filter(t => !t.proje_id);
                 
-                Logger.debug('[EnhancedGorevTreeProvider] Tasks with project_id:', tasksWithProjectId.length);
-                Logger.debug('[EnhancedGorevTreeProvider] Tasks without project_id:', tasksWithoutProjectId.length);
+                // Task categorization complete
                 
                 // Warn about tasks without project_id
                 if (tasksWithoutProjectId.length > 0) {
@@ -436,7 +417,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             
             // IMPORTANT: Set filtered tasks after loading
             this.filteredTasks = [...this.tasks];
-            Logger.debug('[EnhancedGorevTreeProvider] After filtering:', this.filteredTasks.length, 'tasks');
+            // Tasks filtered and ready
         } catch (error) {
             Logger.error('Failed to load tasks:', error);
             throw error;

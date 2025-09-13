@@ -337,8 +337,8 @@
   "inlineEdit.editTagsPrompt": "Edit tags (comma separated)",
   "inlineEdit.tagsTooLong": "Tags cannot be longer than 50 characters",
   "inlineEdit.tagsInvalidChars": "Tags can only contain letters, numbers, hyphens and underscores",
-  "inlineEdit.tagsFeatureComingSoon": "Tag update feature coming soon"
-  
+  "inlineEdit.tagsFeatureComingSoon": "Tag update feature coming soon",
+
   "mcpDebug.toggleMessage": "Gorev debug mode {0}. Please restart VS Code for changes to take effect.",
   "mcpDebug.enabled": "enabled",
   "mcpDebug.disabled": "disabled",

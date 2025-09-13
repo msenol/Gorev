@@ -2,6 +2,39 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.6.7] - 2025-09-13
+
+### Fixed
+- **Critical L10n Bug Resolution**: Completely fixed localization system showing translation keys instead of actual text
+  - **Root Cause**: JSON syntax errors in bundle files (missing commas at line 340 in both EN and TR bundles)
+  - **Status Bar Fix**: "statusBar.connected" → "$(check) Gorev: Connected"
+  - **Filter Toolbar Fix**: "filterToolbar.search" → "$(search) Search"
+  - **Complete UI Translation**: All 668 localization keys now working properly in both VS Code and Cursor
+- **Debug System Enhancement**: Enhanced logging with Logger.debug instead of console.log for better Cursor IDE compatibility
+- **Error Handling**: Improved error message formatting for JSON parse failures to show actual error messages
+- **Logger Initialization**: Fixed debug level timing issue that prevented log visibility during extension activation
+
+### Performance
+- **Verbose Logging Cleanup**: Removed 15+ excessive debug messages from EnhancedGorevTreeProvider
+- **Simplified Fallback**: Streamlined l10n lookup mechanism for better performance
+- **Bundle Validation**: Both EN and TR bundles verified with 668 keys each
+
+### Technical
+- **Rule 15 Compliance**: Complete root cause analysis and proper solution without workarounds
+- **VS Code Marketplace**: Published v0.6.7 with working localization system
+- **GitHub Release**: Updated v0.14.0 release with working VSIX file
+- **Multi-IDE Support**: Full compatibility verified for both VS Code and Cursor IDE
+
+## [0.6.3] - 2025-09-13
+
+### Added
+- **Debug System**: Added comprehensive debug logging system with [GOREV-L10N] prefix for l10n issue diagnosis
+- **Enhanced Error Handling**: Improved error reporting in localization system
+
+### Technical
+- **Logger Integration**: Migrated from console.log to Logger.debug for proper output channel integration
+- **Debug Visibility**: Enhanced debug message visibility in Output Channel
+
 ## [0.5.1] - 2025-08-19
 
 ### Changed
