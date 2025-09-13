@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
@@ -33,7 +34,7 @@ export function registerGorevCommands(
       try {
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.refreshTasks') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.refreshTasks') + `: ${error}`);
       }
     })
   );
@@ -49,7 +50,7 @@ export function registerGorevCommands(
           context.extensionUri
         );
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.showTaskDetail') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.showTaskDetail') + `: ${error}`);
       }
     })
   );
@@ -60,12 +61,12 @@ export function registerGorevCommands(
       try {
         const newStatus = await vscode.window.showQuickPick(
           [
-            { label: vscode.l10n.t('status.pending'), value: GorevDurum.Beklemede },
-            { label: vscode.l10n.t('status.inProgress'), value: GorevDurum.DevamEdiyor },
-            { label: vscode.l10n.t('status.completed'), value: GorevDurum.Tamamlandi },
+            { label: t('status.pending'), value: GorevDurum.Beklemede },
+            { label: t('status.inProgress'), value: GorevDurum.DevamEdiyor },
+            { label: t('status.completed'), value: GorevDurum.Tamamlandi },
           ],
           {
-            placeHolder: vscode.l10n.t('input.selectStatus'),
+            placeHolder: t('input.selectStatus'),
           }
         );
 
@@ -76,10 +77,10 @@ export function registerGorevCommands(
           durum: newStatus.value,
         });
 
-        vscode.window.showInformationMessage(vscode.l10n.t('success.taskStatusUpdated'));
+        vscode.window.showInformationMessage(t('success.taskStatusUpdated'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.updateTaskStatus') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.updateTaskStatus') + `: ${error}`);
       }
     })
   );
@@ -89,22 +90,22 @@ export function registerGorevCommands(
     vscode.commands.registerCommand(COMMANDS.DELETE_TASK, async (item: any) => {
       try {
         const confirm = await vscode.window.showWarningMessage(
-          vscode.l10n.t('confirm.deleteTask', item.task.baslik),
-          vscode.l10n.t('confirm.yes'),
-          vscode.l10n.t('confirm.no')
+          t('confirm.deleteTask', item.task.baslik),
+          t('confirm.yes'),
+          t('confirm.no')
         );
 
-        if (confirm !== vscode.l10n.t('confirm.yes')) return;
+        if (confirm !== t('confirm.yes')) return;
 
         await mcpClient.callTool('gorev_sil', {
           id: item.task.id,
           onay: true,
         });
 
-        vscode.window.showInformationMessage(vscode.l10n.t('success.taskDeleted'));
+        vscode.window.showInformationMessage(t('success.taskDeleted'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.deleteTask') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.deleteTask') + `: ${error}`);
       }
     })
   );
@@ -114,11 +115,11 @@ export function registerGorevCommands(
     vscode.commands.registerCommand(COMMANDS.CREATE_SUBTASK, async (item: any) => {
       try {
         const baslik = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('input.subtaskTitle'),
-          placeHolder: vscode.l10n.t('placeholder.createSubtask', item.task.baslik),
+          prompt: t('input.subtaskTitle'),
+          placeHolder: t('placeholder.createSubtask', item.task.baslik),
           validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-              return vscode.l10n.t('validation.subtaskTitleRequired');
+              return t('validation.subtaskTitleRequired');
             }
             return null;
           },
@@ -127,18 +128,18 @@ export function registerGorevCommands(
         if (!baslik) return;
 
         const aciklama = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('input.subtaskDescription'),
-          placeHolder: vscode.l10n.t('placeholder.subtaskDescription'),
+          prompt: t('input.subtaskDescription'),
+          placeHolder: t('placeholder.subtaskDescription'),
         });
 
         const oncelik = await vscode.window.showQuickPick(
           [
-            { label: vscode.l10n.t('priority.high'), value: GorevOncelik.Yuksek },
-            { label: vscode.l10n.t('priority.medium'), value: GorevOncelik.Orta },
-            { label: vscode.l10n.t('priority.low'), value: GorevOncelik.Dusuk },
+            { label: t('priority.high'), value: GorevOncelik.Yuksek },
+            { label: t('priority.medium'), value: GorevOncelik.Orta },
+            { label: t('priority.low'), value: GorevOncelik.Dusuk },
           ],
           {
-            placeHolder: vscode.l10n.t('input.selectPriority'),
+            placeHolder: t('input.selectPriority'),
           }
         );
 
@@ -151,10 +152,10 @@ export function registerGorevCommands(
           oncelik: oncelik.value,
         });
 
-        vscode.window.showInformationMessage(vscode.l10n.t('success.subtaskCreated'));
+        vscode.window.showInformationMessage(t('success.subtaskCreated'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.createSubtask') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.createSubtask') + `: ${error}`);
       }
     })
   );
@@ -169,7 +170,7 @@ export function registerGorevCommands(
         });
         
         if (!result || !result.content || !result.content[0]) {
-          throw new Error(vscode.l10n.t('error.fetchTasks'));
+          throw new Error(t('error.fetchTasks'));
         }
 
         const tasks = result.content[0].text
@@ -184,11 +185,11 @@ export function registerGorevCommands(
 
         const parentChoice = await vscode.window.showQuickPick(
           [
-            { label: vscode.l10n.t('parent.noParent'), value: null },
+            { label: t('parent.noParent'), value: null },
             ...tasks.map((t: any) => ({ label: t.baslik, value: t.id }))
           ],
           {
-            placeHolder: vscode.l10n.t('input.selectParentTask'),
+            placeHolder: t('input.selectParentTask'),
           }
         );
 
@@ -199,10 +200,10 @@ export function registerGorevCommands(
           yeni_parent_id: parentChoice.value || '',
         });
 
-        vscode.window.showInformationMessage(vscode.l10n.t('success.parentChanged'));
+        vscode.window.showInformationMessage(t('success.parentChanged'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.changeParent') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.changeParent') + `: ${error}`);
       }
     })
   );
@@ -216,10 +217,10 @@ export function registerGorevCommands(
           yeni_parent_id: '',
         });
 
-        vscode.window.showInformationMessage(vscode.l10n.t('success.taskIsRootNow'));
+        vscode.window.showInformationMessage(t('success.taskIsRootNow'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.removeParent') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.removeParent') + `: ${error}`);
       }
     })
   );
@@ -234,7 +235,7 @@ export function registerGorevCommands(
         });
         
         if (!result || !result.content || !result.content[0]) {
-          throw new Error(vscode.l10n.t('error.fetchTasks'));
+          throw new Error(t('error.fetchTasks'));
         }
 
         // Parse tasks from the result
@@ -254,21 +255,21 @@ export function registerGorevCommands(
           .filter((task: any) => task && task.id !== item.task.id);
 
         if (tasks.length === 0) {
-          vscode.window.showInformationMessage(vscode.l10n.t('info.noTasksForDependency'));
+          vscode.window.showInformationMessage(t('info.noTasksForDependency'));
           return;
         }
 
         // Create quick pick items with status icons
         const quickPickItems = tasks.map((t: any) => ({
           label: `${t.durum === 'tamamlandi' ? '✓' : t.durum === 'devam_ediyor' ? '▶' : '○'} ${t.baslik}`,
-          description: t.durum === 'tamamlandi' ? vscode.l10n.t('status.completed') : t.durum === 'devam_ediyor' ? vscode.l10n.t('status.inProgress') : vscode.l10n.t('status.pending'),
+          description: t.durum === 'tamamlandi' ? t('status.completed') : t.durum === 'devam_ediyor' ? t('status.inProgress') : t('status.pending'),
           value: t.id
         }));
 
         const selectedTask = await vscode.window.showQuickPick(
           quickPickItems,
           {
-            placeHolder: vscode.l10n.t('input.selectDependency', item.task.baslik),
+            placeHolder: t('input.selectDependency', item.task.baslik),
           }
         );
 
@@ -281,10 +282,10 @@ export function registerGorevCommands(
           baglanti_tipi: 'bagimli', // depends on
         });
 
-        vscode.window.showInformationMessage(vscode.l10n.t('success.dependencyAdded'));
+        vscode.window.showInformationMessage(t('success.dependencyAdded'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(vscode.l10n.t('error.addDependency') + `: ${error}`);
+        vscode.window.showErrorMessage(t('error.addDependency') + `: ${error}`);
       }
     })
   );

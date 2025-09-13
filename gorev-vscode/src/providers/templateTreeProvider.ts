@@ -4,6 +4,7 @@ import { GorevTemplate, TemplateKategori } from '../models/template';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { MarkdownParser } from '../utils/markdownParser';
+import { t } from '../utils/l10n';
 
 export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTreeItem | TemplateCategoryItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<TemplateTreeItem | TemplateCategoryItem | undefined | null | void>();
@@ -97,7 +98,7 @@ export class TemplateCategoryItem extends vscode.TreeItem {
   ) {
     super(category, vscode.TreeItemCollapsibleState.Expanded);
     
-    this.description = vscode.l10n.t('templateTree.templates', count.toString());
+    this.description = t('templateTree.templates', count.toString());
     this.iconPath = new vscode.ThemeIcon(ICONS.PROJECT);
   }
 }
@@ -120,16 +121,16 @@ export class TemplateTreeItem extends vscode.TreeItem {
       this.template.isim,
       this.template.tanim,
       '',
-      vscode.l10n.t('templateTree.fields'),
+      t('templateTree.fields'),
     ];
     
     this.template.alanlar.forEach((field) => {
-      const required = field.zorunlu ? ` ${vscode.l10n.t('templateTree.required')}` : '';
+      const required = field.zorunlu ? ` ${t('templateTree.required')}` : '';
       lines.push(`  • ${field.isim}: ${field.tur}${required}`);
     });
     
     if (this.template.ornek_degerler && Object.keys(this.template.ornek_degerler).length > 0) {
-      lines.push('', vscode.l10n.t('templateTree.exampleValues'));
+      lines.push('', t('templateTree.exampleValues'));
       Object.entries(this.template.ornek_degerler).forEach(([key, value]) => {
         lines.push(`  • ${key}: ${value}`);
       });

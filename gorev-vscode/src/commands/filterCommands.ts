@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { Logger } from '../utils/logger';
@@ -11,7 +12,7 @@ export function registerFilterCommands(
     const { filterToolbar } = providers;
     
     if (!filterToolbar) {
-        Logger.warn(vscode.l10n.t('filter.toolbarNotInitialized'));
+        Logger.warn(t('filter.toolbarNotInitialized'));
         return;
     }
 
@@ -55,8 +56,8 @@ export function registerFilterCommands(
             });
             
             const message = showingAllProjects ? 
-                vscode.l10n.t('filter.showingActiveProject') : 
-                vscode.l10n.t('filter.showingAllProjects');
+                t('filter.showingActiveProject') : 
+                t('filter.showingAllProjects');
             vscode.window.showInformationMessage(message);
         })
     );
@@ -67,7 +68,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterOverdue', () => {
             providers.gorevTreeProvider.updateFilter({ overdue: true });
-            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingOverdue'));
+            vscode.window.showInformationMessage(t('filter.showingOverdue'));
         })
     );
 
@@ -75,7 +76,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterDueToday', () => {
             providers.gorevTreeProvider.updateFilter({ dueToday: true });
-            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingDueToday'));
+            vscode.window.showInformationMessage(t('filter.showingDueToday'));
         })
     );
 
@@ -83,7 +84,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterDueThisWeek', () => {
             providers.gorevTreeProvider.updateFilter({ dueThisWeek: true });
-            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingDueThisWeek'));
+            vscode.window.showInformationMessage(t('filter.showingDueThisWeek'));
         })
     );
 
@@ -91,7 +92,7 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterHighPriority', () => {
             providers.gorevTreeProvider.updateFilter({ oncelik: 'yuksek' as any });
-            vscode.window.showInformationMessage(vscode.l10n.t('filter.showingHighPriority'));
+            vscode.window.showInformationMessage(t('filter.showingHighPriority'));
         })
     );
 
@@ -106,12 +107,12 @@ export function registerFilterCommands(
                 const match = content.match(/ID: ([a-f0-9-]+)/);
                 if (match) {
                     providers.gorevTreeProvider.updateFilter({ projeId: match[1] });
-                    vscode.window.showInformationMessage(vscode.l10n.t('filter.showingActiveProject'));
+                    vscode.window.showInformationMessage(t('filter.showingActiveProject'));
                 } else {
-                    vscode.window.showWarningMessage(vscode.l10n.t('filter.activeProjectNotFound'));
+                    vscode.window.showWarningMessage(t('filter.activeProjectNotFound'));
                 }
             } catch (error) {
-                vscode.window.showErrorMessage(vscode.l10n.t('filter.activeProjectFetchFailed'));
+                vscode.window.showErrorMessage(t('filter.activeProjectFetchFailed'));
             }
         })
     );
@@ -120,13 +121,13 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterByTag', async () => {
             const tag = await vscode.window.showInputBox({
-                prompt: vscode.l10n.t('filter.tagPromptMessage'),
-                placeHolder: vscode.l10n.t('filter.tagPlaceholderExample')
+                prompt: t('filter.tagPromptMessage'),
+                placeHolder: t('filter.tagPlaceholderExample')
             });
 
             if (tag) {
                 providers.gorevTreeProvider.updateFilter({ tags: [tag] });
-                vscode.window.showInformationMessage(vscode.l10n.t('filter.showingTagged', tag));
+                vscode.window.showInformationMessage(t('filter.showingTagged', tag));
             }
         })
     );

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
@@ -12,7 +13,7 @@ async function getProjectList(mcpClient: MCPClient): Promise<Proje[]> {
     return MarkdownParser.parseProjeListesi(result.content[0].text);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(vscode.l10n.t('project.getListFailed', errorMessage));
+    console.error(t('project.getListFailed', errorMessage));
     return [];
   }
 }
@@ -27,11 +28,11 @@ export function registerProjeCommands(
     vscode.commands.registerCommand(COMMANDS.CREATE_PROJECT, async () => {
       try {
         const isim = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('project.namePrompt'),
-          placeHolder: vscode.l10n.t('project.namePlaceholder'),
+          prompt: t('project.namePrompt'),
+          placeHolder: t('project.namePlaceholder'),
           validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-              return vscode.l10n.t('project.nameRequired');
+              return t('project.nameRequired');
             }
             return null;
           },
@@ -40,8 +41,8 @@ export function registerProjeCommands(
         if (!isim) return;
 
         const tanim = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('project.descriptionPrompt'),
-          placeHolder: vscode.l10n.t('project.descriptionPlaceholder'),
+          prompt: t('project.descriptionPrompt'),
+          placeHolder: t('project.descriptionPlaceholder'),
         });
 
         await mcpClient.callTool('proje_olustur', {
@@ -49,11 +50,11 @@ export function registerProjeCommands(
           tanim: tanim || '',
         });
 
-        vscode.window.showInformationMessage(vscode.l10n.t('project.createdSuccess'));
+        vscode.window.showInformationMessage(t('project.createdSuccess'));
         await providers.projeTreeProvider.refresh();
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(vscode.l10n.t('project.createFailed', errorMessage));
+        vscode.window.showErrorMessage(t('project.createFailed', errorMessage));
       }
     })
   );
@@ -66,18 +67,18 @@ export function registerProjeCommands(
         if (!item) {
           const projects = await getProjectList(mcpClient);
           if (projects.length === 0) {
-            vscode.window.showWarningMessage(vscode.l10n.t('project.noProjectsFound'));
+            vscode.window.showWarningMessage(t('project.noProjectsFound'));
             return;
           }
 
           const selected = await vscode.window.showQuickPick(
             projects.map(p => ({
               label: p.isim,
-              description: vscode.l10n.t('project.taskCount', (p.gorev_sayisi || 0).toString()),
+              description: t('project.taskCount', (p.gorev_sayisi || 0).toString()),
               project: p
             })),
             {
-              placeHolder: vscode.l10n.t('project.selectToActivate')
+              placeHolder: t('project.selectToActivate')
             }
           );
 
@@ -86,26 +87,26 @@ export function registerProjeCommands(
           await mcpClient.callTool('proje_aktif_yap', {
             proje_id: selected.project.id,
           });
-          vscode.window.showInformationMessage(vscode.l10n.t('project.nowActive', selected.project.isim));
+          vscode.window.showInformationMessage(t('project.nowActive', selected.project.isim));
         } else {
           // Item provided from tree view
           if (item.isActive) {
             const deactivate = await vscode.window.showQuickPick(
-              [vscode.l10n.t('project.deactivateOption'), vscode.l10n.t('project.cancelOption')],
+              [t('project.deactivateOption'), t('project.cancelOption')],
               {
-                placeHolder: vscode.l10n.t('project.alreadyActivePrompt'),
+                placeHolder: t('project.alreadyActivePrompt'),
               }
             );
 
-            if (deactivate === vscode.l10n.t('project.deactivateOption')) {
+            if (deactivate === t('project.deactivateOption')) {
               await mcpClient.callTool('aktif_proje_kaldir');
-              vscode.window.showInformationMessage(vscode.l10n.t('project.deactivated'));
+              vscode.window.showInformationMessage(t('project.deactivated'));
             }
           } else {
             await mcpClient.callTool('proje_aktif_yap', {
               proje_id: item.project.id,
             });
-            vscode.window.showInformationMessage(vscode.l10n.t('project.nowActive', item.project.isim));
+            vscode.window.showInformationMessage(t('project.nowActive', item.project.isim));
           }
         }
 
@@ -114,7 +115,7 @@ export function registerProjeCommands(
         providers.statusBarManager.update();
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(vscode.l10n.t('project.updateActiveFailed', errorMessage));
+        vscode.window.showErrorMessage(t('project.updateActiveFailed', errorMessage));
       }
     })
   );

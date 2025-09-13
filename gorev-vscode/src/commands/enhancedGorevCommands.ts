@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
@@ -26,16 +27,16 @@ export function registerEnhancedGorevCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.SET_GROUPING, async () => {
       const items = [
-        { label: vscode.l10n.t('grouping.none'), value: GroupingStrategy.None },
-        { label: vscode.l10n.t('grouping.byStatus'), value: GroupingStrategy.ByStatus },
-        { label: vscode.l10n.t('grouping.byPriority'), value: GroupingStrategy.ByPriority },
-        { label: vscode.l10n.t('grouping.byProject'), value: GroupingStrategy.ByProject },
-        { label: vscode.l10n.t('grouping.byTag'), value: GroupingStrategy.ByTag },
-        { label: vscode.l10n.t('grouping.byDueDate'), value: GroupingStrategy.ByDueDate },
+        { label: t('grouping.none'), value: GroupingStrategy.None },
+        { label: t('grouping.byStatus'), value: GroupingStrategy.ByStatus },
+        { label: t('grouping.byPriority'), value: GroupingStrategy.ByPriority },
+        { label: t('grouping.byProject'), value: GroupingStrategy.ByProject },
+        { label: t('grouping.byTag'), value: GroupingStrategy.ByTag },
+        { label: t('grouping.byDueDate'), value: GroupingStrategy.ByDueDate },
       ];
 
       const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: vscode.l10n.t('grouping.selectStrategy'),
+        placeHolder: t('grouping.selectStrategy'),
       });
 
       if (selected) {
@@ -48,26 +49,26 @@ export function registerEnhancedGorevCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.SET_SORTING, async () => {
       const criteria = [
-        { label: vscode.l10n.t('sorting.byTitle'), value: SortingCriteria.Title },
-        { label: vscode.l10n.t('sorting.byPriority'), value: SortingCriteria.Priority },
-        { label: vscode.l10n.t('sorting.byDueDate'), value: SortingCriteria.DueDate },
-        { label: vscode.l10n.t('sorting.byCreatedDate'), value: SortingCriteria.CreatedDate },
-        { label: vscode.l10n.t('sorting.byStatus'), value: SortingCriteria.Status },
+        { label: t('sorting.byTitle'), value: SortingCriteria.Title },
+        { label: t('sorting.byPriority'), value: SortingCriteria.Priority },
+        { label: t('sorting.byDueDate'), value: SortingCriteria.DueDate },
+        { label: t('sorting.byCreatedDate'), value: SortingCriteria.CreatedDate },
+        { label: t('sorting.byStatus'), value: SortingCriteria.Status },
       ];
 
       const selectedCriteria = await vscode.window.showQuickPick(criteria, {
-        placeHolder: vscode.l10n.t('sorting.selectCriteria'),
+        placeHolder: t('sorting.selectCriteria'),
       });
 
       if (!selectedCriteria) return;
 
       const order = await vscode.window.showQuickPick(
         [
-          { label: vscode.l10n.t('sorting.ascending'), value: true },
-          { label: vscode.l10n.t('sorting.descending'), value: false },
+          { label: t('sorting.ascending'), value: true },
+          { label: t('sorting.descending'), value: false },
         ],
         {
-          placeHolder: vscode.l10n.t('sorting.selectOrder'),
+          placeHolder: t('sorting.selectOrder'),
         }
       );
 
@@ -82,15 +83,15 @@ export function registerEnhancedGorevCommands(
     vscode.commands.registerCommand(COMMANDS.FILTER_TASKS, async () => {
       const action = await vscode.window.showQuickPick(
         [
-          { label: vscode.l10n.t('filter.searchByText'), value: 'search' },
-          { label: vscode.l10n.t('filter.byStatus'), value: 'status' },
-          { label: vscode.l10n.t('filter.byPriority'), value: 'priority' },
-          { label: vscode.l10n.t('filter.byTag'), value: 'tag' },
-          { label: vscode.l10n.t('filter.byDueDate'), value: 'dueDate' },
-          { label: vscode.l10n.t('filter.quickFilters'), value: 'quick' },
+          { label: t('filter.searchByText'), value: 'search' },
+          { label: t('filter.byStatus'), value: 'status' },
+          { label: t('filter.byPriority'), value: 'priority' },
+          { label: t('filter.byTag'), value: 'tag' },
+          { label: t('filter.byDueDate'), value: 'dueDate' },
+          { label: t('filter.quickFilters'), value: 'quick' },
         ],
         {
-          placeHolder: vscode.l10n.t('filter.selectType'),
+          placeHolder: t('filter.selectType'),
         }
       );
 
@@ -101,8 +102,8 @@ export function registerEnhancedGorevCommands(
       switch (action.value) {
         case 'search':
           const query = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('filter.searchPrompt'),
-            placeHolder: vscode.l10n.t('filter.searchPlaceholder'),
+            prompt: t('filter.searchPrompt'),
+            placeHolder: t('filter.searchPlaceholder'),
           });
           if (query) {
             filter.searchQuery = query;
@@ -112,12 +113,12 @@ export function registerEnhancedGorevCommands(
         case 'status':
           const statuses = await vscode.window.showQuickPick(
             [
-              { label: vscode.l10n.t('status.pending'), value: GorevDurum.Beklemede, picked: true },
-              { label: vscode.l10n.t('status.inProgress'), value: GorevDurum.DevamEdiyor, picked: true },
-              { label: vscode.l10n.t('status.completed'), value: GorevDurum.Tamamlandi, picked: false },
+              { label: t('status.pending'), value: GorevDurum.Beklemede, picked: true },
+              { label: t('status.inProgress'), value: GorevDurum.DevamEdiyor, picked: true },
+              { label: t('status.completed'), value: GorevDurum.Tamamlandi, picked: false },
             ],
             {
-              placeHolder: vscode.l10n.t('filter.selectStatuses'),
+              placeHolder: t('filter.selectStatuses'),
               canPickMany: true,
             }
           );
@@ -130,12 +131,12 @@ export function registerEnhancedGorevCommands(
         case 'priority':
           const priorities = await vscode.window.showQuickPick(
             [
-              { label: vscode.l10n.t('priority.high'), value: GorevOncelik.Yuksek },
-              { label: vscode.l10n.t('priority.medium'), value: GorevOncelik.Orta },
-              { label: vscode.l10n.t('priority.low'), value: GorevOncelik.Dusuk },
+              { label: t('priority.high'), value: GorevOncelik.Yuksek },
+              { label: t('priority.medium'), value: GorevOncelik.Orta },
+              { label: t('priority.low'), value: GorevOncelik.Dusuk },
             ],
             {
-              placeHolder: vscode.l10n.t('filter.selectPriorities'),
+              placeHolder: t('filter.selectPriorities'),
               canPickMany: true,
             }
           );
@@ -147,8 +148,8 @@ export function registerEnhancedGorevCommands(
 
         case 'tag':
           const tag = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('filter.tagPrompt'),
-            placeHolder: vscode.l10n.t('filter.tagPlaceholder'),
+            prompt: t('filter.tagPrompt'),
+            placeHolder: t('filter.tagPlaceholder'),
           });
           if (tag) {
             filter.tags = [tag];
@@ -158,15 +159,15 @@ export function registerEnhancedGorevCommands(
         case 'dueDate':
           const dateFilter = await vscode.window.showQuickPick(
             [
-              { label: vscode.l10n.t('filter.overdueTasks'), value: 'overdue' },
-              { label: vscode.l10n.t('filter.dueToday'), value: 'today' },
-              { label: vscode.l10n.t('filter.dueThisWeek'), value: 'week' },
-              { label: vscode.l10n.t('filter.dueThisMonth'), value: 'month' },
-              { label: vscode.l10n.t('filter.hasDueDate'), value: 'hasDue' },
-              { label: vscode.l10n.t('filter.noDueDate'), value: 'noDue' },
+              { label: t('filter.overdueTasks'), value: 'overdue' },
+              { label: t('filter.dueToday'), value: 'today' },
+              { label: t('filter.dueThisWeek'), value: 'week' },
+              { label: t('filter.dueThisMonth'), value: 'month' },
+              { label: t('filter.hasDueDate'), value: 'hasDue' },
+              { label: t('filter.noDueDate'), value: 'noDue' },
             ],
             {
-              placeHolder: vscode.l10n.t('filter.selectDueDateFilter'),
+              placeHolder: t('filter.selectDueDateFilter'),
             }
           );
 
@@ -206,14 +207,14 @@ export function registerEnhancedGorevCommands(
         case 'quick':
           const quickFilter = await vscode.window.showQuickPick(
             [
-              { label: vscode.l10n.t('filter.highPriority'), value: 'highPriority' },
-              { label: vscode.l10n.t('filter.overdue'), value: 'overdue' },
-              { label: vscode.l10n.t('filter.today'), value: 'today' },
-              { label: vscode.l10n.t('filter.inProgress'), value: 'inProgress' },
-              { label: vscode.l10n.t('filter.completedToday'), value: 'completedToday' },
+              { label: t('filter.highPriority'), value: 'highPriority' },
+              { label: t('filter.overdue'), value: 'overdue' },
+              { label: t('filter.today'), value: 'today' },
+              { label: t('filter.inProgress'), value: 'inProgress' },
+              { label: t('filter.completedToday'), value: 'completedToday' },
             ],
             {
-              placeHolder: vscode.l10n.t('filter.selectQuickFilter'),
+              placeHolder: t('filter.selectQuickFilter'),
             }
           );
 
@@ -252,7 +253,7 @@ export function registerEnhancedGorevCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CLEAR_FILTER, () => {
       treeProvider.updateFilter({});
-      vscode.window.showInformationMessage(vscode.l10n.t('filter.cleared'));
+      vscode.window.showInformationMessage(t('filter.cleared'));
     })
   );
 
@@ -263,7 +264,7 @@ export function registerEnhancedGorevCommands(
       const current = config.get('showCompleted', true);
       config.update('showCompleted', !current, vscode.ConfigurationTarget.Global);
       vscode.window.showInformationMessage(
-        !current ? vscode.l10n.t('toggle.showingCompleted') : vscode.l10n.t('toggle.hidingCompleted')
+        !current ? t('toggle.showingCompleted') : t('toggle.hidingCompleted')
       );
     })
   );
@@ -275,7 +276,7 @@ export function registerEnhancedGorevCommands(
       // For now, show informational message about current selection
       const selectedTasks = treeProvider.getSelectedTasks();
       vscode.window.showInformationMessage(
-        vscode.l10n.t('selectAll.currentlySelected', { count: selectedTasks.length.toString() })
+        t('selectAll.currentlySelected', { count: selectedTasks.length.toString() })
       );
     })
   );
@@ -285,7 +286,7 @@ export function registerEnhancedGorevCommands(
     vscode.commands.registerCommand(COMMANDS.DESELECT_ALL, () => {
       // Clear all selections in the tree provider
       treeProvider.clearSelection();
-      vscode.window.showInformationMessage(vscode.l10n.t('selectAll.allCleared'));
+      vscode.window.showInformationMessage(t('selectAll.allCleared'));
     })
   );
 
@@ -295,18 +296,18 @@ export function registerEnhancedGorevCommands(
       const selectedTasks = treeProvider.getSelectedTasks();
       
       if (selectedTasks.length === 0) {
-        vscode.window.showWarningMessage(vscode.l10n.t('bulk.noTasksSelected'));
+        vscode.window.showWarningMessage(t('bulk.noTasksSelected'));
         return;
       }
 
       const newStatus = await vscode.window.showQuickPick(
         [
-          { label: vscode.l10n.t('status.pending'), value: GorevDurum.Beklemede },
-          { label: vscode.l10n.t('status.inProgress'), value: GorevDurum.DevamEdiyor },
-          { label: vscode.l10n.t('status.completed'), value: GorevDurum.Tamamlandi },
+          { label: t('status.pending'), value: GorevDurum.Beklemede },
+          { label: t('status.inProgress'), value: GorevDurum.DevamEdiyor },
+          { label: t('status.completed'), value: GorevDurum.Tamamlandi },
         ],
         {
-          placeHolder: vscode.l10n.t('bulk.updateStatusPlaceholder', selectedTasks.length.toString()),
+          placeHolder: t('bulk.updateStatusPlaceholder', selectedTasks.length.toString()),
         }
       );
 
@@ -316,7 +317,7 @@ export function registerEnhancedGorevCommands(
         vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: vscode.l10n.t('bulk.updatingTasks'),
+            title: t('bulk.updatingTasks'),
             cancellable: false,
           },
           async (progress) => {
@@ -336,12 +337,12 @@ export function registerEnhancedGorevCommands(
         );
 
         vscode.window.showInformationMessage(
-          vscode.l10n.t('bulk.updatedTasks', selectedTasks.length.toString(), newStatus.label)
+          t('bulk.updatedTasks', selectedTasks.length.toString(), newStatus.label)
         );
         await treeProvider.refresh();
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(vscode.l10n.t('bulk.failedToUpdate', errorMessage));
+        vscode.window.showErrorMessage(t('bulk.failedToUpdate', errorMessage));
       }
     })
   );
@@ -352,23 +353,23 @@ export function registerEnhancedGorevCommands(
       const selectedTasks = treeProvider.getSelectedTasks();
       
       if (selectedTasks.length === 0) {
-        vscode.window.showWarningMessage(vscode.l10n.t('bulk.noTasksSelected'));
+        vscode.window.showWarningMessage(t('bulk.noTasksSelected'));
         return;
       }
 
       const confirm = await vscode.window.showWarningMessage(
-        vscode.l10n.t('bulk.deleteConfirm', selectedTasks.length.toString()),
-        vscode.l10n.t('confirm.yes'),
-        vscode.l10n.t('confirm.no')
+        t('bulk.deleteConfirm', selectedTasks.length.toString()),
+        t('confirm.yes'),
+        t('confirm.no')
       );
 
-      if (confirm !== vscode.l10n.t('confirm.yes')) return;
+      if (confirm !== t('confirm.yes')) return;
 
       try {
         vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: vscode.l10n.t('bulk.deletingTasks'),
+            title: t('bulk.deletingTasks'),
             cancellable: false,
           },
           async (progress) => {
@@ -388,12 +389,12 @@ export function registerEnhancedGorevCommands(
         );
 
         vscode.window.showInformationMessage(
-          vscode.l10n.t('bulk.deletedTasks', selectedTasks.length.toString())
+          t('bulk.deletedTasks', selectedTasks.length.toString())
         );
         await treeProvider.refresh();
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(vscode.l10n.t('bulk.failedToDelete', errorMessage));
+        vscode.window.showErrorMessage(t('bulk.failedToDelete', errorMessage));
       }
     })
   );

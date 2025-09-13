@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import * as path from 'path';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from '../commands/index';
@@ -25,7 +26,7 @@ export class ImportWizard {
     // Create and show panel
     this.panel = vscode.window.createWebviewPanel(
       'gorevImportWizard',
-      vscode.l10n.t('import.wizardTitle'),
+      t('import.wizardTitle'),
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -110,7 +111,7 @@ export class ImportWizard {
       Logger.error('Failed to load initial import wizard data', error);
       this.panel.webview.postMessage({
         command: 'showError',
-        message: vscode.l10n.t('error.loadFailed', { error: String(error) })
+        message: t('error.loadFailed', { error: String(error) })
       });
     }
   }
@@ -127,7 +128,7 @@ export class ImportWizard {
         'CSV Files': ['csv'],
         'All Files': ['*']
       },
-      title: vscode.l10n.t('import.selectFile')
+      title: t('import.selectFile')
     });
 
     if (fileUri && fileUri[0]) {
@@ -256,10 +257,10 @@ export class ImportWizard {
       // Perform import with progress updates
       await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: vscode.l10n.t('import.inProgress'),
+        title: t('import.inProgress'),
         cancellable: false
       }, async (progress) => {
-        progress.report({ increment: 10, message: vscode.l10n.t('import.preparing') });
+        progress.report({ increment: 10, message: t('import.preparing') });
 
         // Remove dry_run flag for actual import
         const importOptions = {
@@ -270,13 +271,13 @@ export class ImportWizard {
         // Call MCP import tool
         const result = await this.mcpClient.callTool('gorev_import', importOptions);
 
-        progress.report({ increment: 80, message: vscode.l10n.t('import.processing') });
+        progress.report({ increment: 80, message: t('import.processing') });
 
         if (result.isError) {
           throw new Error(result.content[0]?.text || 'Import failed');
         }
 
-        progress.report({ increment: 100, message: vscode.l10n.t('import.complete') });
+        progress.report({ increment: 100, message: t('import.complete') });
 
         // Parse import results
         const importResult = this.parseImportResult(result.content[0]?.text || '');
@@ -292,7 +293,7 @@ export class ImportWizard {
 
         // Show success message
         vscode.window.showInformationMessage(
-          vscode.l10n.t('import.success', { 
+          t('import.success', { 
             tasks: importResult.tasksImported,
             projects: importResult.projectsImported
           })
@@ -313,7 +314,7 @@ export class ImportWizard {
       });
 
       vscode.window.showErrorMessage(
-        vscode.l10n.t('error.importFailed', { error: String(error) })
+        t('error.importFailed', { error: String(error) })
       );
     }
   }
@@ -468,7 +469,7 @@ export class ImportWizard {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
-    <title>${vscode.l10n.t('import.wizardTitle')}</title>
+    <title>${t('import.wizardTitle')}</title>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -695,14 +696,14 @@ export class ImportWizard {
     <div class="step active" id="step1">
         <div class="step-header">
             <div class="step-indicator">1</div>
-            <div class="step-title">${vscode.l10n.t('import.step1.title')}</div>
+            <div class="step-title">${t('import.step1.title')}</div>
         </div>
         
         <div class="form-group">
-            <label for="filePath">${vscode.l10n.t('import.selectFile')}</label>
+            <label for="filePath">${t('import.selectFile')}</label>
             <div class="file-input-group">
-                <input type="text" id="filePath" readonly placeholder="${vscode.l10n.t('import.noFileSelected')}">
-                <button class="btn btn-secondary" onclick="selectFile()">${vscode.l10n.t('import.browse')}</button>
+                <input type="text" id="filePath" readonly placeholder="${t('import.noFileSelected')}">
+                <button class="btn btn-secondary" onclick="selectFile()">${t('import.browse')}</button>
             </div>
         </div>
 
@@ -710,7 +711,7 @@ export class ImportWizard {
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
-            <div id="analysisMessage">${vscode.l10n.t('import.analyzing')}</div>
+            <div id="analysisMessage">${t('import.analyzing')}</div>
         </div>
 
         <div id="analysisResult" class="analysis-result" style="display: none;">
@@ -720,8 +721,8 @@ export class ImportWizard {
         <div id="analysisError" class="error" style="display: none;"></div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="cancel()">${vscode.l10n.t('common.cancel')}</button>
-            <button class="btn btn-primary" onclick="nextStep(2)" id="nextBtn1" disabled>${vscode.l10n.t('common.next')}</button>
+            <button class="btn btn-secondary" onclick="cancel()">${t('common.cancel')}</button>
+            <button class="btn btn-primary" onclick="nextStep(2)" id="nextBtn1" disabled>${t('common.next')}</button>
         </div>
     </div>
 
@@ -729,37 +730,37 @@ export class ImportWizard {
     <div class="step" id="step2">
         <div class="step-header">
             <div class="step-indicator">2</div>
-            <div class="step-title">${vscode.l10n.t('import.step2.title')}</div>
+            <div class="step-title">${t('import.step2.title')}</div>
         </div>
 
         <div class="form-group">
-            <label>${vscode.l10n.t('import.projectMapping')}</label>
+            <label>${t('import.projectMapping')}</label>
             <div id="projectMappings" class="project-mapping">
                 <!-- Project mappings filled dynamically -->
             </div>
         </div>
 
         <div class="form-group">
-            <label>${vscode.l10n.t('import.conflictResolution')}</label>
+            <label>${t('import.conflictResolution')}</label>
             <div class="radio-group">
                 <div class="radio-item">
                     <input type="radio" id="conflictSkip" name="conflictResolution" value="skip" checked>
-                    <label for="conflictSkip">${vscode.l10n.t('import.conflict.skip')}</label>
+                    <label for="conflictSkip">${t('import.conflict.skip')}</label>
                 </div>
                 <div class="radio-item">
                     <input type="radio" id="conflictOverwrite" name="conflictResolution" value="overwrite">
-                    <label for="conflictOverwrite">${vscode.l10n.t('import.conflict.overwrite')}</label>
+                    <label for="conflictOverwrite">${t('import.conflict.overwrite')}</label>
                 </div>
                 <div class="radio-item">
                     <input type="radio" id="conflictMerge" name="conflictResolution" value="merge">
-                    <label for="conflictMerge">${vscode.l10n.t('import.conflict.merge')}</label>
+                    <label for="conflictMerge">${t('import.conflict.merge')}</label>
                 </div>
             </div>
         </div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="previousStep(1)">${vscode.l10n.t('common.back')}</button>
-            <button class="btn btn-primary" onclick="nextStep(3)">${vscode.l10n.t('common.next')}</button>
+            <button class="btn btn-secondary" onclick="previousStep(1)">${t('common.back')}</button>
+            <button class="btn btn-primary" onclick="nextStep(3)">${t('common.next')}</button>
         </div>
     </div>
 
@@ -767,18 +768,18 @@ export class ImportWizard {
     <div class="step" id="step3">
         <div class="step-header">
             <div class="step-indicator">3</div>
-            <div class="step-title">${vscode.l10n.t('import.step3.title')}</div>
+            <div class="step-title">${t('import.step3.title')}</div>
         </div>
 
         <div class="form-group">
-            <button class="btn btn-primary" onclick="performDryRun()" id="dryRunBtn">${vscode.l10n.t('import.runPreview')}</button>
+            <button class="btn btn-primary" onclick="performDryRun()" id="dryRunBtn">${t('import.runPreview')}</button>
         </div>
 
         <div id="dryRunStatus" style="display: none;">
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
-            <div id="dryRunMessage">${vscode.l10n.t('import.previewRunning')}</div>
+            <div id="dryRunMessage">${t('import.previewRunning')}</div>
         </div>
 
         <div id="dryRunResult" class="analysis-result" style="display: none;">
@@ -792,8 +793,8 @@ export class ImportWizard {
         <div id="dryRunError" class="error" style="display: none;"></div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="previousStep(2)">${vscode.l10n.t('common.back')}</button>
-            <button class="btn btn-primary" onclick="nextStep(4)" id="nextBtn3" disabled>${vscode.l10n.t('common.next')}</button>
+            <button class="btn btn-secondary" onclick="previousStep(2)">${t('common.back')}</button>
+            <button class="btn btn-primary" onclick="nextStep(4)" id="nextBtn3" disabled>${t('common.next')}</button>
         </div>
     </div>
 
@@ -801,25 +802,25 @@ export class ImportWizard {
     <div class="step" id="step4">
         <div class="step-header">
             <div class="step-indicator">4</div>
-            <div class="step-title">${vscode.l10n.t('import.step4.title')}</div>
+            <div class="step-title">${t('import.step4.title')}</div>
         </div>
 
         <div class="info">
-            <p>${vscode.l10n.t('import.finalWarning')}</p>
+            <p>${t('import.finalWarning')}</p>
         </div>
 
         <div id="importProgress" style="display: none;">
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
-            <div id="importMessage">${vscode.l10n.t('import.preparing')}</div>
+            <div id="importMessage">${t('import.preparing')}</div>
         </div>
 
         <div id="importResult" style="display: none;"></div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="previousStep(3)" id="backBtn4">${vscode.l10n.t('common.back')}</button>
-            <button class="btn btn-primary" onclick="startImport()" id="importBtn">${vscode.l10n.t('import.start')}</button>
+            <button class="btn btn-secondary" onclick="previousStep(3)" id="backBtn4">${t('common.back')}</button>
+            <button class="btn btn-primary" onclick="startImport()" id="importBtn">${t('import.start')}</button>
         </div>
     </div>
 
@@ -922,11 +923,11 @@ export class ImportWizard {
             const mappingsDiv = document.getElementById('projectMappings');
             
             if (!analysisData || analysisData.totalProjects === 0) {
-                mappingsDiv.innerHTML = '<p>${vscode.l10n.t('import.noProjectMapping')}</p>';
+                mappingsDiv.innerHTML = '<p>${t('import.noProjectMapping')}</p>';
                 return;
             }
 
-            let html = '<p>${vscode.l10n.t('import.projectMapping.description')}</p>';
+            let html = '<p>${t('import.projectMapping.description')}</p>';
             
             // Create mapping interfaces for each project in import file
             // This would need to be enhanced based on actual analysis data structure
@@ -935,7 +936,7 @@ export class ImportWizard {
                 html += '<div><label>Import Project ' + (i + 1) + '</label><input type="text" readonly value="Project from file"></div>';
                 html += '<div class="arrow">→</div>';
                 html += '<div><select id="projectMapping' + i + '">';
-                html += '<option value="">${vscode.l10n.t('import.createNew')}</option>';
+                html += '<option value="">${t('import.createNew')}</option>';
                 
                 projects.forEach(project => {
                     html += '<option value="' + project.id + '">' + project.name + '</option>';
@@ -996,12 +997,12 @@ export class ImportWizard {
         function showAnalysisResult(result) {
             const resultDiv = document.getElementById('analysisResult');
             
-            let html = '<h3>${vscode.l10n.t('import.analysisResult')}</h3>';
-            html += '<div class="stat-item"><span class="stat-label">${vscode.l10n.t('import.totalTasks')}:</span><span class="stat-value">' + result.totalTasks + '</span></div>';
-            html += '<div class="stat-item"><span class="stat-label">${vscode.l10n.t('import.totalProjects')}:</span><span class="stat-value">' + result.totalProjects + '</span></div>';
+            let html = '<h3>${t('import.analysisResult')}</h3>';
+            html += '<div class="stat-item"><span class="stat-label">${t('import.totalTasks')}:</span><span class="stat-value">' + result.totalTasks + '</span></div>';
+            html += '<div class="stat-item"><span class="stat-label">${t('import.totalProjects')}:</span><span class="stat-value">' + result.totalProjects + '</span></div>';
             
             if (result.warnings && result.warnings.length > 0) {
-                html += '<div class="warning"><strong>${vscode.l10n.t('import.warnings')}:</strong><ul>';
+                html += '<div class="warning"><strong>${t('import.warnings')}:</strong><ul>';
                 result.warnings.forEach(warning => {
                     html += '<li>' + warning + '</li>';
                 });
@@ -1009,7 +1010,7 @@ export class ImportWizard {
             }
             
             if (result.errors && result.errors.length > 0) {
-                html += '<div class="error"><strong>${vscode.l10n.t('import.errors')}:</strong><ul>';
+                html += '<div class="error"><strong>${t('import.errors')}:</strong><ul>';
                 result.errors.forEach(error => {
                     html += '<li>' + error + '</li>';
                 });
@@ -1022,7 +1023,7 @@ export class ImportWizard {
 
         function showAnalysisError(error) {
             const errorDiv = document.getElementById('analysisError');
-            errorDiv.innerHTML = '<strong>${vscode.l10n.t('import.analysisFailed')}:</strong> ' + error;
+            errorDiv.innerHTML = '<strong>${t('import.analysisFailed')}:</strong> ' + error;
             errorDiv.style.display = 'block';
         }
 
@@ -1032,22 +1033,22 @@ export class ImportWizard {
             
             statusDiv.style.display = show ? 'block' : 'none';
             btn.disabled = show;
-            btn.textContent = show ? '${vscode.l10n.t('import.previewRunning')}' : '${vscode.l10n.t('import.runPreview')}';
+            btn.textContent = show ? '${t('import.previewRunning')}' : '${t('import.runPreview')}';
         }
 
         function showDryRunResult(result) {
             const resultDiv = document.getElementById('dryRunResult');
             
-            let html = '<h3>${vscode.l10n.t('import.previewResult')}</h3>';
-            html += '<div class="stat-item"><span class="stat-label">${vscode.l10n.t('import.tasksToImport')}:</span><span class="stat-value">' + result.tasksToImport + '</span></div>';
-            html += '<div class="stat-item"><span class="stat-label">${vscode.l10n.t('import.projectsToImport')}:</span><span class="stat-value">' + result.projectsToImport + '</span></div>';
+            let html = '<h3>${t('import.previewResult')}</h3>';
+            html += '<div class="stat-item"><span class="stat-label">${t('import.tasksToImport')}:</span><span class="stat-value">' + result.tasksToImport + '</span></div>';
+            html += '<div class="stat-item"><span class="stat-label">${t('import.projectsToImport')}:</span><span class="stat-value">' + result.projectsToImport + '</span></div>';
             
             resultDiv.innerHTML = html;
             resultDiv.style.display = 'block';
             
             if (result.conflicts && result.conflicts.length > 0) {
                 const conflictsDiv = document.getElementById('conflictsList');
-                let conflictsHtml = '<h4>${vscode.l10n.t('import.conflicts')}</h4>';
+                let conflictsHtml = '<h4>${t('import.conflicts')}</h4>';
                 result.conflicts.forEach(conflict => {
                     conflictsHtml += '<div class="conflict-item">' + conflict + '</div>';
                 });
@@ -1058,7 +1059,7 @@ export class ImportWizard {
 
         function showDryRunError(error) {
             const errorDiv = document.getElementById('dryRunError');
-            errorDiv.innerHTML = '<strong>${vscode.l10n.t('import.previewFailed')}:</strong> ' + error;
+            errorDiv.innerHTML = '<strong>${t('import.previewFailed')}:</strong> ' + error;
             errorDiv.style.display = 'block';
         }
 
@@ -1070,7 +1071,7 @@ export class ImportWizard {
             progressDiv.style.display = show ? 'block' : 'none';
             backBtn.disabled = show;
             importBtn.disabled = show;
-            importBtn.textContent = show ? '${vscode.l10n.t('import.importing')}' : '${vscode.l10n.t('import.start')}';
+            importBtn.textContent = show ? '${t('import.importing')}' : '${t('import.start')}';
         }
 
         function showImportResult(success, result, error) {
@@ -1078,14 +1079,14 @@ export class ImportWizard {
             const importBtn = document.getElementById('importBtn');
             
             if (success) {
-                resultDiv.innerHTML = '<div class="success"><strong>${vscode.l10n.t('import.completed')}!</strong><br>' +
-                    '${vscode.l10n.t('import.importedSummary')}: ' + result.tasksImported + ' ${vscode.l10n.t('import.tasks')}, ' + 
-                    result.projectsImported + ' ${vscode.l10n.t('import.projects')}</div>';
-                importBtn.textContent = '${vscode.l10n.t('common.close')}';
+                resultDiv.innerHTML = '<div class="success"><strong>${t('import.completed')}!</strong><br>' +
+                    '${t('import.importedSummary')}: ' + result.tasksImported + ' ${t('import.tasks')}, ' + 
+                    result.projectsImported + ' ${t('import.projects')}</div>';
+                importBtn.textContent = '${t('common.close')}';
                 importBtn.onclick = cancel;
             } else {
-                resultDiv.innerHTML = '<div class="error"><strong>${vscode.l10n.t('import.failed')}:</strong> ' + error + '</div>';
-                importBtn.textContent = '${vscode.l10n.t('import.retry')}';
+                resultDiv.innerHTML = '<div class="error"><strong>${t('import.failed')}:</strong> ' + error + '</div>';
+                importBtn.textContent = '${t('import.retry')}';
             }
             
             resultDiv.style.display = 'block';

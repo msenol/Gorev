@@ -1,4 +1,5 @@
 import { MCPClient } from '../mcp/client';
+import { t } from '../utils/l10n';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { Logger } from '../utils/logger';
 import * as vscode from 'vscode';
@@ -23,56 +24,56 @@ export class TestDataSeeder {
      */
     async seedTestData(): Promise<void> {
         const result = await vscode.window.showInformationMessage(
-            vscode.l10n.t('testData.confirmSeed'),
-            vscode.l10n.t('testData.yesCreate'),
-            vscode.l10n.t('testData.no')
+            t('testData.confirmSeed'),
+            t('testData.yesCreate'),
+            t('testData.no')
         );
 
-        if (result !== vscode.l10n.t('testData.yesCreate')) {
+        if (result !== t('testData.yesCreate')) {
             return;
         }
 
         try {
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: vscode.l10n.t('testData.creating'),
+                title: t('testData.creating'),
                 cancellable: false
             }, async (progress) => {
                 // 1. Test projeleri oluştur
-                progress.report({ increment: 10, message: vscode.l10n.t('testData.creatingProjects') });
+                progress.report({ increment: 10, message: t('testData.creatingProjects') });
                 const projectIds = await this.createTestProjects();
 
                 // 2. Test görevleri oluştur
-                progress.report({ increment: 30, message: vscode.l10n.t('testData.creatingTasks') });
+                progress.report({ increment: 30, message: t('testData.creatingTasks') });
                 const taskIds = await this.createTestTasks(projectIds);
 
                 // 3. Bağımlılıklar oluştur
-                progress.report({ increment: 20, message: vscode.l10n.t('testData.creatingDependencies') });
+                progress.report({ increment: 20, message: t('testData.creatingDependencies') });
                 await this.createTestDependencies(taskIds);
 
                 // 4. Alt görevler oluştur
-                progress.report({ increment: 10, message: vscode.l10n.t('testData.creatingSubtasks') });
+                progress.report({ increment: 10, message: t('testData.creatingSubtasks') });
                 await this.createSubtasks(taskIds);
 
                 // 5. Extra template görevler oluştur (örnekler için)
-                progress.report({ increment: 10, message: vscode.l10n.t('testData.creatingExamples') });
+                progress.report({ increment: 10, message: t('testData.creatingExamples') });
                 await this.createAdditionalTemplateExamples(projectIds);
 
                 // 6. Bazı görevleri tamamla ve AI interaksiyonları ekle
-                progress.report({ increment: 10, message: vscode.l10n.t('testData.updatingStatuses') });
+                progress.report({ increment: 10, message: t('testData.updatingStatuses') });
                 await this.updateSomeTaskStatuses(taskIds);
 
                 // 7. AI context oluştur
-                progress.report({ increment: 10, message: vscode.l10n.t('testData.creatingAIContext') });
+                progress.report({ increment: 10, message: t('testData.creatingAIContext') });
                 await this.setupAIContext(taskIds);
 
-                progress.report({ increment: 10, message: vscode.l10n.t('testData.completed') });
+                progress.report({ increment: 10, message: t('testData.completed') });
             });
 
-            vscode.window.showInformationMessage(vscode.l10n.t('testData.success'));
+            vscode.window.showInformationMessage(t('testData.success'));
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            vscode.window.showErrorMessage(vscode.l10n.t('testData.failed', errorMessage));
+            vscode.window.showErrorMessage(t('testData.failed', errorMessage));
             Logger.error('Test data seeding failed:', error);
         }
     }
@@ -671,12 +672,12 @@ export class TestDataSeeder {
      */
     async clearTestData(): Promise<void> {
         const result = await vscode.window.showWarningMessage(
-            vscode.l10n.t('testData.confirmClear'),
-            vscode.l10n.t('testData.yesDelete'),
-            vscode.l10n.t('testData.no')
+            t('testData.confirmClear'),
+            t('testData.yesDelete'),
+            t('testData.no')
         );
 
-        if (result !== vscode.l10n.t('testData.yesDelete')) {
+        if (result !== t('testData.yesDelete')) {
             return;
         }
 
@@ -701,10 +702,10 @@ export class TestDataSeeder {
                 }
             }
 
-            vscode.window.showInformationMessage(vscode.l10n.t('testData.cleared'));
+            vscode.window.showInformationMessage(t('testData.cleared'));
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            vscode.window.showErrorMessage(vscode.l10n.t('testData.clearFailed', errorMessage));
+            vscode.window.showErrorMessage(t('testData.clearFailed', errorMessage));
             Logger.error('Failed to clear test data:', error);
         }
     }

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { TestDataSeeder } from '../debug/testDataSeeder';
@@ -25,7 +26,7 @@ export function registerDebugCommands(
             } catch (error) {
                 Logger.error('Failed to seed test data:', error);
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                vscode.window.showErrorMessage(vscode.l10n.t('debug.seedingFailed', errorMessage));
+                vscode.window.showErrorMessage(t('debug.seedingFailed', errorMessage));
             }
         })
     );
@@ -44,7 +45,7 @@ export function registerDebugCommands(
             } catch (error) {
                 Logger.error('Failed to clear test data:', error);
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                vscode.window.showErrorMessage(vscode.l10n.t('debug.clearingFailed', errorMessage));
+                vscode.window.showErrorMessage(t('debug.clearingFailed', errorMessage));
             }
         })
     );
@@ -54,13 +55,13 @@ export function registerDebugCommands(
     
     // Status bar'a debug göstergesi ekle
     const debugStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1000);
-    debugStatusBar.text = vscode.l10n.t('debug.modeLabel');
-    debugStatusBar.tooltip = vscode.l10n.t('debug.modeTooltip');
+    debugStatusBar.text = t('debug.modeLabel');
+    debugStatusBar.tooltip = t('debug.modeTooltip');
     debugStatusBar.command = 'gorev.debug.seedTestData';
     debugStatusBar.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
     debugStatusBar.show();
     
     context.subscriptions.push(debugStatusBar);
 
-    Logger.info(vscode.l10n.t('debug.commandsRegistered'));
+    Logger.info(t('debug.commandsRegistered'));
 }

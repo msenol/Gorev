@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { Proje } from '../models/proje';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
@@ -79,7 +80,7 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
       const content = result.content[0].text;
       
       // Check if no active project
-      if (content.includes(vscode.l10n.t('projectTree.noActiveProject'))) {
+      if (content.includes(t('projectTree.noActiveProject'))) {
         this.activeProjectId = null;
         return;
       }
@@ -118,23 +119,23 @@ export class ProjeTreeItem extends vscode.TreeItem {
   private getTooltip(): string {
     const lines = [
       this.project.isim,
-      this.project.tanim || vscode.l10n.t('projectTree.noDescription'),
+      this.project.tanim || t('projectTree.noDescription'),
       '',
-      vscode.l10n.t('projectTree.totalTasks', (this.project.gorev_sayisi || 0).toString()),
+      t('projectTree.totalTasks', (this.project.gorev_sayisi || 0).toString()),
     ];
     
     if (this.project.tamamlanan_sayisi !== undefined) {
-      lines.push(vscode.l10n.t('projectTree.completed', this.project.tamamlanan_sayisi.toString()));
+      lines.push(t('projectTree.completed', this.project.tamamlanan_sayisi.toString()));
     }
     if (this.project.devam_eden_sayisi !== undefined) {
-      lines.push(vscode.l10n.t('projectTree.inProgress', this.project.devam_eden_sayisi.toString()));
+      lines.push(t('projectTree.inProgress', this.project.devam_eden_sayisi.toString()));
     }
     if (this.project.bekleyen_sayisi !== undefined) {
-      lines.push(vscode.l10n.t('projectTree.pending', this.project.bekleyen_sayisi.toString()));
+      lines.push(t('projectTree.pending', this.project.bekleyen_sayisi.toString()));
     }
     
     if (this.isActive) {
-      lines.push('', vscode.l10n.t('projectTree.activeProject'));
+      lines.push('', t('projectTree.activeProject'));
     }
     
     return lines.join('\n');
@@ -144,15 +145,15 @@ export class ProjeTreeItem extends vscode.TreeItem {
     const parts = [];
     
     if (this.isActive) {
-      parts.push(vscode.l10n.t('projectTree.active'));
+      parts.push(t('projectTree.active'));
     }
     
     const taskCount = this.project.gorev_sayisi || 0;
-    parts.push(vscode.l10n.t('projectTree.tasks', taskCount.toString()));
+    parts.push(t('projectTree.tasks', taskCount.toString()));
     
     if (this.project.tamamlanan_sayisi !== undefined && taskCount > 0) {
       const percentage = Math.round((this.project.tamamlanan_sayisi / taskCount) * 100);
-      parts.push(vscode.l10n.t('projectTree.percentDone', percentage.toString()));
+      parts.push(t('projectTree.percentDone', percentage.toString()));
     }
     
     return parts.join(' • ');

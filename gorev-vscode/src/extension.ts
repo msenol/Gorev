@@ -9,6 +9,7 @@ import { FilterToolbar } from './ui/filterToolbar';
 import { Logger, LogLevel } from './utils/logger';
 import { Config } from './utils/config';
 import { COMMANDS } from './utils/constants';
+import { initializeL10n } from './utils/l10n';
 
 let mcpClient: MCPClient;
 let statusBarManager: StatusBarManager;
@@ -21,11 +22,15 @@ let context: vscode.ExtensionContext;
 
 export async function activate(extensionContext: vscode.ExtensionContext) {
   context = extensionContext;
-  Logger.info(vscode.l10n.t('extension.starting'));
-  
+
+  // Initialize L10n system first
+  await initializeL10n(context);
+
+  Logger.info('Extension starting...');
+
   // Set debug logging
   Logger.setLogLevel(LogLevel.Debug);
-  
+
   // Check if we're in development mode
   const isDevelopment = extensionContext.extensionMode === vscode.ExtensionMode.Development;
 
@@ -105,13 +110,14 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
           const hasNoTasks = result.content[0].text.includes('Henüz görev bulunmuyor');
           
           if (hasNoTasks) {
+            const { t } = await import('./utils/l10n');
             const answer = await vscode.window.showInformationMessage(
-              vscode.l10n.t('debug.noTasksFound'),
-              vscode.l10n.t('debug.yesCreate'),
-              vscode.l10n.t('debug.no')
+              t('debug.noTasksFound'),
+              t('debug.yesCreate'),
+              t('debug.no')
             );
-            
-            if (answer === vscode.l10n.t('debug.yesCreate')) {
+
+            if (answer === t('debug.yesCreate')) {
               await vscode.commands.executeCommand('gorev.debug.seedTestData');
             }
           }
@@ -130,7 +136,8 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
         try {
           await refreshAllViews();
         } catch (error) {
-          Logger.error(vscode.l10n.t('log.failedRefreshViews'), error);
+          const { t } = await import('./utils/l10n');
+          Logger.error(t('log.failedRefreshViews'), error);
         }
       }
     }, refreshInterval * 1000);
@@ -159,12 +166,14 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     })
   );
 
-  Logger.info(vscode.l10n.t('extension.activated'));
+  const { t } = await import('./utils/l10n');
+  Logger.info(t('extension.activated'));
 }
 
-export function deactivate() {
-  Logger.info(vscode.l10n.t('extension.deactivated'));
-  
+export async function deactivate() {
+  const { t } = await import('./utils/l10n');
+  Logger.info(t('extension.deactivated'));
+
   if (mcpClient) {
     mcpClient.disconnect();
   }
@@ -172,26 +181,26 @@ export function deactivate() {
   if (statusBarManager) {
     statusBarManager.dispose();
   }
-
-  Logger.info(vscode.l10n.t('extension.deactivated'));
 }
 
 
 async function refreshAllViews(): Promise<void> {
   if (!mcpClient.isConnected()) {
-    Logger.warn(vscode.l10n.t('log.cannotRefreshViews'));
+    const { t } = await import('./utils/l10n');
+    Logger.warn(t('log.cannotRefreshViews'));
     return;
   }
-  
+
   try {
     // Refresh sequentially to avoid overwhelming the MCP server
     await gorevTreeProvider.refresh();
     await projeTreeProvider.refresh();
     await templateTreeProvider.refresh();
-    
+
     statusBarManager.update();
   } catch (error) {
-    Logger.error(vscode.l10n.t('log.errorRefreshingViews'), error);
+    const { t } = await import('./utils/l10n');
+    Logger.error(t('log.errorRefreshingViews'), error);
     throw error;
   }
 }

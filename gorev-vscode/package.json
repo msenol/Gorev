@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -13,7 +13,7 @@
   ],
   "keywords": [
     "task",
-    "todo", 
+    "todo",
     "project management",
     "mcp",
     "gorev",
@@ -102,7 +102,14 @@
         "gorev.treeView.grouping": {
           "type": "string",
           "default": "status",
-          "enum": ["none", "status", "priority", "project", "tag", "dueDate"],
+          "enum": [
+            "none",
+            "status",
+            "priority",
+            "project",
+            "tag",
+            "dueDate"
+          ],
           "enumDescriptions": [
             "No grouping - show all tasks in a flat list",
             "Group by status (Pending, In Progress, Completed)",
@@ -116,7 +123,13 @@
         "gorev.treeView.sorting": {
           "type": "string",
           "default": "priority",
-          "enum": ["title", "priority", "dueDate", "createdDate", "status"],
+          "enum": [
+            "title",
+            "priority",
+            "dueDate",
+            "createdDate",
+            "status"
+          ],
           "enumDescriptions": [
             "Sort by task title",
             "Sort by priority",
@@ -209,7 +222,11 @@
         "gorev.treeView.visuals.progressBarStyle": {
           "type": "string",
           "default": "blocks",
-          "enum": ["blocks", "percentage", "both"],
+          "enum": [
+            "blocks",
+            "percentage",
+            "both"
+          ],
           "enumDescriptions": [
             "Show progress as block characters (█░)",
             "Show progress as percentage only",
@@ -220,7 +237,11 @@
         "gorev.treeView.visuals.dueDateFormat": {
           "type": "string",
           "default": "smart",
-          "enum": ["smart", "relative", "absolute"],
+          "enum": [
+            "smart",
+            "relative",
+            "absolute"
+          ],
           "enumDescriptions": [
             "Smart formatting (Today, Tomorrow, 3d, etc.)",
             "Always relative (3 days left, 2 days overdue)",
@@ -255,16 +276,39 @@
             ".*": {
               "type": "object",
               "properties": {
-                "searchQuery": { "type": "string" },
-                "durum": { "type": "string" },
-                "oncelik": { "type": "string" },
-                "projeId": { "type": "string" },
-                "tags": { "type": "array", "items": { "type": "string" } },
-                "overdue": { "type": "boolean" },
-                "dueToday": { "type": "boolean" },
-                "dueThisWeek": { "type": "boolean" },
-                "hasTag": { "type": "boolean" },
-                "hasDependency": { "type": "boolean" }
+                "searchQuery": {
+                  "type": "string"
+                },
+                "durum": {
+                  "type": "string"
+                },
+                "oncelik": {
+                  "type": "string"
+                },
+                "projeId": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "overdue": {
+                  "type": "boolean"
+                },
+                "dueToday": {
+                  "type": "boolean"
+                },
+                "dueThisWeek": {
+                  "type": "boolean"
+                },
+                "hasTag": {
+                  "type": "boolean"
+                },
+                "hasDependency": {
+                  "type": "boolean"
+                }
               }
             }
           }
@@ -934,23 +978,24 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.6",
     "@types/node": "20.x",
+    "@types/sinon": "^17.0.2",
     "@types/vscode": "^1.95.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
+    "c8": "^9.0.0",
     "eslint": "^9.0.0",
-    "typescript": "^5.8.3",
+    "glob": "^10.3.10",
     "mocha": "^10.2.0",
     "sinon": "^17.0.1",
-    "@types/mocha": "^10.0.6",
-    "@types/sinon": "^17.0.2",
-    "glob": "^10.3.10",
-    "c8": "^9.0.0"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@vscode/l10n": "^0.0.18",
     "vscode-languageclient": "^9.0.1"
   }
 }

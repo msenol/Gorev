@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { MCPClient } from '../mcp/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { Logger } from '../utils/logger';
+import { t } from '../utils/l10n';
 
 /**
  * TreeView item'ları için inline düzenleme sağlayıcı
@@ -24,14 +25,14 @@ export class InlineEditProvider {
         this.originalLabel = item.task.baslik;
 
         const newTitle = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('inlineEdit.editTaskTitle'),
+            prompt: t('inlineEdit.editTaskTitle'),
             value: item.task.baslik,
             validateInput: (value) => {
                 if (!value || value.trim().length === 0) {
-                    return vscode.l10n.t('inlineEdit.taskTitleEmpty');
+                    return t('inlineEdit.taskTitleEmpty');
                 }
                 if (value.length > 200) {
-                    return vscode.l10n.t('inlineEdit.taskTitleTooLong');
+                    return t('inlineEdit.taskTitleTooLong');
                 }
                 return null;
             }
@@ -57,11 +58,11 @@ export class InlineEditProvider {
                 baslik: newTitle
             });
 
-            vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.taskTitleUpdated'));
+            vscode.window.showInformationMessage(t('inlineEdit.taskTitleUpdated'));
             Logger.info(`Task ${task.id} title updated to: ${newTitle}`);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.updateFailed', errorMessage));
+            vscode.window.showErrorMessage(t('inlineEdit.updateFailed', errorMessage));
             Logger.error('Failed to update task title:', error);
         }
     }
@@ -72,25 +73,25 @@ export class InlineEditProvider {
     async quickStatusChange(task: Gorev): Promise<void> {
         const items = [
             { 
-                label: vscode.l10n.t('inlineEdit.pending'), 
+                label: t('inlineEdit.pending'), 
                 value: GorevDurum.Beklemede,
-                description: task.durum === GorevDurum.Beklemede ? vscode.l10n.t('inlineEdit.currentStatus') : ''
+                description: task.durum === GorevDurum.Beklemede ? t('inlineEdit.currentStatus') : ''
             },
             { 
-                label: vscode.l10n.t('inlineEdit.inProgress'), 
+                label: t('inlineEdit.inProgress'), 
                 value: GorevDurum.DevamEdiyor,
-                description: task.durum === GorevDurum.DevamEdiyor ? vscode.l10n.t('inlineEdit.currentStatus') : ''
+                description: task.durum === GorevDurum.DevamEdiyor ? t('inlineEdit.currentStatus') : ''
             },
             { 
-                label: vscode.l10n.t('inlineEdit.completed'), 
+                label: t('inlineEdit.completed'), 
                 value: GorevDurum.Tamamlandi,
-                description: task.durum === GorevDurum.Tamamlandi ? vscode.l10n.t('inlineEdit.currentStatus') : ''
+                description: task.durum === GorevDurum.Tamamlandi ? t('inlineEdit.currentStatus') : ''
             }
         ];
 
         const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: vscode.l10n.t('inlineEdit.selectNewStatus'),
-            title: vscode.l10n.t('inlineEdit.changeStatusFor', task.baslik)
+            placeHolder: t('inlineEdit.selectNewStatus'),
+            title: t('inlineEdit.changeStatusFor', task.baslik)
         });
 
         if (selected && selected.value !== task.durum) {
@@ -104,14 +105,14 @@ export class InlineEditProvider {
                 
                 Logger.info(`[QuickStatusChange] MCP response:`, JSON.stringify(result));
 
-                vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.taskStatusUpdated'));
+                vscode.window.showInformationMessage(t('inlineEdit.taskStatusUpdated'));
                 Logger.info(`[QuickStatusChange] Task ${task.id} status updated to: ${selected.value}`);
                 
                 // Force a command execution to refresh all trees
                 await vscode.commands.executeCommand('gorev.refreshTasks');
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.statusUpdateFailed', errorMessage));
+                vscode.window.showErrorMessage(t('inlineEdit.statusUpdateFailed', errorMessage));
                 Logger.error('[QuickStatusChange] Failed to update task status:', error);
             }
         }
@@ -123,25 +124,25 @@ export class InlineEditProvider {
     async quickPriorityChange(task: Gorev): Promise<void> {
         const items = [
             { 
-                label: vscode.l10n.t('inlineEdit.highPriority'), 
+                label: t('inlineEdit.highPriority'), 
                 value: GorevOncelik.Yuksek,
-                description: task.oncelik === GorevOncelik.Yuksek ? vscode.l10n.t('inlineEdit.currentPriority') : ''
+                description: task.oncelik === GorevOncelik.Yuksek ? t('inlineEdit.currentPriority') : ''
             },
             { 
-                label: vscode.l10n.t('inlineEdit.mediumPriority'), 
+                label: t('inlineEdit.mediumPriority'), 
                 value: GorevOncelik.Orta,
-                description: task.oncelik === GorevOncelik.Orta ? vscode.l10n.t('inlineEdit.currentPriority') : ''
+                description: task.oncelik === GorevOncelik.Orta ? t('inlineEdit.currentPriority') : ''
             },
             { 
-                label: vscode.l10n.t('inlineEdit.lowPriority'), 
+                label: t('inlineEdit.lowPriority'), 
                 value: GorevOncelik.Dusuk,
-                description: task.oncelik === GorevOncelik.Dusuk ? vscode.l10n.t('inlineEdit.currentPriority') : ''
+                description: task.oncelik === GorevOncelik.Dusuk ? t('inlineEdit.currentPriority') : ''
             }
         ];
 
         const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: vscode.l10n.t('inlineEdit.selectNewPriority'),
-            title: vscode.l10n.t('inlineEdit.changePriorityFor', task.baslik)
+            placeHolder: t('inlineEdit.selectNewPriority'),
+            title: t('inlineEdit.changePriorityFor', task.baslik)
         });
 
         if (selected && selected.value !== task.oncelik) {
@@ -151,11 +152,11 @@ export class InlineEditProvider {
                     oncelik: selected.value
                 });
 
-                vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.taskPriorityUpdated'));
+                vscode.window.showInformationMessage(t('inlineEdit.taskPriorityUpdated'));
                 Logger.info(`Task ${task.id} priority updated to: ${selected.value}`);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.priorityUpdateFailed', errorMessage));
+                vscode.window.showErrorMessage(t('inlineEdit.priorityUpdateFailed', errorMessage));
                 Logger.error('Failed to update task priority:', error);
             }
         }
@@ -168,7 +169,7 @@ export class InlineEditProvider {
         const currentDate = task.son_tarih || '';
         
         const newDate = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('inlineEdit.enterDueDate'),
+            prompt: t('inlineEdit.enterDueDate'),
             value: currentDate,
             placeHolder: '2024-12-31',
             validateInput: (value) => {
@@ -177,11 +178,11 @@ export class InlineEditProvider {
                 }
                 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
                 if (!dateRegex.test(value)) {
-                    return vscode.l10n.t('inlineEdit.invalidDateFormat');
+                    return t('inlineEdit.invalidDateFormat');
                 }
                 const date = new Date(value);
                 if (isNaN(date.getTime())) {
-                    return vscode.l10n.t('inlineEdit.invalidDate');
+                    return t('inlineEdit.invalidDate');
                 }
                 return null;
             }
@@ -195,12 +196,12 @@ export class InlineEditProvider {
                 });
 
                 vscode.window.showInformationMessage(
-                    newDate ? vscode.l10n.t('inlineEdit.dueDateUpdated') : vscode.l10n.t('inlineEdit.dueDateRemoved')
+                    newDate ? t('inlineEdit.dueDateUpdated') : t('inlineEdit.dueDateRemoved')
                 );
                 Logger.info(`Task ${task.id} due date updated to: ${newDate || 'none'}`);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.dateUpdateFailed', errorMessage));
+                vscode.window.showErrorMessage(t('inlineEdit.dateUpdateFailed', errorMessage));
                 Logger.error('Failed to update task due date:', error);
             }
         }
@@ -211,16 +212,16 @@ export class InlineEditProvider {
      */
     async showDetailedEdit(task: Gorev): Promise<void> {
         const options = [
-            { label: vscode.l10n.t('inlineEdit.editTitle'), action: 'title' },
-            { label: vscode.l10n.t('inlineEdit.editDescription'), action: 'description' },
-            { label: vscode.l10n.t('inlineEdit.changeStatus'), action: 'status' },
-            { label: vscode.l10n.t('inlineEdit.changePriority'), action: 'priority' },
-            { label: vscode.l10n.t('inlineEdit.changeDueDate'), action: 'dueDate' },
-            { label: vscode.l10n.t('inlineEdit.editTags'), action: 'tags' }
+            { label: t('inlineEdit.editTitle'), action: 'title' },
+            { label: t('inlineEdit.editDescription'), action: 'description' },
+            { label: t('inlineEdit.changeStatus'), action: 'status' },
+            { label: t('inlineEdit.changePriority'), action: 'priority' },
+            { label: t('inlineEdit.changeDueDate'), action: 'dueDate' },
+            { label: t('inlineEdit.editTags'), action: 'tags' }
         ];
 
         const selected = await vscode.window.showQuickPick(options, {
-            placeHolder: vscode.l10n.t('inlineEdit.whatToEdit')
+            placeHolder: t('inlineEdit.whatToEdit')
         });
 
         if (!selected) return;
@@ -252,9 +253,9 @@ export class InlineEditProvider {
      */
     private async editDescription(task: Gorev): Promise<void> {
         const newDescription = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('inlineEdit.editTaskDescription'),
+            prompt: t('inlineEdit.editTaskDescription'),
             value: task.aciklama || '',
-            placeHolder: vscode.l10n.t('inlineEdit.descriptionPlaceholder')
+            placeHolder: t('inlineEdit.descriptionPlaceholder')
         });
 
         if (newDescription !== undefined && newDescription !== task.aciklama) {
@@ -264,11 +265,11 @@ export class InlineEditProvider {
                     aciklama: newDescription
                 });
 
-                vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.descriptionUpdated'));
+                vscode.window.showInformationMessage(t('inlineEdit.descriptionUpdated'));
                 Logger.info(`Task ${task.id} description updated`);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                vscode.window.showErrorMessage(vscode.l10n.t('inlineEdit.descriptionUpdateFailed', errorMessage));
+                vscode.window.showErrorMessage(t('inlineEdit.descriptionUpdateFailed', errorMessage));
                 Logger.error('Failed to update task description:', error);
             }
         }
@@ -281,7 +282,7 @@ export class InlineEditProvider {
         const currentTags = task.etiketler?.join(', ') || '';
         
         const newTags = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('inlineEdit.editTagsPrompt'),
+            prompt: t('inlineEdit.editTagsPrompt'),
             value: currentTags,
             placeHolder: 'bug, frontend, urgent',
             validateInput: (value) => {
@@ -289,10 +290,10 @@ export class InlineEditProvider {
                     const tags = value.split(',').map(t => t.trim());
                     for (const tag of tags) {
                         if (tag.length > 50) {
-                            return vscode.l10n.t('inlineEdit.tagsTooLong');
+                            return t('inlineEdit.tagsTooLong');
                         }
                         if (!/^[a-zA-Z0-9_-]+$/.test(tag)) {
-                            return vscode.l10n.t('inlineEdit.tagsInvalidChars');
+                            return t('inlineEdit.tagsInvalidChars');
                         }
                     }
                 }
@@ -303,7 +304,7 @@ export class InlineEditProvider {
         if (newTags !== undefined && newTags !== currentTags) {
             // Etiket güncelleme MCP tool'u henüz yok, bu yüzden şimdilik bilgi mesajı
             vscode.window.showInformationMessage(
-                vscode.l10n.t('inlineEdit.tagsFeatureComingSoon')
+                t('inlineEdit.tagsFeatureComingSoon')
             );
         }
     }

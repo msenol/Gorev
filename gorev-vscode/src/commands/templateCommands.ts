@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { TemplateTreeItem } from '../providers/templateTreeProvider';
@@ -20,7 +21,7 @@ export function registerTemplateCommands(
         await TemplateWizard.show(mcpClient, context.extensionUri, templateId);
       } catch (error) {
         Logger.error('Failed to open template wizard:', error);
-        vscode.window.showErrorMessage(vscode.l10n.t('template.wizardOpenFailed'));
+        vscode.window.showErrorMessage(t('template.wizardOpenFailed'));
       }
     })
   );
@@ -39,7 +40,7 @@ export function registerTemplateCommands(
         await TemplateWizard.show(mcpClient, context.extensionUri, item.template.id);
       } catch (error) {
         Logger.error('Failed to create task from template:', error);
-        vscode.window.showErrorMessage(vscode.l10n.t('template.createFromFailed'));
+        vscode.window.showErrorMessage(t('template.createFromFailed'));
       }
     })
   );
@@ -53,7 +54,7 @@ export function registerTemplateCommands(
         const templates = MarkdownParser.parseTemplateListesi(result.content[0].text);
 
         if (templates.length === 0) {
-          vscode.window.showInformationMessage(vscode.l10n.t('template.noTemplatesDefined'));
+          vscode.window.showInformationMessage(t('template.noTemplatesDefined'));
           return;
         }
 
@@ -66,7 +67,7 @@ export function registerTemplateCommands(
         }));
 
         const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: vscode.l10n.t('template.selectTemplate'),
+          placeHolder: t('template.selectTemplate'),
           matchOnDescription: true,
           matchOnDetail: true
         });
@@ -76,7 +77,7 @@ export function registerTemplateCommands(
         }
       } catch (error) {
         Logger.error('Failed to show template quick pick:', error);
-        vscode.window.showErrorMessage(vscode.l10n.t('template.listLoadFailed'));
+        vscode.window.showErrorMessage(t('template.listLoadFailed'));
       }
     })
   );
@@ -86,10 +87,10 @@ export function registerTemplateCommands(
     vscode.commands.registerCommand(COMMANDS.REFRESH_TEMPLATES, async () => {
       try {
         await providers.templateTreeProvider.refresh();
-        vscode.window.showInformationMessage(vscode.l10n.t('template.refreshed'));
+        vscode.window.showInformationMessage(t('template.refreshed'));
       } catch (error) {
         Logger.error('Failed to refresh templates:', error);
-        vscode.window.showErrorMessage(vscode.l10n.t('template.refreshFailed'));
+        vscode.window.showErrorMessage(t('template.refreshFailed'));
       }
     })
   );
@@ -99,12 +100,12 @@ export function registerTemplateCommands(
     vscode.commands.registerCommand(COMMANDS.INIT_DEFAULT_TEMPLATES, async () => {
       try {
         const answer = await vscode.window.showWarningMessage(
-          vscode.l10n.t('template.initConfirm'),
+          t('template.initConfirm'),
           { modal: true },
-          vscode.l10n.t('template.initConfirmYes')
+          t('template.initConfirmYes')
         );
 
-        if (answer !== vscode.l10n.t('template.initConfirmYes')) {
+        if (answer !== t('template.initConfirmYes')) {
           return;
         }
 
@@ -112,7 +113,7 @@ export function registerTemplateCommands(
         const serverPath = vscode.workspace.getConfiguration('gorev').get<string>('serverPath');
         
         if (!serverPath) {
-          vscode.window.showErrorMessage(vscode.l10n.t('template.serverPathNotConfigured'));
+          vscode.window.showErrorMessage(t('template.serverPathNotConfigured'));
           return;
         }
         
@@ -124,11 +125,11 @@ export function registerTemplateCommands(
         // Wait a bit and refresh
         setTimeout(async () => {
           await providers.templateTreeProvider.refresh();
-          vscode.window.showInformationMessage(vscode.l10n.t('template.defaultsLoaded'));
+          vscode.window.showInformationMessage(t('template.defaultsLoaded'));
         }, 2000);
       } catch (error) {
         Logger.error('Failed to initialize templates:', error);
-        vscode.window.showErrorMessage(vscode.l10n.t('template.initFailed'));
+        vscode.window.showErrorMessage(t('template.initFailed'));
       }
     })
   );
@@ -163,14 +164,14 @@ export function registerTemplateCommands(
       const uri = await vscode.window.showSaveDialog({
         defaultUri: vscode.Uri.file(`${template.isim.replace(/\s+/g, '_')}.json`),
         filters: {
-          [vscode.l10n.t('template.jsonFilter')]: ['json']
+          [t('template.jsonFilter')]: ['json']
         }
       });
 
       if (uri) {
         const content = JSON.stringify(template, null, 2);
         await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
-        vscode.window.showInformationMessage(vscode.l10n.t('template.exported'));
+        vscode.window.showInformationMessage(t('template.exported'));
       }
     })
   );
@@ -242,28 +243,28 @@ function getTemplateDetailsHtml(template: GorevTemplate): string {
   </head>
   <body>
       <h1>${template.isim}</h1>
-      <div class="category">${template.kategori || vscode.l10n.t('template.general')}</div>
+      <div class="category">${template.kategori || t('template.general')}</div>
       ${template.tanim ? `<div class="description">${template.tanim}</div>` : ''}
       
-      <h2>${vscode.l10n.t('template.fields')}</h2>
+      <h2>${t('template.fields')}</h2>
       ${template.alanlar.map(field => `
           <div class="field">
               <div>
                   <span class="field-name">${field.isim}</span>
                   <span class="field-type">(${field.tur})</span>
-                  ${field.zorunlu ? `<span class="field-required">${vscode.l10n.t('template.fieldRequired')}</span>` : ''}
+                  ${field.zorunlu ? `<span class="field-required">${t('template.fieldRequired')}</span>` : ''}
               </div>
-              ${field.varsayilan ? `<div class="field-description">${vscode.l10n.t('template.fieldDefault')}: <code>${field.varsayilan}</code></div>` : ''}
+              ${field.varsayilan ? `<div class="field-description">${t('template.fieldDefault')}: <code>${field.varsayilan}</code></div>` : ''}
           </div>
       `).join('')}
       
       ${template.varsayilan_baslik ? `
-          <h2>${vscode.l10n.t('template.defaultTitle')}</h2>
+          <h2>${t('template.defaultTitle')}</h2>
           <p><code>${template.varsayilan_baslik}</code></p>
       ` : ''}
       
       ${template.aciklama_template ? `
-          <h2>${vscode.l10n.t('template.descriptionTemplate')}</h2>
+          <h2>${t('template.descriptionTemplate')}</h2>
           <pre>${template.aciklama_template}</pre>
       ` : ''}
   </body>

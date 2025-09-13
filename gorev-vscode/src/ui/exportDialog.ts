@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import * as path from 'path';
 import { MCPClient } from '../mcp/client';
 import { Logger } from '../utils/logger';
@@ -23,7 +24,7 @@ export class ExportDialog {
     // Create and show panel
     this.panel = vscode.window.createWebviewPanel(
       'gorevExportDialog',
-      vscode.l10n.t('export.dialogTitle'),
+      t('export.dialogTitle'),
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -121,7 +122,7 @@ export class ExportDialog {
       Logger.error('Failed to load initial export dialog data', error);
       this.panel.webview.postMessage({
         command: 'showError',
-        message: vscode.l10n.t('error.loadFailed', { error: String(error) })
+        message: t('error.loadFailed', { error: String(error) })
       });
     }
   }
@@ -205,7 +206,7 @@ export class ExportDialog {
         'JSON Files': ['json'],
         'All Files': ['*']
       },
-      title: vscode.l10n.t('export.selectLocation')
+      title: t('export.selectLocation')
     });
 
     if (saveUri) {
@@ -228,21 +229,21 @@ export class ExportDialog {
       // Perform export with progress updates
       await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: vscode.l10n.t('export.inProgress'),
+        title: t('export.inProgress'),
         cancellable: false
       }, async (progress) => {
-        progress.report({ increment: 10, message: vscode.l10n.t('export.preparing') });
+        progress.report({ increment: 10, message: t('export.preparing') });
 
         // Call MCP export tool
         const result = await this.mcpClient.callTool('gorev_export', options);
 
-        progress.report({ increment: 90, message: vscode.l10n.t('export.completing') });
+        progress.report({ increment: 90, message: t('export.completing') });
 
         if (result.isError) {
           throw new Error(result.content[0]?.text || 'Export failed');
         }
 
-        progress.report({ increment: 100, message: vscode.l10n.t('export.complete') });
+        progress.report({ increment: 100, message: t('export.complete') });
 
         // Notify webview of success
         this.panel?.webview.postMessage({
@@ -251,11 +252,11 @@ export class ExportDialog {
         });
 
         // Show success message with action buttons
-        const openAction = vscode.l10n.t('export.openFile');
-        const openFolderAction = vscode.l10n.t('export.openFolder');
+        const openAction = t('export.openFile');
+        const openFolderAction = t('export.openFolder');
         
         const action = await vscode.window.showInformationMessage(
-          vscode.l10n.t('export.success', { path: options.output_path }),
+          t('export.success', { path: options.output_path }),
           openAction,
           openFolderAction
         );
@@ -281,7 +282,7 @@ export class ExportDialog {
       });
 
       vscode.window.showErrorMessage(
-        vscode.l10n.t('error.exportFailed', { error: String(error) })
+        t('error.exportFailed', { error: String(error) })
       );
     }
   }
@@ -345,7 +346,7 @@ export class ExportDialog {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
-    <title>${vscode.l10n.t('export.dialogTitle')}</title>
+    <title>${t('export.dialogTitle')}</title>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -524,11 +525,11 @@ export class ExportDialog {
     <div class="step active" id="step1">
         <div class="step-header">
             <div class="step-indicator">1</div>
-            <div class="step-title">${vscode.l10n.t('export.step1.title')}</div>
+            <div class="step-title">${t('export.step1.title')}</div>
         </div>
         
         <div class="form-group">
-            <label for="format">${vscode.l10n.t('export.format')}</label>
+            <label for="format">${t('export.format')}</label>
             <select id="format">
                 <option value="json">JSON</option>
                 <option value="csv">CSV</option>
@@ -536,30 +537,30 @@ export class ExportDialog {
         </div>
 
         <div class="form-group">
-            <label>${vscode.l10n.t('export.includeOptions')}</label>
+            <label>${t('export.includeOptions')}</label>
             <div class="checkbox-group">
                 <div class="checkbox-item">
                     <input type="checkbox" id="includeCompleted" checked>
-                    <label for="includeCompleted">${vscode.l10n.t('export.includeCompleted')}</label>
+                    <label for="includeCompleted">${t('export.includeCompleted')}</label>
                 </div>
                 <div class="checkbox-item">
                     <input type="checkbox" id="includeDependencies" checked>
-                    <label for="includeDependencies">${vscode.l10n.t('export.includeDependencies')}</label>
+                    <label for="includeDependencies">${t('export.includeDependencies')}</label>
                 </div>
                 <div class="checkbox-item">
                     <input type="checkbox" id="includeTemplates">
-                    <label for="includeTemplates">${vscode.l10n.t('export.includeTemplates')}</label>
+                    <label for="includeTemplates">${t('export.includeTemplates')}</label>
                 </div>
                 <div class="checkbox-item">
                     <input type="checkbox" id="includeAiContext">
-                    <label for="includeAiContext">${vscode.l10n.t('export.includeAiContext')}</label>
+                    <label for="includeAiContext">${t('export.includeAiContext')}</label>
                 </div>
             </div>
         </div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="cancel()">${vscode.l10n.t('common.cancel')}</button>
-            <button class="btn btn-primary" onclick="nextStep(2)">${vscode.l10n.t('common.next')}</button>
+            <button class="btn btn-secondary" onclick="cancel()">${t('common.cancel')}</button>
+            <button class="btn btn-primary" onclick="nextStep(2)">${t('common.next')}</button>
         </div>
     </div>
 
@@ -567,60 +568,60 @@ export class ExportDialog {
     <div class="step" id="step2">
         <div class="step-header">
             <div class="step-indicator">2</div>
-            <div class="step-title">${vscode.l10n.t('export.step2.title')}</div>
+            <div class="step-title">${t('export.step2.title')}</div>
         </div>
 
         <div class="form-group">
-            <label for="projectFilter">${vscode.l10n.t('export.projectFilter')}</label>
+            <label for="projectFilter">${t('export.projectFilter')}</label>
             <select id="projectFilter" multiple style="height: 120px;">
                 <!-- Projects loaded dynamically -->
             </select>
-            <small>${vscode.l10n.t('export.projectFilter.help')}</small>
+            <small>${t('export.projectFilter.help')}</small>
         </div>
 
         <div class="form-group">
-            <label for="statusFilter">${vscode.l10n.t('export.statusFilter')}</label>
+            <label for="statusFilter">${t('export.statusFilter')}</label>
             <div class="checkbox-group">
                 <div class="checkbox-item">
                     <input type="checkbox" id="statusPending" checked>
-                    <label for="statusPending">${vscode.l10n.t('status.pending')}</label>
+                    <label for="statusPending">${t('status.pending')}</label>
                 </div>
                 <div class="checkbox-item">
                     <input type="checkbox" id="statusInProgress" checked>
-                    <label for="statusInProgress">${vscode.l10n.t('status.inProgress')}</label>
+                    <label for="statusInProgress">${t('status.inProgress')}</label>
                 </div>
                 <div class="checkbox-item">
                     <input type="checkbox" id="statusCompleted" checked>
-                    <label for="statusCompleted">${vscode.l10n.t('status.completed')}</label>
+                    <label for="statusCompleted">${t('status.completed')}</label>
                 </div>
             </div>
         </div>
 
         <div class="form-group">
-            <label for="tagFilter">${vscode.l10n.t('export.tagFilter')}</label>
+            <label for="tagFilter">${t('export.tagFilter')}</label>
             <select id="tagFilter" multiple style="height: 100px;">
                 <!-- Tags loaded dynamically -->
             </select>
-            <small>${vscode.l10n.t('export.tagFilter.help')}</small>
+            <small>${t('export.tagFilter.help')}</small>
         </div>
 
         <div class="form-group">
-            <label>${vscode.l10n.t('export.dateRange')}</label>
+            <label>${t('export.dateRange')}</label>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div>
-                    <label for="dateFrom">${vscode.l10n.t('export.dateFrom')}</label>
+                    <label for="dateFrom">${t('export.dateFrom')}</label>
                     <input type="date" id="dateFrom">
                 </div>
                 <div>
-                    <label for="dateTo">${vscode.l10n.t('export.dateTo')}</label>
+                    <label for="dateTo">${t('export.dateTo')}</label>
                     <input type="date" id="dateTo">
                 </div>
             </div>
         </div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="previousStep(1)">${vscode.l10n.t('common.back')}</button>
-            <button class="btn btn-primary" onclick="nextStep(3)">${vscode.l10n.t('common.next')}</button>
+            <button class="btn btn-secondary" onclick="previousStep(1)">${t('common.back')}</button>
+            <button class="btn btn-primary" onclick="nextStep(3)">${t('common.next')}</button>
         </div>
     </div>
 
@@ -628,14 +629,14 @@ export class ExportDialog {
     <div class="step" id="step3">
         <div class="step-header">
             <div class="step-indicator">3</div>
-            <div class="step-title">${vscode.l10n.t('export.step3.title')}</div>
+            <div class="step-title">${t('export.step3.title')}</div>
         </div>
 
         <div class="form-group">
-            <label for="outputPath">${vscode.l10n.t('export.outputPath')}</label>
+            <label for="outputPath">${t('export.outputPath')}</label>
             <div class="file-input-group">
                 <input type="text" id="outputPath" readonly>
-                <button class="btn btn-secondary" onclick="selectOutputPath()">${vscode.l10n.t('export.browse')}</button>
+                <button class="btn btn-secondary" onclick="selectOutputPath()">${t('export.browse')}</button>
             </div>
         </div>
 
@@ -643,8 +644,8 @@ export class ExportDialog {
         <div id="sizeEstimate" class="info" style="display: none;"></div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="previousStep(2)">${vscode.l10n.t('common.back')}</button>
-            <button class="btn btn-primary" onclick="nextStep(4)">${vscode.l10n.t('common.next')}</button>
+            <button class="btn btn-secondary" onclick="previousStep(2)">${t('common.back')}</button>
+            <button class="btn btn-primary" onclick="nextStep(4)">${t('common.next')}</button>
         </div>
     </div>
 
@@ -652,7 +653,7 @@ export class ExportDialog {
     <div class="step" id="step4">
         <div class="step-header">
             <div class="step-indicator">4</div>
-            <div class="step-title">${vscode.l10n.t('export.step4.title')}</div>
+            <div class="step-title">${t('export.step4.title')}</div>
         </div>
 
         <div class="export-summary" id="exportSummary">
@@ -663,14 +664,14 @@ export class ExportDialog {
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <div id="progressMessage">${vscode.l10n.t('export.preparing')}</div>
+            <div id="progressMessage">${t('export.preparing')}</div>
         </div>
 
         <div id="exportResult" style="display: none;"></div>
 
         <div class="button-group">
-            <button class="btn btn-secondary" onclick="previousStep(3)" id="backBtn">${vscode.l10n.t('common.back')}</button>
-            <button class="btn btn-primary" onclick="startExport()" id="exportBtn">${vscode.l10n.t('export.start')}</button>
+            <button class="btn btn-secondary" onclick="previousStep(3)" id="backBtn">${t('common.back')}</button>
+            <button class="btn btn-primary" onclick="startExport()" id="exportBtn">${t('export.start')}</button>
         </div>
     </div>
 
@@ -840,34 +841,34 @@ export class ExportDialog {
             const options = gatherExportOptions();
             const summary = document.getElementById('exportSummary');
             
-            let html = '<h3>${vscode.l10n.t('export.summary')}</h3>';
+            let html = '<h3>${t('export.summary')}</h3>';
             
-            html += '<div class="summary-item"><span class="summary-label">${vscode.l10n.t('export.format')}:</span><span>' + options.format.toUpperCase() + '</span></div>';
-            html += '<div class="summary-item"><span class="summary-label">${vscode.l10n.t('export.outputPath')}:</span><span>' + options.output_path + '</span></div>';
+            html += '<div class="summary-item"><span class="summary-label">${t('export.format')}:</span><span>' + options.format.toUpperCase() + '</span></div>';
+            html += '<div class="summary-item"><span class="summary-label">${t('export.outputPath')}:</span><span>' + options.output_path + '</span></div>';
             
             const includeOptions = [];
-            if (options.include_completed) includeOptions.push('${vscode.l10n.t('export.includeCompleted')}');
-            if (options.include_dependencies) includeOptions.push('${vscode.l10n.t('export.includeDependencies')}');
-            if (options.include_templates) includeOptions.push('${vscode.l10n.t('export.includeTemplates')}');
-            if (options.include_ai_context) includeOptions.push('${vscode.l10n.t('export.includeAiContext')}');
+            if (options.include_completed) includeOptions.push('${t('export.includeCompleted')}');
+            if (options.include_dependencies) includeOptions.push('${t('export.includeDependencies')}');
+            if (options.include_templates) includeOptions.push('${t('export.includeTemplates')}');
+            if (options.include_ai_context) includeOptions.push('${t('export.includeAiContext')}');
             
-            html += '<div class="summary-item"><span class="summary-label">${vscode.l10n.t('export.includeOptions')}:</span><span>' + includeOptions.join(', ') + '</span></div>';
+            html += '<div class="summary-item"><span class="summary-label">${t('export.includeOptions')}:</span><span>' + includeOptions.join(', ') + '</span></div>';
             
             if (options.project_filter && options.project_filter.length > 0) {
                 const projectNames = options.project_filter.map(id => {
                     const project = projects.find(p => p.id === id);
                     return project ? project.name : id;
                 });
-                html += '<div class="summary-item"><span class="summary-label">${vscode.l10n.t('export.projectFilter')}:</span><span>' + projectNames.join(', ') + '</span></div>';
+                html += '<div class="summary-item"><span class="summary-label">${t('export.projectFilter')}:</span><span>' + projectNames.join(', ') + '</span></div>';
             }
             
             if (options.tag_filter && options.tag_filter.length > 0) {
-                html += '<div class="summary-item"><span class="summary-label">${vscode.l10n.t('export.tagFilter')}:</span><span>' + options.tag_filter.join(', ') + '</span></div>';
+                html += '<div class="summary-item"><span class="summary-label">${t('export.tagFilter')}:</span><span>' + options.tag_filter.join(', ') + '</span></div>';
             }
             
             if (options.date_range) {
                 const dateRange = (options.date_range.from || '') + ' - ' + (options.date_range.to || '');
-                html += '<div class="summary-item"><span class="summary-label">${vscode.l10n.t('export.dateRange')}:</span><span>' + dateRange + '</span></div>';
+                html += '<div class="summary-item"><span class="summary-label">${t('export.dateRange')}:</span><span>' + dateRange + '</span></div>';
             }
             
             summary.innerHTML = html;
@@ -879,7 +880,7 @@ export class ExportDialog {
             if (isValid) {
                 errorDiv.style.display = 'none';
             } else {
-                errorDiv.innerHTML = '<strong>${vscode.l10n.t('validation.errors')}:</strong><ul>' + 
+                errorDiv.innerHTML = '<strong>${t('validation.errors')}:</strong><ul>' + 
                     errors.map(error => '<li>' + error + '</li>').join('') + '</ul>';
                 errorDiv.style.display = 'block';
             }
@@ -887,7 +888,7 @@ export class ExportDialog {
 
         function showSizeEstimate(size) {
             const estimateDiv = document.getElementById('sizeEstimate');
-            estimateDiv.innerHTML = '<strong>${vscode.l10n.t('export.estimatedSize')}:</strong> ' + size;
+            estimateDiv.innerHTML = '<strong>${t('export.estimatedSize')}:</strong> ' + size;
             estimateDiv.style.display = 'block';
         }
 
@@ -900,12 +901,12 @@ export class ExportDialog {
                 progressDiv.style.display = 'block';
                 backBtn.disabled = true;
                 exportBtn.disabled = true;
-                exportBtn.textContent = '${vscode.l10n.t('export.exporting')}';
+                exportBtn.textContent = '${t('export.exporting')}';
             } else {
                 progressDiv.style.display = 'none';
                 backBtn.disabled = false;
                 exportBtn.disabled = false;
-                exportBtn.textContent = '${vscode.l10n.t('export.start')}';
+                exportBtn.textContent = '${t('export.start')}';
             }
         }
 
@@ -916,13 +917,13 @@ export class ExportDialog {
             showExportProgress(false);
             
             if (success) {
-                resultDiv.innerHTML = '<div class="info"><strong>${vscode.l10n.t('export.completed')}!</strong><br>' + 
-                    '${vscode.l10n.t('export.savedTo')}: ' + path + '</div>';
-                exportBtn.textContent = '${vscode.l10n.t('common.close')}';
+                resultDiv.innerHTML = '<div class="info"><strong>${t('export.completed')}!</strong><br>' + 
+                    '${t('export.savedTo')}: ' + path + '</div>';
+                exportBtn.textContent = '${t('common.close')}';
                 exportBtn.onclick = cancel;
             } else {
-                resultDiv.innerHTML = '<div class="error"><strong>${vscode.l10n.t('export.failed')}:</strong> ' + error + '</div>';
-                exportBtn.textContent = '${vscode.l10n.t('export.retry')}';
+                resultDiv.innerHTML = '<div class="error"><strong>${t('export.failed')}:</strong> ' + error + '</div>';
+                exportBtn.textContent = '${t('export.retry')}';
             }
             
             resultDiv.style.display = 'block';

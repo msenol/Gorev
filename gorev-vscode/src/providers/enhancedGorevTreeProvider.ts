@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { 
@@ -115,7 +116,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         
         if (!this.mcpClient.isConnected()) {
             Logger.warn('[EnhancedGorevTreeProvider] MCP client not connected');
-            return [new EmptyTreeViewItem(vscode.l10n.t('enhancedTree.notConnected'))];
+            return [new EmptyTreeViewItem(t('enhancedTree.notConnected'))];
         }
 
         // Root level
@@ -128,7 +129,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 return items;
             } catch (error) {
                 Logger.error('Failed to load tasks:', error);
-                return [new EmptyTreeViewItem(vscode.l10n.t('enhancedTree.loadFailed'))];
+                return [new EmptyTreeViewItem(t('enhancedTree.loadFailed'))];
             }
         }
 
@@ -289,12 +290,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
      */
     private getEmptyMessage(): string {
         if (this.config.filters.searchQuery) {
-            return vscode.l10n.t('enhancedTree.searchNoResults', this.config.filters.searchQuery);
+            return t('enhancedTree.searchNoResults', this.config.filters.searchQuery);
         }
         if (Object.keys(this.config.filters).length > 0) {
-            return vscode.l10n.t('enhancedTree.filterNoResults');
+            return t('enhancedTree.filterNoResults');
         }
-        return vscode.l10n.t('enhancedTree.noTasks');
+        return t('enhancedTree.noTasks');
     }
 
     /**
@@ -689,20 +690,20 @@ export class GroupTreeViewItem extends vscode.TreeItem {
     private createTooltip(completedCount: number, overdueCount: number): string {
         const lines = [
             `${this.label}`,
-            vscode.l10n.t('enhancedTree.totalTasks', this.tasks.length.toString()),
+            t('enhancedTree.totalTasks', this.tasks.length.toString()),
         ];
 
         if (completedCount > 0) {
-            lines.push(vscode.l10n.t('enhancedTree.completedTasks', completedCount.toString()));
+            lines.push(t('enhancedTree.completedTasks', completedCount.toString()));
         }
 
         if (overdueCount > 0) {
-            lines.push(vscode.l10n.t('enhancedTree.overdueTasks', overdueCount.toString()));
+            lines.push(t('enhancedTree.overdueTasks', overdueCount.toString()));
         }
 
         const highPriorityCount = this.tasks.filter(t => t.oncelik === GorevOncelik.Yuksek).length;
         if (highPriorityCount > 0) {
-            lines.push(vscode.l10n.t('enhancedTree.highPriorityTasks', highPriorityCount.toString()));
+            lines.push(t('enhancedTree.highPriorityTasks', highPriorityCount.toString()));
         }
 
         return lines.join('\n');
@@ -929,7 +930,7 @@ export class TaskTreeViewItem extends vscode.TreeItem {
                 priorityColor = 'blue';
                 break;
         }
-        md.appendMarkdown(`**${vscode.l10n.t('enhancedTree.priority')}** ${priorityBadge} <span style="color: ${priorityColor}">${this.task.oncelik}</span>\n\n`);
+        md.appendMarkdown(`**${t('enhancedTree.priority')}** ${priorityBadge} <span style="color: ${priorityColor}">${this.task.oncelik}</span>\n\n`);
 
         // Due date with smart formatting
         if (this.task.son_tarih) {
@@ -948,13 +949,13 @@ export class TaskTreeViewItem extends vscode.TreeItem {
             
             if (this.task.durum !== GorevDurum.Tamamlandi) {
                 if (diffDays < 0) {
-                    dueDateText = `⚠️ <span style="color: red">${vscode.l10n.t('enhancedTree.daysOverdue', Math.abs(diffDays).toString())}</span>`;
+                    dueDateText = `⚠️ <span style="color: red">${t('enhancedTree.daysOverdue', Math.abs(diffDays).toString())}</span>`;
                 } else if (diffDays === 0) {
-                    dueDateText = `📅 <span style="color: orange">${vscode.l10n.t('enhancedTree.today')}</span>`;
+                    dueDateText = `📅 <span style="color: orange">${t('enhancedTree.today')}</span>`;
                 } else if (diffDays === 1) {
-                    dueDateText = `📅 <span style="color: orange">${vscode.l10n.t('enhancedTree.tomorrow')}</span>`;
+                    dueDateText = `📅 <span style="color: orange">${t('enhancedTree.tomorrow')}</span>`;
                 } else if (diffDays <= 7) {
-                    dueDateText = `📅 ${vscode.l10n.t('enhancedTree.daysLeft', diffDays.toString())}`;
+                    dueDateText = `📅 ${t('enhancedTree.daysLeft', diffDays.toString())}`;
                 }
             }
             

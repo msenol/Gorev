@@ -3,6 +3,7 @@ import { MCPClient } from '../mcp/client';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { TaskFilter, SortingCriteria } from '../models/treeModels';
 import { Logger } from '../utils/logger';
+import { t } from '../utils/l10n';
 
 /**
  * Gelişmiş filtreleme toolbar'ı
@@ -30,8 +31,8 @@ export class FilterToolbar {
             vscode.StatusBarAlignment.Left,
             100
         );
-        searchItem.text = vscode.l10n.t('filterToolbar.search');
-        searchItem.tooltip = vscode.l10n.t('filterToolbar.searchTooltip');
+        searchItem.text = t('filterToolbar.search');
+        searchItem.tooltip = t('filterToolbar.searchTooltip');
         searchItem.command = 'gorev.showSearchInput';
         this.statusBarItems.push(searchItem);
 
@@ -40,8 +41,8 @@ export class FilterToolbar {
             vscode.StatusBarAlignment.Left,
             99
         );
-        filterItem.text = vscode.l10n.t('filterToolbar.filter');
-        filterItem.tooltip = vscode.l10n.t('filterToolbar.advancedFilter');
+        filterItem.text = t('filterToolbar.filter');
+        filterItem.tooltip = t('filterToolbar.advancedFilter');
         filterItem.command = 'gorev.showFilterMenu';
         this.statusBarItems.push(filterItem);
 
@@ -51,7 +52,7 @@ export class FilterToolbar {
             98
         );
         activeFilterItem.text = '';
-        activeFilterItem.tooltip = vscode.l10n.t('filterToolbar.activeFilters');
+        activeFilterItem.tooltip = t('filterToolbar.activeFilters');
         activeFilterItem.command = 'gorev.clearAllFilters';
         this.statusBarItems.push(activeFilterItem);
 
@@ -60,8 +61,8 @@ export class FilterToolbar {
             vscode.StatusBarAlignment.Left,
             97
         );
-        profileItem.text = vscode.l10n.t('filterToolbar.profiles');
-        profileItem.tooltip = vscode.l10n.t('filterToolbar.filterProfiles');
+        profileItem.text = t('filterToolbar.profiles');
+        profileItem.tooltip = t('filterToolbar.filterProfiles');
         profileItem.command = 'gorev.showFilterProfiles';
         this.statusBarItems.push(profileItem);
 
@@ -70,8 +71,8 @@ export class FilterToolbar {
             vscode.StatusBarAlignment.Left,
             96
         );
-        allProjectsItem.text = vscode.l10n.t('filterToolbar.allProjects');
-        allProjectsItem.tooltip = vscode.l10n.t('filterToolbar.toggleProjectsTooltip');
+        allProjectsItem.text = t('filterToolbar.allProjects');
+        allProjectsItem.tooltip = t('filterToolbar.toggleProjectsTooltip');
         allProjectsItem.command = 'gorev.toggleAllProjects';
         this.statusBarItems.push(allProjectsItem);
     }
@@ -96,8 +97,8 @@ export class FilterToolbar {
      */
     async showSearchInput(): Promise<void> {
         const searchQuery = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('filterToolbar.searchPrompt'),
-            placeHolder: vscode.l10n.t('filterToolbar.searchPlaceholder'),
+            prompt: t('filterToolbar.searchPrompt'),
+            placeHolder: t('filterToolbar.searchPlaceholder'),
             value: this.activeFilters.searchQuery || ''
         });
 
@@ -111,8 +112,8 @@ export class FilterToolbar {
      */
     async showFilterMenu(): Promise<void> {
         this.quickPick = vscode.window.createQuickPick<FilterQuickPickItem>();
-        this.quickPick.title = vscode.l10n.t('filterToolbar.advancedFilterTitle');
-        this.quickPick.placeholder = vscode.l10n.t('filterToolbar.selectFilterPlaceholder');
+        this.quickPick.title = t('filterToolbar.advancedFilterTitle');
+        this.quickPick.placeholder = t('filterToolbar.selectFilterPlaceholder');
         this.quickPick.canSelectMany = true;
         
         // Filtre seçeneklerini oluştur
@@ -120,7 +121,7 @@ export class FilterToolbar {
             // Durum filtreleri
             ...Object.values(GorevDurum).map(durum => ({
                 label: `$(circle-outline) ${this.getDurumLabel(durum)}`,
-                description: vscode.l10n.t('filterToolbar.status'),
+                description: t('filterToolbar.status'),
                 value: { durum },
                 filterType: 'durum' as const,
                 picked: this.activeFilters.durum === durum
@@ -129,7 +130,7 @@ export class FilterToolbar {
             // Öncelik filtreleri
             ...Object.values(GorevOncelik).map(oncelik => ({
                 label: `$(arrow-up) ${this.getOncelikLabel(oncelik)}`,
-                description: vscode.l10n.t('filterToolbar.priority'),
+                description: t('filterToolbar.priority'),
                 value: { oncelik },
                 filterType: 'oncelik' as const,
                 picked: this.activeFilters.oncelik === oncelik
@@ -138,42 +139,42 @@ export class FilterToolbar {
             // Özel filtreler
             {
                 label: '$(globe) Tüm Projeler',
-                description: vscode.l10n.t('filterToolbar.showAllProjectsDesc'),
+                description: t('filterToolbar.showAllProjectsDesc'),
                 value: { showAllProjects: true },
                 filterType: 'special' as const,
                 picked: this.activeFilters.showAllProjects !== false
             },
             {
                 label: '$(warning) Gecikmiş Görevler',
-                description: vscode.l10n.t('filterToolbar.overdueTasks'),
+                description: t('filterToolbar.overdueTasks'),
                 value: { overdue: true },
                 filterType: 'special' as const,
                 picked: this.activeFilters.overdue === true
             },
             {
                 label: '$(calendar) Bugün Biten',
-                description: vscode.l10n.t('filterToolbar.dueTodayTasks'),
+                description: t('filterToolbar.dueTodayTasks'),
                 value: { dueToday: true },
                 filterType: 'special' as const,
                 picked: this.activeFilters.dueToday === true
             },
             {
                 label: '$(calendar) Bu Hafta Biten',
-                description: vscode.l10n.t('filterToolbar.dueThisWeekTasks'),
+                description: t('filterToolbar.dueThisWeekTasks'),
                 value: { dueThisWeek: true },
                 filterType: 'special' as const,
                 picked: this.activeFilters.dueThisWeek === true
             },
             {
                 label: '$(tag) Etiketli Görevler',
-                description: vscode.l10n.t('filterToolbar.taggedTasks'),
+                description: t('filterToolbar.taggedTasks'),
                 value: { hasTag: true },
                 filterType: 'special' as const,
                 picked: this.activeFilters.hasTag === true
             },
             {
                 label: '$(link) Bağımlılığı Olan',
-                description: vscode.l10n.t('filterToolbar.tasksWithDependencies'),
+                description: t('filterToolbar.tasksWithDependencies'),
                 value: { hasDependency: true },
                 filterType: 'special' as const,
                 picked: this.activeFilters.hasDependency === true
@@ -187,7 +188,7 @@ export class FilterToolbar {
             
             items.push(...projects.map(project => ({
                 label: `$(folder) ${project.isim}`,
-                description: vscode.l10n.t('filterToolbar.project'),
+                description: t('filterToolbar.project'),
                 value: { projeId: project.id },
                 filterType: 'proje' as const,
                 picked: this.activeFilters.projeId === project.id
@@ -232,18 +233,18 @@ export class FilterToolbar {
         this.quickPick.buttons = [
             {
                 iconPath: new vscode.ThemeIcon('save'),
-                tooltip: vscode.l10n.t('filterToolbar.saveFilter')
+                tooltip: t('filterToolbar.saveFilter')
             },
             {
                 iconPath: new vscode.ThemeIcon('clear-all'),
-                tooltip: vscode.l10n.t('filterToolbar.clearAllFilters')
+                tooltip: t('filterToolbar.clearAllFilters')
             }
         ];
 
         this.quickPick.onDidTriggerButton(button => {
-            if (button.tooltip === vscode.l10n.t('filterToolbar.saveFilter')) {
+            if (button.tooltip === t('filterToolbar.saveFilter')) {
                 this.saveCurrentFilter();
-            } else if (button.tooltip === vscode.l10n.t('filterToolbar.clearAllFilters')) {
+            } else if (button.tooltip === t('filterToolbar.clearAllFilters')) {
                 this.clearAllFilters();
                 this.quickPick?.hide();
             }
@@ -268,17 +269,17 @@ export class FilterToolbar {
         }));
 
         if (profiles.length === 0) {
-            vscode.window.showInformationMessage(vscode.l10n.t('filterToolbar.noSavedProfiles'));
+            vscode.window.showInformationMessage(t('filterToolbar.noSavedProfiles'));
             return;
         }
 
         const selected = await vscode.window.showQuickPick(profiles, {
-            placeHolder: vscode.l10n.t('filterToolbar.selectProfile')
+            placeHolder: t('filterToolbar.selectProfile')
         });
 
         if (selected) {
             this.updateFilter(selected.filter);
-            vscode.window.showInformationMessage(vscode.l10n.t('filterToolbar.profileApplied', selected.label));
+            vscode.window.showInformationMessage(t('filterToolbar.profileApplied', selected.label));
         }
     }
 
@@ -287,19 +288,19 @@ export class FilterToolbar {
      */
     private async saveCurrentFilter(): Promise<void> {
         if (Object.keys(this.activeFilters).length === 0) {
-            vscode.window.showWarningMessage(vscode.l10n.t('filterToolbar.noActiveFilters'));
+            vscode.window.showWarningMessage(t('filterToolbar.noActiveFilters'));
             return;
         }
 
         const name = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('filterToolbar.profileNamePrompt'),
-            placeHolder: vscode.l10n.t('filterToolbar.profileNamePlaceholder')
+            prompt: t('filterToolbar.profileNamePrompt'),
+            placeHolder: t('filterToolbar.profileNamePlaceholder')
         });
 
         if (name) {
             this.savedProfiles.set(name, { ...this.activeFilters });
             this.saveSavedProfiles();
-            vscode.window.showInformationMessage(vscode.l10n.t('filterToolbar.profileSaved', name));
+            vscode.window.showInformationMessage(t('filterToolbar.profileSaved', name));
         }
     }
 
@@ -320,7 +321,7 @@ export class FilterToolbar {
         this.activeFilters = {};
         this.onFilterChange({}); // Empty filter object to clear all filters
         this.updateActiveFilterDisplay();
-        vscode.window.showInformationMessage(vscode.l10n.t('filterToolbar.allFiltersCleared'));
+        vscode.window.showInformationMessage(t('filterToolbar.allFiltersCleared'));
     }
 
     /**
@@ -331,8 +332,8 @@ export class FilterToolbar {
         const filterCount = Object.keys(this.activeFilters).length;
 
         if (filterCount > 0) {
-            activeFilterItem.text = vscode.l10n.t('filterToolbar.activeFilterCount', filterCount.toString());
-            activeFilterItem.tooltip = vscode.l10n.t('filterToolbar.activeFiltersTooltip', this.getFilterDescription(this.activeFilters));
+            activeFilterItem.text = t('filterToolbar.activeFilterCount', filterCount.toString());
+            activeFilterItem.tooltip = t('filterToolbar.activeFiltersTooltip', this.getFilterDescription(this.activeFilters));
             activeFilterItem.show();
         } else {
             activeFilterItem.hide();
@@ -346,31 +347,31 @@ export class FilterToolbar {
         const parts: string[] = [];
 
         if (filter.searchQuery) {
-            parts.push(vscode.l10n.t('filterToolbar.searchQuery', filter.searchQuery));
+            parts.push(t('filterToolbar.searchQuery', filter.searchQuery));
         }
         if (filter.durum) {
-            parts.push(vscode.l10n.t('filterToolbar.statusFilter', this.getDurumLabel(filter.durum)));
+            parts.push(t('filterToolbar.statusFilter', this.getDurumLabel(filter.durum)));
         }
         if (filter.oncelik) {
-            parts.push(vscode.l10n.t('filterToolbar.priorityFilter', this.getOncelikLabel(filter.oncelik)));
+            parts.push(t('filterToolbar.priorityFilter', this.getOncelikLabel(filter.oncelik)));
         }
         if (filter.projeId) {
-            parts.push(vscode.l10n.t('filterToolbar.projectFilter'));
+            parts.push(t('filterToolbar.projectFilter'));
         }
         if (filter.overdue) {
-            parts.push(vscode.l10n.t('filterToolbar.overdue'));
+            parts.push(t('filterToolbar.overdue'));
         }
         if (filter.dueToday) {
-            parts.push(vscode.l10n.t('filterToolbar.dueToday'));
+            parts.push(t('filterToolbar.dueToday'));
         }
         if (filter.dueThisWeek) {
-            parts.push(vscode.l10n.t('filterToolbar.dueThisWeek'));
+            parts.push(t('filterToolbar.dueThisWeek'));
         }
         if (filter.hasTag) {
-            parts.push(vscode.l10n.t('filterToolbar.tagged'));
+            parts.push(t('filterToolbar.tagged'));
         }
         if (filter.hasDependency) {
-            parts.push(vscode.l10n.t('filterToolbar.withDependencies'));
+            parts.push(t('filterToolbar.withDependencies'));
         }
 
         return parts.join(' • ');
@@ -381,9 +382,9 @@ export class FilterToolbar {
      */
     private getDurumLabel(durum: GorevDurum): string {
         const labels: Record<GorevDurum, string> = {
-            [GorevDurum.Beklemede]: vscode.l10n.t('status.pending'),
-            [GorevDurum.DevamEdiyor]: vscode.l10n.t('status.inProgress'),
-            [GorevDurum.Tamamlandi]: vscode.l10n.t('status.completed')
+            [GorevDurum.Beklemede]: t('status.pending'),
+            [GorevDurum.DevamEdiyor]: t('status.inProgress'),
+            [GorevDurum.Tamamlandi]: t('status.completed')
         };
         return labels[durum];
     }
@@ -393,9 +394,9 @@ export class FilterToolbar {
      */
     private getOncelikLabel(oncelik: GorevOncelik): string {
         const labels: Record<GorevOncelik, string> = {
-            [GorevOncelik.Dusuk]: vscode.l10n.t('priority.low'),
-            [GorevOncelik.Orta]: vscode.l10n.t('priority.medium'),
-            [GorevOncelik.Yuksek]: vscode.l10n.t('priority.high')
+            [GorevOncelik.Dusuk]: t('priority.low'),
+            [GorevOncelik.Orta]: t('priority.medium'),
+            [GorevOncelik.Yuksek]: t('priority.high')
         };
         return labels[oncelik];
     }
@@ -407,7 +408,7 @@ export class FilterToolbar {
         const allProjectsItem = this.statusBarItems[4]; // 5th item (index 4)
         if (allProjectsItem) {
             const showingAllProjects = this.activeFilters.showAllProjects !== false;
-            allProjectsItem.text = showingAllProjects ? vscode.l10n.t('filterToolbar.allProjects') : vscode.l10n.t('filterToolbar.activeProject');
+            allProjectsItem.text = showingAllProjects ? t('filterToolbar.allProjects') : t('filterToolbar.activeProject');
             allProjectsItem.backgroundColor = showingAllProjects ? undefined : new vscode.ThemeColor('statusBarItem.warningBackground');
         }
     }

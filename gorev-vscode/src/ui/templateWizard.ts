@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import * as path from 'path';
 import { MCPClient } from '../mcp/client';
 import { GorevTemplate, TemplateAlan } from '../models/template';
@@ -20,7 +21,7 @@ export class TemplateWizard {
     ) {
         this.panel = vscode.window.createWebviewPanel(
             'gorevTemplateWizard',
-            vscode.l10n.t('templateWizard.title'),
+            t('templateWizard.title'),
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -111,7 +112,7 @@ export class TemplateWizard {
             });
         } catch (error) {
             Logger.error('Failed to load templates:', error);
-            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.loadFailed'));
+            vscode.window.showErrorMessage(t('templateWizard.loadFailed'));
         }
     }
 
@@ -144,7 +145,7 @@ export class TemplateWizard {
             
             this.template = templates.find(t => t.id === templateId);
             if (!this.template) {
-                throw new Error(vscode.l10n.t('templateWizard.notFound'));
+                throw new Error(t('templateWizard.notFound'));
             }
 
             // Send template details to webview
@@ -154,13 +155,13 @@ export class TemplateWizard {
             });
         } catch (error) {
             Logger.error('Failed to load template:', error);
-            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.loadTemplateFailed'));
+            vscode.window.showErrorMessage(t('templateWizard.loadTemplateFailed'));
         }
     }
 
     private async createTaskFromTemplate(values: Record<string, any>): Promise<void> {
         if (!this.template) {
-            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.notSelected'));
+            vscode.window.showErrorMessage(t('templateWizard.notSelected'));
             return;
         }
 
@@ -185,7 +186,7 @@ export class TemplateWizard {
             });
 
             // Show success message
-            vscode.window.showInformationMessage(vscode.l10n.t('templateWizard.taskCreated'));
+            vscode.window.showInformationMessage(t('templateWizard.taskCreated'));
 
             // Close wizard
             this.panel.dispose();
@@ -194,7 +195,7 @@ export class TemplateWizard {
             await vscode.commands.executeCommand('gorev.refreshTasks');
         } catch (error) {
             Logger.error('Failed to create task from template:', error);
-            vscode.window.showErrorMessage(vscode.l10n.t('templateWizard.createFailed'));
+            vscode.window.showErrorMessage(t('templateWizard.createFailed'));
         }
     }
 
@@ -211,19 +212,19 @@ export class TemplateWizard {
     }
 
     private generateTaskPreview(template: GorevTemplate, values: Record<string, any>): string {
-        let preview = `# ${values.baslik || template.varsayilan_baslik || vscode.l10n.t('templateWizard.newTask')}\n\n`;
+        let preview = `# ${values.baslik || template.varsayilan_baslik || t('templateWizard.newTask')}\n\n`;
         
         if (values.aciklama || template.aciklama_template) {
-            preview += `## ${vscode.l10n.t('templateWizard.description')}\n${values.aciklama || template.aciklama_template}\n\n`;
+            preview += `## ${t('templateWizard.description')}\n${values.aciklama || template.aciklama_template}\n\n`;
         }
 
-        preview += `## ${vscode.l10n.t('templateWizard.details')}\n`;
-        preview += `- **${vscode.l10n.t('templateWizard.priorityLabel')}** ${values.oncelik || vscode.l10n.t('templateWizard.mediumPriority')}\n`;
+        preview += `## ${t('templateWizard.details')}\n`;
+        preview += `- **${t('templateWizard.priorityLabel')}** ${values.oncelik || t('templateWizard.mediumPriority')}\n`;
         if (values.son_tarih) {
-            preview += `- **${vscode.l10n.t('templateWizard.dueDateLabel')}** ${values.son_tarih}\n`;
+            preview += `- **${t('templateWizard.dueDateLabel')}** ${values.son_tarih}\n`;
         }
         if (values.etiketler) {
-            preview += `- **${vscode.l10n.t('templateWizard.tagsLabel')}** ${values.etiketler}\n`;
+            preview += `- **${t('templateWizard.tagsLabel')}** ${values.etiketler}\n`;
         }
 
         // Add custom fields
@@ -242,7 +243,7 @@ export class TemplateWizard {
             favorites.push(templateId);
             await this.saveFavorites(favorites);
             
-            vscode.window.showInformationMessage(vscode.l10n.t('templateWizard.addedToFavorites'));
+            vscode.window.showInformationMessage(t('templateWizard.addedToFavorites'));
             
             // Update UI
             this.panel.webview.postMessage({
@@ -294,26 +295,26 @@ export class TemplateWizard {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${vscode.l10n.t('templateWizard.title')}</title>
+            <title>${t('templateWizard.title')}</title>
             <link href="${styleUri}" rel="stylesheet">
         </head>
         <body>
             <div class="wizard-container">
                 <!-- Step 1: Template Selection -->
                 <div id="step-template-selection" class="wizard-step active">
-                    <h2>${vscode.l10n.t('templateWizard.selectTemplate')}</h2>
+                    <h2>${t('templateWizard.selectTemplate')}</h2>
                     
                     <div class="search-container">
-                        <input type="text" id="template-search" placeholder="${vscode.l10n.t('templateWizard.searchPlaceholder')}" />
+                        <input type="text" id="template-search" placeholder="${t('templateWizard.searchPlaceholder')}" />
                     </div>
 
                     <div class="category-tabs">
-                        <button class="category-tab active" data-category="">${vscode.l10n.t('templateWizard.categoryAll')}</button>
-                        <button class="category-tab" data-category="Genel">${vscode.l10n.t('templateWizard.categoryGeneral')}</button>
-                        <button class="category-tab" data-category="Teknik">${vscode.l10n.t('templateWizard.categoryTechnical')}</button>
-                        <button class="category-tab" data-category="Özellik">${vscode.l10n.t('templateWizard.categoryFeature')}</button>
-                        <button class="category-tab" data-category="Bug">${vscode.l10n.t('templateWizard.categoryBug')}</button>
-                        <button class="category-tab" data-category="favorites">${vscode.l10n.t('templateWizard.categoryFavorites')}</button>
+                        <button class="category-tab active" data-category="">${t('templateWizard.categoryAll')}</button>
+                        <button class="category-tab" data-category="Genel">${t('templateWizard.categoryGeneral')}</button>
+                        <button class="category-tab" data-category="Teknik">${t('templateWizard.categoryTechnical')}</button>
+                        <button class="category-tab" data-category="Özellik">${t('templateWizard.categoryFeature')}</button>
+                        <button class="category-tab" data-category="Bug">${t('templateWizard.categoryBug')}</button>
+                        <button class="category-tab" data-category="favorites">${t('templateWizard.categoryFavorites')}</button>
                     </div>
 
                     <div id="template-grid" class="template-grid">
@@ -323,7 +324,7 @@ export class TemplateWizard {
 
                 <!-- Step 2: Form Fields -->
                 <div id="step-form-fields" class="wizard-step">
-                    <h2 id="template-name">${vscode.l10n.t('templateWizard.title')}</h2>
+                    <h2 id="template-name">${t('templateWizard.title')}</h2>
                     <p id="template-description" class="template-description"></p>
 
                     <form id="template-form">
@@ -333,23 +334,23 @@ export class TemplateWizard {
                     </form>
 
                     <div class="form-actions">
-                        <button id="btn-back" class="btn-secondary">${vscode.l10n.t('templateWizard.back')}</button>
-                        <button id="btn-preview" class="btn-secondary">${vscode.l10n.t('templateWizard.preview')}</button>
-                        <button id="btn-create" class="btn-primary">${vscode.l10n.t('templateWizard.create')}</button>
+                        <button id="btn-back" class="btn-secondary">${t('templateWizard.back')}</button>
+                        <button id="btn-preview" class="btn-secondary">${t('templateWizard.preview')}</button>
+                        <button id="btn-create" class="btn-primary">${t('templateWizard.create')}</button>
                     </div>
                 </div>
 
                 <!-- Step 3: Preview -->
                 <div id="step-preview" class="wizard-step">
-                    <h2>${vscode.l10n.t('templateWizard.taskPreview')}</h2>
+                    <h2>${t('templateWizard.taskPreview')}</h2>
                     
                     <div id="task-preview" class="task-preview">
                         <!-- Preview content will be shown here -->
                     </div>
 
                     <div class="form-actions">
-                        <button id="btn-back-to-form" class="btn-secondary">${vscode.l10n.t('templateWizard.edit')}</button>
-                        <button id="btn-confirm-create" class="btn-primary">${vscode.l10n.t('templateWizard.confirmCreate')}</button>
+                        <button id="btn-back-to-form" class="btn-secondary">${t('templateWizard.edit')}</button>
+                        <button id="btn-confirm-create" class="btn-primary">${t('templateWizard.confirmCreate')}</button>
                     </div>
                 </div>
             </div>

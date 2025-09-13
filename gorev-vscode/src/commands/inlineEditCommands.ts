@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
@@ -23,7 +24,7 @@ export function registerInlineEditCommands(
                 if (selectedTasks.length === 1) {
                     item = { task: selectedTasks[0] };
                 } else {
-                    vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTaskToEdit'));
+                    vscode.window.showWarningMessage(t('inlineEdit.selectTaskToEdit'));
                     return;
                 }
             }
@@ -36,28 +37,28 @@ export function registerInlineEditCommands(
     // Quick Status Change
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.QUICK_STATUS_CHANGE, async (item: any) => {
-            Logger.info(vscode.l10n.t('inlineEdit.quickStatusStartLog'));
-            Logger.info(vscode.l10n.t('inlineEdit.quickStatusItemTypeLog'), item?.constructor?.name);
-            Logger.info(vscode.l10n.t('inlineEdit.quickStatusHasTaskLog'), !!item?.task);
+            Logger.info(t('inlineEdit.quickStatusStartLog'));
+            Logger.info(t('inlineEdit.quickStatusItemTypeLog'), item?.constructor?.name);
+            Logger.info(t('inlineEdit.quickStatusHasTaskLog'), !!item?.task);
             
             if (item?.task) {
-                Logger.info(vscode.l10n.t('inlineEdit.quickStatusTaskIdLog'), item.task.id);
-                Logger.info(vscode.l10n.t('inlineEdit.quickStatusTaskTitleLog'), item.task.baslik);
-                Logger.info(vscode.l10n.t('inlineEdit.quickStatusCurrentStatusLog'), item.task.durum);
+                Logger.info(t('inlineEdit.quickStatusTaskIdLog'), item.task.id);
+                Logger.info(t('inlineEdit.quickStatusTaskTitleLog'), item.task.baslik);
+                Logger.info(t('inlineEdit.quickStatusCurrentStatusLog'), item.task.durum);
             }
             
             if (!item || !item.task) {
-                Logger.warn(vscode.l10n.t('inlineEdit.quickStatusNoTaskLog'));
-                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
+                Logger.warn(t('inlineEdit.quickStatusNoTaskLog'));
+                vscode.window.showWarningMessage(t('inlineEdit.selectTask'));
                 return;
             }
 
             try {
-                Logger.info(vscode.l10n.t('inlineEdit.quickStatusCallingEditLog'));
+                Logger.info(t('inlineEdit.quickStatusCallingEditLog'));
                 await editProvider.quickStatusChange(item.task);
                 // Add a small delay to ensure the backend has processed the update
                 await new Promise(resolve => setTimeout(resolve, 100));
-                Logger.info(vscode.l10n.t('inlineEdit.quickStatusRefreshingLog'));
+                Logger.info(t('inlineEdit.quickStatusRefreshingLog'));
                 await treeProvider.refresh();
                 
                 // Also refresh the project tree if it exists
@@ -66,7 +67,7 @@ export function registerInlineEditCommands(
                     await projeTreeProvider.refresh();
                 }
             } catch (error) {
-                Logger.error(vscode.l10n.t('inlineEdit.quickStatusFailed'), error);
+                Logger.error(t('inlineEdit.quickStatusFailed'), error);
             }
         })
     );
@@ -75,7 +76,7 @@ export function registerInlineEditCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.QUICK_PRIORITY_CHANGE, async (item: any) => {
             if (!item || !item.task) {
-                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
+                vscode.window.showWarningMessage(t('inlineEdit.selectTask'));
                 return;
             }
 
@@ -88,7 +89,7 @@ export function registerInlineEditCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.QUICK_DATE_CHANGE, async (item: any) => {
             if (!item || !item.task) {
-                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
+                vscode.window.showWarningMessage(t('inlineEdit.selectTask'));
                 return;
             }
 
@@ -101,7 +102,7 @@ export function registerInlineEditCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand(COMMANDS.DETAILED_EDIT, async (item: any) => {
             if (!item || !item.task) {
-                vscode.window.showWarningMessage(vscode.l10n.t('inlineEdit.selectTask'));
+                vscode.window.showWarningMessage(t('inlineEdit.selectTask'));
                 return;
             }
 
@@ -125,7 +126,7 @@ export function registerInlineEditCommands(
         vscode.commands.registerCommand('gorev.cancelEdit', () => {
             if (editProvider.isEditing()) {
                 editProvider.cancelEdit();
-                vscode.window.showInformationMessage(vscode.l10n.t('inlineEdit.editCancelled'));
+                vscode.window.showInformationMessage(t('inlineEdit.editCancelled'));
             }
         })
     );

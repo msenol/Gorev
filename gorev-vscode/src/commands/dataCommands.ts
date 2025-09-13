@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import * as path from 'path';
 import { MCPClient } from '../mcp/client';
 import { CommandContext } from './index';
@@ -22,7 +23,7 @@ export function registerDataCommands(
     vscode.commands.registerCommand(COMMANDS.EXPORT_DATA, async () => {
       try {
         if (!mcpClient.isConnected()) {
-          vscode.window.showWarningMessage(vscode.l10n.t('connection.notConnected'));
+          vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
@@ -31,7 +32,7 @@ export function registerDataCommands(
       } catch (error) {
         Logger.error('Export data command failed', error);
         vscode.window.showErrorMessage(
-          vscode.l10n.t('error.exportFailed', { error: String(error) })
+          t('error.exportFailed', { error: String(error) })
         );
       }
     })
@@ -42,7 +43,7 @@ export function registerDataCommands(
     vscode.commands.registerCommand(COMMANDS.IMPORT_DATA, async () => {
       try {
         if (!mcpClient.isConnected()) {
-          vscode.window.showWarningMessage(vscode.l10n.t('connection.notConnected'));
+          vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
@@ -51,7 +52,7 @@ export function registerDataCommands(
       } catch (error) {
         Logger.error('Import data command failed', error);
         vscode.window.showErrorMessage(
-          vscode.l10n.t('error.importFailed', { error: String(error) })
+          t('error.importFailed', { error: String(error) })
         );
       }
     })
@@ -62,7 +63,7 @@ export function registerDataCommands(
     vscode.commands.registerCommand(COMMANDS.EXPORT_CURRENT_VIEW, async (element?: any) => {
       try {
         if (!mcpClient.isConnected()) {
-          vscode.window.showWarningMessage(vscode.l10n.t('connection.notConnected'));
+          vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
@@ -70,7 +71,7 @@ export function registerDataCommands(
       } catch (error) {
         Logger.error('Export current view command failed', error);
         vscode.window.showErrorMessage(
-          vscode.l10n.t('error.exportCurrentViewFailed', { error: String(error) })
+          t('error.exportCurrentViewFailed', { error: String(error) })
         );
       }
     })
@@ -81,7 +82,7 @@ export function registerDataCommands(
     vscode.commands.registerCommand(COMMANDS.QUICK_EXPORT, async () => {
       try {
         if (!mcpClient.isConnected()) {
-          vscode.window.showWarningMessage(vscode.l10n.t('connection.notConnected'));
+          vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
@@ -89,7 +90,7 @@ export function registerDataCommands(
       } catch (error) {
         Logger.error('Quick export command failed', error);
         vscode.window.showErrorMessage(
-          vscode.l10n.t('error.quickExportFailed', { error: String(error) })
+          t('error.quickExportFailed', { error: String(error) })
         );
       }
     })
@@ -115,7 +116,7 @@ async function exportCurrentView(
       'CSV Files': ['csv'],
       'All Files': ['*']
     },
-    title: vscode.l10n.t('export.selectLocation')
+    title: t('export.selectLocation')
   });
 
   if (!saveUri) {
@@ -128,10 +129,10 @@ async function exportCurrentView(
   // Show progress
   await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
-    title: vscode.l10n.t('export.inProgress'),
+    title: t('export.inProgress'),
     cancellable: false
   }, async (progress) => {
-    progress.report({ increment: 10, message: vscode.l10n.t('export.preparing') });
+    progress.report({ increment: 10, message: t('export.preparing') });
 
     // Build export options based on current view context
     const exportOptions: any = {
@@ -150,23 +151,23 @@ async function exportCurrentView(
       }
     }
 
-    progress.report({ increment: 30, message: vscode.l10n.t('export.exporting') });
+    progress.report({ increment: 30, message: t('export.exporting') });
 
     // Call MCP export tool
     const result = await mcpClient.callTool('gorev_export', exportOptions);
 
-    progress.report({ increment: 80, message: vscode.l10n.t('export.completing') });
+    progress.report({ increment: 80, message: t('export.completing') });
 
     if (result.isError) {
       throw new Error(result.content[0]?.text || 'Export failed');
     }
 
-    progress.report({ increment: 100, message: vscode.l10n.t('export.complete') });
+    progress.report({ increment: 100, message: t('export.complete') });
 
     // Show success message with option to open file
-    const openAction = vscode.l10n.t('export.openFile');
+    const openAction = t('export.openFile');
     const action = await vscode.window.showInformationMessage(
-      vscode.l10n.t('export.success', { path: saveUri.fsPath }),
+      t('export.success', { path: saveUri.fsPath }),
       openAction
     );
 
@@ -193,10 +194,10 @@ async function quickExport(mcpClient: MCPClient): Promise<void> {
   // Show progress
   await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
-    title: vscode.l10n.t('export.quickExporting'),
+    title: t('export.quickExporting'),
     cancellable: false
   }, async (progress) => {
-    progress.report({ increment: 20, message: vscode.l10n.t('export.preparing') });
+    progress.report({ increment: 20, message: t('export.preparing') });
 
     const exportOptions = {
       output_path: defaultPath,
@@ -207,7 +208,7 @@ async function quickExport(mcpClient: MCPClient): Promise<void> {
       include_ai_context: false
     };
 
-    progress.report({ increment: 50, message: vscode.l10n.t('export.exporting') });
+    progress.report({ increment: 50, message: t('export.exporting') });
 
     // Call MCP export tool
     const result = await mcpClient.callTool('gorev_export', exportOptions);
@@ -216,14 +217,14 @@ async function quickExport(mcpClient: MCPClient): Promise<void> {
       throw new Error(result.content[0]?.text || 'Quick export failed');
     }
 
-    progress.report({ increment: 100, message: vscode.l10n.t('export.complete') });
+    progress.report({ increment: 100, message: t('export.complete') });
 
     // Show success notification
-    const openAction = vscode.l10n.t('export.openFile');
-    const openFolderAction = vscode.l10n.t('export.openFolder');
+    const openAction = t('export.openFile');
+    const openFolderAction = t('export.openFolder');
     
     const action = await vscode.window.showInformationMessage(
-      vscode.l10n.t('export.quickSuccess', { filename: defaultFileName }),
+      t('export.quickSuccess', { filename: defaultFileName }),
       openAction,
       openFolderAction
     );
@@ -243,11 +244,11 @@ export function validateExportOptions(options: any): { isValid: boolean; errors:
   const errors: string[] = [];
 
   if (!options.output_path) {
-    errors.push(vscode.l10n.t('validation.outputPathRequired'));
+    errors.push(t('validation.outputPathRequired'));
   }
 
   if (options.format && !['json', 'csv'].includes(options.format)) {
-    errors.push(vscode.l10n.t('validation.invalidFormat'));
+    errors.push(t('validation.invalidFormat'));
   }
 
   if (options.date_range) {
@@ -256,7 +257,7 @@ export function validateExportOptions(options: any): { isValid: boolean; errors:
       const toDate = new Date(options.date_range.to);
       
       if (fromDate > toDate) {
-        errors.push(vscode.l10n.t('validation.invalidDateRange'));
+        errors.push(t('validation.invalidDateRange'));
       }
     }
   }
@@ -275,7 +276,7 @@ export async function estimateExportSize(mcpClient: MCPClient, options: any): Pr
     // Get summary to estimate size
     const summaryResult = await mcpClient.callTool('ozet_goster');
     if (summaryResult.isError) {
-      return vscode.l10n.t('export.sizeUnknown');
+      return t('export.sizeUnknown');
     }
 
     // Parse summary for task/project counts
@@ -298,6 +299,6 @@ export async function estimateExportSize(mcpClient: MCPClient, options: any): Pr
     }
   } catch (error) {
     Logger.warn('Failed to estimate export size', error);
-    return vscode.l10n.t('export.sizeUnknown');
+    return t('export.sizeUnknown');
   }
 }

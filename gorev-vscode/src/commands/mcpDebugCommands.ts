@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../utils/l10n';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getDebugConfig, showDebugInfo } from '../debug/debugConfig';
@@ -13,7 +14,7 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
             await config.update('debug.useWrapper', !currentValue, vscode.ConfigurationTarget.Workspace);
             
             vscode.window.showInformationMessage(
-                vscode.l10n.t('mcpDebug.toggleMessage', !currentValue ? vscode.l10n.t('mcpDebug.enabled') : vscode.l10n.t('mcpDebug.disabled'))
+                t('mcpDebug.toggleMessage', !currentValue ? t('mcpDebug.enabled') : t('mcpDebug.disabled'))
             );
             
             if (!currentValue) {
@@ -35,7 +36,7 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                     .reverse();
                 
                 if (files.length === 0) {
-                    vscode.window.showInformationMessage(vscode.l10n.t('mcpDebug.noLogsFound'));
+                    vscode.window.showInformationMessage(t('mcpDebug.noLogsFound'));
                     return;
                 }
                 
@@ -47,7 +48,7 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                         detail: getFileSize(path.join(debugPath, f))
                     })),
                     {
-                        placeHolder: vscode.l10n.t('mcpDebug.selectLogFile')
+                        placeHolder: t('mcpDebug.selectLogFile')
                     }
                 );
                 
@@ -57,7 +58,7 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                 }
             } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : String(e);
-                vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.readLogsFailed', errorMessage));
+                vscode.window.showErrorMessage(t('mcpDebug.readLogsFailed', errorMessage));
             }
         })
     );
@@ -69,12 +70,12 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
             const debugPath = debugConfig.debugLogPath;
             
             const answer = await vscode.window.showWarningMessage(
-                vscode.l10n.t('mcpDebug.clearLogsConfirm'),
-                vscode.l10n.t('mcpDebug.yes'),
-                vscode.l10n.t('mcpDebug.no')
+                t('mcpDebug.clearLogsConfirm'),
+                t('mcpDebug.yes'),
+                t('mcpDebug.no')
             );
             
-            if (answer === vscode.l10n.t('mcpDebug.yes')) {
+            if (answer === t('mcpDebug.yes')) {
                 try {
                     const files = fs.readdirSync(debugPath)
                         .filter(f => f.startsWith('mcp-session-') || f.startsWith('stdin-') || f.startsWith('stdout-') || f.endsWith('.log'));
@@ -83,10 +84,10 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                         fs.unlinkSync(path.join(debugPath, file));
                     }
                     
-                    vscode.window.showInformationMessage(vscode.l10n.t('mcpDebug.clearedLogs', files.length.toString()));
+                    vscode.window.showInformationMessage(t('mcpDebug.clearedLogs', files.length.toString()));
                 } catch (e) {
                     const errorMessage = e instanceof Error ? e.message : String(e);
-                    vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.clearLogsFailed', errorMessage));
+                    vscode.window.showErrorMessage(t('mcpDebug.clearLogsFailed', errorMessage));
                 }
             }
         })
@@ -96,33 +97,33 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.testConnection', async () => {
             outputChannel.show();
-            outputChannel.appendLine(vscode.l10n.t('mcpDebug.testingConnection'));
-            outputChannel.appendLine(vscode.l10n.t('mcpDebug.testTime', new Date().toISOString()));
+            outputChannel.appendLine(t('mcpDebug.testingConnection'));
+            outputChannel.appendLine(t('mcpDebug.testTime', new Date().toISOString()));
             
             const config = vscode.workspace.getConfiguration('gorev');
             const serverPath = config.get<string>('mcp.serverPath') || config.get<string>('serverPath');
             
             if (!serverPath) {
-                outputChannel.appendLine(vscode.l10n.t('mcpDebug.noServerPath'));
-                vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.configureServerPath'));
+                outputChannel.appendLine(t('mcpDebug.noServerPath'));
+                vscode.window.showErrorMessage(t('mcpDebug.configureServerPath'));
                 return;
             }
             
-            outputChannel.appendLine(vscode.l10n.t('mcpDebug.serverPath', serverPath));
+            outputChannel.appendLine(t('mcpDebug.serverPath', serverPath));
             
             // Check if file exists
             if (!fs.existsSync(serverPath)) {
-                outputChannel.appendLine(vscode.l10n.t('mcpDebug.serverNotFound'));
-                vscode.window.showErrorMessage(vscode.l10n.t('mcpDebug.serverNotFoundAt', serverPath));
+                outputChannel.appendLine(t('mcpDebug.serverNotFound'));
+                vscode.window.showErrorMessage(t('mcpDebug.serverNotFoundAt', serverPath));
                 return;
             }
             
             // Check if executable
             try {
                 fs.accessSync(serverPath, fs.constants.X_OK);
-                outputChannel.appendLine(vscode.l10n.t('mcpDebug.serverExecutable'));
+                outputChannel.appendLine(t('mcpDebug.serverExecutable'));
             } catch {
-                outputChannel.appendLine(vscode.l10n.t('mcpDebug.serverNotExecutable'));
+                outputChannel.appendLine(t('mcpDebug.serverNotExecutable'));
             }
             
             // Try a simple MCP call
@@ -162,35 +163,35 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
                 });
                 
                 if (response) {
-                    outputChannel.appendLine(vscode.l10n.t('mcpDebug.serverResponded'));
-                    outputChannel.appendLine(vscode.l10n.t('mcpDebug.responsePreview', response.substring(0, 200)));
+                    outputChannel.appendLine(t('mcpDebug.serverResponded'));
+                    outputChannel.appendLine(t('mcpDebug.responsePreview', response.substring(0, 200)));
                 } else {
-                    outputChannel.appendLine(vscode.l10n.t('mcpDebug.noResponse'));
+                    outputChannel.appendLine(t('mcpDebug.noResponse'));
                 }
                 
                 if (error) {
-                    outputChannel.appendLine(vscode.l10n.t('mcpDebug.stderr', error));
+                    outputChannel.appendLine(t('mcpDebug.stderr', error));
                 }
                 
             } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : String(e);
-                outputChannel.appendLine(vscode.l10n.t('mcpDebug.error', errorMessage));
+                outputChannel.appendLine(t('mcpDebug.error', errorMessage));
             }
             
-            outputChannel.appendLine(vscode.l10n.t('mcpDebug.testComplete'));
+            outputChannel.appendLine(t('mcpDebug.testComplete'));
         })
     );
 }
 
 function getFileDescription(filename: string): string {
     if (filename.startsWith('mcp-session-')) {
-        return vscode.l10n.t('mcpDebug.mainDebugLog');
+        return t('mcpDebug.mainDebugLog');
     } else if (filename.startsWith('stdin-')) {
-        return vscode.l10n.t('mcpDebug.inputMessages');
+        return t('mcpDebug.inputMessages');
     } else if (filename.startsWith('stdout-')) {
-        return vscode.l10n.t('mcpDebug.outputMessages');
+        return t('mcpDebug.outputMessages');
     }
-    return vscode.l10n.t('mcpDebug.debugLog');
+    return t('mcpDebug.debugLog');
 }
 
 function getFileSize(filepath: string): string {
@@ -198,11 +199,11 @@ function getFileSize(filepath: string): string {
         const stats = fs.statSync(filepath);
         const size = stats.size;
         if (size < 1024) {
-            return vscode.l10n.t('mcpDebug.bytes', size.toString());
+            return t('mcpDebug.bytes', size.toString());
         } else if (size < 1024 * 1024) {
-            return vscode.l10n.t('mcpDebug.kilobytes', (size / 1024).toFixed(1));
+            return t('mcpDebug.kilobytes', (size / 1024).toFixed(1));
         } else {
-            return vscode.l10n.t('mcpDebug.megabytes', (size / (1024 * 1024)).toFixed(1));
+            return t('mcpDebug.megabytes', (size / (1024 * 1024)).toFixed(1));
         }
     } catch {
         return '';
