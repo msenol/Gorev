@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	version   = "v0.14.1-dev"
+	version   = "v0.14.1"
 	buildTime = "unknown"
 	gitCommit = "unknown"
 	langFlag  string
@@ -93,7 +93,25 @@ func getMigrationsPath() string {
 
 // getDatabasePath returns the correct path to database file
 func getDatabasePath() string {
-	// First check if database exists in user's home directory
+	// First priority: GOREV_DB_PATH environment variable (set by VS Code extension)
+	if dbPath := os.Getenv("GOREV_DB_PATH"); dbPath != "" {
+		// Clean the path and make it absolute if not already
+		cleanPath := filepath.Clean(dbPath)
+		if !filepath.IsAbs(cleanPath) {
+			if cwd, err := os.Getwd(); err == nil {
+				cleanPath = filepath.Join(cwd, cleanPath)
+			}
+		}
+		// Ensure the directory exists
+		if dir := filepath.Dir(cleanPath); dir != "" {
+			if err := os.MkdirAll(dir, 0755); err == nil {
+				return cleanPath
+			}
+		}
+		return cleanPath
+	}
+
+	// Second priority: check if database exists in user's home directory
 	homeDir, err := os.UserHomeDir()
 	if err == nil {
 		homeDBPath := filepath.Join(homeDir, ".gorev", "gorev.db")
