@@ -731,5 +731,7 @@
   "common.cancel": "İptal",
   "common.next": "İleri",
   "common.back": "Geri",
-  "common.close": "Kapat"
+  "common.close": "Kapat",
+
+  "config.databasePath": "Veritabanı dosya yolu (boş bırakılırsa otomatik konumu kullanır)"
 }

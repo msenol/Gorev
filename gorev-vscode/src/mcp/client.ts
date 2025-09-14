@@ -38,16 +38,28 @@ export class MCPClient extends EventEmitter {
     try {
       // Set working directory to server's directory
       const path = require('path');
-      
+
+      // Get database path from configuration
+      const databasePath = vscode.workspace.getConfiguration('gorev').get<string>('databasePath');
+
+      // Prepare environment variables
+      const env: any = {
+        ...process.env,
+        // Set GOREV_ROOT to a data directory (fallback)
+        GOREV_ROOT: path.join(path.dirname(serverPath), '..', 'data')
+      };
+
+      // Set GOREV_DB_PATH if configured
+      if (databasePath && databasePath.trim() !== '') {
+        env.GOREV_DB_PATH = databasePath.trim();
+        Logger.info(`Using configured database path: ${databasePath}`);
+      }
+
       // Spawn the MCP server process
       const spawnOptions: any = {
         stdio: ['pipe', 'pipe', 'pipe'],
         shell: false,
-        env: { 
-          ...process.env,
-          // Set GOREV_ROOT to a data directory
-          GOREV_ROOT: path.join(path.dirname(serverPath), '..', 'data')
-        },
+        env: env,
       };
       const serverDir = path.dirname(serverPath);
       if (serverDir) {

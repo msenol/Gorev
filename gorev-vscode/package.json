@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -329,6 +329,11 @@
           "minimum": 5000,
           "maximum": 120000,
           "description": "Server response timeout in milliseconds"
+        },
+        "gorev.databasePath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.databasePath%"
         }
       }
     },

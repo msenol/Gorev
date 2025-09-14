@@ -731,5 +731,7 @@
   "common.cancel": "Cancel",
   "common.next": "Next",
   "common.back": "Back",
-  "common.close": "Close"
+  "common.close": "Close",
+
+  "config.databasePath": "Database file path (leave empty to use automatic location detection)"
 }
