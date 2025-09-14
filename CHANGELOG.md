@@ -2,6 +2,49 @@
 
 All notable changes to Gorev will be documented in this file.
 
+## [v0.14.2] - 2025-09-14
+
+### Added
+- **Complete Workspace Database Support**: Project-specific database functionality without VS Code dependency
+  - Automatic workspace detection: Server detects `.gorev/gorev.db` in current directory and parent directories
+  - New `gorev init` CLI command: Initialize workspace (`gorev init`) or global (`gorev init --global`) databases
+  - Database path logging: Server logs which database file is being used on startup
+  - MCP client agnostic: Works with Claude Desktop, Cursor, Windsurf, and any MCP-compatible client
+- **VS Code Extension Enhancements**: Smart database mode selection with visual indicators
+  - New configuration: `gorev.databaseMode` replaces `gorev.databasePath` (auto/workspace/global modes)
+  - Status bar indicator: Shows current database mode (📁 Workspace / 🌐 Global) with path tooltip
+  - New commands: "Initialize Workspace Database" and "Switch Database Mode"
+  - Auto-detection: Extension automatically detects workspace databases and switches modes
+
+### Changed
+- Database priority logic enhanced with comprehensive fallback system:
+  1. `GOREV_DB_PATH` environment variable (any MCP client can set this)
+  2. Current directory `.gorev/gorev.db`
+  3. Parent directories `.gorev/gorev.db` (monorepo support)
+  4. User home `~/.gorev/gorev.db` (global)
+  5. Standard fallback locations
+- `getDatabasePath()` comment updated to reflect MCP client agnostic nature
+- Server version updated to v0.14.2
+
+### Technical Details
+- **Files Added**:
+  - `gorev-vscode/src/commands/databaseCommands.ts`: New database management commands
+- **Files Modified**:
+  - `gorev-mcpserver/cmd/gorev/main.go`: Enhanced workspace detection, init command, logging
+  - `gorev-vscode/package.json`: New database mode configuration and commands
+  - `gorev-vscode/src/mcp/client.ts`: Workspace database detection and mode switching
+  - `gorev-vscode/src/ui/statusBar.ts`: Database mode visual indicator
+  - `gorev-vscode/src/extension.ts`: Database mode event handling
+  - `gorev-vscode/src/utils/constants.ts`: New command constants
+  - All localization files: Database mode translations (TR/EN)
+- **Documentation**: CLAUDE.md updated with comprehensive v0.14.2 feature documentation
+
+### Usage Scenarios
+- **Single Project**: Auto-detects `.gorev/gorev.db`
+- **Monorepo**: Each package can have its own `.gorev/` directory
+- **Global Mode**: Shared database across all projects
+- **VS Code-Free**: Full functionality without VS Code extension
+
 ## [v0.14.1] - 2025-09-14
 
 ### Added

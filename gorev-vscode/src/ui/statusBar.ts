@@ -5,7 +5,10 @@ import { t } from '../utils/l10n';
 
 export class StatusBarManager implements vscode.Disposable {
   private statusBarItem: vscode.StatusBarItem;
+  private databaseModeItem: vscode.StatusBarItem;
   private visible = false;
+  private currentDatabaseMode = 'auto';
+  private currentDatabasePath = '';
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(
@@ -13,16 +16,25 @@ export class StatusBarManager implements vscode.Disposable {
       100
     );
     this.statusBarItem.command = COMMANDS.SHOW_SUMMARY;
+
+    // Database mode indicator
+    this.databaseModeItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      99
+    );
+    this.updateDatabaseModeDisplay();
   }
 
   show(): void {
     this.visible = true;
     this.statusBarItem.show();
+    this.databaseModeItem.show();
   }
 
   hide(): void {
     this.visible = false;
     this.statusBarItem.hide();
+    this.databaseModeItem.hide();
   }
 
   isVisible(): boolean {
@@ -55,7 +67,55 @@ export class StatusBarManager implements vscode.Disposable {
     }
   }
 
+  setDatabaseMode(mode: string, databasePath?: string): void {
+    this.currentDatabaseMode = mode;
+    this.currentDatabasePath = databasePath || '';
+    this.updateDatabaseModeDisplay();
+  }
+
+  private updateDatabaseModeDisplay(): void {
+    const mode = this.currentDatabaseMode;
+    let icon = '';
+    let text = '';
+
+    if (mode === 'workspace') {
+      icon = '📁';
+      text = 'Workspace';
+    } else if (mode === 'global') {
+      icon = '🌐';
+      text = 'Global';
+    } else {
+      // auto mode
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (workspaceFolder) {
+        const path = require('path');
+        const workspaceDbDir = path.join(workspaceFolder.uri.fsPath, '.gorev');
+        const fs = require('fs');
+
+        if (fs.existsSync(workspaceDbDir)) {
+          icon = '📁';
+          text = 'Auto (Workspace)';
+        } else {
+          icon = '🌐';
+          text = 'Auto (Global)';
+        }
+      } else {
+        icon = '🌐';
+        text = 'Global';
+      }
+    }
+
+    this.databaseModeItem.text = `${icon} ${text}`;
+
+    let tooltip = `Database Mode: ${text}`;
+    if (this.currentDatabasePath) {
+      tooltip += `\nPath: ${this.currentDatabasePath}`;
+    }
+    this.databaseModeItem.tooltip = tooltip;
+  }
+
   dispose(): void {
     this.statusBarItem.dispose();
+    this.databaseModeItem.dispose();
   }
 }

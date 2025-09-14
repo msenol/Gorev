@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -330,10 +330,16 @@
           "maximum": 120000,
           "description": "Server response timeout in milliseconds"
         },
-        "gorev.databasePath": {
+        "gorev.databaseMode": {
           "type": "string",
-          "default": "",
-          "description": "%config.databasePath%"
+          "enum": ["auto", "workspace", "global"],
+          "default": "auto",
+          "enumDescriptions": [
+            "Auto-detect: Use workspace database if .gorev/ exists, otherwise global",
+            "Workspace: Always use project-local database in .gorev/",
+            "Global: Always use shared database in user home directory"
+          ],
+          "description": "%config.databaseMode%"
         }
       }
     },
@@ -664,6 +670,18 @@
         "title": "%command.quickExport%",
         "category": "Gorev",
         "icon": "$(export)"
+      },
+      {
+        "command": "gorev.initWorkspaceDatabase",
+        "title": "%command.initWorkspaceDatabase%",
+        "category": "Gorev",
+        "icon": "$(database)"
+      },
+      {
+        "command": "gorev.switchDatabaseMode",
+        "title": "%command.switchDatabaseMode%",
+        "category": "Gorev",
+        "icon": "$(database)"
       }
     ],
     "viewsContainers": {

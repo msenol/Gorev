@@ -60,6 +60,8 @@
   "command.importData": "Veri İçe Aktar",
   "command.exportCurrentView": "Mevcut Görünümü Dışa Aktar",
   "command.quickExport": "Hızlı Dışa Aktar",
+  "command.initWorkspaceDatabase": "Workspace Veritabanı Başlat",
+  "command.switchDatabaseMode": "Veritabanı Modunu Değiştir",
 
   "view.tasks": "Görevler",
   "view.projects": "Projeler",
@@ -122,5 +124,7 @@
   "dueDateFormat.absolute": "Her zaman mutlak tarih (15 Oca)",
 
   "welcome.tasks.noTasks": "Görev bulunamadı.\\n[Görev Oluştur](command:gorev.createTask)\\n[Önce Proje Oluştur](command:gorev.createProject)",
-  "welcome.projects.noProjects": "Proje bulunamadı.\\n[Proje Oluştur](command:gorev.createProject)"
+  "welcome.projects.noProjects": "Proje bulunamadı.\\n[Proje Oluştur](command:gorev.createProject)",
+
+  "config.databaseMode": "Veritabanı saklama modu: auto (workspace algıla), workspace (proje-yerel), veya global (paylaşımlı)"
 }

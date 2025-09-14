@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	version   = "v0.14.1"
+	version   = "v0.14.2"
 	buildTime = "unknown"
 	gitCommit = "unknown"
 	langFlag  string
@@ -93,7 +93,7 @@ func getMigrationsPath() string {
 
 // getDatabasePath returns the correct path to database file
 func getDatabasePath() string {
-	// First priority: GOREV_DB_PATH environment variable (set by VS Code extension)
+	// First priority: GOREV_DB_PATH environment variable (can be set by any MCP client)
 	if dbPath := os.Getenv("GOREV_DB_PATH"); dbPath != "" {
 		// Clean the path and make it absolute if not already
 		cleanPath := filepath.Clean(dbPath)
@@ -111,7 +111,29 @@ func getDatabasePath() string {
 		return cleanPath
 	}
 
-	// Second priority: check if database exists in user's home directory
+	// Second priority: check for workspace database in current working directory
+	cwd, err := os.Getwd()
+	if err == nil {
+		workspaceDBPath := filepath.Join(cwd, ".gorev", "gorev.db")
+		if _, err := os.Stat(workspaceDBPath); err == nil {
+			return workspaceDBPath
+		}
+
+		// Also check parent directories for workspace database (monorepo support)
+		parentPaths := []string{
+			filepath.Join(filepath.Dir(cwd), ".gorev", "gorev.db"),
+			filepath.Join(filepath.Dir(filepath.Dir(cwd)), ".gorev", "gorev.db"),
+			filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(cwd))), ".gorev", "gorev.db"),
+		}
+
+		for _, path := range parentPaths {
+			if _, err := os.Stat(path); err == nil {
+				return path
+			}
+		}
+	}
+
+	// Third priority: check if database exists in user's home directory
 	homeDir, err := os.UserHomeDir()
 	if err == nil {
 		homeDBPath := filepath.Join(homeDir, ".gorev", "gorev.db")
@@ -180,8 +202,7 @@ func getDatabasePath() string {
 	}
 
 	// 3. Fallback to current working directory
-	cwd, err := os.Getwd()
-	if err == nil {
+	if cwd != "" {
 		// Check if we're in the project root
 		migrationsPath := filepath.Join(cwd, "internal", "veri", "migrations")
 		if _, err := os.Stat(migrationsPath); err == nil {
@@ -191,6 +212,50 @@ func getDatabasePath() string {
 
 	// Last resort: use current directory
 	return "gorev.db"
+}
+
+// initWorkspaceDatabase initializes a database in the specified location
+func initWorkspaceDatabase(global bool) error {
+	var dbPath string
+	var dbDir string
+
+	if global {
+		// Global database in user home directory
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get user home directory: %w", err)
+		}
+		dbDir = filepath.Join(homeDir, ".gorev")
+		dbPath = filepath.Join(dbDir, "gorev.db")
+	} else {
+		// Workspace database in current directory
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+		dbDir = filepath.Join(cwd, ".gorev")
+		dbPath = filepath.Join(dbDir, "gorev.db")
+	}
+
+	// Check if database already exists
+	if _, err := os.Stat(dbPath); err == nil {
+		return fmt.Errorf("database already exists: %s", dbPath)
+	}
+
+	// Create directory if it doesn't exist
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dbDir, err)
+	}
+
+	// Initialize database by creating a VeriYonetici instance
+	veriYonetici, err := gorev.YeniVeriYonetici(dbPath, getMigrationsPath())
+	if err != nil {
+		return fmt.Errorf("failed to initialize database: %w", err)
+	}
+	defer func() { _ = veriYonetici.Kapat() }()
+
+	fmt.Printf("Database initialized successfully: %s\n", dbPath)
+	return nil
 }
 
 // detectLanguage detects the language preference from environment variables and CLI flags
@@ -262,6 +327,23 @@ func main() {
 		},
 	}
 
+	// Init command
+	var globalFlag bool
+	initCmd := &cobra.Command{
+		Use:   "init",
+		Short: "Initialize database",
+		Long:  "Initialize a new Gorev database in the current workspace or global location.",
+		Example: `  # Initialize workspace database in .gorev/gorev.db
+  gorev init
+
+  # Initialize global database in ~/.gorev/gorev.db
+  gorev init --global`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initWorkspaceDatabase(globalFlag)
+		},
+	}
+	initCmd.Flags().BoolVar(&globalFlag, "global", false, "Initialize global database in user home directory")
+
 	// Template komutları
 	templateCmd := &cobra.Command{
 		Use:   "template",
@@ -318,7 +400,7 @@ func main() {
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&langFlag, "lang", "", i18n.T("flags.language"))
 
-	rootCmd.AddCommand(serveCmd, versionCmd, templateCmd, mcpCmd, ideCmd)
+	rootCmd.AddCommand(serveCmd, versionCmd, initCmd, templateCmd, mcpCmd, ideCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Hata: %v\n", err)
@@ -328,7 +410,9 @@ func main() {
 
 func runServer() error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
+	dbPath := getDatabasePath()
+	log.Printf("Using database: %s", dbPath)
+	veriYonetici, err := gorev.YeniVeriYonetici(dbPath, getMigrationsPath())
 	if err != nil {
 		return errors.New(i18n.T("error.dataManagerInit", map[string]interface{}{"Error": err}))
 	}

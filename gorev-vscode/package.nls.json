@@ -60,6 +60,8 @@
   "command.importData": "Import Data",
   "command.exportCurrentView": "Export Current View",
   "command.quickExport": "Quick Export",
+  "command.initWorkspaceDatabase": "Initialize Workspace Database",
+  "command.switchDatabaseMode": "Switch Database Mode",
 
   "view.tasks": "Tasks",
   "view.projects": "Projects", 
@@ -122,5 +124,7 @@
   "dueDateFormat.absolute": "Always absolute date (15 Jan)",
 
   "welcome.tasks.noTasks": "No tasks found.\\n[Create Task](command:gorev.createTask)\\n[Create Project First](command:gorev.createProject)",
-  "welcome.projects.noProjects": "No projects found.\\n[Create Project](command:gorev.createProject)"
+  "welcome.projects.noProjects": "No projects found.\\n[Create Project](command:gorev.createProject)",
+
+  "config.databaseMode": "Database storage mode: auto (detect workspace), workspace (project-local), or global (shared)"
 }

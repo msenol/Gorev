@@ -39,8 +39,8 @@ export class MCPClient extends EventEmitter {
       // Set working directory to server's directory
       const path = require('path');
 
-      // Get database path from configuration
-      const databasePath = vscode.workspace.getConfiguration('gorev').get<string>('databasePath');
+      // Get database mode from configuration
+      const databaseMode = vscode.workspace.getConfiguration('gorev').get<string>('databaseMode', 'auto');
 
       // Prepare environment variables
       const env: any = {
@@ -49,11 +49,50 @@ export class MCPClient extends EventEmitter {
         GOREV_ROOT: path.join(path.dirname(serverPath), '..', 'data')
       };
 
-      // Set GOREV_DB_PATH if configured
-      if (databasePath && databasePath.trim() !== '') {
-        env.GOREV_DB_PATH = databasePath.trim();
-        Logger.info(`Using configured database path: ${databasePath}`);
+      // Determine database path based on mode and workspace
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      let databasePath: string | null = null;
+
+      if (databaseMode === 'global') {
+        // Force global mode - don't set GOREV_DB_PATH, let server use default
+        Logger.info('Using global database mode');
+      } else if (databaseMode === 'workspace' && workspaceFolder) {
+        // Force workspace mode
+        databasePath = path.join(workspaceFolder.uri.fsPath, '.gorev', 'gorev.db');
+        Logger.info(`Using workspace database mode: ${databasePath}`);
+      } else if (databaseMode === 'auto' && workspaceFolder) {
+        // Auto mode - check if .gorev directory exists
+        const workspaceDbPath = path.join(workspaceFolder.uri.fsPath, '.gorev', 'gorev.db');
+        const workspaceDbDir = path.join(workspaceFolder.uri.fsPath, '.gorev');
+
+        try {
+          const fs = require('fs');
+          if (fs.existsSync(workspaceDbDir)) {
+            databasePath = workspaceDbPath;
+            Logger.info(`Auto-detected workspace database: ${workspaceDbPath}`);
+          } else {
+            Logger.info('Auto mode: No .gorev directory found, using global database');
+          }
+        } catch (error) {
+          Logger.warn(`Failed to check workspace database directory: ${error}`);
+          Logger.info('Auto mode: Falling back to global database');
+        }
+      } else {
+        Logger.info('Using global database mode (no workspace or global mode selected)');
       }
+
+      // Set GOREV_DB_PATH if we determined a specific path
+      if (databasePath) {
+        env.GOREV_DB_PATH = databasePath;
+        Logger.info(`Setting GOREV_DB_PATH: ${databasePath}`);
+      }
+
+      // Store database mode info for status bar
+      this.emit('databaseModeChanged', {
+        mode: databaseMode,
+        path: databasePath,
+        workspaceFolder: workspaceFolder?.uri.fsPath
+      });
 
       // Spawn the MCP server process
       const spawnOptions: any = {
