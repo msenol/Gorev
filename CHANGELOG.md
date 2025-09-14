@@ -1,3 +1,29 @@
+# Changelog
+
+All notable changes to Gorev will be documented in this file.
+
+## [v0.14.1] - 2025-09-14
+
+### Added
+- **VS Code Extension Database Path Configuration**: Users can now specify a custom database file path in VS Code extension settings
+  - New configuration setting: `gorev.databasePath` in VS Code extension settings
+  - Server enhancement: Added `GOREV_DB_PATH` environment variable support with priority over automatic detection
+  - Automatic directory creation for custom database paths
+  - Full localization support (Turkish and English) for new configuration option
+
+### Changed
+- `getDatabasePath()` function now prioritizes `GOREV_DB_PATH` environment variable as first choice for database location
+- VS Code extension MCP client enhanced to read database path configuration and set appropriate environment variables
+
+### Technical Details
+- **Files Modified**:
+  - `gorev-mcpserver/cmd/gorev/main.go`: Enhanced database path detection logic with environment variable support
+  - `gorev-vscode/package.json`: Added `gorev.databasePath` configuration property
+  - `gorev-vscode/src/mcp/client.ts`: Added configuration reading and `GOREV_DB_PATH` environment variable setting
+  - `gorev-vscode/l10n/bundle.l10n*.json`: Added `config.databasePath` localization keys
+- **Backward Compatibility**: Maintains existing database location logic as fallback when custom path is not configured
+- **Rule 15 Compliance**: Complete implementation without workarounds or technical shortcuts
+
 ## [v0.14.0] - 2025-09-13
 ### Added
 - Thread safety enhancement with comprehensive mutex protection

@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 13 September 2025 | **Version:** v0.14.1
+**Last Updated:** 14 September 2025 | **Version:** v0.14.1
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,18 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.14.1 - VS Code Extension L10n System Complete Fix (13 Sep 2025)**
+**v0.14.1 - VS Code Extension Database Path Configuration (14 Sep 2025)**
+- **Configurable Database Location**: Users can now specify custom database file path in VS Code extension settings
+  - **New Setting**: `gorev.databasePath` configuration in VS Code settings
+  - **Environment Variable**: Extension sets `GOREV_DB_PATH` for server when custom path is configured
+  - **Server Enhancement**: `getDatabasePath()` function now prioritizes `GOREV_DB_PATH` environment variable
+  - **Auto Directory Creation**: Server automatically creates database directory if it doesn't exist
+  - **Backward Compatibility**: Maintains existing database location logic as fallback
+- **Localization Support**: Full Turkish and English translations for new configuration option
+- **Testing Verified**: Complete functionality testing with custom database paths
+- **Rule 15 Compliance**: Comprehensive implementation without workarounds or shortcuts
+
+**Previous: v0.14.1 - VS Code Extension L10n System Complete Fix (13 Sep 2025)**
 - **Critical Localization Bug Resolution**: VS Code extension l10n system fully operational
   - **Root Cause**: JSON syntax errors in bundle files (missing commas at line 340)
   - **Status Bar Fix**: "statusBar.connected" → "$(check) Gorev: Connected"
