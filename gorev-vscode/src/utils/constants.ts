@@ -89,6 +89,10 @@ export const COMMANDS = {
   IMPORT_DATA: 'gorev.importData',
   EXPORT_CURRENT_VIEW: 'gorev.exportCurrentView',
   QUICK_EXPORT: 'gorev.quickExport',
+
+  // Database commands
+  INIT_WORKSPACE_DATABASE: 'gorev.initWorkspaceDatabase',
+  SWITCH_DATABASE_MODE: 'gorev.switchDatabaseMode',
 } as const;
 
 export const VIEWS = {

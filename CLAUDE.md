@@ -10,16 +10,29 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.14.1 - VS Code Extension Database Path Configuration (14 Sep 2025)**
-- **Configurable Database Location**: Users can now specify custom database file path in VS Code extension settings
-  - **New Setting**: `gorev.databasePath` configuration in VS Code settings
-  - **Environment Variable**: Extension sets `GOREV_DB_PATH` for server when custom path is configured
-  - **Server Enhancement**: `getDatabasePath()` function now prioritizes `GOREV_DB_PATH` environment variable
-  - **Auto Directory Creation**: Server automatically creates database directory if it doesn't exist
-  - **Backward Compatibility**: Maintains existing database location logic as fallback
-- **Localization Support**: Full Turkish and English translations for new configuration option
-- **Testing Verified**: Complete functionality testing with custom database paths
-- **Rule 15 Compliance**: Comprehensive implementation without workarounds or shortcuts
+**v0.14.2 - Workspace Database & VS Code-Independent Operation (14 Sep 2025)**
+- **Complete Workspace Database Support**: Project-specific database functionality without VS Code dependency
+  - **Automatic Workspace Detection**: Server detects `.gorev/gorev.db` in current directory and parent directories
+  - **New `gorev init` Command**: Initialize workspace (`gorev init`) or global (`gorev init --global`) databases
+  - **Database Path Logging**: Server logs which database file is being used on startup
+  - **MCP Client Agnostic**: Works with Claude Desktop, Cursor, Windsurf, and any MCP-compatible client
+- **VS Code Extension Enhancements**: Smart database mode selection with visual indicators
+  - **New Configuration**: `gorev.databaseMode` replaces `gorev.databasePath` (auto/workspace/global modes)
+  - **Status Bar Indicator**: Shows current database mode (📁 Workspace / 🌐 Global) with path tooltip
+  - **New Commands**: "Initialize Workspace Database" and "Switch Database Mode"
+  - **Auto-Detection**: Extension automatically detects workspace databases and switches modes
+- **Database Priority Logic**: Comprehensive fallback system for maximum compatibility
+  1. `GOREV_DB_PATH` environment variable (any MCP client can set this)
+  2. Current directory `.gorev/gorev.db`
+  3. Parent directories `.gorev/gorev.db` (monorepo support)
+  4. User home `~/.gorev/gorev.db` (global)
+  5. Standard fallback locations
+- **Usage Scenarios**: Supports all development workflows
+  - **Single Project**: Auto-detects `.gorev/gorev.db`
+  - **Monorepo**: Each package can have its own `.gorev/` directory
+  - **Global Mode**: Shared database across all projects
+  - **VS Code-Free**: Full functionality without VS Code extension
+- **Rule 15 Compliance**: No VS Code dependency, works standalone with any MCP client
 
 **Previous: v0.14.1 - VS Code Extension L10n System Complete Fix (13 Sep 2025)**
 - **Critical Localization Bug Resolution**: VS Code extension l10n system fully operational
@@ -161,6 +174,10 @@ make test                  # Run all tests with coverage
 make fmt                   # Format code (run before commit)
 go vet ./...              # Static analysis
 make deps                  # Download and tidy dependencies
+
+# Database initialization
+./gorev init               # Initialize workspace database (.gorev/gorev.db)
+./gorev init --global      # Initialize global database (~/.gorev/gorev.db)
 
 # Development
 make run                  # Build and run server

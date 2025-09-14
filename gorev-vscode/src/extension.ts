@@ -79,6 +79,11 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
 
   context.subscriptions.push(tasksView, projectsView, templatesView);
 
+  // Listen for database mode changes
+  mcpClient.on('databaseModeChanged', (data: any) => {
+    statusBarManager.setDatabaseMode(data.mode, data.path);
+  });
+
   // Register commands
   registerCommands(context, mcpClient, {
     gorevTreeProvider,

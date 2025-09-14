@@ -733,5 +733,5 @@
   "common.back": "Back",
   "common.close": "Close",
 
-  "config.databasePath": "Database file path (leave empty to use automatic location detection)"
+  "config.databaseMode": "Database storage mode: auto (detect workspace), workspace (project-local), or global (shared)"
 }

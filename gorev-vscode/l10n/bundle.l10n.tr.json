@@ -733,5 +733,5 @@
   "common.back": "Geri",
   "common.close": "Kapat",
 
-  "config.databasePath": "Veritabanı dosya yolu (boş bırakılırsa otomatik konumu kullanır)"
+  "config.databaseMode": "Veritabanı saklama modu: auto (workspace algıla), workspace (proje-yerel), veya global (paylaşımlı)"
 }
