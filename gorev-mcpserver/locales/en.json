@@ -639,5 +639,19 @@
       "extensionInstalled": "✓ {{.Extension}} successfully installed in {{.IDE}} (v{{.Version}})",
       "extensionUninstalled": "✓ {{.Extension}} successfully uninstalled from {{.IDE}}"
     }
+  },
+  "error": {
+    "dbConnectionClosed": "database connection is closed",
+    "filterProfileIdRequired": "Filter profile ID is required",
+    "filterProfileGetFailed": "Failed to get filter profile: {{.Error}}",
+    "filterProfileUnmarshalFailed": "Failed to parse filter profile data: {{.Error}}",
+    "filterProfileMarshalFailed": "Failed to serialize filter profile data: {{.Error}}",
+    "filterProfileListFailed": "Failed to list filter profiles: {{.Error}}",
+    "filterProfileScanFailed": "Failed to read filter profile data: {{.Error}}",
+    "filterProfileDeleteFailed": "Failed to delete filter profile: {{.Error}}",
+    "filterProfileCreated": "✅ Filter profile created: {{.Name}}",
+    "filterProfileDeleted": "✅ Filter profile deleted: {{.Name}}",
+    "searchQueryFailed": "Search query failed: {{.Error}}",
+    "searchScanFailed": "Failed to read search results: {{.Error}}"
   }
 }

@@ -660,6 +660,18 @@
     "filter_profile_name_required": "Filter profili adı gerekli",
     "filter_profile_name_exists": "{{.name}} adında bir filter profili zaten mevcut",
     "filter_profile_not_found": "ID {{.id}} ile filter profili bulunamadı",
-    "cannot_delete_default_profile": "Varsayılan filter profilleri silinemez"
+    "cannot_delete_default_profile": "Varsayılan filter profilleri silinemez",
+    "dbConnectionClosed": "veritabanı bağlantısı kapalı",
+    "filterProfileIdRequired": "Filter profili ID gerekli",
+    "filterProfileGetFailed": "Filter profili alınamadı: {{.Error}}",
+    "filterProfileUnmarshalFailed": "Filter profili verisi parse edilemedi: {{.Error}}",
+    "filterProfileMarshalFailed": "Filter profili verisi serialize edilemedi: {{.Error}}",
+    "filterProfileListFailed": "Filter profilleri listelenemedi: {{.Error}}",
+    "filterProfileScanFailed": "Filter profili verisi okunamadı: {{.Error}}",
+    "filterProfileDeleteFailed": "Filter profili silinemedi: {{.Error}}",
+    "filterProfileCreated": "✅ Filter profili oluşturuldu: {{.Name}}",
+    "filterProfileDeleted": "✅ Filter profili silindi: {{.Name}}",
+    "searchQueryFailed": "Arama sorgusu başarısız: {{.Error}}",
+    "searchScanFailed": "Arama sonuçları okunamadı: {{.Error}}"
   }
 }
