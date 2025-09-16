@@ -28,6 +28,7 @@ func (tr *ToolRegistry) RegisterAllTools(s *server.MCPServer) {
 	tr.registerTemplateTools(s)
 	tr.registerAIContextTools(s)
 	tr.registerFileWatcherTools(s)
+	tr.registerSearchTools(s)
 	tr.registerAdvancedTools(s)
 }
 
@@ -363,6 +364,42 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 				"updates": map[string]interface{}{
 					"type":        "array",
 					"description": i18n.TBatch("updates"),
+					"items": map[string]interface{}{
+						"type": "object",
+						"properties": map[string]interface{}{
+							"id": map[string]interface{}{
+								"type":        "string",
+								"description": "Task ID to update",
+							},
+							"baslik": map[string]interface{}{
+								"type":        "string",
+								"description": "New task title",
+							},
+							"aciklama": map[string]interface{}{
+								"type":        "string",
+								"description": "New task description",
+							},
+							"durum": map[string]interface{}{
+								"type":        "string",
+								"description": "New task status",
+								"enum":        []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"},
+							},
+							"oncelik": map[string]interface{}{
+								"type":        "string",
+								"description": "New task priority",
+								"enum":        []string{"dusuk", "orta", "yuksek"},
+							},
+							"son_tarih": map[string]interface{}{
+								"type":        "string",
+								"description": "New due date (YYYY-MM-DD format)",
+							},
+							"proje_id": map[string]interface{}{
+								"type":        "string",
+								"description": "New project ID",
+							},
+						},
+						"required": []string{"id"},
+					},
 				},
 			},
 			Required: []string{"updates"},
@@ -453,6 +490,169 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{},
 		},
 	}, tr.handlers.GorevFileWatchStats)
+}
+
+// registerSearchTools registers advanced search and filter tools
+func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
+	if tr.handlers.debug {
+		slog.Debug("Registering search tools")
+	}
+
+	// Advanced search with FTS5
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_search_advanced",
+		Description: i18n.T("tools.descriptions.gorev_search_advanced", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"query": map[string]interface{}{
+					"type":        "string",
+					"description": "Search query for FTS5 full-text search",
+				},
+				"filters": map[string]interface{}{
+					"type":        "object",
+					"description": "Filter conditions (durum, oncelik, proje_id, etc.)",
+				},
+				"use_fuzzy_search": map[string]interface{}{
+					"type":        "boolean",
+					"description": "Enable fuzzy search for partial matches",
+					"default":     true,
+				},
+				"fuzzy_threshold": map[string]interface{}{
+					"type":        "number",
+					"description": "Fuzzy search similarity threshold (0.0-1.0)",
+					"default":     0.6,
+				},
+				"max_results": map[string]interface{}{
+					"type":        "integer",
+					"description": "Maximum number of results to return",
+					"default":     50,
+				},
+				"sort_by": map[string]interface{}{
+					"type":        "string",
+					"description": "Sort field (relevance, created, updated, due_date, priority)",
+					"default":     "relevance",
+				},
+				"sort_direction": map[string]interface{}{
+					"type":        "string",
+					"description": "Sort direction (asc, desc)",
+					"default":     "desc",
+				},
+				"include_completed": map[string]interface{}{
+					"type":        "boolean",
+					"description": "Include completed tasks in results",
+					"default":     false,
+				},
+				"search_fields": map[string]interface{}{
+					"type":        "array",
+					"description": "Fields to search (baslik, aciklama, etiketler, proje_adi)",
+					"items": map[string]interface{}{
+						"type": "string",
+					},
+				},
+			},
+		},
+	}, tr.handlers.GorevSearchAdvanced)
+
+	// Save filter profile
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_filter_profile_save",
+		Description: i18n.T("tools.descriptions.gorev_filter_profile_save", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"name": map[string]interface{}{
+					"type":        "string",
+					"description": "Profile name",
+				},
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": "Profile description",
+				},
+				"filters": map[string]interface{}{
+					"type":        "object",
+					"description": "Filter configuration to save",
+				},
+				"search_query": map[string]interface{}{
+					"type":        "string",
+					"description": "Search query to save with profile",
+				},
+				"is_default": map[string]interface{}{
+					"type":        "boolean",
+					"description": "Mark as default profile",
+					"default":     false,
+				},
+			},
+			Required: []string{"name"},
+		},
+	}, tr.handlers.GorevFilterProfileSave)
+
+	// Load filter profile
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_filter_profile_load",
+		Description: i18n.T("tools.descriptions.gorev_filter_profile_load", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"profile_id": map[string]interface{}{
+					"type":        "integer",
+					"description": "Profile ID to load",
+				},
+				"profile_name": map[string]interface{}{
+					"type":        "string",
+					"description": "Profile name to load",
+				},
+			},
+		},
+	}, tr.handlers.GorevFilterProfileLoad)
+
+	// List filter profiles
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_filter_profile_list",
+		Description: i18n.T("tools.descriptions.gorev_filter_profile_list", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"defaults_only": map[string]interface{}{
+					"type":        "boolean",
+					"description": "Only return default profiles",
+					"default":     false,
+				},
+			},
+		},
+	}, tr.handlers.GorevFilterProfileList)
+
+	// Delete filter profile
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_filter_profile_delete",
+		Description: i18n.T("tools.descriptions.gorev_filter_profile_delete", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"profile_id": map[string]interface{}{
+					"type":        "integer",
+					"description": "Profile ID to delete",
+				},
+			},
+			Required: []string{"profile_id"},
+		},
+	}, tr.handlers.GorevFilterProfileDelete)
+
+	// Search history
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_search_history",
+		Description: i18n.T("tools.descriptions.gorev_search_history", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"limit": map[string]interface{}{
+					"type":        "integer",
+					"description": "Maximum number of history entries to return",
+					"default":     20,
+				},
+			},
+		},
+	}, tr.handlers.GorevSearchHistory)
 }
 
 // registerAdvancedTools registers advanced and hierarchy tools
