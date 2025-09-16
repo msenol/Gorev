@@ -214,31 +214,36 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             this.config.sortAscending
         );
 
-        // Filter to show only root tasks (tasks without parent_id)
+        // Improved hierarchy handling: Show root tasks and orphaned subtasks
+        const allTaskIds = new Set(sortedTasks.map(t => t.id));
         const rootTasks = sortedTasks.filter(task => !task.parent_id);
-        
-        Logger.debug(`[EnhancedGorevTreeProvider] Group ${group.groupKey} has ${sortedTasks.length} sorted tasks`);
-        Logger.debug(`[EnhancedGorevTreeProvider] After filtering for root tasks: ${rootTasks.length} tasks`);
-        if (sortedTasks.length > 0 && rootTasks.length === 0) {
-            Logger.warn(`[EnhancedGorevTreeProvider] All tasks in group ${group.groupKey} have parent_id set!`);
-            Logger.warn(`[EnhancedGorevTreeProvider] First few tasks:`, sortedTasks.slice(0, 3).map(t => ({
+        const orphanedSubtasks = sortedTasks.filter(task =>
+            task.parent_id && !allTaskIds.has(task.parent_id)
+        );
+
+        Logger.debug(`[EnhancedGorevTreeProvider] Group ${group.groupKey}: ${sortedTasks.length} total, ${rootTasks.length} root, ${orphanedSubtasks.length} orphaned`);
+
+        // Combine root tasks and orphaned subtasks to prevent task loss
+        const visibleTasks = [...rootTasks, ...orphanedSubtasks];
+
+        if (sortedTasks.length > 0 && visibleTasks.length === 0) {
+            Logger.warn(`[EnhancedGorevTreeProvider] No visible tasks in group ${group.groupKey} after hierarchy filtering!`);
+            Logger.warn(`[EnhancedGorevTreeProvider] Sample tasks:`, sortedTasks.slice(0, 3).map(t => ({
                 id: t.id,
                 baslik: t.baslik,
                 parent_id: t.parent_id,
                 seviye: t.seviye
             })));
-            
-            // TEMPORARY FIX: If all tasks have parent_id but we don't have the parents in this group,
-            // treat them as root tasks
-            Logger.warn(`[EnhancedGorevTreeProvider] APPLYING TEMPORARY FIX: Showing all tasks as root tasks`);
+
+            // Show all tasks to prevent complete loss of visibility
             return sortedTasks.map(task => {
                 const item = new TaskTreeViewItem(task, this.selection, group);
                 this.decorationProvider.updateTaskDecoration(task, item);
                 return item;
             });
         }
-        
-        return rootTasks.map(task => {
+
+        return visibleTasks.map(task => {
             const item = new TaskTreeViewItem(task, this.selection, group);
             this.decorationProvider.updateTaskDecoration(task, item);
             return item;
@@ -300,8 +305,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 Logger.debug(`[EnhancedGorevTreeProvider] Loaded ${this.projects.size} projects`);
             }
             
-            // Get page size from configuration
-            const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 10);
+            // Get page size from configuration (default should match package.json)
+            const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 100);
             
             // Check if we should show all projects or just active project
             // Default to true to show all projects
@@ -380,12 +385,22 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 
                 // Safety check to prevent infinite loop
                 if (offset > 1000 || this.tasks.length > 1000) {
-                    Logger.warn('[EnhancedGorevTreeProvider] Safety limit reached, stopping pagination');
+                    Logger.warn(`[EnhancedGorevTreeProvider] Safety limit reached at offset=${offset}, tasks=${this.tasks.length}`);
+                    Logger.warn('[EnhancedGorevTreeProvider] Consider increasing safety limits if your project has >1000 tasks');
                     break;
                 }
             }
             
-            Logger.info('[EnhancedGorevTreeProvider] Total tasks fetched:', this.tasks.length, 'Expected:', totalTaskCount);
+            Logger.info(`[EnhancedGorevTreeProvider] Task loading summary:`);
+            Logger.info(`  - Total tasks fetched: ${this.tasks.length}`);
+            Logger.info(`  - Expected total: ${totalTaskCount}`);
+            Logger.info(`  - Page size used: ${pageSize}`);
+            Logger.info(`  - Show all projects: ${showAllProjects}`);
+            Logger.info(`  - Active project ID: ${activeProjectId || 'N/A'}`);
+
+            if (this.tasks.length !== totalTaskCount && totalTaskCount > 0) {
+                Logger.warn(`[EnhancedGorevTreeProvider] TASK COUNT MISMATCH: Expected ${totalTaskCount}, got ${this.tasks.length}`);
+            }
             
             // If tasks don't have project_id and we're showing active project tasks only, assign it
             if (!showAllProjects && activeProjectId && this.tasks.length > 0) {

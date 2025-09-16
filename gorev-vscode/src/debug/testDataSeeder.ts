@@ -44,27 +44,37 @@ export class TestDataSeeder {
                 const projectIds = await this.createTestProjects();
 
                 // 2. Test görevleri oluştur
-                progress.report({ increment: 30, message: t('testData.creatingTasks') });
+                progress.report({ increment: 20, message: t('testData.creatingTasks') });
                 const taskIds = await this.createTestTasks(projectIds);
 
-                // 3. Bağımlılıklar oluştur
-                progress.report({ increment: 20, message: t('testData.creatingDependencies') });
+                // 3. Pagination test için çok sayıda görev oluştur
+                progress.report({ increment: 15, message: 'Creating tasks for pagination testing...' });
+                const paginationTaskIds = await this.createPaginationTestTasks(projectIds);
+                taskIds.push(...paginationTaskIds);
+
+                // 4. Hierarchy test görevleri oluştur
+                progress.report({ increment: 10, message: 'Creating hierarchy test tasks...' });
+                const hierarchyTaskIds = await this.createHierarchyTestTasks(projectIds);
+                taskIds.push(...hierarchyTaskIds);
+
+                // 5. Bağımlılıklar oluştur
+                progress.report({ increment: 10, message: t('testData.creatingDependencies') });
                 await this.createTestDependencies(taskIds);
 
-                // 4. Alt görevler oluştur
+                // 6. Alt görevler oluştur
                 progress.report({ increment: 10, message: t('testData.creatingSubtasks') });
                 await this.createSubtasks(taskIds);
 
-                // 5. Extra template görevler oluştur (örnekler için)
+                // 7. Extra template görevler oluştur (örnekler için)
                 progress.report({ increment: 10, message: t('testData.creatingExamples') });
                 await this.createAdditionalTemplateExamples(projectIds);
 
-                // 6. Bazı görevleri tamamla ve AI interaksiyonları ekle
-                progress.report({ increment: 10, message: t('testData.updatingStatuses') });
+                // 8. Bazı görevleri tamamla ve AI interaksiyonları ekle
+                progress.report({ increment: 5, message: t('testData.updatingStatuses') });
                 await this.updateSomeTaskStatuses(taskIds);
 
-                // 7. AI context oluştur
-                progress.report({ increment: 10, message: t('testData.creatingAIContext') });
+                // 9. AI context oluştur
+                progress.report({ increment: 5, message: t('testData.creatingAIContext') });
                 await this.setupAIContext(taskIds);
 
                 progress.report({ increment: 10, message: t('testData.completed') });
@@ -707,6 +717,161 @@ export class TestDataSeeder {
             const errorMessage = error instanceof Error ? error.message : String(error);
             vscode.window.showErrorMessage(t('testData.clearFailed', errorMessage));
             Logger.error('Failed to clear test data:', error);
+        }
+    }
+
+    /**
+     * Create large number of tasks for pagination testing
+     */
+    private async createPaginationTestTasks(projectIds: string[]): Promise<string[]> {
+        const taskIds: string[] = [];
+        const targetTaskCount = 150; // To test pagination (pageSize is 100)
+
+        Logger.info(`[TestDataSeeder] Creating ${targetTaskCount} tasks for pagination testing...`);
+
+        for (let i = 0; i < targetTaskCount; i++) {
+            try {
+                const taskData = {
+                    templateId: this.TEMPLATE_IDS.BUG_RAPORU,
+                    projectId: projectIds[i % projectIds.length],
+                    degerler: {
+                        baslik: `Pagination Test Task ${i + 1}`,
+                        aciklama: `This is test task #${i + 1} created for pagination testing. It helps verify that the VS Code extension can handle large numbers of tasks properly.`,
+                        oncelik: ['dusuk', 'orta', 'yuksek'][i % 3],
+                        etiketler: [`pagination-test`, `batch-${Math.floor(i / 50) + 1}`]
+                    }
+                };
+
+                const result = await this.mcpClient.callTool('templateden_gorev_olustur', taskData);
+                const taskId = this.extractTaskId(result);
+                if (taskId) {
+                    taskIds.push(taskId);
+                }
+
+                // Log progress every 25 tasks
+                if ((i + 1) % 25 === 0) {
+                    Logger.info(`[TestDataSeeder] Created ${i + 1}/${targetTaskCount} pagination test tasks`);
+                }
+            } catch (error) {
+                Logger.error(`Failed to create pagination test task ${i + 1}:`, error);
+            }
+        }
+
+        Logger.info(`[TestDataSeeder] Successfully created ${taskIds.length} pagination test tasks`);
+        return taskIds;
+    }
+
+    /**
+     * Create tasks with complex hierarchy for hierarchy testing
+     */
+    private async createHierarchyTestTasks(projectIds: string[]): Promise<string[]> {
+        const taskIds: string[] = [];
+
+        Logger.info('[TestDataSeeder] Creating hierarchy test tasks...');
+
+        // Create parent tasks first
+        const parentTasks = [
+            {
+                baslik: 'Feature: User Management System',
+                aciklama: 'Complete user management system with authentication and authorization',
+                oncelik: 'yuksek'
+            },
+            {
+                baslik: 'Feature: Reporting Dashboard',
+                aciklama: 'Advanced reporting dashboard with charts and export functionality',
+                oncelik: 'orta'
+            },
+            {
+                baslik: 'Infrastructure: Database Migration',
+                aciklama: 'Migrate from old database schema to new optimized structure',
+                oncelik: 'yuksek'
+            }
+        ];
+
+        const parentTaskIds: string[] = [];
+
+        for (const parentTaskData of parentTasks) {
+            try {
+                const taskData = {
+                    templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                    projectId: projectIds[0],
+                    degerler: {
+                        ...parentTaskData,
+                        etiketler: ['hierarchy-test', 'parent-task']
+                    }
+                };
+
+                const result = await this.mcpClient.callTool('templateden_gorev_olustur', taskData);
+                const taskId = this.extractTaskId(result);
+                if (taskId) {
+                    parentTaskIds.push(taskId);
+                    taskIds.push(taskId);
+                    Logger.info(`Created parent task: ${parentTaskData.baslik} (${taskId})`);
+                }
+            } catch (error) {
+                Logger.error(`Failed to create parent task: ${parentTaskData.baslik}`, error);
+            }
+        }
+
+        // Create subtasks for each parent
+        const subtaskTemplates = [
+            { baslik: 'Design Phase', aciklama: 'Design user interface and user experience' },
+            { baslik: 'Backend Implementation', aciklama: 'Implement backend API and business logic' },
+            { baslik: 'Frontend Implementation', aciklama: 'Create frontend components and pages' },
+            { baslik: 'Testing Phase', aciklama: 'Write and execute comprehensive tests' },
+            { baslik: 'Documentation', aciklama: 'Create user and technical documentation' }
+        ];
+
+        for (let i = 0; i < parentTaskIds.length; i++) {
+            const parentId = parentTaskIds[i];
+
+            for (const subtaskTemplate of subtaskTemplates) {
+                try {
+                    const taskData = {
+                        templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                        projectId: projectIds[0],
+                        degerler: {
+                            baslik: `${subtaskTemplate.baslik} (Parent ${i + 1})`,
+                            aciklama: subtaskTemplate.aciklama,
+                            oncelik: 'orta',
+                            etiketler: ['hierarchy-test', 'subtask', `parent-${i + 1}`]
+                        }
+                    };
+
+                    const result = await this.mcpClient.callTool('templateden_gorev_olustur', taskData);
+                    const taskId = this.extractTaskId(result);
+                    if (taskId) {
+                        taskIds.push(taskId);
+
+                        // Set parent relationship
+                        await this.mcpClient.callTool('gorev_ust_gorev_degistir', {
+                            gorev_id: taskId,
+                            ust_gorev_id: parentId
+                        });
+
+                        Logger.debug(`Created subtask: ${taskData.degerler.baslik} under parent ${parentId}`);
+                    }
+                } catch (error) {
+                    Logger.error(`Failed to create subtask: ${subtaskTemplate.baslik}`, error);
+                }
+            }
+        }
+
+        Logger.info(`[TestDataSeeder] Successfully created ${taskIds.length} hierarchy test tasks (${parentTaskIds.length} parents)`);
+        return taskIds;
+    }
+
+    /**
+     * Extract task ID from MCP response
+     */
+    private extractTaskId(result: any): string | null {
+        try {
+            const responseText = result.content[0].text;
+            const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+            return idMatch ? idMatch[1] : null;
+        } catch (error) {
+            Logger.error('Failed to extract task ID from response:', error);
+            return null;
         }
     }
 }

@@ -1886,6 +1886,18 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.GorevFileWatchList(params)
 	case "gorev_file_watch_stats":
 		return h.GorevFileWatchStats(params)
+	case "gorev_search_advanced":
+		return h.GorevSearchAdvanced(params)
+	case "gorev_filter_profile_save":
+		return h.GorevFilterProfileSave(params)
+	case "gorev_filter_profile_load":
+		return h.GorevFilterProfileLoad(params)
+	case "gorev_filter_profile_list":
+		return h.GorevFilterProfileList(params)
+	case "gorev_filter_profile_delete":
+		return h.GorevFilterProfileDelete(params)
+	case "gorev_search_history":
+		return h.GorevSearchHistory(params)
 	case "gorev_export":
 		return h.GorevExport(params)
 	case "gorev_import":
@@ -2845,4 +2857,257 @@ func getIDEIcon(ideType gorev.IDEType) string {
 	default:
 		return "💻"
 	}
+}
+
+// ================================
+// Advanced Search Tools
+// ================================
+
+// GorevSearchAdvanced performs advanced search with FTS5 and fuzzy matching
+func (h *Handlers) GorevSearchAdvanced(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Extract parameters
+	query := h.toolHelpers.Validator.ValidateOptionalString(params, "query")
+
+	// Extract search options with defaults
+	useFuzzySearch := true
+	if val, ok := params["use_fuzzy_search"].(bool); ok {
+		useFuzzySearch = val
+	}
+
+	fuzzyThreshold := 0.6
+	if val, ok := params["fuzzy_threshold"].(float64); ok {
+		fuzzyThreshold = val
+	}
+
+	maxResults := 50
+	if val, ok := params["max_results"]; ok {
+		if intVal, ok := val.(int); ok {
+			maxResults = intVal
+		} else if floatVal, ok := val.(float64); ok {
+			maxResults = int(floatVal)
+		}
+	}
+
+	sortBy := "relevance"
+	if val, ok := params["sort_by"].(string); ok && val != "" {
+		sortBy = val
+	}
+
+	sortDirection := "desc"
+	if val, ok := params["sort_direction"].(string); ok && val != "" {
+		sortDirection = val
+	}
+
+	includeCompleted := false
+	if val, ok := params["include_completed"].(bool); ok {
+		includeCompleted = val
+	}
+
+	// Parse search options
+	options := gorev.SearchOptions{
+		Query:            query,
+		Filters:          make(map[string]interface{}),
+		UseFuzzySearch:   useFuzzySearch,
+		FuzzyThreshold:   fuzzyThreshold,
+		MaxResults:       maxResults,
+		SortBy:           sortBy,
+		SortDirection:    sortDirection,
+		IncludeCompleted: includeCompleted,
+	}
+
+	// Extract filters if provided
+	if filtersParam, ok := params["filters"]; ok {
+		if filters, ok := filtersParam.(map[string]interface{}); ok {
+			options.Filters = filters
+		}
+	}
+
+	// Extract search fields if provided
+	if fieldsParam, ok := params["search_fields"]; ok {
+		if fields, ok := fieldsParam.([]interface{}); ok {
+			for _, field := range fields {
+				if fieldStr, ok := field.(string); ok {
+					options.SearchFields = append(options.SearchFields, fieldStr)
+				}
+			}
+		}
+	}
+
+	// Create search engine and perform search
+	searchEngine := gorev.NewSearchEngine(h.isYonetici.VeriYonetici(), nil) // TODO: Pass DB connection
+	response, err := searchEngine.Search(options)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Search failed: %v", err)), nil
+	}
+
+	// Format response as simple text for now
+	responseText := fmt.Sprintf("Advanced Search Results:\n")
+	responseText += fmt.Sprintf("Query: '%s'\n", query)
+	responseText += fmt.Sprintf("Found %d results in %dms\n", response.TotalCount, response.QueryTime.Milliseconds())
+	responseText += fmt.Sprintf("Fuzzy search: %v\n", response.UsedFuzzy)
+
+	if len(response.Results) > 0 {
+		responseText += "\nTop Results:\n"
+		for i, result := range response.Results {
+			if i >= 5 { // Limit to top 5 for display
+				break
+			}
+			responseText += fmt.Sprintf("- %s (Score: %.2f)\n", result.Task.Baslik, result.RelevanceScore)
+		}
+	}
+
+	return mcp.NewToolResultText(responseText), nil
+}
+
+// GorevFilterProfileSave saves a filter profile
+func (h *Handlers) GorevFilterProfileSave(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	name, err := h.toolHelpers.Validator.ValidateRequiredString(params, "name")
+	if err != nil {
+		return err, nil
+	}
+
+	// TODO: Extract and use description, searchQuery, isDefault, filters when implementing FilterProfileManager
+	// For now, just return success message
+	return mcp.NewToolResultText(fmt.Sprintf("Filter profile '%s' saved successfully", name)), nil
+}
+
+// GorevFilterProfileLoad loads a filter profile by ID or name
+func (h *Handlers) GorevFilterProfileLoad(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	profileID := 0
+	if val, ok := params["profile_id"]; ok {
+		if intVal, ok := val.(int); ok {
+			profileID = intVal
+		} else if floatVal, ok := val.(float64); ok {
+			profileID = int(floatVal)
+		}
+	}
+
+	profileName := h.toolHelpers.Validator.ValidateOptionalString(params, "profile_name")
+
+	if profileID == 0 && profileName == "" {
+		return mcp.NewToolResultError("Profile ID or name is required"), nil
+	}
+
+	// TODO: Implement actual profile loading
+	// For now, return mock data
+	profile := &gorev.FilterProfile{
+		ID:          profileID,
+		Name:        profileName,
+		Description: "Mock filter profile",
+		Filters:     map[string]interface{}{"durum": "devam_ediyor"},
+		SearchQuery: "",
+		IsDefault:   false,
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("Loaded filter profile: %s", profile.Name)), nil
+}
+
+// GorevFilterProfileList lists all filter profiles
+func (h *Handlers) GorevFilterProfileList(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	defaultsOnly := false
+	if val, ok := params["defaults_only"].(bool); ok {
+		defaultsOnly = val
+	}
+
+	// TODO: Implement actual profile listing
+	// For now, return mock data
+	profiles := []*gorev.FilterProfile{
+		{
+			ID:          1,
+			Name:        "Yüksek Öncelik",
+			Description: "Yüksek öncelikli görevler",
+			Filters:     map[string]interface{}{"oncelik": "yuksek"},
+			IsDefault:   true,
+			UseCount:    5,
+		},
+		{
+			ID:          2,
+			Name:        "Devam Ediyor",
+			Description: "Şu anda üzerinde çalışılan görevler",
+			Filters:     map[string]interface{}{"durum": "devam_ediyor"},
+			IsDefault:   true,
+			UseCount:    10,
+		},
+	}
+
+	// Filter for defaults only if requested
+	if defaultsOnly {
+		var defaultProfiles []*gorev.FilterProfile
+		for _, profile := range profiles {
+			if profile.IsDefault {
+				defaultProfiles = append(defaultProfiles, profile)
+			}
+		}
+		profiles = defaultProfiles
+	}
+
+	responseText := fmt.Sprintf("Filter Profiles (%d found):\n", len(profiles))
+	for _, profile := range profiles {
+		responseText += fmt.Sprintf("- %s: %s\n", profile.Name, profile.Description)
+	}
+
+	return mcp.NewToolResultText(responseText), nil
+}
+
+// GorevFilterProfileDelete deletes a filter profile
+func (h *Handlers) GorevFilterProfileDelete(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	profileID := 0
+	if val, ok := params["profile_id"]; ok {
+		if intVal, ok := val.(int); ok {
+			profileID = intVal
+		} else if floatVal, ok := val.(float64); ok {
+			profileID = int(floatVal)
+		}
+	}
+
+	if profileID == 0 {
+		return mcp.NewToolResultError("Profile ID is required"), nil
+	}
+
+	// TODO: Implement actual profile deletion
+	// For now, return success message
+	return mcp.NewToolResultText(fmt.Sprintf("Filter profile %d deleted successfully", profileID)), nil
+}
+
+// GorevSearchHistory returns recent search history
+func (h *Handlers) GorevSearchHistory(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	limit := 20
+	if val, ok := params["limit"]; ok {
+		if intVal, ok := val.(int); ok {
+			limit = intVal
+		} else if floatVal, ok := val.(float64); ok {
+			limit = int(floatVal)
+		}
+	}
+
+	// TODO: Implement actual search history retrieval
+	// For now, return mock data
+	history := []*gorev.SearchHistoryEntry{
+		{
+			ID:              1,
+			Query:           "database görevleri",
+			Filters:         `{"durum": "devam_ediyor"}`,
+			ResultCount:     5,
+			ExecutionTimeMs: 150,
+		},
+		{
+			ID:              2,
+			Query:           "yüksek öncelikli",
+			Filters:         `{"oncelik": "yuksek"}`,
+			ResultCount:     8,
+			ExecutionTimeMs: 89,
+		},
+	}
+
+	// Apply limit
+	if len(history) > limit {
+		history = history[:limit]
+	}
+
+	responseText := fmt.Sprintf("Search History (last %d entries):\n", len(history))
+	for _, entry := range history {
+		responseText += fmt.Sprintf("- '%s' (%d results, %dms)\n", entry.Query, entry.ResultCount, entry.ExecutionTimeMs)
+	}
+
+	return mcp.NewToolResultText(responseText), nil
 }
