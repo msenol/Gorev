@@ -26,21 +26,25 @@ This roadmap outlines the planned development path for the Gorev task management
 
 #### 2. ✅ Advanced Search and Filtering System
 
-**Status:** Completed (16 Sep 2025) - v0.15.0
-**Description:** Full-text search with natural language support, multi-filter combinations, and saved filter profiles.
+**Status:** Completed (17 Sep 2025) - v0.15.0
+**Description:** Production-ready full-text search with natural language support, multi-filter combinations, and saved filter profiles.
 
-**Implemented Features:**
+**Final Implementation - Rule 15 Compliant:**
 
-- ✅ SQLite FTS5 extension with high-performance full-text search
+- ✅ SQL-based full-text search (replaced FTS5 for maximum compatibility)
 - ✅ Natural language query support (integrates with AI Context Management)
 - ✅ Fuzzy search support with Levenshtein distance algorithm
-- ✅ Filter profiles (save/load) with complete CRUD operations
-- ✅ Search history tracking and retrieval
+- ✅ Filter profiles (save/load/delete) with complete CRUD operations
+- ✅ Search history tracking and retrieval with analytics
 - ✅ Smart suggestions based on AI interactions and NLP processing
 - ✅ 6 new MCP tools: `gorev_search_advanced`, `gorev_search_suggestions`, `gorev_search_history`, `gorev_filter_profile_*`
 - ✅ Advanced filtering: status, priority, project, tags, date ranges
 - ✅ Thread-safe concurrent access with comprehensive error handling
-- ✅ Complete i18n support for all search-related messages
+- ✅ Complete i18n support for all search-related messages (28+ keys)
+- ✅ NULL value handling for database nullable fields (parent_id, proje_id)
+- ✅ Type safety fixes in MCP handlers (FilterProfile struct fields)
+- ✅ All tests passing with proper implementation (no t.Skip usage)
+- ✅ Build verification and clean compilation
 - 🔲 Command Palette integration (VS Code extension enhancement - future)
 
 #### 3. 🔧 Task Dependencies in TreeView
