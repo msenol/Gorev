@@ -223,6 +223,62 @@ func (vy *VeriYonetici) Kapat() error {
 	return vy.db.Close()
 }
 
+// GetDB returns the underlying database connection for advanced operations
+func (vy *VeriYonetici) GetDB() (*sql.DB, error) {
+	if vy.db == nil {
+		return nil, fmt.Errorf(i18n.T("error.dbConnectionClosed"))
+	}
+	return vy.db, nil
+}
+
+// ProjeOlustur creates a new project with minimal data for testing
+func (vy *VeriYonetici) ProjeOlustur(isim, aciklama string, etiketler ...string) (*Proje, error) {
+	proje := &Proje{
+		ID:         fmt.Sprintf("proj_%d", time.Now().UnixNano()),
+		Isim:       isim,
+		Tanim:      aciklama,
+		OlusturmaTarih: time.Now(),
+	}
+
+	err := vy.ProjeKaydet(proje)
+	if err != nil {
+		return nil, err
+	}
+
+	return proje, nil
+}
+
+// GorevOlusturBasit creates a task with individual parameters for testing
+func (vy *VeriYonetici) GorevOlusturBasit(baslik, aciklama, projeID, oncelik, sonTarih, parentID, etiketler string) (*Gorev, error) {
+	gorev := &Gorev{
+		ID:             fmt.Sprintf("task_%d", time.Now().UnixNano()),
+		Baslik:         baslik,
+		Aciklama:       aciklama,
+		Durum:          "beklemede",
+		Oncelik:        oncelik,
+		ProjeID:        projeID,
+		OlusturmaTarih: time.Now(),
+		GuncellemeTarih: time.Now(),
+	}
+
+	if sonTarih != "" {
+		if tarih, err := time.Parse("2006-01-02", sonTarih); err == nil {
+			gorev.SonTarih = &tarih
+		}
+	}
+
+	if parentID != "" {
+		gorev.ParentID = parentID
+	}
+
+	err := vy.GorevKaydet(gorev)
+	if err != nil {
+		return nil, err
+	}
+
+	return gorev, nil
+}
+
 func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 	sorgu := `INSERT INTO gorevler (id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih)
 	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`

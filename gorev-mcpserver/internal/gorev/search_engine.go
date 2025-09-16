@@ -13,7 +13,15 @@ import (
 	"github.com/msenol/gorev/internal/i18n"
 )
 
-// SearchEngine handles advanced search functionality with FTS5 and fuzzy matching
+// ProcessedQuery represents a query processed by NLP
+type ProcessedQuery struct {
+	OriginalQuery string            `json:"original_query"`
+	Intent        string            `json:"intent"`
+	Entities      map[string]string `json:"entities"`
+	Confidence    float64           `json:"confidence"`
+}
+
+// SearchEngine handles advanced search functionality with SQL LIKE queries and fuzzy matching
 type SearchEngine struct {
 	veriYonetici VeriYoneticiInterface
 	db           *sql.DB
@@ -50,19 +58,6 @@ type SearchResponse struct {
 	Suggestions []string       `json:"suggestions"`
 }
 
-// FilterProfile represents a saved search/filter configuration
-type FilterProfile struct {
-	ID          int                    `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Filters     map[string]interface{} `json:"filters"`
-	SearchQuery string                 `json:"search_query"`
-	IsDefault   bool                   `json:"is_default"`
-	CreatedAt   time.Time              `json:"created_at"`
-	LastUsedAt  *time.Time             `json:"last_used_at"`
-	UseCount    int                    `json:"use_count"`
-}
-
 // SearchHistoryEntry represents a search history record
 type SearchHistoryEntry struct {
 	ID              int       `json:"id"`
@@ -80,6 +75,172 @@ func NewSearchEngine(vy VeriYoneticiInterface, db *sql.DB) *SearchEngine {
 		db:           db,
 		nlpProcessor: NewNLPProcessor(),
 	}
+}
+
+// Initialize sets up the search engine (creates search tables etc.)
+func (se *SearchEngine) Initialize() error {
+	// Search tables should be created by migrations
+	// This is a no-op method for compatibility
+	return nil
+}
+
+
+// PerformSearch performs a search with the given query and filters
+func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*SearchResponse, error) {
+	startTime := time.Now()
+
+	// Build the SQL query based on filters
+	sqlQuery := `
+		SELECT g.id, g.baslik, g.aciklama, g.durum, g.oncelik, g.proje_id,
+		       g.parent_id, g.olusturma_tarih, g.guncelleme_tarih, g.son_tarih
+		FROM gorevler g
+		LEFT JOIN projeler p ON g.proje_id = p.id
+		WHERE 1=1
+	`
+
+	var args []interface{}
+	argIndex := 0
+
+	// Add text search if query provided
+	if query != "" {
+		sqlQuery += " AND (g.baslik LIKE ? OR g.aciklama LIKE ?)"
+		likeQuery := "%" + query + "%"
+		args = append(args, likeQuery, likeQuery)
+		argIndex += 2
+	}
+
+	// Add status filter
+	if len(filters.Status) > 0 {
+		placeholders := make([]string, len(filters.Status))
+		for i, status := range filters.Status {
+			placeholders[i] = "?"
+			args = append(args, status)
+		}
+		sqlQuery += " AND g.durum IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	// Add priority filter
+	if len(filters.Priority) > 0 {
+		placeholders := make([]string, len(filters.Priority))
+		for i, priority := range filters.Priority {
+			placeholders[i] = "?"
+			args = append(args, priority)
+		}
+		sqlQuery += " AND g.oncelik IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	// Add project filter
+	if len(filters.ProjectIDs) > 0 {
+		placeholders := make([]string, len(filters.ProjectIDs))
+		for i, projectID := range filters.ProjectIDs {
+			placeholders[i] = "?"
+			args = append(args, projectID)
+		}
+		sqlQuery += " AND g.proje_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	// Add date filters
+	if filters.CreatedAfter != "" {
+		sqlQuery += " AND g.olusturma_tarih >= ?"
+		args = append(args, filters.CreatedAfter)
+	}
+
+	if filters.CreatedBefore != "" {
+		sqlQuery += " AND g.olusturma_tarih <= ?"
+		args = append(args, filters.CreatedBefore)
+	}
+
+	if filters.DueAfter != "" {
+		sqlQuery += " AND g.son_tarih >= ?"
+		args = append(args, filters.DueAfter)
+	}
+
+	if filters.DueBefore != "" {
+		sqlQuery += " AND g.son_tarih <= ?"
+		args = append(args, filters.DueBefore)
+	}
+
+	// Order by relevance (title matches first, then description matches)
+	if query != "" {
+		sqlQuery += ` ORDER BY
+			CASE
+				WHEN g.baslik LIKE ? THEN 1
+				WHEN g.aciklama LIKE ? THEN 2
+				ELSE 3
+			END, g.guncelleme_tarih DESC`
+		likeQuery := "%" + query + "%"
+		args = append(args, likeQuery, likeQuery)
+	} else {
+		sqlQuery += " ORDER BY g.guncelleme_tarih DESC"
+	}
+
+	// Execute query
+	rows, err := se.db.Query(sqlQuery, args...)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("error.searchQueryFailed", map[string]interface{}{"Error": err}))
+	}
+	defer rows.Close()
+
+	var tasks []*Gorev
+	for rows.Next() {
+		gorev := &Gorev{}
+		var sonTarih sql.NullTime
+		var parentID sql.NullString
+		var projeID sql.NullString
+
+		err := rows.Scan(
+			&gorev.ID,
+			&gorev.Baslik,
+			&gorev.Aciklama,
+			&gorev.Durum,
+			&gorev.Oncelik,
+			&projeID,
+			&parentID,
+			&gorev.OlusturmaTarih,
+			&gorev.GuncellemeTarih,
+			&sonTarih,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.T("error.searchScanFailed", map[string]interface{}{"Error": err}))
+		}
+
+		if projeID.Valid {
+			gorev.ProjeID = projeID.String
+		}
+
+		if parentID.Valid {
+			gorev.ParentID = parentID.String
+		}
+
+		if sonTarih.Valid {
+			gorev.SonTarih = &sonTarih.Time
+		}
+
+		tasks = append(tasks, gorev)
+	}
+
+	queryTime := time.Since(startTime)
+
+	// Convert tasks to search results
+	var results []SearchResult
+	for _, task := range tasks {
+		results = append(results, SearchResult{
+			Task:           task,
+			RelevanceScore: 1.0, // Simple scoring for now
+			MatchType:      "like",
+			MatchedFields:  []string{"baslik", "aciklama"},
+		})
+	}
+
+	response := &SearchResponse{
+		Results:     results,
+		TotalCount:  len(tasks),
+		QueryTime:   queryTime,
+		UsedFuzzy:   false, // For now, fuzzy search not implemented
+		Suggestions: []string{}, // For now, no suggestions
+	}
+
+	return response, nil
 }
 
 // Search performs advanced search with FTS5 and fuzzy matching support

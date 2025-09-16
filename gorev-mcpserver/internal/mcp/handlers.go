@@ -2991,10 +2991,10 @@ func (h *Handlers) GorevFilterProfileLoad(params map[string]interface{}) (*mcp.C
 	// TODO: Implement actual profile loading
 	// For now, return mock data
 	profile := &gorev.FilterProfile{
-		ID:          profileID,
+		ID:          fmt.Sprintf("%d", profileID),
 		Name:        profileName,
 		Description: "Mock filter profile",
-		Filters:     map[string]interface{}{"durum": "devam_ediyor"},
+		Filters:     gorev.SearchFilters{Status: []string{"devam_ediyor"}},
 		SearchQuery: "",
 		IsDefault:   false,
 	}
@@ -3013,18 +3013,18 @@ func (h *Handlers) GorevFilterProfileList(params map[string]interface{}) (*mcp.C
 	// For now, return mock data
 	profiles := []*gorev.FilterProfile{
 		{
-			ID:          1,
+			ID:          "1",
 			Name:        "Yüksek Öncelik",
 			Description: "Yüksek öncelikli görevler",
-			Filters:     map[string]interface{}{"oncelik": "yuksek"},
+			Filters:     gorev.SearchFilters{Priority: []string{"yuksek"}},
 			IsDefault:   true,
 			UseCount:    5,
 		},
 		{
-			ID:          2,
+			ID:          "2",
 			Name:        "Devam Ediyor",
 			Description: "Şu anda üzerinde çalışılan görevler",
-			Filters:     map[string]interface{}{"durum": "devam_ediyor"},
+			Filters:     gorev.SearchFilters{Status: []string{"devam_ediyor"}},
 			IsDefault:   true,
 			UseCount:    10,
 		},

@@ -10,6 +10,34 @@ import (
 	"github.com/msenol/gorev/internal/i18n"
 )
 
+// SearchFilters represents search filter criteria
+type SearchFilters struct {
+	Status       []string `json:"status,omitempty"`
+	Priority     []string `json:"priority,omitempty"`
+	ProjectIDs   []string `json:"project_ids,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
+	EnableFuzzy  bool     `json:"enable_fuzzy,omitempty"`
+	FuzzyThreshold int    `json:"fuzzy_threshold,omitempty"`
+	CreatedAfter  string  `json:"created_after,omitempty"`
+	CreatedBefore string  `json:"created_before,omitempty"`
+	DueAfter     string   `json:"due_after,omitempty"`
+	DueBefore    string   `json:"due_before,omitempty"`
+}
+
+// FilterProfile represents a saved filter configuration
+type FilterProfile struct {
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Filters     SearchFilters `json:"filters"`
+	SearchQuery string        `json:"search_query,omitempty"`
+	IsDefault   bool          `json:"is_default,omitempty"`
+	UseCount    int           `json:"use_count,omitempty"`
+	LastUsedAt  *time.Time    `json:"last_used_at,omitempty"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
+}
+
 // FilterProfileManager handles filter profile operations
 type FilterProfileManager struct {
 	db *sql.DB
@@ -24,13 +52,178 @@ func NewFilterProfileManager(db *sql.DB) *FilterProfileManager {
 
 // SaveFilterProfile saves a new filter profile or updates existing one
 func (fpm *FilterProfileManager) SaveFilterProfile(profile *FilterProfile) error {
-	if profile.ID == 0 {
+	if profile.ID == "" {
 		// Create new profile
 		return fpm.createFilterProfile(profile)
 	} else {
 		// Update existing profile
 		return fpm.updateFilterProfile(profile)
 	}
+}
+
+// CreateProfile creates a new filter profile and returns it
+func (fpm *FilterProfileManager) CreateProfile(profile FilterProfile) (*FilterProfile, error) {
+	// Generate new ID
+	profile.ID = fmt.Sprintf("fp_%d", time.Now().UnixNano())
+	profile.CreatedAt = time.Now()
+	profile.UpdatedAt = time.Now()
+
+	err := fpm.createFilterProfile(&profile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &profile, nil
+}
+
+// GetProfile retrieves a filter profile by ID
+func (fpm *FilterProfileManager) GetProfile(id string) (*FilterProfile, error) {
+	if id == "" {
+		return nil, fmt.Errorf(i18n.T("error.filterProfileIdRequired"))
+	}
+
+	query := `
+		SELECT id, name, description, filters, search_query, is_default, created_at, updated_at
+		FROM filter_profiles
+		WHERE id = ?
+	`
+
+	var profile FilterProfile
+	var filtersJSON string
+	var searchQuery sql.NullString
+
+	err := fpm.db.QueryRow(query, id).Scan(
+		&profile.ID,
+		&profile.Name,
+		&profile.Description,
+		&filtersJSON,
+		&searchQuery,
+		&profile.IsDefault,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf(i18n.T("filter_profile_not_found", map[string]interface{}{"id": id}))
+		}
+		return nil, fmt.Errorf(i18n.T("error.filterProfileGetFailed", map[string]interface{}{"Error": err}))
+	}
+
+	// Unmarshal filters
+	err = json.Unmarshal([]byte(filtersJSON), &profile.Filters)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("error.filterProfileUnmarshalFailed", map[string]interface{}{"Error": err}))
+	}
+
+	if searchQuery.Valid {
+		profile.SearchQuery = searchQuery.String
+	}
+
+	return &profile, nil
+}
+
+// ListProfiles retrieves all filter profiles
+func (fpm *FilterProfileManager) ListProfiles() ([]FilterProfile, error) {
+	query := `
+		SELECT id, name, description, filters, search_query, is_default, use_count, last_used_at, created_at, updated_at
+		FROM filter_profiles
+		ORDER BY name
+	`
+
+	rows, err := fpm.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("error.filterProfileListFailed", map[string]interface{}{"Error": err}))
+	}
+	defer rows.Close()
+
+	var profiles []FilterProfile
+	for rows.Next() {
+		var profile FilterProfile
+		var filtersJSON string
+		var searchQuery sql.NullString
+		var lastUsedAt sql.NullTime
+
+		err := rows.Scan(
+			&profile.ID,
+			&profile.Name,
+			&profile.Description,
+			&filtersJSON,
+			&searchQuery,
+			&profile.IsDefault,
+			&profile.UseCount,
+			&lastUsedAt,
+			&profile.CreatedAt,
+			&profile.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf(i18n.T("error.filterProfileScanFailed", map[string]interface{}{"Error": err}))
+		}
+
+		// Unmarshal filters
+		err = json.Unmarshal([]byte(filtersJSON), &profile.Filters)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.T("error.filterProfileUnmarshalFailed", map[string]interface{}{"Error": err}))
+		}
+
+		if searchQuery.Valid {
+			profile.SearchQuery = searchQuery.String
+		}
+
+		if lastUsedAt.Valid {
+			profile.LastUsedAt = &lastUsedAt.Time
+		}
+
+		profiles = append(profiles, profile)
+	}
+
+	return profiles, nil
+}
+
+// UpdateProfile updates an existing filter profile
+func (fpm *FilterProfileManager) UpdateProfile(profile FilterProfile) error {
+	profile.UpdatedAt = time.Now()
+	return fpm.updateFilterProfile(&profile)
+}
+
+// DeleteProfile deletes a filter profile by ID
+func (fpm *FilterProfileManager) DeleteProfile(id string) error {
+	if id == "" {
+		return fmt.Errorf(i18n.T("error.filterProfileIdRequired"))
+	}
+
+	// Check if profile exists
+	existingProfile, err := fpm.GetProfile(id)
+	if err != nil {
+		return err
+	}
+
+	// Don't allow deletion of default profiles
+	if existingProfile.IsDefault {
+		return fmt.Errorf(i18n.T("cannot_delete_default_profile"))
+	}
+
+	query := "DELETE FROM filter_profiles WHERE id = ?"
+	result, err := fpm.db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.filterProfileDeleteFailed", map[string]interface{}{"Error": err}))
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.filterProfileDeleteFailed", map[string]interface{}{"Error": err}))
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf(i18n.T("filter_profile_not_found", map[string]interface{}{"id": id}))
+	}
+
+	log.Printf("%s", i18n.T("success.filterProfileDeleted", map[string]interface{}{
+		"Name": existingProfile.Name,
+	}))
+
+	return nil
 }
 
 // createFilterProfile creates a new filter profile
@@ -41,7 +234,7 @@ func (fpm *FilterProfileManager) createFilterProfile(profile *FilterProfile) err
 	}
 
 	// Check if name already exists
-	exists, err := fpm.filterProfileNameExists(profile.Name, 0)
+	exists, err := fpm.filterProfileNameExists(profile.Name, "")
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.filterProfileGetFailed", map[string]interface{}{"Error": err}))
 	}
@@ -82,7 +275,7 @@ func (fpm *FilterProfileManager) createFilterProfile(profile *FilterProfile) err
 		return fmt.Errorf(i18n.T("error.filterProfileCreateFailed", map[string]interface{}{"Error": err}))
 	}
 
-	profile.ID = int(id)
+	profile.ID = fmt.Sprintf("%d", id)
 	profile.CreatedAt = time.Now()
 
 	log.Printf("%s", i18n.T("success.filterProfileCreated", map[string]interface{}{
@@ -454,11 +647,11 @@ func (fpm *FilterProfileManager) SearchFilterProfiles(query string) ([]*FilterPr
 }
 
 // filterProfileNameExists checks if a profile name already exists
-func (fpm *FilterProfileManager) filterProfileNameExists(name string, excludeID int) (bool, error) {
+func (fpm *FilterProfileManager) filterProfileNameExists(name string, excludeID string) (bool, error) {
 	query := "SELECT COUNT(*) FROM filter_profiles WHERE name = ?"
 	args := []interface{}{name}
 
-	if excludeID > 0 {
+	if excludeID != "" {
 		query += " AND id != ?"
 		args = append(args, excludeID)
 	}
