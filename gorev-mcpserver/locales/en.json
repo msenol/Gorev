@@ -107,7 +107,27 @@
     "taskNotFoundFileWatch": "Task not found: {{.Error}}",
     "fileWatchAddFailed": "Failed to add file watch: {{.Error}}",
     "fileWatchRemoveFailed": "Failed to remove file watch: {{.Error}}",
-    "activeProjectRetrieve": "failed to retrieve active project: {{.Error}}"
+    "activeProjectRetrieve": "failed to retrieve active project: {{.Error}}",
+    "searchFailed": "search error: {{.Error}}",
+    "ftsSearchFailed": "FTS search query failed: {{.Error}}",
+    "fuzzySearchFailed": "fuzzy search failed: {{.Error}}",
+    "tasksRetrieveFailed": "failed to retrieve tasks: {{.Error}}",
+    "searchHistoryFailed": "failed to record search history: {{.Error}}",
+    "scanResultFailed": "failed to scan result: {{.Error}}",
+    "filterProfileNameRequired": "filter profile name is required",
+    "filterProfileNameExists": "a profile with this name already exists: {{.Name}}",
+    "filterProfileNotFound": "filter profile not found: {{.ID}}",
+    "filterProfileCreateFailed": "failed to create filter profile: {{.Error}}",
+    "filterProfileUpdateFailed": "failed to update filter profile: {{.Error}}",
+    "filterProfileDeleteFailed": "failed to delete filter profile: {{.Error}}",
+    "filterProfileMarshalFailed": "failed to process filter settings: {{.Error}}",
+    "filterProfileParseFailed": "failed to parse filter settings: {{.Error}}",
+    "cannotDeleteDefaultProfile": "cannot delete default profile",
+    "searchHistoryCleanFailed": "failed to clean search history: {{.Error}}",
+    "filterProfileGetFailed": "failed to get filter profile: {{.Error}}",
+    "filterProfileListFailed": "failed to list filter profiles: {{.Error}}",
+    "filterProfileUseFailed": "failed to mark filter profile as used: {{.Error}}",
+    "filterProfileSearchFailed": "failed to search filter profiles: {{.Error}}"
   },
   "success": {
     "activeProjectSet": "✓ Active project set: {{.Project}}",
@@ -124,7 +144,11 @@
     "activeTaskSet": "{{.Title}} successfully set as active task",
     "defaultTemplatesCreated": "✓ Default templates created successfully.",
     "fileWatchAdded": "✅ File path '{{.FilePath}}' added to watch for task '{{.TaskTitle}}'.\n\nFile changes will be automatically tracked and task status will be updated as needed.",
-    "fileWatchRemoved": "✅ File path '{{.FilePath}}' removed from watch for task ID {{.TaskID}}."
+    "fileWatchRemoved": "✅ File path '{{.FilePath}}' removed from watch for task ID {{.TaskID}}.",
+    "filterProfileCreated": "✅ Filter profile created: {{.Name}} (ID: {{.ID}})",
+    "filterProfileUpdated": "✅ Filter profile updated: {{.Name}}",
+    "filterProfileDeleted": "✅ Filter profile deleted: {{.Name}}",
+    "searchHistoryCleaned": "✅ {{.Count}} old search records cleaned (older than {{.Days}} days)"
   },
   "display": {
     "noTemplates": "No templates found yet.",
@@ -455,6 +479,12 @@
       "gorev_context_summary": "AI-optimized context summary. Shows active task, recent tasks, priorities and blockers.",
       "gorev_batch_update": "Updates multiple tasks at once. Used for efficient bulk operations.",
       "gorev_nlp_query": "Natural language task search. Examples: 'high priority', 'working on today', 'tag:bug'",
+      "gorev_search_advanced": "Advanced search - FTS5 full-text search, fuzzy matching, and filters",
+      "gorev_filter_profile_save": "Save filter profile - store search and filter settings for future use",
+      "gorev_filter_profile_load": "Load filter profile - apply saved search and filter settings",
+      "gorev_filter_profile_list": "List filter profiles - show all saved search profiles",
+      "gorev_filter_profile_delete": "Delete filter profile - permanently remove saved profile",
+      "gorev_search_history": "Search history - show recent searches and their results",
       "gorev_file_watch_add": "Adds a file path to a task and starts monitoring for automatic status updates.",
       "gorev_file_watch_remove": "Removes a file path from a task and stops monitoring.",
       "gorev_file_watch_list": "Lists monitored file paths for a task.",
@@ -596,7 +626,11 @@
       "downloadFailed": "Failed to download {{.Extension}}: {{.Error}}",
       "installFailed": "Failed to install {{.Extension}} in {{.IDE}}: {{.Error}}",
       "uninstallFailed": "Failed to uninstall {{.Extension}} from {{.IDE}}: {{.Error}}",
-      "noIDEsDetected": "No IDEs detected"
+      "noIDEsDetected": "No IDEs detected",
+      "filter_profile_name_required": "Filter profile name is required",
+      "filter_profile_name_exists": "A filter profile named {{.name}} already exists",
+      "filter_profile_not_found": "Filter profile with ID {{.id}} not found",
+      "cannot_delete_default_profile": "Default filter profiles cannot be deleted"
     }
   },
   "success": {
