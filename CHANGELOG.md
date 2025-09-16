@@ -2,6 +2,45 @@
 
 All notable changes to Gorev will be documented in this file.
 
+## [v0.15.0] - 2025-09-17
+
+### ✨ Added
+- **Advanced Search and Filtering System** - Major new feature
+  - FTS5 full-text search with SQLite virtual tables for high-performance searching
+  - 6 new MCP tools: `gorev_search_advanced`, `gorev_search_suggestions`, `gorev_search_history`, `gorev_filter_profile_save`, `gorev_filter_profile_load`, `gorev_filter_profile_list`
+  - Fuzzy string matching using Levenshtein distance algorithm
+  - NLP integration for intelligent query parsing
+  - Thread-safe concurrent access with comprehensive error handling
+  - Filter profile management system for saved search combinations
+  - Search history tracking with analytics
+- **VirtualBox Linux VM Setup Scripts** - Complete development environment automation
+  - 7 comprehensive setup scripts for Ubuntu/Debian/Fedora/CentOS
+  - Modular design with error handling and comprehensive logging
+  - Automated Go, Node.js, VS Code installation
+  - Project building, testing, and extension compilation
+  - Debug tools and troubleshooting helpers
+- **Database Migration 000010** - FTS5 search infrastructure
+  - `gorevler_fts` virtual table for full-text search
+  - `filter_profiles` table for saved filter combinations
+  - `search_history` table for search analytics
+
+### 🔧 Fixed
+- **MCP Schema Validation Error** - Fixed missing `items` property in `gorev_batch_update` tool array schema
+- **Localization Compliance** - Added 30+ new i18n keys for search functionality
+- **Thread Safety** - Enhanced SearchEngine and FilterProfileManager with proper mutex protection
+
+### 📚 Changed
+- **Tool Count Update** - Updated from 31 to 42 MCP tools in documentation
+- **Version Bump** - Updated to v0.15.0 across all project files
+- **Documentation** - Enhanced README.md with advanced search features
+- **ROADMAP** - Marked Advanced Search as completed
+
+### 🏗️ Technical
+- New packages: `internal/gorev/search_engine.go`, `internal/gorev/filter_profile_manager.go`
+- Comprehensive test coverage: `search_engine_test.go`, `filter_profile_manager_test.go`, `search_integration_test.go`
+- Enhanced error handling with proper i18n message formatting
+- SQLite FTS5 integration with content synchronization triggers
+
 ## [v0.14.2] - 2025-09-14
 
 ### Added

@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 14 September 2025 | **Version:** v0.14.1
+**Last Updated:** 17 September 2025 | **Version:** v0.15.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,23 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.14.2 - Workspace Database & VS Code-Independent Operation (14 Sep 2025)**
+**v0.15.0 - Advanced Search and Filtering System (17 Sep 2025)**
+- **Complete Advanced Search System**: FTS5 full-text search with high-performance SQLite virtual tables
+  - **6 New MCP Tools**: `gorev_search_advanced`, `gorev_search_suggestions`, `gorev_search_history`, `gorev_filter_profile_*`
+  - **Fuzzy String Matching**: Levenshtein distance algorithm for intelligent query matching
+  - **NLP Integration**: Intelligent query parsing with natural language understanding
+  - **Filter Profile Management**: Save and load custom search filter combinations
+  - **Search History Analytics**: Track and analyze search patterns with statistics
+  - **Thread-Safe Concurrent Access**: Comprehensive error handling and mutex protection
+- **VirtualBox Linux VM Setup Scripts**: Complete development environment automation
+  - **7 Comprehensive Scripts**: Ubuntu/Debian/Fedora/CentOS support with modular design
+  - **Automated Installation**: Go, Node.js, VS Code, project building, extension compilation
+  - **Debug Tools**: Interactive troubleshooting helpers and comprehensive logging
+- **Database Migration 000010**: FTS5 search infrastructure with content synchronization
+- **Critical Fix**: MCP schema validation error in `gorev_batch_update` tool (missing `items` property)
+- **Localization**: 30+ new i18n keys for complete search functionality translation
+
+**Previous: v0.14.2 - Workspace Database & VS Code-Independent Operation (14 Sep 2025)**
 - **Complete Workspace Database Support**: Project-specific database functionality without VS Code dependency
   - **Automatic Workspace Detection**: Server detects `.gorev/gorev.db` in current directory and parent directories
   - **New `gorev init` Command**: Initialize workspace (`gorev init`) or global (`gorev init --global`) databases
@@ -147,7 +163,7 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 1. **gorev-mcpserver**: Core MCP server (Go) - Task management for AI assistants
 2. **gorev-vscode**: Optional VS Code extension - Rich visual interface
 
-**Core Features**: 36 MCP tools, unlimited subtask hierarchy, task dependencies, template system, data export/import, IDE extension management, file watching, bilingual support (TR/EN), AI context management, enhanced NLP processing.
+**Core Features**: 42 MCP tools, unlimited subtask hierarchy, task dependencies, template system, data export/import, IDE extension management, file watching, bilingual support (TR/EN), AI context management, enhanced NLP processing, advanced search & filtering with FTS5, fuzzy matching, filter profiles.
 
 ## 🏗️ Architecture
 
@@ -196,12 +212,13 @@ npm test                  # Run tests
 
 ## 🛠️ MCP Tools Summary
 
-**36 MCP Tools** organized in 9 categories:
+**42 MCP Tools** organized in 10 categories:
 - **Task Management**: 6 tools (gorev_listele, gorev_detay, etc.)
-- **Subtask Management**: 3 tools (gorev_altgorev_olustur, etc.) 
+- **Subtask Management**: 3 tools (gorev_altgorev_olustur, etc.)
 - **Templates**: 2 tools (template_listele, templateden_gorev_olustur)
 - **Project Management**: 6 tools (proje_olustur, proje_listele, etc.)
 - **AI Context**: 6 tools (gorev_set_active, gorev_nlp_query, etc.)
+- **Advanced Search & Filtering**: 6 tools (gorev_search_advanced, gorev_search_suggestions, gorev_search_history, gorev_filter_profile_*)
 - **Data Export/Import**: 2 tools (gorev_export, gorev_import)
 - **IDE Extension Management**: 5 tools (ide_detect, ide_install_extension, ide_uninstall_extension, ide_extension_status, ide_update_extension)
 - **File Watching**: 4 tools (gorev_file_watch_add, etc.)
@@ -211,14 +228,17 @@ npm test                  # Run tests
 
 ## 🗄️ Database Schema
 
-**SQLite database** with 9 tables + 1 view:
+**SQLite database** with 12 tables + 1 view:
 - **gorevler**: Tasks (with parent_id for hierarchy)
-- **projeler**: Projects  
+- **projeler**: Projects
 - **baglantilar**: Task dependencies
 - **etiketler**, **gorev_etiketleri**: Tagging system
 - **gorev_templateleri**: Task templates
 - **ai_interactions**, **ai_context**: AI session management
 - **aktif_proje**: Active project setting
+- **gorevler_fts**: FTS5 virtual table for full-text search
+- **filter_profiles**: Saved search filter combinations
+- **search_history**: Search query history tracking
 - **gorev_hiyerarsi** (VIEW): Recursive hierarchy queries
 
 Migrations: `gorev-mcpserver/internal/veri/migrations/` (handled by golang-migrate)
@@ -270,13 +290,14 @@ gorev serve --lang=tr    # Turkish interface
 
 ## 📚 Essential References
 
-- **MCP Tools Reference**: @docs/MCP_TOOLS_REFERENCE.md
-- **Development History**: @docs/DEVELOPMENT_HISTORY.md  
+- **MCP Tools Reference**: @docs/mcp-araclari.md (Turkish documentation with 42 tools)
+- **Development History**: @docs/DEVELOPMENT_HISTORY.md
 - **VS Code Data Export/Import**: @docs/user-guide/vscode-data-export-import.md
 - **Architecture Details**: Project structure above + clean architecture pattern
-- **Database Migrations**: @internal/veri/migrations/
+- **Database Migrations**: @internal/veri/migrations/ (including FTS5 migration 000010)
 - **Testing Guide**: DRY patterns, table-driven tests, 90%+ server coverage, 100% extension coverage
 - **Version Management**: Build-time injection via Makefile LDFLAGS
+- **Advanced Search Documentation**: SearchEngine, FilterProfileManager, NLP integration
 
 ## 🚨 Rule 15: Comprehensive Problem-Solving & Zero Technical Debt
 

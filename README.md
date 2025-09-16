@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 14, 2025 | **Version:** v0.14.2
+**Last Updated:** September 17, 2025 | **Version:** v0.15.0
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -24,7 +24,7 @@
 
 **Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation. 
 
-**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, 36 MCP tools, and optional VS Code extension with rich visual interface.
+**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, advanced search & filtering with FTS5, 42 MCP tools, and optional VS Code extension with rich visual interface.
 
 **Quick Start**: [Installation Guide](README.en.md#-installation) | [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
@@ -69,6 +69,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **⚙️ Konfigürasyon Yönetimi** - Ignore patterns ve izleme kuralları özelleştirmesi
 
 ### 🤖 AI Entegrasyonu
+- **🔍 Gelişmiş Arama & Filtreleme** - FTS5 full-text search ve akıllı filtreleme (v0.15.0)
 - **🧠 Gelişmiş NLP İşleme** - Akıllı doğal dil anlama ve yorumlama (v0.14.0)
 - **Doğal dil işleme** - AI asistanlarla konuşarak görev yönetimi
 - **Çoklu editör desteği** - Claude, VS Code, Windsurf, Cursor, Zed
