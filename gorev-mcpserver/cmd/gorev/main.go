@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	version   = "v0.15.5-dev"
+	version   = "v0.15.5"
 	buildTime = "unknown"
 	gitCommit = "unknown"
 	langFlag  string
@@ -25,70 +25,10 @@ var (
 )
 
 // getMigrationsPath returns the correct path to migrations folder
+// It first tries to use embedded migrations, then falls back to filesystem
 func getMigrationsPath() string {
-	// First check if migrations exist in user's home directory
-	homeDir, err := os.UserHomeDir()
-	if err == nil {
-		homeMigrationsPath := filepath.Join(homeDir, ".gorev", "internal", "veri", "migrations")
-		if _, err := os.Stat(homeMigrationsPath); err == nil {
-			return "file://" + homeMigrationsPath
-		}
-	}
-
-	// Get the executable path
-	exePath, err := os.Executable()
-	if err != nil {
-		// Fallback to relative path
-		return "file://internal/veri/migrations"
-	}
-
-	// Get the directory of the executable
-	exeDir := filepath.Dir(exePath)
-
-	// First, check if we can find the migrations in the standard project structure
-	// This handles the case where the executable is in a temporary directory (go run)
-	// or installed in a different location
-	possiblePaths := []string{
-		// Direct path from executable location
-		filepath.Join(exeDir, "internal", "veri", "migrations"),
-		// If in build directory
-		filepath.Join(filepath.Dir(exeDir), "internal", "veri", "migrations"),
-		// If in gorev-mcpserver directory
-		filepath.Join(exeDir, "..", "internal", "veri", "migrations"),
-		// Try to find gorev-mcpserver in parent directories
-		filepath.Join(exeDir, "..", "..", "gorev-mcpserver", "internal", "veri", "migrations"),
-		filepath.Join(exeDir, "..", "..", "..", "gorev-mcpserver", "internal", "veri", "migrations"),
-	}
-
-	// Also check GOREV_ROOT environment variable if set
-	if gorevRoot := os.Getenv("GOREV_ROOT"); gorevRoot != "" {
-		possiblePaths = append([]string{
-			filepath.Join(gorevRoot, "internal", "veri", "migrations"),
-		}, possiblePaths...)
-	}
-
-	// Try each possible path
-	for _, path := range possiblePaths {
-		// Clean the path to resolve .. and .
-		cleanPath := filepath.Clean(path)
-		// Check if the migrations directory exists
-		if _, err := os.Stat(cleanPath); err == nil {
-			// Found the migrations directory
-			return "file://" + cleanPath
-		}
-	}
-
-	// Fallback: assume migrations are relative to current working directory
-	cwd, err := os.Getwd()
-	if err == nil {
-		migrationsPath := filepath.Join(cwd, "internal", "veri", "migrations")
-		if _, err := os.Stat(migrationsPath); err == nil {
-			return "file://" + migrationsPath
-		}
-	}
-
-	// Last resort: return relative path and hope for the best
-	return "file://internal/veri/migrations"
+	// Priority 1: Use embedded migrations (always available in NPX package)
+	return "embedded://migrations"
 }
 
 // getDatabasePath returns the correct path to database file
@@ -248,7 +188,22 @@ func initWorkspaceDatabase(global bool) error {
 	}
 
 	// Initialize database by creating a VeriYonetici instance
-	veriYonetici, err := gorev.YeniVeriYonetici(dbPath, getMigrationsPath())
+	migrationsPath := getMigrationsPath()
+	var veriYonetici *gorev.VeriYonetici
+	var err error
+
+	if migrationsPath == "embedded://migrations" {
+		// Use embedded migrations
+		migrationsFS, fsErr := getEmbeddedMigrationsFS()
+		if fsErr != nil {
+			return fmt.Errorf("failed to get embedded migrations: %w", fsErr)
+		}
+		veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, migrationsFS)
+	} else {
+		// Fallback to filesystem migrations
+		veriYonetici, err = gorev.YeniVeriYonetici(dbPath, migrationsPath)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -412,7 +367,24 @@ func runServer() error {
 	// Veritabanını başlat
 	dbPath := getDatabasePath()
 	log.Printf("Using database: %s", dbPath)
-	veriYonetici, err := gorev.YeniVeriYonetici(dbPath, getMigrationsPath())
+
+	// Use embedded migrations if available, fallback to filesystem
+	migrationsPath := getMigrationsPath()
+	var veriYonetici *gorev.VeriYonetici
+	var err error
+
+	if migrationsPath == "embedded://migrations" {
+		// Use embedded migrations
+		migrationsFS, fsErr := getEmbeddedMigrationsFS()
+		if fsErr != nil {
+			return errors.New(i18n.T("error.dataManagerInit", map[string]interface{}{"Error": fsErr}))
+		}
+		veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, migrationsFS)
+	} else {
+		// Fallback to filesystem migrations
+		veriYonetici, err = gorev.YeniVeriYonetici(dbPath, migrationsPath)
+	}
+
 	if err != nil {
 		return errors.New(i18n.T("error.dataManagerInit", map[string]interface{}{"Error": err}))
 	}
@@ -444,6 +416,24 @@ func runServer() error {
 	}
 
 	return nil
+}
+
+// createVeriYonetici creates a VeriYonetici instance using embedded migrations
+func createVeriYonetici() (*gorev.VeriYonetici, error) {
+	dbPath := getDatabasePath()
+	migrationsPath := getMigrationsPath()
+
+	if migrationsPath == "embedded://migrations" {
+		// Use embedded migrations
+		migrationsFS, err := getEmbeddedMigrationsFS()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get embedded migrations: %w", err)
+		}
+		return gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, migrationsFS)
+	} else {
+		// Fallback to filesystem migrations
+		return gorev.YeniVeriYonetici(dbPath, migrationsPath)
+	}
 }
 
 // checkAndPromptIDEExtensions checks for IDEs and prompts for extension installation
@@ -518,7 +508,7 @@ func checkAndPromptIDEExtensions() {
 
 func listTemplates(kategori string) error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
+	veriYonetici, err := createVeriYonetici()
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
@@ -564,7 +554,7 @@ func listTemplates(kategori string) error {
 
 func showTemplate(templateID string) error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
+	veriYonetici, err := createVeriYonetici()
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
@@ -609,7 +599,7 @@ func showTemplate(templateID string) error {
 
 func initTemplates() error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
+	veriYonetici, err := createVeriYonetici()
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}
@@ -627,7 +617,7 @@ func initTemplates() error {
 
 func listTemplateAliases() error {
 	// Veritabanını başlat
-	veriYonetici, err := gorev.YeniVeriYonetici(getDatabasePath(), getMigrationsPath())
+	veriYonetici, err := createVeriYonetici()
 	if err != nil {
 		return fmt.Errorf("veri yönetici başlatılamadı: %w", err)
 	}

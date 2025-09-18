@@ -1,0 +1,1 @@
+ALTER TABLE gorevler ADD COLUMN son_tarih DATETIME;

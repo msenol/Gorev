@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -29,6 +32,21 @@ func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, erro
 
 	vy := &VeriYonetici{db: db}
 	if err := vy.migrateDB(migrationsYolu); err != nil {
+		return nil, fmt.Errorf(i18n.T("error.migrationFailed", map[string]interface{}{"Error": err}))
+	}
+
+	return vy, nil
+}
+
+// YeniVeriYoneticiWithEmbeddedMigrations creates a new VeriYonetici with embedded migrations
+func YeniVeriYoneticiWithEmbeddedMigrations(dbYolu string, migrationsFS fs.FS) (*VeriYonetici, error) {
+	db, err := sql.Open("sqlite3", dbYolu)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
+	}
+
+	vy := &VeriYonetici{db: db}
+	if err := vy.migrateDBWithFS(migrationsFS); err != nil {
 		return nil, fmt.Errorf(i18n.T("error.migrationFailed", map[string]interface{}{"Error": err}))
 	}
 
@@ -81,6 +99,42 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	}
 
 	return nil
+}
+
+// migrateDBWithFS migrates database using embedded filesystem
+func (vy *VeriYonetici) migrateDBWithFS(migrationsFS fs.FS) error {
+	// Extract embedded migrations to temporary directory
+	tempDir, err := os.MkdirTemp("", "gorev-migrations-*")
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.migrationDriverFailed", map[string]interface{}{"Error": err}))
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Copy all migration files from embedded FS to temp directory
+	err = fs.WalkDir(migrationsFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		// Read file from embedded FS
+		content, err := fs.ReadFile(migrationsFS, path)
+		if err != nil {
+			return err
+		}
+
+		// Write to temp directory
+		destPath := filepath.Join(tempDir, path)
+		return os.WriteFile(destPath, content, 0644)
+	})
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.migrationInstanceFailed", map[string]interface{}{"Error": err}))
+	}
+
+	// Now use regular file-based migration
+	return vy.migrateDB("file://" + tempDir)
 }
 
 // GorevListele retrieves tasks based on filters
