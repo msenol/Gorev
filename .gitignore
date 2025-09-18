@@ -82,3 +82,5 @@ gorev-mcpserver/release-*/
 gorev-mcpserver/artifacts/
 */artifacts/
 code_search_index/
+.sequential-thoughts/
+
