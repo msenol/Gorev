@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 18 September 2025 | **Version:** v0.15.2
+**Last Updated:** 18 September 2025 | **Version:** v0.15.3
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,28 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.2 - Bug Fixes and Stability Improvements (18 Sep 2025)**
+**v0.15.3 - VS Code Extension Dependency Display Fix (18 Sep 2025)**
+
+- **Critical VS Code Extension Fix**: Dependencies now display properly in VS Code extension
+  - **Root Cause**: MCP handlers (`gorev_listele`, `gorev_detay`) were not including dependency count information in markdown output
+  - **Solution**: Added dependency information to task hierarchy and detail outputs using existing `gorevBagimlilikBilgisi` helper
+  - **Impact**: VS Code extension now displays 🔒/🔓 icons, dependency counts, and proper blocking indicators
+  - **Components**: Enhanced both `GorevListele` and `GorevDetay` MCP handlers with dependency calculation
+
+- **Compilation Fix**: Resolved missing `log` import in `export_import.go`
+  - **Issue**: Build failure due to undefined log package in import/export logging statements
+  - **Fix**: Added missing `log` import to maintain proper logging functionality
+
+- **Test Coverage Enhancement**: Added comprehensive dependency parsing tests
+  - **Coverage**: New tests for both task list and task detail dependency parsing in MarkdownParser
+  - **Validation**: Ensures proper parsing of `bagimli_gorev_sayisi`, `tamamlanmamis_bagimlilik_sayisi`, `bu_goreve_bagimli_sayisi` fields
+
+- **Rule 15 Compliance**: Complete root cause analysis and proper solution without workarounds
+  - **Quality**: No temporary fixes or shortcuts in dependency display implementation
+  - **Architecture**: Leveraged existing dependency calculation infrastructure
+  - **Testing**: Comprehensive test coverage for regression prevention
+
+**Previous: v0.15.2 - Bug Fixes and Stability Improvements (18 Sep 2025)**
 
 - **Import/Export System Logging Fix**: Standardized logging patterns across data import/export operations
   - **Log Consistency**: Replaced `fmt.Printf` with `log.Printf` for proper log formatting and VS Code parsing

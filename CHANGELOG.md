@@ -2,6 +2,28 @@
 
 All notable changes to Gorev will be documented in this file.
 
+## [v0.15.3] - 2025-09-18
+
+### 🔧 Fixed
+- **VS Code Extension Dependency Display** - Critical fix for dependency visualization in VS Code extension
+  - **Root Cause**: MCP handlers (`gorev_listele`, `gorev_detay`) were not including dependency count information in markdown output
+  - **Solution**: Enhanced `GorevListele` and `GorevDetay` handlers to include dependency information using `gorevBagimlilikBilgisi` helper
+  - **Impact**: VS Code extension now displays 🔒/🔓 icons, dependency counts, and proper task blocking indicators
+  - **Fields**: Now properly transmits `bagimli_gorev_sayisi`, `tamamlanmamis_bagimlilik_sayisi`, `bu_goreve_bagimli_sayisi`
+- **Compilation Fix** - Resolved missing `log` import in `export_import.go`
+  - Fixed build failure due to undefined log package in import/export logging statements
+
+### 🧪 Tests
+- **Enhanced Test Coverage** - Added comprehensive dependency parsing tests
+  - New MarkdownParser tests for task list dependency parsing
+  - New MarkdownParser tests for task detail dependency parsing
+  - Validates proper extraction of all dependency count fields
+
+### 🛡️ Quality Assurance
+- **Rule 15 Compliance** - Complete root cause analysis without workarounds
+- **Architecture Reuse** - Leveraged existing dependency calculation infrastructure
+- **Regression Prevention** - Comprehensive test coverage added
+
 ## [v0.15.2] - 2025-09-18
 
 ### 🔧 Fixed
