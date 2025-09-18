@@ -148,13 +148,21 @@ function showVersion() {
 function main() {
     const args = process.argv.slice(2);
 
+    // Handle help flags
     if (args.includes('--help') || args.includes('-h')) {
         showHelp();
         return;
     }
 
+    // Handle version flags (show NPM package version)
     if (args.includes('--version') || args.includes('-v')) {
         showVersion();
+        return;
+    }
+
+    // Handle version command (pass to Go binary to show Go binary version)
+    if (args.length > 0 && args[0] === 'version') {
+        runServer();
         return;
     }
 
@@ -169,5 +177,6 @@ if (require.main === module) {
 module.exports = {
     getPlatform,
     getBinaryPath,
-    runServer
+    runServer,
+    main
 };

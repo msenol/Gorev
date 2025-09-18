@@ -10,8 +10,8 @@
 
 const path = require('path');
 
-// Import the main wrapper from parent directory
+// Import and execute the main wrapper from parent directory
 const wrapper = require(path.join(__dirname, '..', 'index.js'));
 
-// Execute the wrapper
-wrapper.runServer();
+// Call main function directly since this is our entry point
+wrapper.main();
