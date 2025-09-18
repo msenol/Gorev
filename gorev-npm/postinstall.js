@@ -13,6 +13,28 @@ const os = require('os');
 const GITHUB_REPO = 'msenol/Gorev';
 const BINARIES_DIR = path.join(__dirname, 'binaries');
 
+/**
+ * Safely unlink a file without throwing errors on Windows
+ */
+function safeUnlink(filePath) {
+    try {
+        if (fs.existsSync(filePath)) {
+            // On Windows, try to make file writable first
+            if (os.platform() === 'win32') {
+                try {
+                    fs.chmodSync(filePath, 0o666);
+                } catch (e) {
+                    // Ignore chmod errors
+                }
+            }
+            fs.unlinkSync(filePath);
+        }
+    } catch (err) {
+        // Ignore unlink errors - file might be in use or permission denied
+        console.warn(`Warning: Could not remove file ${filePath}: ${err.message}`);
+    }
+}
+
 function getPlatformInfo() {
     const platform = os.platform();
     const arch = os.arch();
@@ -90,12 +112,12 @@ function downloadFile(url, dest) {
         });
 
         request.on('error', (err) => {
-            fs.unlinkSync(dest);
+            safeUnlink(dest);
             reject(err);
         });
 
         file.on('error', (err) => {
-            fs.unlinkSync(dest);
+            safeUnlink(dest);
             reject(err);
         });
     });
