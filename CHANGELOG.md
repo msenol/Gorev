@@ -237,6 +237,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.4] - 2025-09-18
+
+### 🚀 Added - NPX Integration
+- **NPX Easy Installation**: Zero-config setup via `npx @gorev/mcp-server@latest`
+- **NPM Package Wrapper**: @gorev/mcp-server with automatic binary downloads
+- **Cross-platform Support**: Windows/macOS/Linux, AMD64/ARM64 architecture support
+- **GitHub Actions CI/CD**: Automated NPM publishing pipeline
+
+### 🎨 Added - VS Code Extension NPX Mode
+- **serverMode Configuration**: NPX as default mode (npx/binary options)
+- **Smart MCP Client**: Automatic command/args selection based on server mode
+- **Backward Compatibility**: Full support for existing binary installations
+- **Version 0.6.11**: Enhanced NPX integration with localization updates
+
+### 📚 Added - Comprehensive Documentation
+- **Turkish Documentation Suite**: Complete Turkish docs (kurulum.md, kullanim.md, mcp-araclari.md)
+- **Documentation Standardization**: All docs updated to v0.15.4
+- **NPX Installation Guides**: Updated installation instructions for all MCP clients
+- **Go Version Standardization**: Updated to Go 1.23+ across all documentation
+
+### 🔧 Changed
+- **Installation Methods**: NPX as primary installation method
+- **VS Code Extension Default**: NPX mode as default server configuration
+- **Documentation Structure**: Enhanced organization with Turkish localization
+- **Test Coverage Reporting**: Updated from 84.6% to 90%+ in documentation
+
+### 🐛 Fixed
+- **PowerShell Syntax**: Fixed install.ps1 syntax error with VERSION variable
+- **Documentation Versions**: Standardized version references across all files
+- **MCP Tools Count**: Consistent 48 tools reference across documentation
+
 ## [v0.13.1] - 2025-09-04 - Test Infrastructure Standardization
 
 ### Added
