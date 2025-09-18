@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 18 September 2025 | **Version:** v0.15.4
+**Last Updated:** 18 September 2025 | **Version:** v0.15.5
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,22 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.4 - NPX Easy Installation System (18 Sep 2025)**
+**v0.15.5 - NPX Embedded Migrations Fix (18 Sep 2025)**
+
+- **Critical NPX Fix**: Resolved "error.dataManagerInit" issue in NPX package environments
+  - **Root Cause**: NPX package couldn't find migration files, causing database initialization failures
+  - **Solution**: Embedded all migration files directly into Go binary using `//go:embed`
+  - **Implementation**: New `migrations_embed.go` with embedded filesystem support
+  - **User Impact**: NPX package now works without GOREV_ROOT environment variable
+  - **Compatibility**: Maintains backward compatibility with existing filesystem migrations
+
+- **Technical Implementation**: Complete embedded migrations architecture
+  - **`YeniVeriYoneticiWithEmbeddedMigrations()`**: New function for embedded FS support
+  - **`migrateDBWithFS()`**: Extracts embedded migrations to temporary directory
+  - **`createVeriYonetici()`**: Unified helper with embedded/filesystem fallback
+  - **Template Functions**: All template commands updated to use embedded migrations
+
+**Previous: v0.15.4 - NPX Easy Installation System (18 Sep 2025)**
 
 - **NPX Package Distribution**: Complete NPM package system for easy installation
   - **@mehmetsenol/gorev-mcp-server**: New NPM package enabling `npx @mehmetsenol/gorev-mcp-server@latest` usage

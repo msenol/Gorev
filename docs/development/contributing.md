@@ -1,6 +1,6 @@
 # Contributing to Gorev
 
-> **Version**: This documentation is valid for v0.15.4+
+> **Version**: This documentation is valid for v0.15.5+
 > **Last Updated**: September 18, 2025
 
 This document explains the development environment setup, code standards, and contribution processes for those who want to contribute to the Gorev project.

@@ -1,6 +1,6 @@
 # Installation Guide
 
-> **Version**: This documentation is valid for v0.15.4+
+> **Version**: This documentation is valid for v0.15.5+
 > **Last Updated**: September 18, 2025
 
 Complete installation instructions for Gorev on all platforms.

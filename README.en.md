@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 18, 2025 | **Version:** v0.15.4
+**Last Updated:** September 18, 2025 | **Version:** v0.15.5
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -281,7 +281,7 @@ make docker-build
 
 ## 📊 Project Status
 
-- **Version**: v0.15.4 🚀
+- **Version**: v0.15.5 🚀
 - **Test Coverage**: 90%+ (Major Improvement)
 - **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0

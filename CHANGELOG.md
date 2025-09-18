@@ -2,6 +2,34 @@
 
 All notable changes to Gorev will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v0.15.5] - 2025-09-18
+
+### Fixed
+- **Critical NPX Fix**: Resolved "error.dataManagerInit" issue in NPX package environments
+  - NPX package couldn't find migration files, causing database initialization failures
+  - Embedded all migration files directly into Go binary using `//go:embed`
+  - NPX package now works without GOREV_ROOT environment variable
+
+### Added
+- **Embedded Migrations Architecture**: Complete migration embedding system
+  - New `cmd/gorev/migrations_embed.go` with embedded filesystem support
+  - `YeniVeriYoneticiWithEmbeddedMigrations()` function for embedded FS support
+  - `migrateDBWithFS()` extracts embedded migrations to temporary directory
+  - `createVeriYonetici()` unified helper with embedded/filesystem fallback
+  - All template commands updated to use embedded migrations
+
+### Changed
+- **Binary Size**: Slight increase due to embedded migration files
+- **Performance**: Temporary directory extraction during first migration
+
+### Technical
+- Maintains backward compatibility with existing filesystem migrations
+- Enhanced `internal/gorev/veri_yonetici.go` with embed.FS support
+- Updated package versions: gorev-mcpserver v0.15.5, gorev-npm 0.15.5
+
 ## [v0.15.4] - 2025-09-18
 
 ### 🚀 Features

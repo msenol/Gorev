@@ -1,6 +1,6 @@
 # Kullanım Kılavuzu
 
-> **Versiyon**: Bu dokümantasyon v0.15.4 için geçerlidir.
+> **Versiyon**: Bu dokümantasyon v0.15.5 için geçerlidir.
 > **Son Güncelleme**: 18 Eylül 2025
 
 Gorev ile görev yönetiminin temelleri ve gelişmiş özellikler.
@@ -109,7 +109,7 @@ gorev template show bug
 
 ## 📋 Template Alias Referansı
 
-### Mevcut Alias'lar (v0.15.4)
+### Mevcut Alias'lar (v0.15.5)
 
 - **`bug`** → bug-report: Hata raporları ve düzeltmeler
 - **`feature`** → feature: Yeni özellik ve geliştirmeler

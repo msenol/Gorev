@@ -1,6 +1,6 @@
 # Kurulum Kılavuzu
 
-> **Versiyon**: Bu dokümantasyon v0.15.4+ için geçerlidir
+> **Versiyon**: Bu dokümantasyon v0.15.5+ için geçerlidir
 > **Son Güncelleme**: 18 Eylül 2025
 
 Gorev'in tüm platformlarda kurulumu için detaylı talimatlar.
@@ -71,7 +71,7 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 
 **Belirli versiyon için:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.15.4 bash
+curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.15.5 bash
 ```
 
 **Windows (PowerShell):**
@@ -81,7 +81,7 @@ irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 
 **Belirli versiyon için:**
 ```powershell
-$env:VERSION="v0.15.4"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+$env:VERSION="v0.15.5"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 ### ✅ Kurulumu Doğrulama
@@ -199,13 +199,13 @@ GitHub Releases sayfasından platform-specific binary'leri indirin:
 
 ```bash
 # Linux AMD64
-wget https://github.com/msenol/gorev/releases/download/v0.15.4/gorev-linux-amd64.tar.gz
+wget https://github.com/msenol/gorev/releases/download/v0.15.5/gorev-linux-amd64.tar.gz
 
 # macOS
-wget https://github.com/msenol/gorev/releases/download/v0.15.4/gorev-darwin-amd64.tar.gz
+wget https://github.com/msenol/gorev/releases/download/v0.15.5/gorev-darwin-amd64.tar.gz
 
 # Windows
-curl -L -o gorev-windows-amd64.zip https://github.com/msenol/gorev/releases/download/v0.15.4/gorev-windows-amd64.zip
+curl -L -o gorev-windows-amd64.zip https://github.com/msenol/gorev/releases/download/v0.15.5/gorev-windows-amd64.zip
 ```
 
 ### 🔧 Kaynak Koddan Derleme
