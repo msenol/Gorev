@@ -2,6 +2,50 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.6.14] - 2025-09-19
+
+### Enhanced
+
+- **Template Wizard Complete Redesign**: Professional template wizard with enhanced UI/UX
+  - **Enhanced Field Renderers**: 9 specialized field types (text, textarea, select, date, tags, email, url, number, markdown)
+  - **Real-Time Validation**: Dynamic field validation with visual feedback and error states
+  - **Marked.js Integration**: Local bundling of marked.min.js for markdown preview functionality
+  - **Professional Styling**: 300+ lines of enhanced CSS with animations, loading states, and responsive design
+  - **Favorites System**: Template favorites management using WebView localStorage
+  - **Form States**: Loading states, error handling, and validation feedback
+  - **Enhanced User Experience**: Smooth transitions, professional form styling, and comprehensive field support
+
+### Added
+
+- **Local Marked.js Bundle**: Downloaded and bundled marked.min.js (39KB) to resolve WebView security restrictions
+  - Fixed CDN loading issues in VS Code WebViews
+  - Enabled markdown preview functionality in template wizard
+  - Enhanced security by using local assets only
+
+### Fixed
+
+- **Template Wizard Functionality**: Resolved "too simple" template wizard interface
+  - Advanced field rendering with proper type support
+  - Dynamic form generation based on template field configurations
+  - Proper validation and error handling for all field types
+  - Enhanced preview functionality with markdown rendering
+
+### Technical
+
+- **4 Major Files Updated**: 1095+ lines of improvements across template wizard system
+  - `src/ui/templateWizard.ts`: Enhanced TypeScript implementation with local asset loading
+  - `media/templateWizard.js`: Complete rewrite with 9 field renderers and validation system
+  - `media/templateWizard.css`: Professional styling system with form states and animations
+  - `media/marked.min.js`: New local bundle for markdown processing
+
+## [0.6.13] - 2025-09-18
+
+### Fixed
+- **Debug Message Cleanup**: Removed all debug logging messages from production build
+  - Cleaned up extension.ts and mcp/client.ts debug code
+  - Removed network connectivity test logging
+  - Production-ready clean output
+
 ## [0.6.12] - 2025-09-18
 
 ### Changed

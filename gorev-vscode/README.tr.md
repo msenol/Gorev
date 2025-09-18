@@ -8,14 +8,14 @@
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-[![Version](https://img.shields.io/badge/Version-0.6.12-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+[![Version](https://img.shields.io/badge/Version-0.6.14-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **48 MCP aracı, sınırsız hiyerarşi ve sorunsuz AI asistan entegrasyonu ile nihai görev yönetimi güç merkezi**
 
-> 🚀 **v0.6.12'de YENİ**: Sıfır kurulum NPX desteği! Extension artık yayınlanan @mehmetsenol/gorev-mcp-server paketini kullanarak anında kurulum sağlıyor. VS Code, Cursor, Windsurf ve diğer MCP destekli editörler için mükemmel çoklu IDE desteği.
+> 🚀 **v0.6.14'te YENİ**: Profesyonel Template Sihirbazı! 9 alan tipi, gerçek zamanlı doğrulama, markdown önizleme ve gelişmiş UX ile tamamen yeniden tasarlandı. Artı sıfır kurulum NPX desteği!
 
 </div>
 

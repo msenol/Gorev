@@ -8,14 +8,14 @@
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-[![Version](https://img.shields.io/badge/Version-0.6.12-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+[![Version](https://img.shields.io/badge/Version-0.6.14-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **The ultimate task management powerhouse with 48 MCP tools, unlimited hierarchy, and seamless AI assistant integration**
 
-> 🚀 **NEW in v0.6.12**: Zero-installation NPX setup! Extension now uses the published @mehmetsenol/gorev-mcp-server package for instant setup. Perfect multi-IDE support for VS Code, Cursor, Windsurf, and other MCP-enabled editors.
+> 🚀 **NEW in v0.6.14**: Professional Template Wizard! Complete redesign with 9 field types, real-time validation, markdown preview, and enhanced UX. Plus zero-installation NPX setup for instant start!
 
 </div>
 
@@ -487,18 +487,30 @@ README.md change → Update "Documentation" task
 
 ## 🏆 Advanced Capabilities
 
+### Professional Template Wizard 🎯 NEW!
+
+**Complete redesign with professional UI/UX for enhanced task creation:**
+
+- **🎨 9 Field Types** - Text, textarea, select, date, tags, email, URL, number, markdown
+- **⚡ Real-Time Validation** - Dynamic field validation with visual feedback
+- **📝 Markdown Preview** - Live markdown rendering with local marked.js bundle
+- **💫 Professional Styling** - 300+ lines of enhanced CSS with animations
+- **⭐ Favorites System** - Save and manage favorite templates with localStorage
+- **🔄 Form States** - Loading states, error handling, and validation feedback
+- **🛡️ Security Enhanced** - Local asset bundling, no CDN dependencies
+
 ### Template System with Aliases
 
 Pre-built templates for common task types:
 
-- **🐛 Bug Report** (`bug`) - Structured bug documentation
-- **✨ Feature Request** (`feature`) - New feature specifications
-- **🔬 Research** (`research`) - Investigation and learning tasks
-- **⚡ Spike** (`spike`) - Time-boxed exploration
-- **🔒 Security** (`security`) - Security-related tasks
-- **🚀 Performance** (`performance`) - Optimization tasks
-- **🔧 Refactoring** (`refactor`) - Code improvement tasks
-- **💳 Technical Debt** (`debt`) - Code debt tracking
+- **🐛 Bug Report** (`bug`) - Structured bug documentation with required fields
+- **✨ Feature Request** (`feature`) - New feature specifications with validation
+- **🔬 Research** (`research`) - Investigation and learning tasks with time tracking
+- **⚡ Spike** (`spike`) - Time-boxed exploration with scope definition
+- **🔒 Security** (`security`) - Security-related tasks with impact assessment
+- **🚀 Performance** (`performance`) - Optimization tasks with metrics tracking
+- **🔧 Refactoring** (`refactor`) - Code improvement tasks with before/after
+- **💳 Technical Debt** (`debt`) - Code debt tracking with priority scoring
 
 ### Batch Operations
 
