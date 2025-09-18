@@ -2,6 +2,28 @@
 
 All notable changes to Gorev will be documented in this file.
 
+## [v0.15.2] - 2025-09-18
+
+### 🔧 Fixed
+- **Import/Export System Logging** - Fixed logging inconsistencies in data import/export operations
+  - Replaced `fmt.Printf` with `log.Printf` for proper log formatting
+  - Added detailed import conflict logging with task IDs and resolution strategies
+  - Enhanced error logging for failed task creation during import
+  - Fixed task-tag association and dependency creation log messages
+- **AI Interaction Error Handling** - Improved file watcher AI interaction error reporting
+  - Fixed AI interaction save error message to use proper i18n key `error.interactionSaveFailed`
+  - Enhanced error context for file change interaction recording
+- **VS Code Extension Duplicate Task Handling** - Resolved duplicate task display issues
+  - Added `removeDuplicateTasks()` method to filter duplicate tasks by ID
+  - Implemented intelligent duplicate resolution keeping most recently updated tasks
+  - Enhanced task loading with automatic duplicate filtering
+  - Added debug logging for duplicate detection and removal
+
+### 🛡️ Security & Quality
+- **Rule 15 Compliance** - All fixes maintain zero technical debt approach
+- **Logging Standardization** - Consistent logging patterns across all modules
+- **Error Message Localization** - Proper i18n integration for user-facing error messages
+
 ## [v0.15.0] - 2025-09-17
 
 ### ✨ Added

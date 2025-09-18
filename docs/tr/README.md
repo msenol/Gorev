@@ -1,6 +1,6 @@
 # 📚 Gorev Türkçe Belgelendirme
 
-**Sürüm**: v0.14.0 | **Production Hazır** | **Rule 15 Uyumlu**
+**Sürüm**: v0.15.2 | **Production Hazır** | **Rule 15 Uyumlu**
 
 <div align="center">
 
@@ -75,7 +75,7 @@ gorev serve
 
 ---
 
-## 🌟 v0.14.0'da Yenilikler
+## 🌟 v0.15.2'de Yenilikler
 
 ### 🧠 **Gelişmiş NLP İşlemci**
 - **%89 doğruluk** Türkçe ve İngilizce doğal dil anlayışında
@@ -234,7 +234,7 @@ func GorevOlusturKotu(baslik string) *Gorev {
 
 ### 🔧 **Bakım Durumu**
 
-- **Son Güncelleme**: 12 Eylül 2025
+- **Son Güncelleme**: 18 Eylül 2025
 - **Sonraki İnceleme**: 26 Eylül 2025
 - **Bakım Görevlileri**: [@msenol](https://github.com/msenol), Claude AI Asistanı
 - **Katkıda Bulunanlar**: [Tam Liste](../development/contributors.md)

@@ -2,13 +2,13 @@
 
 <div align="center">
 
-**Last Updated:** September 14, 2025 | **Version:** v0.14.2
+**Last Updated:** September 18, 2025 | **Version:** v0.15.2
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: The `gorev_olustur` tool is no longer available! Template usage is now mandatory. [Details](#breaking-change-template-requirement)
 
-![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)
+![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 ![Test Coverage](https://img.shields.io/badge/Coverage-84.6%25-brightgreen?style=flat-square)

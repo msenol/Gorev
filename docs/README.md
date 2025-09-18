@@ -1,7 +1,7 @@
 # 📚 Gorev Documentation Index
 
-**Version**: v0.14.0  
-**Last Updated**: September 13, 2025  
+**Version**: v0.15.2
+**Last Updated**: September 18, 2025  
 **Status**: Production Ready  
 
 ---
@@ -14,7 +14,7 @@
 - **[VS Code Extension](guides/user/vscode-extension.md)** - Visual interface setup
 
 ### 📖 API & Tools
-- **[MCP Tools Reference](api/MCP_TOOLS_REFERENCE.md)** - All 36 MCP tools documentation
+- **[MCP Tools Reference](api/MCP_TOOLS_REFERENCE.md)** - All 48 MCP tools documentation
 - **[API Reference](api/reference.md)** - Technical API documentation
 
 ### 🏗️ Architecture & Development

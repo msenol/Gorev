@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 18 September 2025 | **Version:** v0.15.1
+**Last Updated:** 18 September 2025 | **Version:** v0.15.2
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,30 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.1 - Critical VS Code Extension Keyboard Blocking Fix (18 Sep 2025)**
+**v0.15.2 - Bug Fixes and Stability Improvements (18 Sep 2025)**
+
+- **Import/Export System Logging Fix**: Standardized logging patterns across data import/export operations
+  - **Log Consistency**: Replaced `fmt.Printf` with `log.Printf` for proper log formatting and VS Code parsing
+  - **Enhanced Import Debugging**: Added detailed conflict resolution logging with task IDs and strategies
+  - **Error Context**: Improved error logging for failed task creation and dependency management
+  - **VS Code Compatibility**: Fixed log message parsing issues that caused VS Code warnings
+
+- **AI Interaction Error Handling**: Fixed file watcher AI interaction error reporting
+  - **i18n Integration**: Proper use of `error.interactionSaveFailed` i18n key for localized error messages
+  - **Error Context**: Enhanced error reporting for file change interaction recording failures
+
+- **VS Code Extension Duplicate Task Resolution**: Comprehensive duplicate task handling system
+  - **Duplicate Detection**: New `removeDuplicateTasks()` method filters duplicate tasks by ID
+  - **Smart Resolution**: Keeps most recently updated task when duplicates exist
+  - **Debug Logging**: Enhanced logging for duplicate detection and removal operations
+  - **Import Reliability**: Prevents duplicate task display after data import operations
+
+- **Rule 15 Compliance**: All fixes maintain zero technical debt with proper root cause analysis
+  - **No Workarounds**: Complete solutions without temporary fixes or shortcuts
+  - **Logging Standardization**: Consistent logging patterns across all modules
+  - **Quality Assurance**: Comprehensive error handling and localization integration
+
+**Previous: v0.15.1 - Critical VS Code Extension Keyboard Blocking Fix (18 Sep 2025)**
 
 - **Critical Bug Fix**: Resolved VS Code keyboard input blocking issue with comprehensive architecture solution
   - **Root Cause**: Eliminated aggressive 30-second refresh cycles causing UI thread saturation
