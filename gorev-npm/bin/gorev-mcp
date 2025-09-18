@@ -4,8 +4,8 @@
  * Gorev MCP Server Executable Entry Point
  *
  * This is the main executable that gets called when using:
- * - npx @gorev/mcp-server
- * - npm install -g @gorev/mcp-server && gorev-mcp
+ * - npx @mehmetsenol/gorev-mcp-server
+ * - npm install -g @mehmetsenol/gorev-mcp-server && gorev-mcp
  */
 
 const path = require('path');

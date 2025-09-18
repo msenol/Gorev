@@ -207,7 +207,7 @@ async function main() {
         console.log('  "mcpServers": {');
         console.log('    "gorev": {');
         console.log('      "command": "npx",');
-        console.log('      "args": ["@gorev/mcp-server"]');
+        console.log('      "args": ["@mehmetsenol/gorev-mcp-server"]');
         console.log('    }');
         console.log('  }');
         console.log('}');

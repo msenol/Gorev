@@ -96,8 +96,8 @@ function runServer() {
         console.error('');
         console.error('This usually means the Gorev binary is not properly installed.');
         console.error('Try reinstalling the package:');
-        console.error('  npm uninstall @gorev/mcp-server');
-        console.error('  npm install @gorev/mcp-server@latest');
+        console.error('  npm uninstall @mehmetsenol/gorev-mcp-server');
+        console.error('  npm install @mehmetsenol/gorev-mcp-server@latest');
         console.error('');
         console.error('If the problem persists, please report it at:');
         console.error('  https://github.com/msenol/Gorev/issues');
@@ -110,7 +110,7 @@ function showHelp() {
     console.log('Gorev MCP Server - Task Management for AI Assistants');
     console.log('');
     console.log('Usage:');
-    console.log('  npx @gorev/mcp-server [command] [options]');
+    console.log('  npx @mehmetsenol/gorev-mcp-server [command] [options]');
     console.log('');
     console.log('Commands:');
     console.log('  serve          Start MCP server (default)');
@@ -129,7 +129,7 @@ function showHelp() {
     console.log('  "mcpServers": {');
     console.log('    "gorev": {');
     console.log('      "command": "npx",');
-    console.log('      "args": ["@gorev/mcp-server@latest"],');
+    console.log('      "args": ["@mehmetsenol/gorev-mcp-server@latest"],');
     console.log('      "env": {');
     console.log('        "GOREV_LANG": "tr"');
     console.log('      }');

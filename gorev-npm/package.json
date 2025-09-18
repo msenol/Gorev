@@ -1,10 +1,10 @@
 {
-  "name": "@gorev/mcp-server",
+  "name": "@mehmetsenol/gorev-mcp-server",
   "version": "0.15.4",
   "description": "Gorev MCP Server - Task management for AI assistants via Model Context Protocol (MCP)",
   "main": "index.js",
   "bin": {
-    "gorev-mcp": "./bin/gorev-mcp"
+    "gorev-mcp": "bin/gorev-mcp"
   },
   "files": [
     "index.js",
@@ -37,7 +37,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/msenol/Gorev.git",
+    "url": "git+https://github.com/msenol/Gorev.git",
     "directory": "gorev-npm"
   },
   "homepage": "https://github.com/msenol/Gorev#readme",

@@ -1,8 +1,8 @@
-# @gorev/mcp-server
+# @mehmetsenol/gorev-mcp-server
 
-[![npm version](https://badge.fury.io/js/%40gorev%2Fmcp-server.svg)](https://badge.fury.io/js/%40gorev%2Fmcp-server)
-[![Downloads](https://img.shields.io/npm/dm/@gorev/mcp-server.svg)](https://www.npmjs.com/package/@gorev/mcp-server)
-[![License](https://img.shields.io/npm/l/@gorev/mcp-server.svg)](https://github.com/msenol/Gorev/blob/main/LICENSE)
+[![npm version](https://badge.fury.io/js/%40mehmetsenol%2Fgorev-mcp-server.svg)](https://badge.fury.io/js/%40mehmetsenol%2Fgorev-mcp-server)
+[![Downloads](https://img.shields.io/npm/dm/@mehmetsenol/gorev-mcp-server.svg)](https://www.npmjs.com/package/@mehmetsenol/gorev-mcp-server)
+[![License](https://img.shields.io/npm/l/@mehmetsenol/gorev-mcp-server.svg)](https://github.com/msenol/Gorev/blob/main/LICENSE)
 
 **Gorev MCP Server** - Modern task management system for AI assistants via Model Context Protocol (MCP)
 
@@ -15,7 +15,7 @@
 No installation required! Use directly with MCP clients:
 
 ```bash
-npx @gorev/mcp-server@latest
+npx @mehmetsenol/gorev-mcp-server@latest
 ```
 
 ### MCP Configuration
@@ -27,7 +27,7 @@ Add to your `mcp.json` configuration file:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -55,7 +55,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -73,7 +73,7 @@ Add to `.vscode/mcp.json` in your workspace:
   "servers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -109,13 +109,13 @@ Add to your Cursor MCP configuration:
 ### Method 1: npx (Recommended)
 ```bash
 # No installation needed - runs directly
-npx @gorev/mcp-server@latest --help
+npx @mehmetsenol/gorev-mcp-server@latest --help
 ```
 
 ### Method 2: Global Installation
 ```bash
 # Install globally
-npm install -g @gorev/mcp-server
+npm install -g @mehmetsenol/gorev-mcp-server
 
 # Run directly
 gorev-mcp --help
@@ -124,7 +124,7 @@ gorev-mcp --help
 ### Method 3: Local Installation
 ```bash
 # Install in project
-npm install @gorev/mcp-server
+npm install @mehmetsenol/gorev-mcp-server
 
 # Run with npx
 npx gorev-mcp serve
@@ -203,7 +203,7 @@ The server provides 48 MCP tools organized in categories:
 # Clear npm cache and reinstall
 npm cache clean --force
 npm uninstall -g @gorev/mcp-server
-npm install -g @gorev/mcp-server@latest
+npm install -g @mehmetsenol/gorev-mcp-server@latest
 ```
 
 ### Platform Not Supported
@@ -262,10 +262,10 @@ This package automatically downloads the latest Gorev binaries from GitHub relea
 
 ```bash
 # Update to latest version
-npm update -g @gorev/mcp-server
+npm update -g @mehmetsenol/gorev-mcp-server
 
 # Or use npx for always latest
-npx @gorev/mcp-server@latest
+npx @mehmetsenol/gorev-mcp-server@latest
 ```
 
 ---
