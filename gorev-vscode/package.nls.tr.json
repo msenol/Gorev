@@ -70,7 +70,10 @@
   "view.projects.contextualTitle": "Gorev Projeleri", 
   "view.templates.contextualTitle": "Görev Şablonları",
 
-  "config.serverPath": "Gorev MCP sunucu yürütülebilir dosyasının tam yolu (örn. /path/to/gorev veya C:\\\\path\\\\to\\\\gorev.exe)",
+  "config.serverMode": "Gorev MCP sunucusunu nasıl çalıştırılacağı",
+  "config.serverMode.npx": "NPX paketi kullan (önerilen - kurulum gerektirmez)",
+  "config.serverMode.binary": "Yerel binary yürütülebilir dosyası kullan",
+  "config.serverPath": "Gorev MCP sunucu yürütülebilir dosyasının tam yolu (sadece binary modu için gerekli)",
   "config.autoConnect": "Başlangıçta Gorev sunucusuna otomatik bağlan",
   "config.showStatusBar": "Durum çubuğunda Gorev durumunu göster",
   "config.refreshInterval": "Yenileme aralığı saniye cinsinden (otomatik yenilemeyi kapatmak için 0)",

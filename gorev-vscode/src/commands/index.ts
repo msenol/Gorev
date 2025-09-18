@@ -87,18 +87,26 @@ export function registerCommands(
 }
 
 async function connectToServer(mcpClient: MCPClient, providers: CommandContext): Promise<void> {
-  let serverPath = vscode.workspace.getConfiguration('gorev').get<string>('serverPath');
-  
-  if (!serverPath) {
-    throw new Error('Gorev server path not configured');
-  }
+  const config = vscode.workspace.getConfiguration('gorev');
+  const serverMode = config.get<string>('serverMode', 'npx');
+  let serverPath = config.get<string>('serverPath');
 
-  // Convert WSL path to Windows path if needed
-  if (process.platform === 'win32' && serverPath.startsWith('/mnt/')) {
-    // Convert /mnt/f/... to F:\...
-    const drive = serverPath.charAt(5).toUpperCase();
-    serverPath = drive + ':\\' + serverPath.substring(7).replace(/\//g, '\\');
-    Logger.debug(`Converted WSL path to Windows path: ${serverPath}`);
+  // Validate configuration based on server mode
+  if (serverMode === 'binary') {
+    if (!serverPath) {
+      throw new Error('Gorev server path not configured for binary mode. Please set gorev.serverPath in settings.');
+    }
+
+    // Convert WSL path to Windows path if needed
+    if (process.platform === 'win32' && serverPath.startsWith('/mnt/')) {
+      // Convert /mnt/f/... to F:\...
+      const drive = serverPath.charAt(5).toUpperCase();
+      serverPath = drive + ':\\' + serverPath.substring(7).replace(/\//g, '\\');
+      Logger.debug(`Converted WSL path to Windows path: ${serverPath}`);
+    }
+  } else {
+    // NPX mode - no server path validation needed
+    Logger.info('Using NPX mode - no server path required');
   }
 
   providers.statusBarManager.setConnecting();

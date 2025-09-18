@@ -28,12 +28,31 @@ export class MCPClient extends EventEmitter {
     super();
   }
 
-  async connect(serverPath: string): Promise<void> {
+  async connect(serverPath?: string): Promise<void> {
     if (this.connected) {
       throw new Error('Already connected to MCP server');
     }
 
-    Logger.info(`Connecting to MCP server at: ${serverPath}`);
+    // Get server mode from configuration
+    const config = vscode.workspace.getConfiguration('gorev');
+    const serverMode = config.get<string>('serverMode', 'npx');
+
+    let command: string;
+    let args: string[];
+
+    if (serverMode === 'npx') {
+      command = 'npx';
+      args = ['@gorev/mcp-server@latest', 'serve'];
+      Logger.info('Connecting to MCP server via NPX: npx @gorev/mcp-server@latest serve');
+    } else {
+      // Binary mode
+      if (!serverPath) {
+        throw new Error('Server path is required for binary mode');
+      }
+      command = serverPath;
+      args = ['serve'];
+      Logger.info(`Connecting to MCP server at: ${serverPath}`);
+    }
 
     try {
       // Set working directory to server's directory
@@ -46,7 +65,7 @@ export class MCPClient extends EventEmitter {
       const env: any = {
         ...process.env,
         // Set GOREV_ROOT to a data directory (fallback)
-        GOREV_ROOT: path.join(path.dirname(serverPath), '..', 'data')
+        GOREV_ROOT: serverMode === 'npx' ? path.join(require('os').homedir(), '.gorev') : path.join(path.dirname(serverPath || ''), '..', 'data')
       };
 
       // Determine database path based on mode and workspace
@@ -100,16 +119,19 @@ export class MCPClient extends EventEmitter {
         shell: false,
         env: env,
       };
-      const serverDir = path.dirname(serverPath);
-      if (serverDir) {
-        spawnOptions.cwd = serverDir;
-        Logger.debug(`Setting working directory to: ${serverDir}`);
+      // Set working directory for NPX or binary mode
+      if (serverMode === 'binary' && serverPath) {
+        const serverDir = path.dirname(serverPath);
+        if (serverDir) {
+          spawnOptions.cwd = serverDir;
+          Logger.debug(`Setting working directory to: ${serverDir}`);
+        }
       }
 
-      Logger.debug(`Spawning process: ${serverPath} serve`);
+      Logger.debug(`Spawning process: ${command} ${args.join(' ')}`);
       Logger.debug(`Spawn options: ${JSON.stringify(spawnOptions)}`);
-      
-      this.process = spawn(serverPath, ['serve'], spawnOptions);
+
+      this.process = spawn(command, args, spawnOptions);
       
       if (!this.process) {
         throw new Error('Failed to spawn process');

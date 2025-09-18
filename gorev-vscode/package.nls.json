@@ -70,7 +70,10 @@
   "view.projects.contextualTitle": "Gorev Projects",
   "view.templates.contextualTitle": "Task Templates",
 
-  "config.serverPath": "Full path to the Gorev MCP server executable (e.g., /path/to/gorev or C:\\\\path\\\\to\\\\gorev.exe)",
+  "config.serverMode": "How to run the Gorev MCP server",
+  "config.serverMode.npx": "Use NPX package (recommended - no installation needed)",
+  "config.serverMode.binary": "Use local binary executable",
+  "config.serverPath": "Full path to the Gorev MCP server executable (required only for binary mode)",
   "config.autoConnect": "Automatically connect to Gorev server on startup",
   "config.showStatusBar": "Show Gorev status in the status bar",
   "config.refreshInterval": "Refresh interval in seconds (0 to disable auto-refresh)",
