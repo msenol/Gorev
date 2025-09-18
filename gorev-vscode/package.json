@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -96,7 +96,9 @@
         },
         "gorev.refreshInterval": {
           "type": "number",
-          "default": 30,
+          "default": 300,
+          "minimum": 0,
+          "maximum": 3600,
           "description": "%config.refreshInterval%"
         },
         "gorev.treeView.grouping": {
@@ -329,6 +331,56 @@
           "minimum": 5000,
           "maximum": 120000,
           "description": "Server response timeout in milliseconds"
+        },
+        "gorev.refreshManager.debounceDelayLow": {
+          "type": "number",
+          "default": 2000,
+          "minimum": 500,
+          "maximum": 10000,
+          "description": "Debounce delay for low priority refreshes (ms)"
+        },
+        "gorev.refreshManager.debounceDelayNormal": {
+          "type": "number",
+          "default": 500,
+          "minimum": 100,
+          "maximum": 2000,
+          "description": "Debounce delay for normal priority refreshes (ms)"
+        },
+        "gorev.refreshManager.debounceDelayHigh": {
+          "type": "number",
+          "default": 100,
+          "minimum": 50,
+          "maximum": 500,
+          "description": "Debounce delay for high priority refreshes (ms)"
+        },
+        "gorev.refreshManager.maxBatchSize": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Maximum refresh requests to process in one batch"
+        },
+        "gorev.refreshManager.enableBatching": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable batching of refresh requests for better performance"
+        },
+        "gorev.refreshManager.enableDeduplication": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable deduplication of similar refresh requests"
+        },
+        "gorev.performance.enableMonitoring": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable performance monitoring and metrics collection"
+        },
+        "gorev.performance.maxMetricsPerOperation": {
+          "type": "number",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 1000,
+          "description": "Maximum number of metrics to keep per operation type"
         },
         "gorev.databaseMode": {
           "type": "string",
