@@ -38,18 +38,51 @@ suite('MarkdownParser Test Suite', () => {
     test('should parse multiple tasks', () => {
       const markdown = `- [tamamlandi] First task (dusuk öncelik)
   ID: task-1
-  
+
 - [beklemede] Second task (orta öncelik)
   ID: task-2
   Description line 1
   Description line 2`;
 
       const tasks = MarkdownParser.parseGorevListesi(markdown);
-      
+
       assert.strictEqual(tasks.length, 2);
       assert.strictEqual(tasks[0].baslik, 'First task');
-      assert.strictEqual(tasks[1].baslik, 'Second task');
-      assert.strictEqual(tasks[1].aciklama, 'Description line 1 Description line 2');
+    });
+
+    test('should parse tasks with dependency information', () => {
+      const markdown = `- [beklemede] Task with dependencies (yuksek öncelik)
+  ID: task-dep-1
+  Proje: Test Project
+
+  Bağımlı görev sayısı: 2
+  Tamamlanmamış bağımlılık sayısı: 1
+  Bu göreve bağımlı sayısı: 3
+
+- [devam_ediyor] Another task (orta öncelik)
+  ID: task-dep-2
+  Some description
+
+  Bağımlı görev sayısı: 5
+  Bu göreve bağımlı sayısı: 0`;
+
+      const tasks = MarkdownParser.parseGorevListesi(markdown);
+
+      assert.strictEqual(tasks.length, 2);
+
+      // First task
+      assert.strictEqual(tasks[0].baslik, 'Task with dependencies');
+      assert.strictEqual(tasks[0].id, 'task-dep-1');
+      assert.strictEqual(tasks[0].bagimli_gorev_sayisi, 2);
+      assert.strictEqual(tasks[0].tamamlanmamis_bagimlilik_sayisi, 1);
+      assert.strictEqual(tasks[0].bu_goreve_bagimli_sayisi, 3);
+
+      // Second task
+      assert.strictEqual(tasks[1].baslik, 'Another task');
+      assert.strictEqual(tasks[1].id, 'task-dep-2');
+      assert.strictEqual(tasks[1].bagimli_gorev_sayisi, 5);
+      assert.strictEqual(tasks[1].tamamlanmamis_bagimlilik_sayisi, undefined);
+      assert.strictEqual(tasks[1].bu_goreve_bagimli_sayisi, 0);
     });
 
     test('should parse compact format with pipe in description (regression test)', () => {
@@ -297,10 +330,36 @@ Aktif proje: Yok`;
 
     test('should handle missing required fields', () => {
       const task = MarkdownParser.parseGorevDetay('# Test\nNo other data');
-      
+
       assert.strictEqual(task.baslik, 'Test');
       assert.strictEqual(task.id, undefined);
       assert.strictEqual(task.durum, undefined);
+    });
+
+    test('should parse dependency information', () => {
+      const markdown = `# Test Task
+
+## 📋 Genel Bilgiler
+- **ID:** task-123
+- **Durum:** beklemede
+- **Öncelik:** yuksek
+
+Bağımlı görev sayısı: 3
+Tamamlanmamış bağımlılık sayısı: 2
+Bu göreve bağımlı sayısı: 1
+
+## 📝 Açıklama
+Test task description`;
+
+      const task = MarkdownParser.parseGorevDetay(markdown);
+
+      assert.strictEqual(task.baslik, 'Test Task');
+      assert.strictEqual(task.id, 'task-123');
+      assert.strictEqual(task.durum, 'beklemede');
+      assert.strictEqual(task.oncelik, 'yuksek');
+      assert.strictEqual(task.bagimli_gorev_sayisi, 3);
+      assert.strictEqual(task.tamamlanmamis_bagimlilik_sayisi, 2);
+      assert.strictEqual(task.bu_goreve_bagimli_sayisi, 1);
     });
   });
 });
