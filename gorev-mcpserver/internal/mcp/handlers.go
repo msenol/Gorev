@@ -318,6 +318,12 @@ func (h *Handlers) gorevHiyerarsiYazdirInternal(gorev *gorev.Gorev, gorevMap map
 		metin += fmt.Sprintf("%s  %s\n", indent, strings.Join(details, " | "))
 	}
 
+	// Bağımlılık bilgilerini ekle (MarkdownParser için)
+	bagimlilikBilgisi := h.gorevBagimlilikBilgisi(gorev, indent+"  ")
+	if bagimlilikBilgisi != "" {
+		metin += bagimlilikBilgisi
+	}
+
 	// Alt görevleri bul ve yazdır - TÜM alt görevler gösterilir
 	for _, g := range gorevMap {
 		if g.ParentID == gorev.ID {
@@ -643,6 +649,22 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		return h.toolHelpers.ErrorFormatter.FormatNotFoundError("görev", id), nil
 	}
 
+	// Bağımlılık sayılarını hesapla (VS Code extension için gerekli)
+	bagimliSayilari, _ := h.isYonetici.VeriYonetici().BulkBagimlilikSayilariGetir([]string{id})
+	if count, exists := bagimliSayilari[id]; exists {
+		gorev.BagimliGorevSayisi = count
+	}
+
+	tamamlanmamisSayilari, _ := h.isYonetici.VeriYonetici().BulkTamamlanmamiaBagimlilikSayilariGetir([]string{id})
+	if count, exists := tamamlanmamisSayilari[id]; exists {
+		gorev.TamamlanmamisBagimlilikSayisi = count
+	}
+
+	buGoreveBagimliSayilari, _ := h.isYonetici.VeriYonetici().BulkBuGoreveBagimliSayilariGetir([]string{id})
+	if count, exists := buGoreveBagimliSayilari[id]; exists {
+		gorev.BuGoreveBagimliSayisi = count
+	}
+
 	// Auto-state management: Record task view and potentially transition state
 	if err := h.aiContextYonetici.RecordTaskView(id); err != nil {
 		// Log but don't fail the request
@@ -687,6 +709,12 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 			etiketIsimleri = append(etiketIsimleri, e.Isim)
 		}
 		metin += "\n" + i18n.TListItem("etiketler", strings.Join(etiketIsimleri, ", "))
+	}
+
+	// Bağımlılık sayı bilgilerini ekle (MarkdownParser için gerekli)
+	bagimlilikBilgisi := h.gorevBagimlilikBilgisi(gorev, "")
+	if bagimlilikBilgisi != "" {
+		metin += "\n" + bagimlilikBilgisi
 	}
 
 	metin += "\n\n## 📝 Açıklama\n"
