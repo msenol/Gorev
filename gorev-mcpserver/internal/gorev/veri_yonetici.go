@@ -234,9 +234,9 @@ func (vy *VeriYonetici) GetDB() (*sql.DB, error) {
 // ProjeOlustur creates a new project with minimal data for testing
 func (vy *VeriYonetici) ProjeOlustur(isim, aciklama string, etiketler ...string) (*Proje, error) {
 	proje := &Proje{
-		ID:         fmt.Sprintf("proj_%d", time.Now().UnixNano()),
-		Isim:       isim,
-		Tanim:      aciklama,
+		ID:             fmt.Sprintf("proj_%d", time.Now().UnixNano()),
+		Isim:           isim,
+		Tanim:          aciklama,
 		OlusturmaTarih: time.Now(),
 	}
 
@@ -251,13 +251,13 @@ func (vy *VeriYonetici) ProjeOlustur(isim, aciklama string, etiketler ...string)
 // GorevOlusturBasit creates a task with individual parameters for testing
 func (vy *VeriYonetici) GorevOlusturBasit(baslik, aciklama, projeID, oncelik, sonTarih, parentID, etiketler string) (*Gorev, error) {
 	gorev := &Gorev{
-		ID:             fmt.Sprintf("task_%d", time.Now().UnixNano()),
-		Baslik:         baslik,
-		Aciklama:       aciklama,
-		Durum:          "beklemede",
-		Oncelik:        oncelik,
-		ProjeID:        projeID,
-		OlusturmaTarih: time.Now(),
+		ID:              fmt.Sprintf("task_%d", time.Now().UnixNano()),
+		Baslik:          baslik,
+		Aciklama:        aciklama,
+		Durum:           "beklemede",
+		Oncelik:         oncelik,
+		ProjeID:         projeID,
+		OlusturmaTarih:  time.Now(),
 		GuncellemeTarih: time.Now(),
 	}
 

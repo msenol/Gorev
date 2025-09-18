@@ -12,16 +12,16 @@ import (
 
 // SearchFilters represents search filter criteria
 type SearchFilters struct {
-	Status       []string `json:"status,omitempty"`
-	Priority     []string `json:"priority,omitempty"`
-	ProjectIDs   []string `json:"project_ids,omitempty"`
-	Tags         []string `json:"tags,omitempty"`
-	EnableFuzzy  bool     `json:"enable_fuzzy,omitempty"`
-	FuzzyThreshold int    `json:"fuzzy_threshold,omitempty"`
-	CreatedAfter  string  `json:"created_after,omitempty"`
-	CreatedBefore string  `json:"created_before,omitempty"`
-	DueAfter     string   `json:"due_after,omitempty"`
-	DueBefore    string   `json:"due_before,omitempty"`
+	Status         []string `json:"status,omitempty"`
+	Priority       []string `json:"priority,omitempty"`
+	ProjectIDs     []string `json:"project_ids,omitempty"`
+	Tags           []string `json:"tags,omitempty"`
+	EnableFuzzy    bool     `json:"enable_fuzzy,omitempty"`
+	FuzzyThreshold int      `json:"fuzzy_threshold,omitempty"`
+	CreatedAfter   string   `json:"created_after,omitempty"`
+	CreatedBefore  string   `json:"created_before,omitempty"`
+	DueAfter       string   `json:"due_after,omitempty"`
+	DueBefore      string   `json:"due_before,omitempty"`
 }
 
 // FilterProfile represents a saved filter configuration

@@ -84,7 +84,6 @@ func (se *SearchEngine) Initialize() error {
 	return nil
 }
 
-
 // PerformSearch performs a search with the given query and filters
 func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*SearchResponse, error) {
 	startTime := time.Now()
@@ -236,7 +235,7 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 		Results:     results,
 		TotalCount:  len(tasks),
 		QueryTime:   queryTime,
-		UsedFuzzy:   false, // For now, fuzzy search not implemented
+		UsedFuzzy:   false,      // For now, fuzzy search not implemented
 		Suggestions: []string{}, // For now, no suggestions
 	}
 
