@@ -238,7 +238,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "Publishing @gorev/mcp-server to NPM..."
+          echo "Publishing @mehmetsenol/gorev-mcp-server to NPM..."
           npm publish --access public
 
       - name: 📋 Create GitHub Release
@@ -257,7 +257,7 @@ jobs:
             You can now install and use Gorev MCP Server with a simple npx command:
 
             ```bash
-            npx @gorev/mcp-server@latest
+            npx @mehmetsenol/gorev-mcp-server@latest
             ```
 
             ### 🔧 MCP Configuration
@@ -269,7 +269,7 @@ jobs:
               "mcpServers": {
                 "gorev": {
                   "command": "npx",
-                  "args": ["@gorev/mcp-server@latest"],
+                  "args": ["@mehmetsenol/gorev-mcp-server@latest"],
                   "env": {
                     "GOREV_LANG": "tr"
                   }

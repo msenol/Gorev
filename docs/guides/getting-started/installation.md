@@ -22,7 +22,7 @@ Complete installation instructions for Gorev on all platforms.
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "en"
       }

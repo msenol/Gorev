@@ -42,8 +42,8 @@ export class MCPClient extends EventEmitter {
 
     if (serverMode === 'npx') {
       command = 'npx';
-      args = ['@gorev/mcp-server@latest', 'serve'];
-      Logger.info('Connecting to MCP server via NPX: npx @gorev/mcp-server@latest serve');
+      args = ['@mehmetsenol/gorev-mcp-server@latest', 'serve'];
+      Logger.info('Connecting to MCP server via NPX: npx @mehmetsenol/gorev-mcp-server@latest serve');
     } else {
       // Binary mode
       if (!serverPath) {

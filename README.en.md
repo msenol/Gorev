@@ -86,7 +86,7 @@ For MCP clients, simply add to your `mcp.json` configuration:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -104,7 +104,7 @@ For MCP clients, simply add to your `mcp.json` configuration:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -120,7 +120,7 @@ For MCP clients, simply add to your `mcp.json` configuration:
   "servers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"]
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
     }
   }
 }
@@ -132,7 +132,7 @@ For MCP clients, simply add to your `mcp.json` configuration:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"]
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
     }
   }
 }

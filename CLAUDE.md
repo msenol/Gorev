@@ -13,10 +13,10 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 **v0.15.4 - NPX Easy Installation System (18 Sep 2025)**
 
 - **NPX Package Distribution**: Complete NPM package system for easy installation
-  - **@gorev/mcp-server**: New NPM package enabling `npx @gorev/mcp-server@latest` usage
+  - **@mehmetsenol/gorev-mcp-server**: New NPM package enabling `npx @mehmetsenol/gorev-mcp-server@latest` usage
   - **Cross-platform Support**: Automatic binary download for Windows, macOS, Linux (amd64/arm64)
   - **Zero Installation**: Users can run Gorev without manual binary installation
-  - **MCP Configuration**: Simple addition to `mcp.json` with `"command": "npx", "args": ["@gorev/mcp-server@latest"]`
+  - **MCP Configuration**: Simple addition to `mcp.json` with `"command": "npx", "args": ["@mehmetsenol/gorev-mcp-server@latest"]`
   - **GitHub Actions**: Automated NPM publishing pipeline with multi-platform binary builds
   - **User Experience**: Eliminates complex installation steps, especially for Windows users
 

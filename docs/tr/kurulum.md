@@ -22,7 +22,7 @@ MCP istemcileri için `mcp.json` konfigürasyonunuza basitçe ekleyin:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -40,7 +40,7 @@ MCP istemcileri için `mcp.json` konfigürasyonunuza basitçe ekleyin:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -108,7 +108,7 @@ Claude Desktop konfigürasyon dosyanıza şu ayarları ekleyin:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -167,7 +167,7 @@ Windsurf ayarlarınıza MCP sunucu konfigürasyonu ekleyin:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }

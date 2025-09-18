@@ -6,10 +6,10 @@ All notable changes to Gorev will be documented in this file.
 
 ### 🚀 Features
 - **NPX Easy Installation System** - Complete NPM package distribution for effortless setup
-  - **@gorev/mcp-server Package**: New NPM package enabling `npx @gorev/mcp-server@latest` usage
+  - **@mehmetsenol/gorev-mcp-server Package**: New NPM package enabling `npx @mehmetsenol/gorev-mcp-server@latest` usage
   - **Cross-Platform Binary Support**: Automatic binary download for Windows, macOS, Linux (amd64/arm64)
   - **Zero Installation Setup**: Users can run Gorev without manual binary installation steps
-  - **Simple MCP Configuration**: Easy addition to `mcp.json` with `"command": "npx", "args": ["@gorev/mcp-server@latest"]`
+  - **Simple MCP Configuration**: Easy addition to `mcp.json` with `"command": "npx", "args": ["@mehmetsenol/gorev-mcp-server@latest"]`
   - **GitHub Actions Pipeline**: Automated NPM publishing with multi-platform binary builds
   - **Platform Detection**: Intelligent platform and architecture detection for correct binary selection
   - **Fallback Mechanisms**: Robust error handling and fallback to latest releases
@@ -44,7 +44,7 @@ All notable changes to Gorev will be documented in this file.
 ### 🎯 User Experience
 - **Windows Users**: Eliminates complex installation steps and PATH configuration
 - **MCP Clients**: Universal compatibility with single configuration format
-- **Developers**: Easy testing with `npx @gorev/mcp-server@latest --help`
+- **Developers**: Easy testing with `npx @mehmetsenol/gorev-mcp-server@latest --help`
 - **CI/CD**: Simple integration without binary management complexity
 
 ## [v0.15.3] - 2025-09-18

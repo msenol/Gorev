@@ -101,7 +101,7 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -119,7 +119,7 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"],
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -135,7 +135,7 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
   "servers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"]
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
     }
   }
 }
