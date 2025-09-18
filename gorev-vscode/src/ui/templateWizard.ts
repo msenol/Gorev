@@ -272,14 +272,14 @@ export class TemplateWizard {
     }
 
     private getFavorites(): string[] {
-        // For now, return empty array. In real implementation,
-        // we would need to pass the extension context to this class
+        // Favorites are now managed in the webview using localStorage
+        // No need to implement here since the webview handles it
         return [];
     }
 
     private async saveFavorites(favorites: string[]): Promise<void> {
-        // For now, do nothing. In real implementation,
-        // we would need to pass the extension context to this class
+        // Favorites are now managed in the webview using localStorage
+        // No need to implement here since the webview handles it
     }
 
     private getHtmlContent(): string {
@@ -288,6 +288,9 @@ export class TemplateWizard {
         );
         const styleUri = this.panel.webview.asWebviewUri(
             vscode.Uri.joinPath(this.extensionUri, 'media', 'templateWizard.css')
+        );
+        const markedUri = this.panel.webview.asWebviewUri(
+            vscode.Uri.joinPath(this.extensionUri, 'media', 'marked.min.js')
         );
 
         return `<!DOCTYPE html>
@@ -355,6 +358,7 @@ export class TemplateWizard {
                 </div>
             </div>
 
+            <script src="${markedUri}"></script>
             <script src="${scriptUri}"></script>
         </body>
         </html>`;

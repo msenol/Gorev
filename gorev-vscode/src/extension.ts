@@ -28,13 +28,7 @@ let debouncedConfigHandler: ReturnType<typeof debounceConfig>;
 export async function activate(extensionContext: vscode.ExtensionContext) {
   context = extensionContext;
 
-  // Set debug logging FIRST
-  Logger.setLogLevel(LogLevel.Debug);
-
-  Logger.debug('[GOREV-L10N] 1. Extension activating at:', new Date().toISOString());
-
   // Initialize L10n system first
-  Logger.debug('[GOREV-L10N] 2. About to initialize L10n system');
   await initializeL10n(context);
 
   Logger.info('Extension starting...');

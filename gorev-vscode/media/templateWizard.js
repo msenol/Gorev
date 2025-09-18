@@ -94,26 +94,62 @@
         // Update active tab
         elements.categoryTabs.forEach(tab => tab.classList.remove('active'));
         event.target.classList.add('active');
-        
+
         const category = event.target.dataset.category;
-        
+
         if (category === 'favorites') {
-            vscode.postMessage({ command: 'loadFavorites' });
+            loadFavoriteTemplates();
         } else {
             loadTemplatesByCategory(category);
         }
     }
+
+    function loadFavoriteTemplates() {
+        // Show loading state
+        showLoadingState(elements.templateGrid, 'Favori şablonlar yükleniyor...');
+
+        // Get all templates first, then filter favorites
+        vscode.postMessage({ command: 'loadTemplates' });
+    }
     
     function loadTemplatesByCategory(category) {
-        vscode.postMessage({ 
-            command: 'loadTemplates', 
-            category: category || undefined 
+        // Show loading state
+        showLoadingState(elements.templateGrid, 'Şablonlar yükleniyor...');
+
+        vscode.postMessage({
+            command: 'loadTemplates',
+            category: category || undefined
         });
+    }
+
+    function showLoadingState(container, message = 'Yükleniyor...') {
+        container.innerHTML = `
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <div class="loading-message">${message}</div>
+            </div>
+        `;
+        container.classList.add('loading');
+    }
+
+    function showErrorState(container, message, retry = null) {
+        container.innerHTML = `
+            <div class="error-state">
+                <div class="error-icon">⚠️</div>
+                <div class="error-message">${message}</div>
+                ${retry ? `<button class="retry-btn" onclick="${retry}">Tekrar Dene</button>` : ''}
+            </div>
+        `;
+        container.classList.remove('loading');
+        container.classList.add('error');
     }
     
     function renderTemplates(templateList) {
         templates = templateList;
-        
+
+        // Remove loading state
+        elements.templateGrid.classList.remove('loading');
+
         if (templates.length === 0) {
             elements.templateGrid.innerHTML = `
                 <div class="empty-state">
@@ -165,99 +201,471 @@
         };
         return icons[category] || '📋';
     }
-    
+
+    // Enhanced field renderers
+    function renderTextField(field, fieldId, required, value) {
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <input type="text" id="${fieldId}" name="${field.isim}"
+                       class="form-input enhanced-input" value="${escapeHtml(value)}" ${required}
+                       placeholder="${field.placeholder || ''}"
+                       autocomplete="off">
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Bu alan zorunludur</div>
+                <div class="validation-feedback"></div>
+            </div>
+        `;
+    }
+
+    function renderTextareaField(field, fieldId, required, value) {
+        const isLarge = field.buyuk || field.isim.toLowerCase().includes('aciklama');
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <textarea id="${fieldId}" name="${field.isim}"
+                          class="form-textarea enhanced-textarea ${isLarge ? 'large' : ''}" ${required}
+                          placeholder="${field.placeholder || 'Detayları buraya yazın...'}"
+                          rows="${isLarge ? 8 : 4}">${escapeHtml(value)}</textarea>
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Bu alan zorunludur</div>
+                <div class="character-count"><span class="count">0</span> karakter</div>
+            </div>
+        `;
+    }
+
+    function renderSelectField(field, fieldId, required, value) {
+        const options = field.secenekler || ['dusuk', 'orta', 'yuksek'];
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <div class="select-wrapper">
+                    <select id="${fieldId}" name="${field.isim}"
+                            class="form-select enhanced-select" ${required}>
+                        <option value="">Seçim yapın...</option>
+                        ${options.map(opt =>
+                            `<option value="${escapeHtml(opt)}" ${value === opt ? 'selected' : ''}>${opt}</option>`
+                        ).join('')}
+                    </select>
+                    <div class="select-arrow">▼</div>
+                </div>
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Bu alan zorunludur</div>
+            </div>
+        `;
+    }
+
+    function renderDateField(field, fieldId, required, value) {
+        const today = new Date().toISOString().split('T')[0];
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <div class="date-input-wrapper">
+                    <input type="date" id="${fieldId}" name="${field.isim}"
+                           class="form-input date-input" value="${value}" ${required}
+                           min="${today}">
+                    <div class="date-shortcuts">
+                        <button type="button" class="date-shortcut" data-days="1">Yarın</button>
+                        <button type="button" class="date-shortcut" data-days="7">1 Hafta</button>
+                        <button type="button" class="date-shortcut" data-days="30">1 Ay</button>
+                    </div>
+                </div>
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Bu alan zorunludur</div>
+            </div>
+        `;
+    }
+
+    function renderTagsField(field, fieldId, required, value) {
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <div class="tag-input-container enhanced-tags" id="${fieldId}-container">
+                    <input type="text" id="${fieldId}" class="tag-input"
+                           placeholder="Etiket ekle ve Enter'a bas...">
+                </div>
+                <input type="hidden" name="${field.isim}" value="${escapeHtml(value)}">
+                <div class="tag-suggestions">
+                    <div class="common-tags">
+                        <span class="tag-suggestion" data-tag="bug">bug</span>
+                        <span class="tag-suggestion" data-tag="feature">feature</span>
+                        <span class="tag-suggestion" data-tag="urgent">urgent</span>
+                        <span class="tag-suggestion" data-tag="documentation">documentation</span>
+                    </div>
+                </div>
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Bu alan zorunludur</div>
+            </div>
+        `;
+    }
+
+    function renderEmailField(field, fieldId, required, value) {
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <input type="email" id="${fieldId}" name="${field.isim}"
+                       class="form-input enhanced-input" value="${escapeHtml(value)}" ${required}
+                       placeholder="ornek@email.com">
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Geçerli bir email adresi girin</div>
+                <div class="validation-feedback"></div>
+            </div>
+        `;
+    }
+
+    function renderUrlField(field, fieldId, required, value) {
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <input type="url" id="${fieldId}" name="${field.isim}"
+                       class="form-input enhanced-input" value="${escapeHtml(value)}" ${required}
+                       placeholder="https://example.com">
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Geçerli bir URL girin</div>
+                <div class="validation-feedback"></div>
+            </div>
+        `;
+    }
+
+    function renderNumberField(field, fieldId, required, value) {
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <input type="number" id="${fieldId}" name="${field.isim}"
+                       class="form-input enhanced-input" value="${value}" ${required}
+                       min="${field.min || 0}" max="${field.max || ''}"
+                       step="${field.step || 1}">
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Geçerli bir sayı girin</div>
+                <div class="validation-feedback"></div>
+            </div>
+        `;
+    }
+
+    function renderMarkdownField(field, fieldId, required, value) {
+        return `
+            <div class="form-group">
+                <label class="form-label ${required}" for="${fieldId}">
+                    ${field.isim}
+                    ${field.zorunlu ? '<span class="required-indicator">*</span>' : ''}
+                </label>
+                <div class="markdown-editor">
+                    <div class="markdown-toolbar">
+                        <button type="button" class="md-btn" data-action="bold" title="Kalın"><b>B</b></button>
+                        <button type="button" class="md-btn" data-action="italic" title="İtalik"><i>I</i></button>
+                        <button type="button" class="md-btn" data-action="link" title="Link">🔗</button>
+                        <button type="button" class="md-btn" data-action="list" title="Liste">📝</button>
+                        <div class="md-divider"></div>
+                        <button type="button" class="md-btn preview-toggle" data-target="${fieldId}">👁 Önizleme</button>
+                    </div>
+                    <textarea id="${fieldId}" name="${field.isim}"
+                              class="form-textarea markdown-textarea" ${required}
+                              placeholder="Markdown formatında yazın..."
+                              rows="8">${escapeHtml(value)}</textarea>
+                    <div class="markdown-preview" id="${fieldId}-preview" style="display: none;"></div>
+                </div>
+                ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
+                <div class="form-error">Bu alan zorunludur</div>
+            </div>
+        `;
+    }
+
+    // Utility function for HTML escaping
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // Form handling
     function renderForm(template) {
         selectedTemplate = template;
-        
+
         // Update header
         elements.templateName.textContent = template.isim;
         elements.templateDescription.textContent = template.tanim || '';
-        
-        // Build form fields
+
+        // Build form fields with enhanced rendering
         const fieldsHtml = template.alanlar.map(field => {
             const fieldId = `field-${field.isim}`;
             const required = field.zorunlu ? 'required' : '';
             const value = formValues[field.isim] || field.varsayilan || '';
-            
+
             switch (field.tur) {
                 case 'text':
-                    return `
-                        <div class="form-group">
-                            <label class="form-label ${required}" for="${fieldId}">${field.isim}</label>
-                            <input type="text" id="${fieldId}" name="${field.isim}" 
-                                   class="form-input" value="${value}" ${required}>
-                            ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
-                            <div class="form-error">Bu alan zorunludur</div>
-                        </div>
-                    `;
-                    
+                    return renderTextField(field, fieldId, required, value);
+
                 case 'textarea':
-                    return `
-                        <div class="form-group">
-                            <label class="form-label ${required}" for="${fieldId}">${field.isim}</label>
-                            <textarea id="${fieldId}" name="${field.isim}" 
-                                      class="form-textarea" ${required}>${value}</textarea>
-                            ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
-                            <div class="form-error">Bu alan zorunludur</div>
-                        </div>
-                    `;
-                    
+                    return renderTextareaField(field, fieldId, required, value);
+
                 case 'select':
-                    const options = field.secenekler || ['dusuk', 'orta', 'yuksek'];
-                    return `
-                        <div class="form-group">
-                            <label class="form-label ${required}" for="${fieldId}">${field.isim}</label>
-                            <select id="${fieldId}" name="${field.isim}" 
-                                    class="form-select" ${required}>
-                                ${options.map(opt => 
-                                    `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`
-                                ).join('')}
-                            </select>
-                            ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
-                            <div class="form-error">Bu alan zorunludur</div>
-                        </div>
-                    `;
-                    
+                    return renderSelectField(field, fieldId, required, value);
+
                 case 'date':
-                    return `
-                        <div class="form-group">
-                            <label class="form-label ${required}" for="${fieldId}">${field.isim}</label>
-                            <input type="date" id="${fieldId}" name="${field.isim}" 
-                                   class="form-input" value="${value}" ${required}>
-                            ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
-                            <div class="form-error">Bu alan zorunludur</div>
-                        </div>
-                    `;
-                    
+                    return renderDateField(field, fieldId, required, value);
+
                 case 'tags':
-                    return `
-                        <div class="form-group">
-                            <label class="form-label ${required}" for="${fieldId}">${field.isim}</label>
-                            <div class="tag-input-container" id="${fieldId}-container">
-                                <input type="text" id="${fieldId}" class="tag-input" 
-                                       placeholder="Etiket ekle ve Enter'a bas...">
-                            </div>
-                            <input type="hidden" name="${field.isim}" value="${value}">
-                            ${field.aciklama ? `<div class="form-help">${field.aciklama}</div>` : ''}
-                            <div class="form-error">Bu alan zorunludur</div>
-                        </div>
-                    `;
-                    
+                    return renderTagsField(field, fieldId, required, value);
+
+                case 'email':
+                    return renderEmailField(field, fieldId, required, value);
+
+                case 'url':
+                    return renderUrlField(field, fieldId, required, value);
+
+                case 'number':
+                    return renderNumberField(field, fieldId, required, value);
+
+                case 'markdown':
+                    return renderMarkdownField(field, fieldId, required, value);
+
                 default:
-                    return '';
+                    return renderTextField(field, fieldId, required, value);
             }
         }).join('');
         
         elements.formFields.innerHTML = fieldsHtml;
         
+        // Initialize enhanced form features
+        initializeEnhancedForm();
+
+        // Show form step
+        showStep('form-fields');
+    }
+
+    function initializeEnhancedForm() {
         // Initialize tag inputs
         document.querySelectorAll('.tag-input').forEach(input => {
             initializeTagInput(input);
         });
-        
-        // Show form step
-        showStep('form-fields');
+
+        // Initialize character counters
+        document.querySelectorAll('.enhanced-textarea').forEach(textarea => {
+            initializeCharacterCounter(textarea);
+        });
+
+        // Initialize date shortcuts
+        document.querySelectorAll('.date-shortcut').forEach(btn => {
+            btn.addEventListener('click', handleDateShortcut);
+        });
+
+        // Initialize tag suggestions
+        document.querySelectorAll('.tag-suggestion').forEach(suggestion => {
+            suggestion.addEventListener('click', handleTagSuggestion);
+        });
+
+        // Initialize markdown editors
+        document.querySelectorAll('.markdown-editor').forEach(editor => {
+            initializeMarkdownEditor(editor);
+        });
+
+        // Initialize real-time validation
+        document.querySelectorAll('.enhanced-input, .enhanced-textarea, .enhanced-select').forEach(field => {
+            field.addEventListener('input', handleRealtimeValidation);
+            field.addEventListener('blur', handleFieldBlur);
+        });
+    }
+
+    function initializeCharacterCounter(textarea) {
+        const counter = textarea.parentElement.querySelector('.character-count .count');
+        if (counter) {
+            const updateCounter = () => {
+                counter.textContent = textarea.value.length;
+            };
+            textarea.addEventListener('input', updateCounter);
+            updateCounter();
+        }
+    }
+
+    function handleDateShortcut(event) {
+        const days = parseInt(event.target.dataset.days);
+        const dateInput = event.target.closest('.date-input-wrapper').querySelector('.date-input');
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + days);
+        dateInput.value = futureDate.toISOString().split('T')[0];
+
+        // Trigger validation
+        dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function handleTagSuggestion(event) {
+        const tag = event.target.dataset.tag;
+        const container = event.target.closest('.form-group').querySelector('.tag-input-container');
+        const tagInput = container.querySelector('.tag-input');
+
+        addTag(container, tag);
+        updateTagsInput(container);
+
+        // Remove suggestion after use
+        event.target.style.opacity = '0.5';
+        event.target.style.pointerEvents = 'none';
+    }
+
+    function initializeMarkdownEditor(editor) {
+        const toolbar = editor.querySelector('.markdown-toolbar');
+        const textarea = editor.querySelector('.markdown-textarea');
+        const preview = editor.querySelector('.markdown-preview');
+
+        // Toolbar actions
+        toolbar.addEventListener('click', (event) => {
+            const action = event.target.dataset.action;
+            if (action) {
+                handleMarkdownAction(textarea, action);
+            }
+        });
+
+        // Preview toggle
+        const previewToggle = toolbar.querySelector('.preview-toggle');
+        if (previewToggle) {
+            previewToggle.addEventListener('click', () => {
+                if (preview.style.display === 'none') {
+                    // Show preview
+                    if (typeof marked !== 'undefined') {
+                        preview.innerHTML = marked.parse(textarea.value);
+                    } else {
+                        preview.innerHTML = '<p>Markdown önizlemesi yüklenemedi</p>';
+                    }
+                    preview.style.display = 'block';
+                    textarea.style.display = 'none';
+                    previewToggle.textContent = '✏️ Düzenle';
+                } else {
+                    // Show editor
+                    preview.style.display = 'none';
+                    textarea.style.display = 'block';
+                    previewToggle.textContent = '👁 Önizleme';
+                }
+            });
+        }
+    }
+
+    function handleMarkdownAction(textarea, action) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
+        let replacement = '';
+
+        switch (action) {
+            case 'bold':
+                replacement = `**${selectedText || 'kalın metin'}**`;
+                break;
+            case 'italic':
+                replacement = `*${selectedText || 'italik metin'}*`;
+                break;
+            case 'link':
+                replacement = `[${selectedText || 'link metni'}](https://example.com)`;
+                break;
+            case 'list':
+                replacement = selectedText
+                    ? selectedText.split('\n').map(line => `- ${line}`).join('\n')
+                    : '- Liste öğesi';
+                break;
+        }
+
+        if (replacement) {
+            textarea.setRangeText(replacement, start, end, 'end');
+            textarea.focus();
+        }
+    }
+
+    function handleRealtimeValidation(event) {
+        const field = event.target;
+        const formGroup = field.closest('.form-group');
+        const errorElement = formGroup.querySelector('.form-error');
+        const feedbackElement = formGroup.querySelector('.validation-feedback');
+
+        // Clear previous validation state
+        formGroup.classList.remove('error', 'success');
+        if (feedbackElement) feedbackElement.textContent = '';
+
+        // Validate based on field type
+        const isValid = validateField(field);
+
+        if (field.hasAttribute('required') && !field.value.trim()) {
+            // Required field is empty - don't show error yet if user is still typing
+            return;
+        }
+
+        if (field.value.trim() && !isValid) {
+            formGroup.classList.add('error');
+            if (feedbackElement) {
+                feedbackElement.textContent = getValidationMessage(field);
+            }
+        } else if (field.value.trim() && isValid) {
+            formGroup.classList.add('success');
+            if (feedbackElement) {
+                feedbackElement.textContent = '✓';
+            }
+        }
+    }
+
+    function handleFieldBlur(event) {
+        const field = event.target;
+        const formGroup = field.closest('.form-group');
+
+        // Show required field error on blur if empty
+        if (field.hasAttribute('required') && !field.value.trim()) {
+            formGroup.classList.add('error');
+        }
+    }
+
+    function validateField(field) {
+        const value = field.value.trim();
+
+        switch (field.type) {
+            case 'email':
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            case 'url':
+                try {
+                    new URL(value);
+                    return true;
+                } catch {
+                    return false;
+                }
+            case 'number':
+                const num = parseFloat(value);
+                const min = field.min ? parseFloat(field.min) : -Infinity;
+                const max = field.max ? parseFloat(field.max) : Infinity;
+                return !isNaN(num) && num >= min && num <= max;
+            default:
+                return true;
+        }
+    }
+
+    function getValidationMessage(field) {
+        switch (field.type) {
+            case 'email':
+                return 'Geçerli bir email adresi girin';
+            case 'url':
+                return 'Geçerli bir URL girin (http:// veya https:// ile başlamalı)';
+            case 'number':
+                return 'Geçerli bir sayı girin';
+            default:
+                return 'Bu alan geçerli değil';
+        }
     }
     
     function initializeTagInput(input) {
@@ -340,30 +748,134 @@
     
     function handlePreview() {
         if (!validateForm()) {
+            showFormValidationErrors();
             return;
         }
-        
+
         formValues = collectFormValues();
+
+        // Show loading state on preview
+        showLoadingState(elements.taskPreview, 'Önizleme hazırlanıyor...');
+        showStep('preview');
+
         vscode.postMessage({ command: 'previewTask', values: formValues });
     }
-    
+
     function handleCreate() {
         if (!validateForm()) {
+            showFormValidationErrors();
             return;
         }
-        
+
         formValues = collectFormValues();
+
+        // Disable create button and show loading
+        const createBtn = document.getElementById('btn-create') || document.getElementById('btn-confirm-create');
+        if (createBtn) {
+            createBtn.disabled = true;
+            createBtn.innerHTML = '⏳ Oluşturuluyor...';
+        }
+
         vscode.postMessage({ command: 'createTask', values: formValues });
+    }
+
+    function showFormValidationErrors() {
+        // Highlight all invalid fields and scroll to first error
+        const form = document.getElementById('template-form');
+        const firstError = form.querySelector('.form-group.error input, .form-group.error textarea, .form-group.error select');
+
+        if (firstError) {
+            firstError.focus();
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Show a notification
+        showNotification('Lütfen tüm gerekli alanları doldurun', 'error');
+    }
+
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️'}</span>
+                <span class="notification-message">${message}</span>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+
+        // Add to page
+        document.body.appendChild(notification);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
     }
     
     // Favorites handling
     function toggleFavorite(templateId, event) {
         event.stopPropagation();
-        vscode.postMessage({ command: 'saveAsFavorite', templateId });
+
+        const favoriteBtn = event.target;
+        const wasFavorite = isFavorite(templateId);
+
+        if (wasFavorite) {
+            removeFromFavorites(templateId);
+            favoriteBtn.classList.remove('active');
+            favoriteBtn.textContent = '☆';
+        } else {
+            addToFavorites(templateId);
+            favoriteBtn.classList.add('active');
+            favoriteBtn.textContent = '⭐';
+        }
     }
     
     function isFavorite(templateId) {
-        // This would be managed by the extension
+        const favorites = getFavorites();
+        return favorites.includes(templateId);
+    }
+
+    function getFavorites() {
+        try {
+            const stored = localStorage.getItem('gorev-template-favorites');
+            return stored ? JSON.parse(stored) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function saveFavorites(favorites) {
+        try {
+            localStorage.setItem('gorev-template-favorites', JSON.stringify(favorites));
+        } catch (error) {
+            console.error('Failed to save favorites:', error);
+        }
+    }
+
+    function addToFavorites(templateId) {
+        const favorites = getFavorites();
+        if (!favorites.includes(templateId)) {
+            favorites.push(templateId);
+            saveFavorites(favorites);
+            showNotification('Şablon favorilere eklendi', 'success');
+            return true;
+        }
+        return false;
+    }
+
+    function removeFromFavorites(templateId) {
+        const favorites = getFavorites();
+        const index = favorites.indexOf(templateId);
+        if (index > -1) {
+            favorites.splice(index, 1);
+            saveFavorites(favorites);
+            showNotification('Şablon favorilerden çıkarıldı', 'info');
+            return true;
+        }
         return false;
     }
     
@@ -373,7 +885,19 @@
         
         switch (message.command) {
             case 'templatesLoaded':
+                // Check if we need to filter for favorites
+                const activeTab = document.querySelector('.category-tab.active');
+                if (activeTab && activeTab.dataset.category === 'favorites') {
+                    const favoriteIds = getFavorites();
+                    const favoriteTemplates = message.templates.filter(t => favoriteIds.includes(t.id));
+                    renderTemplates(favoriteTemplates);
+                } else {
+                    renderTemplates(message.templates);
+                }
+                break;
             case 'searchResults':
+                renderTemplates(message.templates);
+                break;
             case 'favoritesLoaded':
                 renderTemplates(message.templates);
                 break;
@@ -421,10 +945,8 @@
         };
     }
     
-    // Add marked.js for markdown parsing
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-    document.head.appendChild(script);
+    // Marked.js will be loaded from local bundle
+    // The library is already included in the WebView bundle
     
     // Initialize when ready
     init();
@@ -433,7 +955,28 @@
 // Global functions for inline event handlers
 function toggleFavorite(templateId, event) {
     event.stopPropagation();
-    vscode.postMessage({ command: 'saveAsFavorite', templateId });
+
+    const favoriteBtn = event.target;
+    const wasFavorite = favoriteBtn.classList.contains('active');
+
+    if (wasFavorite) {
+        const favorites = JSON.parse(localStorage.getItem('gorev-template-favorites') || '[]');
+        const index = favorites.indexOf(templateId);
+        if (index > -1) {
+            favorites.splice(index, 1);
+            localStorage.setItem('gorev-template-favorites', JSON.stringify(favorites));
+        }
+        favoriteBtn.classList.remove('active');
+        favoriteBtn.textContent = '☆';
+    } else {
+        const favorites = JSON.parse(localStorage.getItem('gorev-template-favorites') || '[]');
+        if (!favorites.includes(templateId)) {
+            favorites.push(templateId);
+            localStorage.setItem('gorev-template-favorites', JSON.stringify(favorites));
+        }
+        favoriteBtn.classList.add('active');
+        favoriteBtn.textContent = '⭐';
+    }
 }
 
 function removeTag(element) {
