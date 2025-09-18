@@ -258,11 +258,11 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 1. **gorev-mcpserver**: Core MCP server (Go) - Task management for AI assistants
 2. **gorev-vscode**: Optional VS Code extension - Rich visual interface
 
-**Core Features**: 48 MCP tools, unlimited subtask hierarchy, task dependencies, template system, data export/import, IDE extension management, file watching, bilingual support (TR/EN), AI context management, enhanced NLP processing, advanced search & filtering, fuzzy matching, filter profiles.
+**Core Features**: 41 MCP tools, unlimited subtask hierarchy, task dependencies, template system, data export/import, IDE extension management, file watching, bilingual support (TR/EN), AI context management, enhanced NLP processing, advanced search & filtering, fuzzy matching, filter profiles.
 
 ## 🏗️ Architecture
 
-```
+```text
 cmd/gorev/main.go                  → Entry point, CLI commands (cobra)
 internal/mcp/handlers.go           → MCP handlers (refactored, 2,362 lines)
 internal/mcp/tool_registry.go      → MCP tool registration (570 lines)
@@ -283,6 +283,7 @@ gorev-npm/                        → NPM package wrapper (NEW v0.15.4)
 ## 🔧 Development Commands
 
 ### MCP Server (gorev-mcpserver)
+
 ```bash
 # Essential commands
 make build                 # Build for current platform
@@ -302,6 +303,7 @@ make run                  # Build and run server
 ```
 
 ### NPM Package (gorev-npm) - NEW v0.15.4
+
 ```bash
 cd gorev-npm
 npm install               # Install dependencies (node-fetch)
@@ -315,6 +317,7 @@ npx @gorev/mcp-server@latest --help  # Test published package
 ```
 
 ### VS Code Extension (gorev-vscode)
+
 ```bash
 cd gorev-vscode
 npm install               # Install dependencies
@@ -330,7 +333,8 @@ vsce package              # Package extension as .vsix file
 
 ## 🛠️ MCP Tools Summary
 
-**48 MCP Tools** organized in 10 categories:
+**41 MCP Tools** organized in 10 categories:
+
 - **Task Management**: 6 tools (gorev_listele, gorev_detay, etc.)
 - **Subtask Management**: 3 tools (gorev_altgorev_olustur, etc.)
 - **Templates**: 2 tools (template_listele, templateden_gorev_olustur)
@@ -347,6 +351,7 @@ vsce package              # Package extension as .vsix file
 ## 🗄️ Database Schema
 
 **SQLite database** with 12 tables + 1 view:
+
 - **gorevler**: Tasks (with parent_id for hierarchy)
 - **projeler**: Projects
 - **baglantilar**: Task dependencies
@@ -411,9 +416,9 @@ gorev serve --lang=tr    # Turkish interface
 
 ## 📚 Essential References
 
-- **MCP Tools Reference**: @docs/mcp-araclari.md (Turkish documentation with 42 tools)
-- **Development History**: @docs/DEVELOPMENT_HISTORY.md
-- **VS Code Data Export/Import**: @docs/user-guide/vscode-data-export-import.md
+- **MCP Tools Reference**: @docs/tr/mcp-araclari.md (Turkish documentation)
+- **Development History**: @docs/development/TASKS.md
+- **VS Code Data Export/Import**: @docs/guides/user/vscode-data-export-import.md
 - **Architecture Details**: Project structure above + clean architecture pattern
 - **Database Migrations**: @internal/veri/migrations/ (including FTS5 migration 000010)
 - **Testing Guide**: DRY patterns, table-driven tests, 90%+ server coverage, 100% extension coverage

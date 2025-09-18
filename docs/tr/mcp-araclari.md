@@ -1,6 +1,6 @@
 # MCP Araçları Referansı
 
-Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
+Gorev'in sağladığı 41 MCP tool'unun detaylı açıklaması.
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` artık kullanılamaz! Template kullanımı zorunludur. Detaylar için [templateden_gorev_olustur](#templateden_gorev_olustur) bölümüne bakın.
 
@@ -9,6 +9,7 @@ Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 ## 📋 Araç Listesi
 
 ### Görev Yönetimi
+
 1. [gorev_olustur](#gorev_olustur) - ⚠️ **DEPRECATED (v0.10.0)** - Template kullanımı zorunlu
 2. [gorev_listele](#gorev_listele) - Görevleri listeleme
 3. [gorev_detay](#gorev_detay) - Görev detaylarını görüntüleme (markdown)
