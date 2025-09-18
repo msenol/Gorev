@@ -8,14 +8,14 @@
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-[![Version](https://img.shields.io/badge/Version-0.6.7-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+[![Version](https://img.shields.io/badge/Version-0.6.12-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **Powerful task management extension for VS Code with unlimited subtask hierarchy, dependency visualization, comprehensive data export/import, and AI assistant integration**
 
-> 🎉 **FIXED in v0.6.7**: Critical localization bug resolved! All UI elements now display properly translated text instead of translation keys. Perfect multi-IDE support for VS Code, Cursor, and other MCP-enabled editors.
+> 🚀 **NEW in v0.6.12**: Updated NPM package support! Extension now uses the published @mehmetsenol/gorev-mcp-server package for seamless NPX integration. Perfect multi-IDE support for VS Code, Cursor, and other MCP-enabled editors.
 
 </div>
 
@@ -82,14 +82,29 @@ code --install-extension mehmetsenol.gorev-vscode
 
 ### Setup
 
+**🚀 Easy Setup (NPX Mode - Recommended)**
+
+No installation needed! The extension automatically uses NPX to run the server:
+
+1. **Enable NPX Mode** (Default):
+   - Open VS Code Settings (Ctrl+,)
+   - Search for "Gorev"
+   - Set `gorev.serverMode` to "npx" (default)
+
+2. **Ready to Go**: The extension will automatically run `npx @mehmetsenol/gorev-mcp-server@latest`
+
+**📦 Traditional Setup (Binary Mode)**
+
 1. **Install Gorev MCP Server**: Follow the [installation guide](https://github.com/msenol/Gorev/blob/main/README.en.md#-installation)
 
 2. **Configure Extension**:
    - Open VS Code Settings (Ctrl+,)
    - Search for "Gorev"
+   - Set `gorev.serverMode` to "binary"
    - Set the path to your Gorev executable:
    ```json
    {
+     "gorev.serverMode": "binary",
      "gorev.serverPath": "/path/to/gorev"
    }
    ```

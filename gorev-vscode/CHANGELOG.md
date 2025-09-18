@@ -2,6 +2,41 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.6.12] - 2025-09-18
+
+### Changed
+- **NPM Package Reference Updated**: Extension now uses the published @mehmetsenol/gorev-mcp-server package
+  - Updated MCP client to use correct NPM package name in NPX mode
+  - Fixed client.ts NPX command: `npx @mehmetsenol/gorev-mcp-server@latest serve`
+  - All references to @gorev/mcp-server updated to @mehmetsenol/gorev-mcp-server
+
+### Added
+- **NPM Package Distribution Support**: Full support for new NPM package distribution
+  - Seamless NPX integration with published package
+  - Ready for marketplace users to use zero-installation setup
+
+### Documentation
+- **README Updates**: Enhanced setup instructions with NPX and binary mode options
+  - Added clear NPX mode setup instructions (recommended)
+  - Updated version badges to v0.6.12
+  - Added serverMode configuration examples
+  - Updated both English and Turkish README files
+
+## [0.6.11] - 2025-09-18
+
+### Added
+- **NPX Mode Support**: Added serverMode configuration for NPX vs binary execution
+  - New `gorev.serverMode` setting with "npx" and "binary" options
+  - NPX mode as default for zero-installation experience
+  - Automatic NPX package execution with `@gorev/mcp-server@latest`
+  - Smart path validation only required for binary mode
+
+### Enhanced
+- **User Experience**: Eliminated need for manual binary installation for new users
+  - NPX mode provides zero-configuration setup
+  - Backward compatibility maintained for existing binary installations
+  - Localized Turkish/English messages for NPX configuration
+
 ## [0.6.10] - 2025-09-18
 
 ### Fixed

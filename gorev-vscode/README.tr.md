@@ -6,7 +6,7 @@
 
 > ⚠️ **BREAKING CHANGE (v0.4.0)**: Template kullanımı artık zorunludur! Doğrudan görev oluşturma kaldırıldı. Tüm görevler template kullanılarak oluşturulmalıdır. [Detaylar](#breaking-change-template-zorunluluğu)
 
-> 🎉 **v0.6.7'de DÜZELTİLDİ**: Kritik yerelleştirme hatası çözüldü! Tüm UI elemanları artık çeviri anahtarları yerine düzgün çevrilmiş metin gösteriyor. VS Code, Cursor ve diğer MCP destekli editörler için mükemmel çoklu IDE desteği.
+> 🚀 **v0.6.12'de YENİ**: NPM paket desteği güncellendi! Extension artık yayınlanan @mehmetsenol/gorev-mcp-server paketini kullanıyor ve sorunsuz NPX entegrasyonu sunuyor. VS Code, Cursor ve diğer MCP destekli editörler için mükemmel çoklu IDE desteği.
 
 Gorev için güçlü ve kullanıcı dostu VS Code extension'ı. MCP protokolü üzerinden Gorev sunucusuyla iletişim kurarak gelişmiş görev yönetimi özellikleri sunar.
 
