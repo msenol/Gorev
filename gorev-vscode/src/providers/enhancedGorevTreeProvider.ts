@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import { MCPClient } from '../mcp/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
-import { 
-    EnhancedTreeItem, 
-    GroupTreeItem, 
-    TaskTreeItem, 
+import {
+    EnhancedTreeItem,
+    GroupTreeItem,
+    TaskTreeItem,
     EmptyTreeItem,
     TreeItemType,
     GroupingStrategy,
@@ -22,11 +22,15 @@ import { TaskDecorationProvider } from './decorationProvider';
 import { ICONS, COLORS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { MarkdownParser } from '../utils/markdownParser';
+import { RefreshManager, RefreshTarget, RefreshProvider, RefreshReason, RefreshPriority } from '../managers/refreshManager';
+import { performanceMonitor, measureAsync } from '../utils/performance';
+import { debounceConfig } from '../utils/debounce';
 
 /**
  * Gelişmiş görev TreeView provider'ı
+ * Now with differential updates and RefreshManager integration
  */
-export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<EnhancedTreeViewItem>, vscode.TreeDragAndDropController<EnhancedTreeViewItem> {
+export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<EnhancedTreeViewItem>, vscode.TreeDragAndDropController<EnhancedTreeViewItem>, RefreshProvider {
     private _onDidChangeTreeData = new vscode.EventEmitter<EnhancedTreeViewItem | undefined | null | void>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
@@ -36,14 +40,23 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     private config: TreeViewConfig;
     private selection: TaskSelection;
     private events: TreeViewEvents = {};
-    
+
     // Drag & Drop
     public readonly dragDropController: DragDropController;
     readonly dropMimeTypes: readonly string[];
     readonly dragMimeTypes: readonly string[];
-    
+
     // Decoration provider
     private decorationProvider: TaskDecorationProvider;
+
+    // Differential update support
+    private previousTasksHash: string = '';
+    private previousProjectsHash: string = '';
+    private treeDataCache: Map<string, EnhancedTreeViewItem> = new Map();
+    private expansionStateCache: Map<string, boolean> = new Map();
+
+    // Configuration change debouncing
+    private debouncedConfigChange: ReturnType<typeof debounceConfig>;
 
     constructor(private mcpClient: MCPClient) {
         // Varsayılan konfigürasyon
@@ -70,14 +83,20 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         // Decoration provider
         this.decorationProvider = new TaskDecorationProvider();
 
-        // Konfigürasyon değişikliklerini dinle
+        // Initialize debounced configuration change handler
+        this.debouncedConfigChange = debounceConfig(this.handleConfigurationChange.bind(this));
+
+        // Konfigürasyon değişikliklerini dinle (tek listener, RefreshManager ile koordineli)
         this.loadConfiguration();
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('gorev.treeView')) {
-                this.loadConfiguration();
-                this.refresh();
+                this.debouncedConfigChange();
             }
         });
+
+        // Register with RefreshManager
+        const refreshManager = RefreshManager.getInstance();
+        refreshManager.registerProvider([RefreshTarget.TASKS], this);
     }
 
     /**
@@ -440,25 +459,189 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     }
 
     /**
-     * TreeView'ı yeniler
+     * TreeView'ı yeniler - RefreshProvider interface implementation
      */
     async refresh(): Promise<void> {
-        Logger.info('[EnhancedGorevTreeProvider] Refreshing tree view...');
-        try {
-            // Clear cached data to force full reload
-            this.tasks = [];
-            this.filteredTasks = [];
-            
-            await this.loadTasks();
-            
-            // Fire change event with undefined to refresh entire tree
-            this._onDidChangeTreeData.fire(undefined);
-            
-            Logger.info('[EnhancedGorevTreeProvider] Tree view refreshed successfully');
-        } catch (error) {
-            Logger.error('[EnhancedGorevTreeProvider] Failed to refresh tree view:', error);
-            throw error;
+        await measureAsync(
+            'enhanced-tree-refresh',
+            async () => {
+                Logger.debug('[EnhancedGorevTreeProvider] Starting refresh...');
+
+                try {
+                    // Load fresh data
+                    await this.loadTasks();
+
+                    // Check if data actually changed using hashes
+                    const currentTasksHash = this.calculateTasksHash();
+                    const currentProjectsHash = this.calculateProjectsHash();
+
+                    const tasksChanged = currentTasksHash !== this.previousTasksHash;
+                    const projectsChanged = currentProjectsHash !== this.previousProjectsHash;
+
+                    if (tasksChanged || projectsChanged) {
+                        Logger.debug('[EnhancedGorevTreeProvider] Data changed, updating tree');
+
+                        // Update hashes
+                        this.previousTasksHash = currentTasksHash;
+                        this.previousProjectsHash = currentProjectsHash;
+
+                        // Clear cache for changed data
+                        if (tasksChanged) {
+                            this.treeDataCache.clear();
+                        }
+
+                        // Fire selective change event
+                        this._onDidChangeTreeData.fire(undefined);
+
+                        Logger.debug('[EnhancedGorevTreeProvider] Tree refreshed with new data');
+                    } else {
+                        Logger.debug('[EnhancedGorevTreeProvider] No data changes detected, skipping tree update');
+                    }
+
+                } catch (error) {
+                    Logger.error('[EnhancedGorevTreeProvider] Failed to refresh tree view:', error);
+                    throw error;
+                }
+            },
+            'tree-refresh',
+            { provider: 'enhanced-tree' }
+        );
+    }
+
+    /**
+     * Force full refresh bypassing differential checks
+     */
+    async forceRefresh(): Promise<void> {
+        Logger.info('[EnhancedGorevTreeProvider] Force refreshing tree view...');
+
+        // Clear all caches
+        this.tasks = [];
+        this.filteredTasks = [];
+        this.treeDataCache.clear();
+        this.previousTasksHash = '';
+        this.previousProjectsHash = '';
+
+        await this.refresh();
+    }
+
+    /**
+     * RefreshProvider interface implementation
+     */
+    getName(): string {
+        return 'EnhancedGorevTreeProvider';
+    }
+
+    supportsTarget(target: RefreshTarget): boolean {
+        return target === RefreshTarget.TASKS || target === RefreshTarget.ALL;
+    }
+
+    /**
+     * Handle configuration changes with debouncing
+     */
+    private async handleConfigurationChange(): Promise<void> {
+        Logger.debug('[EnhancedGorevTreeProvider] Configuration changed');
+        this.loadConfiguration();
+
+        // Request refresh through RefreshManager instead of direct call
+        const refreshManager = RefreshManager.getInstance();
+        await refreshManager.requestRefresh(
+            RefreshReason.CONFIG_CHANGE,
+            [RefreshTarget.TASKS],
+            RefreshPriority.NORMAL
+        );
+    }
+
+    /**
+     * Calculate hash of current tasks for change detection
+     */
+    private calculateTasksHash(): string {
+        const taskData = this.tasks.map(task => ({
+            id: task.id,
+            baslik: task.baslik,
+            durum: task.durum,
+            oncelik: task.oncelik,
+            olusturma_tarih: task.olusturma_tarih,
+            guncelleme_tarih: task.guncelleme_tarih,
+            parent_id: task.parent_id
+        }));
+
+        return this.generateHash(JSON.stringify(taskData));
+    }
+
+    /**
+     * Calculate hash of current projects for change detection
+     */
+    private calculateProjectsHash(): string {
+        const projectData = Array.from(this.projects.entries());
+        return this.generateHash(JSON.stringify(projectData));
+    }
+
+    /**
+     * Simple hash function for change detection
+     */
+    private generateHash(input: string): string {
+        let hash = 0;
+        for (let i = 0; i < input.length; i++) {
+            const char = input.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
         }
+        return hash.toString();
+    }
+
+    /**
+     * Save expansion state before refresh
+     */
+    private saveExpansionState(element?: EnhancedTreeViewItem): void {
+        if (element && element.id) {
+            // Note: Expansion state saving will be implemented when tree item has expanded property
+            // this.expansionStateCache.set(element.id, element.expanded || false);
+        }
+    }
+
+    /**
+     * Restore expansion state after refresh
+     */
+    private restoreExpansionState(element: EnhancedTreeViewItem): void {
+        if (element.id && this.expansionStateCache.has(element.id)) {
+            // Note: Expansion state restoration will be implemented when tree item has expanded property
+            // element.expanded = this.expansionStateCache.get(element.id);
+        }
+    }
+
+    /**
+     * Clear all caches and force complete rebuild
+     */
+    clearCache(): void {
+        this.treeDataCache.clear();
+        this.expansionStateCache.clear();
+        this.previousTasksHash = '';
+        this.previousProjectsHash = '';
+        Logger.debug('[EnhancedGorevTreeProvider] All caches cleared');
+    }
+
+    /**
+     * Get cache statistics for debugging
+     */
+    getCacheStats(): { treeDataSize: number; expansionStateSize: number } {
+        return {
+            treeDataSize: this.treeDataCache.size,
+            expansionStateSize: this.expansionStateCache.size
+        };
+    }
+
+    /**
+     * Dispose and cleanup
+     */
+    dispose(): void {
+        this.debouncedConfigChange.cancel();
+        this.clearCache();
+
+        // Unregister from RefreshManager
+        const refreshManager = RefreshManager.getInstance();
+        refreshManager.unregisterProvider(this);
+
+        Logger.debug('[EnhancedGorevTreeProvider] Disposed');
     }
 
     /**

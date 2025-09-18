@@ -10,6 +10,9 @@ import { Logger, LogLevel } from './utils/logger';
 import { Config } from './utils/config';
 import { COMMANDS } from './utils/constants';
 import { initializeL10n } from './utils/l10n';
+import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from './managers/refreshManager';
+import { measureAsync } from './utils/performance';
+import { debounceConfig } from './utils/debounce';
 
 let mcpClient: MCPClient;
 let statusBarManager: StatusBarManager;
@@ -17,8 +20,10 @@ let filterToolbar: FilterToolbar;
 let gorevTreeProvider: EnhancedGorevTreeProvider;
 let projeTreeProvider: ProjeTreeProvider;
 let templateTreeProvider: TemplateTreeProvider;
+let refreshManager: RefreshManager;
 
 let context: vscode.ExtensionContext;
+let debouncedConfigHandler: ReturnType<typeof debounceConfig>;
 
 export async function activate(extensionContext: vscode.ExtensionContext) {
   context = extensionContext;
@@ -42,12 +47,18 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
 
   // Create MCP client
   mcpClient = new MCPClient();
-  
+
+  // Initialize RefreshManager first
+  refreshManager = RefreshManager.getInstance();
+
   // Initialize UI components
   statusBarManager = new StatusBarManager();
   gorevTreeProvider = new EnhancedGorevTreeProvider(mcpClient);
   projeTreeProvider = new ProjeTreeProvider(mcpClient);
   templateTreeProvider = new TemplateTreeProvider(mcpClient);
+
+  // Note: Other providers will be integrated with RefreshManager in future iterations
+  // For now, only EnhancedGorevTreeProvider implements the RefreshProvider interface
   
   // Initialize filter toolbar
   filterToolbar = new FilterToolbar(mcpClient, (filter) => {
@@ -130,29 +141,38 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
             }
           }
         } catch (error) {
-          // Sessizce devam et
+          Logger.debug('[Extension] Failed to check test data status:', error);
         }
       }, 2000); // 2 saniye bekle
     }
   }
 
-  // Set up refresh interval
+  // Set up refresh interval with RefreshManager
   const refreshInterval = Config.get('refreshInterval') as number;
   if (refreshInterval > 0) {
+    Logger.info(`[Extension] Setting up refresh interval: ${refreshInterval} seconds`);
+
     const intervalId = setInterval(async () => {
       if (mcpClient.isConnected()) {
         try {
-          await refreshAllViews();
+          // Use RefreshManager for coordinated refresh
+          await refreshManager.requestRefresh(
+            RefreshReason.INTERVAL,
+            [RefreshTarget.ALL],
+            RefreshPriority.LOW
+          );
         } catch (error) {
           const { t } = await import('./utils/l10n');
           Logger.error(t('log.failedRefreshViews'), error);
         }
       }
     }, refreshInterval * 1000);
-    
+
     context.subscriptions.push({
       dispose: () => clearInterval(intervalId),
     });
+  } else {
+    Logger.info('[Extension] Auto-refresh disabled (refreshInterval = 0)');
   }
 
   // Status bar setup
@@ -165,11 +185,14 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   filterToolbar.show();
   context.subscriptions.push(filterToolbar);
 
-  // Listen for configuration changes
+  // Initialize debounced configuration handler
+  debouncedConfigHandler = debounceConfig(handleConfigurationChange);
+
+  // Listen for configuration changes (consolidated single handler)
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('gorev')) {
-        handleConfigurationChange();
+        debouncedConfigHandler();
       }
     })
   );
@@ -182,43 +205,76 @@ export async function deactivate() {
   const { t } = await import('./utils/l10n');
   Logger.info(t('extension.deactivated'));
 
+  // Clean up debounced handlers
+  if (debouncedConfigHandler) {
+    debouncedConfigHandler.cancel();
+  }
+
+  // Dispose providers
+  if (gorevTreeProvider) {
+    gorevTreeProvider.dispose();
+  }
+
+  // Dispose RefreshManager
+  if (refreshManager) {
+    refreshManager.dispose();
+  }
+
   if (mcpClient) {
     mcpClient.disconnect();
   }
-  
+
   if (statusBarManager) {
     statusBarManager.dispose();
   }
 }
 
 
+/**
+ * DEPRECATED: Use RefreshManager.requestRefresh() instead
+ * Legacy function kept for backward compatibility during transition
+ */
 async function refreshAllViews(): Promise<void> {
-  if (!mcpClient.isConnected()) {
-    const { t } = await import('./utils/l10n');
-    Logger.warn(t('log.cannotRefreshViews'));
+  Logger.warn('[Extension] refreshAllViews() is deprecated, use RefreshManager instead');
+
+  if (!refreshManager) {
+    Logger.error('[Extension] RefreshManager not initialized');
     return;
   }
 
-  try {
-    // Refresh sequentially to avoid overwhelming the MCP server
-    await gorevTreeProvider.refresh();
-    await projeTreeProvider.refresh();
-    await templateTreeProvider.refresh();
-
-    statusBarManager.update();
-  } catch (error) {
-    const { t } = await import('./utils/l10n');
-    Logger.error(t('log.errorRefreshingViews'), error);
-    throw error;
-  }
+  await refreshManager.requestRefresh(
+    RefreshReason.MANUAL,
+    [RefreshTarget.ALL],
+    RefreshPriority.HIGH
+  );
 }
 
-function handleConfigurationChange(): void {
-  // Handle configuration changes
-  const showStatusBar = Config.get('showStatusBar') as boolean;
-  if (showStatusBar && !statusBarManager.isVisible()) {
-    statusBarManager.show();
-  } else if (!showStatusBar && statusBarManager.isVisible()) {
-    statusBarManager.hide();
-  }
+/**
+ * Handle configuration changes with RefreshManager integration
+ */
+async function handleConfigurationChange(): Promise<void> {
+  Logger.debug('[Extension] Configuration changed');
+
+  await measureAsync(
+    'config-change',
+    async () => {
+      // Handle status bar visibility
+      const showStatusBar = Config.get('showStatusBar') as boolean;
+      if (showStatusBar && !statusBarManager.isVisible()) {
+        statusBarManager.show();
+      } else if (!showStatusBar && statusBarManager.isVisible()) {
+        statusBarManager.hide();
+      }
+
+      // Request refresh through RefreshManager
+      if (refreshManager) {
+        await refreshManager.requestRefresh(
+          RefreshReason.CONFIG_CHANGE,
+          [RefreshTarget.ALL],
+          RefreshPriority.NORMAL
+        );
+      }
+    },
+    'configuration-change'
+  );
 }
