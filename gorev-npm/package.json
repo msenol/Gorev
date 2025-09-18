@@ -1,0 +1,67 @@
+{
+  "name": "@gorev/mcp-server",
+  "version": "0.15.4",
+  "description": "Gorev MCP Server - Task management for AI assistants via Model Context Protocol (MCP)",
+  "main": "index.js",
+  "bin": {
+    "gorev-mcp": "./bin/gorev-mcp"
+  },
+  "files": [
+    "index.js",
+    "postinstall.js",
+    "bin/",
+    "binaries/",
+    "README.md"
+  ],
+  "scripts": {
+    "postinstall": "node postinstall.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "task-management",
+    "gorev",
+    "ai-assistant",
+    "claude",
+    "vs-code",
+    "cursor",
+    "windsurf",
+    "productivity",
+    "turkish",
+    "bilingual",
+    "golang",
+    "cli"
+  ],
+  "author": "Mehmet Senol <me@mehmetsenol.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/msenol/Gorev.git",
+    "directory": "gorev-npm"
+  },
+  "homepage": "https://github.com/msenol/Gorev#readme",
+  "bugs": {
+    "url": "https://github.com/msenol/Gorev/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {},
+  "preferGlobal": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}

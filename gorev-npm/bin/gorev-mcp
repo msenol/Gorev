@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+/**
+ * Gorev MCP Server Executable Entry Point
+ *
+ * This is the main executable that gets called when using:
+ * - npx @gorev/mcp-server
+ * - npm install -g @gorev/mcp-server && gorev-mcp
+ */
+
+const path = require('path');
+
+// Import the main wrapper from parent directory
+const wrapper = require(path.join(__dirname, '..', 'index.js'));
+
+// Execute the wrapper
+wrapper.runServer();
