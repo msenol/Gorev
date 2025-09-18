@@ -905,9 +905,10 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 			}
 		}
 
-		// Check for conflicts
+		// Check for conflicts (both by ID and potentially by title for better duplicate detection)
 		existing, err := iy.veriYonetici.GorevGetir(taskID)
 		if err == nil && existing != nil {
+			log.Printf("Import: Found existing task with ID %s, applying conflict resolution: %s", taskID, options.ConflictResolution)
 			// Handle conflict
 			switch options.ConflictResolution {
 			case "skip", "":
@@ -960,8 +961,10 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 				"son_tarih": task.SonTarih,
 			}
 			if _, err := iy.veriYonetici.GorevOlustur(params); err != nil {
+				log.Printf("Import: Failed to create new task %s: %v", taskID, err)
 				return imported, conflicts, err
 			}
+			log.Printf("Import: Successfully created new task %s", taskID)
 		}
 
 		imported++
@@ -982,7 +985,7 @@ func (iy *IsYonetici) importTaskTagAssociations(taskTags []TaskTagAssociation, o
 		// Get all tags for the task and add the association using GorevEtiketleriniAyarla
 		// This is a simplified approach - we'd need the actual tag by ID
 		// For now, skip tag associations as we don't have a direct method to add individual tags
-		fmt.Printf("Note: Task-tag association skipped for task %s - requires tag lookup by ID\n", taskTag.TaskID)
+		log.Printf("Note: Task-tag association skipped for task %s - requires tag lookup by ID", taskTag.TaskID)
 	}
 
 	return nil
@@ -1011,7 +1014,7 @@ func (iy *IsYonetici) importDependencies(dependencies []*Baglanti, options Impor
 		}
 		if err := iy.veriYonetici.BaglantiEkle(newDep); err != nil {
 			// Log warning but continue
-			fmt.Printf("Warning: Failed to create dependency from %s to %s: %v\n", dep.KaynakID, dep.HedefID, err)
+			log.Printf("Warning: Failed to create dependency from %s to %s: %v", dep.KaynakID, dep.HedefID, err)
 		}
 	}
 

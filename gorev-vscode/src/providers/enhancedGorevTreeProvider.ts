@@ -449,8 +449,9 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 Logger.warn('[EnhancedGorevTreeProvider] No tasks parsed from response');
             }
             
-            // IMPORTANT: Set filtered tasks after loading
-            this.filteredTasks = [...this.tasks];
+            // IMPORTANT: Set filtered tasks after loading with duplicate removal
+            this.filteredTasks = this.removeDuplicateTasks([...this.tasks]);
+            Logger.debug(`[EnhancedGorevTreeProvider] Filtered ${this.tasks.length} tasks to ${this.filteredTasks.length} after duplicate removal`);
             // Tasks filtered and ready
         } catch (error) {
             Logger.error('Failed to load tasks:', error);
@@ -587,6 +588,41 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             hash = hash & hash; // Convert to 32bit integer
         }
         return hash.toString();
+    }
+
+    /**
+     * Remove duplicate tasks based on ID
+     * Keeps the most recently updated version when duplicates exist
+     */
+    private removeDuplicateTasks(tasks: Gorev[]): Gorev[] {
+        const taskMap = new Map<string, Gorev>();
+
+        for (const task of tasks) {
+            if (!task.id) {
+                // Skip tasks without valid IDs
+                Logger.warn('[EnhancedGorevTreeProvider] Skipping task without ID:', task.baslik);
+                continue;
+            }
+
+            const existingTask = taskMap.get(task.id);
+            if (!existingTask) {
+                // First occurrence of this task ID
+                taskMap.set(task.id, task);
+            } else {
+                // Duplicate found - keep the one with the latest update date
+                const currentDate = task.guncelleme_tarih ? new Date(task.guncelleme_tarih) : new Date(0);
+                const existingDate = existingTask.guncelleme_tarih ? new Date(existingTask.guncelleme_tarih) : new Date(0);
+
+                if (currentDate > existingDate) {
+                    Logger.debug(`[EnhancedGorevTreeProvider] Replacing duplicate task ${task.id} with newer version`);
+                    taskMap.set(task.id, task);
+                } else {
+                    Logger.debug(`[EnhancedGorevTreeProvider] Keeping existing version of duplicate task ${task.id}`);
+                }
+            }
+        }
+
+        return Array.from(taskMap.values());
     }
 
     /**

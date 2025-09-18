@@ -344,7 +344,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 
 	// Record the file change interaction
 	if err := fw.veriYonetici.AIEtkilemasimKaydet(taskID, "file_change", string(interactionData), "file_watcher"); err != nil {
-		log.Printf("Failed to record AI interaction for task %s: %v", taskID, err)
+		log.Printf("Failed to record AI interaction for task %s: error.interactionSaveFailed", taskID, err)
 	}
 
 	// Auto-update task status if configured
