@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 18 September 2025 | **Version:** v0.15.3
+**Last Updated:** 18 September 2025 | **Version:** v0.15.4
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,17 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.3 - VS Code Extension Dependency Display Fix (18 Sep 2025)**
+**v0.15.4 - NPX Easy Installation System (18 Sep 2025)**
+
+- **NPX Package Distribution**: Complete NPM package system for easy installation
+  - **@gorev/mcp-server**: New NPM package enabling `npx @gorev/mcp-server@latest` usage
+  - **Cross-platform Support**: Automatic binary download for Windows, macOS, Linux (amd64/arm64)
+  - **Zero Installation**: Users can run Gorev without manual binary installation
+  - **MCP Configuration**: Simple addition to `mcp.json` with `"command": "npx", "args": ["@gorev/mcp-server@latest"]`
+  - **GitHub Actions**: Automated NPM publishing pipeline with multi-platform binary builds
+  - **User Experience**: Eliminates complex installation steps, especially for Windows users
+
+**Previous: v0.15.3 - VS Code Extension Dependency Display Fix (18 Sep 2025)**
 
 - **Critical VS Code Extension Fix**: Dependencies now display properly in VS Code extension
   - **Root Cause**: MCP handlers (`gorev_listele`, `gorev_detay`) were not including dependency count information in markdown output
@@ -248,6 +258,11 @@ internal/gorev/veri_yonetici.go    → Data access layer (SQLite)
 internal/i18n/manager.go           → Internationalization system
 internal/i18n/helpers.go           → DRY i18n patterns
 locales/[tr|en].json              → Translation files
+gorev-npm/                        → NPM package wrapper (NEW v0.15.4)
+  ├── package.json                → NPM package configuration
+  ├── index.js                    → Platform detection & binary wrapper
+  ├── postinstall.js              → Auto-download from GitHub releases
+  └── bin/gorev-mcp               → Executable entry point
 ```
 
 ## 🔧 Development Commands
@@ -269,6 +284,19 @@ make deps                  # Download and tidy dependencies
 make run                  # Build and run server
 ./gorev serve --debug     # Run with debug logging
 ./gorev serve --lang=en   # Run with English language
+```
+
+### NPM Package (gorev-npm) - NEW v0.15.4
+```bash
+cd gorev-npm
+npm install               # Install dependencies (node-fetch)
+npm test                  # Run tests (basic validation)
+npm pack                  # Create package tarball for testing
+npm publish --access public  # Publish to NPM registry
+
+# Testing NPX usage locally
+npx .                     # Test local package
+npx @gorev/mcp-server@latest --help  # Test published package
 ```
 
 ### VS Code Extension (gorev-vscode)

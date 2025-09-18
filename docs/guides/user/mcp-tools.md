@@ -1,6 +1,6 @@
 # MCP Araçları Referansı
 
-Gorev'in sağladığı 29 MCP tool'unun detaylı açıklaması.
+Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` artık kullanılamaz! Template kullanımı zorunludur. Detaylar için [templateden_gorev_olustur](#templateden_gorev_olustur) bölümüne bakın.
 

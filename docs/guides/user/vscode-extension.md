@@ -196,11 +196,26 @@ Task'a sağ tıklayıp **Add Dependency** seçeneği ile:
 
 ## Kurulum
 
-### Marketplace'den Kurulum (Planlanan)
+### 🚀 Marketplace'den Kurulum (Önerilen)
 ```
 1. VS Code Extensions panelini aç (Ctrl+Shift+X)
-2. "Gorev Task Orchestrator" ara
-3. Install butonuna tıkla
+2. "Gorev" ara
+3. "Gorev - Task Management for AI Assistants" seç
+4. Install butonuna tıkla
+```
+
+**NPX modu otomatik olarak etkin!** Server kurulum gerektirmez.
+
+### 🔧 Manual Binary Kurulumu (İsteğe Bağlı)
+
+NPX modu yerine local binary kullanmak isteyenler için:
+
+```bash
+# 1. Gorev binary'sini kur
+curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
+
+# 2. Extension settings'te serverMode'u "binary" yap
+# 3. serverPath'i binary yoluna ayarla
 ```
 
 ### Local Development Kurulumu
@@ -233,11 +248,38 @@ code --install-extension gorev-vscode-0.1.0.vsix
 
 ### Extension Ayarları
 
+#### NPX Mode (Önerilen - v0.6.11+)
+
+NPX modu, binary kurulumu olmadan doğrudan Gorev'i çalıştırmanızı sağlar:
+
 ```json
 {
+  // Server çalıştırma modu
+  "gorev.serverMode": "npx",  // "npx" (default) veya "binary"
+
+  // Başlangıçta otomatik bağlan
+  "gorev.autoConnect": true,
+
+  // Durum çubuğu göster
+  "gorev.showStatusBar": true,
+
+  // Veritabanı modu
+  "gorev.databaseMode": "auto"  // "auto", "workspace", "global"
+}
+```
+
+#### Binary Mode (Geleneksel)
+
+Binary kurulumu yapmış kullanıcılar için:
+
+```json
+{
+  // Server çalıştırma modu
+  "gorev.serverMode": "binary",
+
   // MCP server binary'sinin tam yolu
   "gorev.serverPath": "/usr/local/bin/gorev",
-  
+
   // Başlangıçta otomatik bağlan
   "gorev.autoConnect": true,
   

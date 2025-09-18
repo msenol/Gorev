@@ -1,7 +1,7 @@
 # Gorev API Reference
 
-> **Version**: This documentation is valid for v0.11.0+  
-> **Last Updated**: August 13, 2025
+> **Version**: This documentation is valid for v0.15.4+
+> **Last Updated**: September 18, 2025
 
 Complete API reference for Gorev MCP server, data models, and programmatic interfaces.
 

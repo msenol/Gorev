@@ -1,6 +1,6 @@
 # 📚 Gorev Documentation Index
 
-**Version**: v0.15.2
+**Version**: v0.15.4
 **Last Updated**: September 18, 2025  
 **Status**: Production Ready  
 

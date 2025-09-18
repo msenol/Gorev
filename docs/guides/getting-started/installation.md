@@ -1,7 +1,7 @@
 # Installation Guide
 
-> **Version**: This documentation is valid for v0.11.0+  
-> **Last Updated**: August 13, 2025
+> **Version**: This documentation is valid for v0.15.4+
+> **Last Updated**: September 18, 2025
 
 Complete installation instructions for Gorev on all platforms.
 
@@ -13,7 +13,25 @@ Complete installation instructions for Gorev on all platforms.
 
 ## 🚀 Quick Installation
 
-### 🖥️ Automatic Installation (Recommended)
+### 🚀 NPX Easy Installation (Recommended)
+
+**For MCP clients, simply add to your configuration:**
+
+```json
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"],
+      "env": {
+        "GOREV_LANG": "en"
+      }
+    }
+  }
+}
+```
+
+**Traditional Installation:**
 
 **Linux/macOS:**
 ```bash

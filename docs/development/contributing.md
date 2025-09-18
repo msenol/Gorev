@@ -1,7 +1,7 @@
 # Contributing to Gorev
 
-> **Version**: This documentation is valid for v0.11.0+  
-> **Last Updated**: August 13, 2025
+> **Version**: This documentation is valid for v0.15.4+
+> **Last Updated**: September 18, 2025
 
 This document explains the development environment setup, code standards, and contribution processes for those who want to contribute to the Gorev project.
 
@@ -21,7 +21,7 @@ This document explains the development environment setup, code standards, and co
 
 ### Requirements
 
-- Go 1.22 or higher
+- Go 1.23+ or higher
 - Git
 - Make (optional, for Makefile usage)
 - golangci-lint (for code quality)

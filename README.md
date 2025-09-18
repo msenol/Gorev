@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 18, 2025 | **Version:** v0.15.2
+**Last Updated:** September 18, 2025 | **Version:** v0.15.4
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -24,7 +24,7 @@
 
 **Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation. 
 
-**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, advanced search & filtering with FTS5, 42 MCP tools, and optional VS Code extension with rich visual interface.
+**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, advanced search & filtering with FTS5, 48 MCP tools, and optional VS Code extension with rich visual interface.
 
 **Quick Start**: [Installation Guide](README.en.md#-installation) | [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
@@ -92,7 +92,56 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 
 ## 📦 Kurulum
 
-### 🚀 Otomatik Kurulum (Önerilen)
+### 🚀 NPX ile Kolay Kurulum (En Kolay!)
+
+MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
+
+```json
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"],
+      "env": {
+        "GOREV_LANG": "tr"
+      }
+    }
+  }
+}
+```
+
+**Claude Desktop için:**
+```json
+// ~/.config/Claude/claude_desktop_config.json (Linux)
+// ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
+// %APPDATA%/Claude/claude_desktop_config.json (Windows)
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"],
+      "env": {
+        "GOREV_LANG": "tr"
+      }
+    }
+  }
+}
+```
+
+**VS Code için:**
+```json
+// .vscode/mcp.json
+{
+  "servers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"]
+    }
+  }
+}
+```
+
+### 🔧 Geleneksel Kurulum (Otomatik)
 
 ```bash
 # Linux/macOS
@@ -119,7 +168,7 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERS
 irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 
 # Veya belirli versiyon için:
-$env:VERSION="v0.14.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+$env:VERSION="v0.15.4"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 **Manuel Kurulum:**
@@ -340,11 +389,11 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 
 - 📦 [Installation Guide](docs/guides/getting-started/installation.md) - Platform-specific installation instructions
 - 📖 [Usage Guide](docs/guides/user/usage.md) - Detailed usage examples
-- 🛠 [MCP Tools](docs/guides/user/mcp-tools.md) - Complete reference for 36 MCP tools
+- 🛠 [MCP Tools](docs/guides/user/mcp-tools.md) - Complete reference for 48 MCP tools
 - 🤖 [AI MCP Tools](docs/tr/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
 - 🏗 [System Architecture](docs/architecture/architecture-v2.md) - Technical details
-- 🗺️ [Roadmap](docs/development/ROADMAP.md) - Development roadmap and future plans
-- 💻 [Contributing Guide](docs/development/contributing.md) - How to contribute
+- 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
+- 💻 [Contributing Guide](CONTRIBUTING.md) - How to contribute
 - 🔧 [Go Setup Guide](docs/development/go-setup-guide.md) - Go development environment setup
 - 🎨 [VS Code Extension](docs/guides/user/vscode-extension.md) - Extension documentation
 - 🚀 **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** - Extension'ı indir
@@ -399,7 +448,7 @@ gorev/
 ## 🧪 Geliştirme
 
 ### Gereksinimler
-- Go 1.22+
+- Go 1.23+
 - Make (opsiyonel)
 - golangci-lint (kod kalitesi için)
 
@@ -437,9 +486,9 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/development/contributing.md)'ne
 
 ## 📊 Proje Durumu
 
-- **Versiyon**: v0.14.0 🚀
+- **Versiyon**: v0.15.4 🚀
 - **Test Coverage**: %90+ (Major Improvement) 
-- **Go Version**: 1.22+
+- **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
 - **Database**: SQLite (embedded)
 - **Security**: Production-ready audit compliant

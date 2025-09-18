@@ -2,6 +2,51 @@
 
 All notable changes to Gorev will be documented in this file.
 
+## [v0.15.4] - 2025-09-18
+
+### 🚀 Features
+- **NPX Easy Installation System** - Complete NPM package distribution for effortless setup
+  - **@gorev/mcp-server Package**: New NPM package enabling `npx @gorev/mcp-server@latest` usage
+  - **Cross-Platform Binary Support**: Automatic binary download for Windows, macOS, Linux (amd64/arm64)
+  - **Zero Installation Setup**: Users can run Gorev without manual binary installation steps
+  - **Simple MCP Configuration**: Easy addition to `mcp.json` with `"command": "npx", "args": ["@gorev/mcp-server@latest"]`
+  - **GitHub Actions Pipeline**: Automated NPM publishing with multi-platform binary builds
+  - **Platform Detection**: Intelligent platform and architecture detection for correct binary selection
+  - **Fallback Mechanisms**: Robust error handling and fallback to latest releases
+
+### 🔧 Implementation
+- **gorev-npm Module**: Complete NPM wrapper package structure
+  - `package.json`: NPM package configuration with cross-platform support
+  - `index.js`: Platform detection and binary wrapper with stdio passthrough
+  - `postinstall.js`: Automatic binary download from GitHub releases
+  - `bin/gorev-mcp`: Executable entry point for NPX usage
+- **CI/CD Enhancement**: Multi-stage GitHub Actions workflow
+  - Cross-platform binary building (Windows, macOS, Linux)
+  - NPM package testing on multiple Node.js versions
+  - Automated NPM publishing with artifact management
+  - Release automation with GitHub releases
+
+### 🔧 VS Code Extension NPX Integration (v0.6.11)
+- **New Server Mode Configuration**: Added `gorev.serverMode` setting ("npx" | "binary")
+- **NPX Mode as Default**: Zero-installation setup for users
+- **MCP Client Enhancement**: Automatic NPX vs binary mode detection
+- **Smart Path Validation**: Server path only required for binary mode
+- **Localization Support**: Turkish/English messages for NPX configuration
+- **User Experience**: Eliminates need for manual binary installation
+
+### 📚 Documentation
+- **Installation Guides Updated**: Both Turkish and English README files updated
+  - Added NPX installation as the primary, recommended method
+  - Comprehensive MCP configuration examples for Claude Desktop, VS Code, Cursor
+  - Platform-specific installation paths and configuration locations
+- **CLAUDE.md Enhancement**: Added NPM package development commands and architecture
+
+### 🎯 User Experience
+- **Windows Users**: Eliminates complex installation steps and PATH configuration
+- **MCP Clients**: Universal compatibility with single configuration format
+- **Developers**: Easy testing with `npx @gorev/mcp-server@latest --help`
+- **CI/CD**: Simple integration without binary management complexity
+
 ## [v0.15.3] - 2025-09-18
 
 ### 🔧 Fixed

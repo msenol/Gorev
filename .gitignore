@@ -81,3 +81,4 @@ gorev-mcpserver/release-*/
 # Development artifacts and build outputs
 gorev-mcpserver/artifacts/
 */artifacts/
+code_search_index/

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 18, 2025 | **Version:** v0.15.2
+**Last Updated:** September 18, 2025 | **Version:** v0.15.4
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -77,7 +77,68 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 
 ## 📦 Installation
 
-### 🚀 Automatic Installation (Recommended)
+### 🚀 NPX Easy Setup (Easiest!)
+
+For MCP clients, simply add to your `mcp.json` configuration:
+
+```json
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"],
+      "env": {
+        "GOREV_LANG": "en"
+      }
+    }
+  }
+}
+```
+
+**For Claude Desktop:**
+```json
+// Windows: %APPDATA%/Claude/claude_desktop_config.json
+// macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+// Linux: ~/.config/Claude/claude_desktop_config.json
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"],
+      "env": {
+        "GOREV_LANG": "en"
+      }
+    }
+  }
+}
+```
+
+**For VS Code:**
+```json
+// .vscode/mcp.json
+{
+  "servers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"]
+    }
+  }
+}
+```
+
+**For Cursor:**
+```json
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["@gorev/mcp-server@latest"]
+    }
+  }
+}
+```
+
+### 🔧 Traditional Installation (Automatic)
 
 ```bash
 # Linux/macOS
@@ -97,30 +158,7 @@ irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 $env:VERSION="v0.11.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
-### MCP Editor Integration
-
-#### 🤖 Claude Desktop
-
-Add to your configuration file:
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "gorev": {
-      "command": "/path/to/gorev",
-      "args": ["serve"],
-      "env": {
-        "GOREV_DATA_DIR": "~/.gorev"
-      }
-    }
-  }
-}
-```
-
-#### 💻 VS Code
+### 💻 VS Code Extension (Optional)
 
 **Option 1: Gorev VS Code Extension (Recommended)**
 
@@ -128,21 +166,6 @@ Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?it
 
 ```bash
 code --install-extension mehmetsenol.gorev-vscode
-```
-
-**Option 2: MCP Extension**
-
-Install MCP extension and add to `settings.json`:
-
-```json
-{
-  "mcp.servers": {
-    "gorev": {
-      "command": "/path/to/gorev",
-      "args": ["serve"]
-    }
-  }
-}
 ```
 
 ## 🎮 Usage
@@ -193,7 +216,7 @@ For detailed documentation, see the [docs/](docs/) folder:
 
 - 📦 [Installation Guide](docs/guides/getting-started/installation.md) - Platform-specific installation instructions
 - 📖 [Usage Guide](docs/guides/user/usage.md) - Detailed usage examples
-- 🛠 [MCP Tools](docs/guides/user/mcp-tools.md) - Complete reference for 36 MCP tools
+- 🛠 [MCP Tools](docs/guides/user/mcp-tools.md) - Complete reference for 48 MCP tools
 - 🤖 [AI MCP Tools](docs/tr/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
 - 🏗 [System Architecture](docs/architecture/architecture-v2.md) - Technical details
 - 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
@@ -230,7 +253,7 @@ gorev/
 ## 🧪 Development
 
 ### Requirements
-- Go 1.22+
+- Go 1.23+
 - Make (optional)
 - golangci-lint (for code quality)
 
@@ -240,7 +263,7 @@ gorev/
 # Download dependencies
 make deps
 
-# Run tests (84.6% overall coverage)
+# Run tests (90%+ overall coverage)
 make test
 
 # Coverage report
@@ -258,11 +281,13 @@ make docker-build
 
 ## 📊 Project Status
 
-- **Version**: v0.11.0
-- **Test Coverage**: 84.6%
-- **Go Version**: 1.22+
+- **Version**: v0.15.4 🚀
+- **Test Coverage**: 90%+ (Major Improvement)
+- **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
 - **Database**: SQLite (embedded)
+- **Security**: Production-ready audit compliant
+- **Thread Safety**: 100% race condition free
 
 ## 🤝 Community
 
