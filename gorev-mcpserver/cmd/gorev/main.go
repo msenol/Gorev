@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	version   = "v0.14.2"
+	version   = "v0.15.4"
 	buildTime = "unknown"
 	gitCommit = "unknown"
 	langFlag  string

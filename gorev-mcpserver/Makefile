@@ -4,7 +4,7 @@ GO=go
 GOFLAGS=-v
 
 # Versiyon bilgisi
-VERSION ?= $(shell cat VERSION || echo "0.11.2")
+VERSION ?= 0.15.4
 BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
