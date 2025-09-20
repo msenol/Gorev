@@ -20,6 +20,7 @@ coverage.html
 *.sqlite
 *.sqlite3
 *.db.backup
+.gorev/
 
 # Geçici dosyalar
 *.tmp
