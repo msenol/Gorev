@@ -5,6 +5,22 @@ All notable changes to Gorev will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.15.8] - 2025-09-20
+
+### Changed
+- **Version Standardization**: Standardized versions across all components to v0.15.8
+- **Build System Improvements**: Enhanced cross-platform build process
+- **Release Process**: Automated release artifact generation and publishing
+
+### Added
+- **Windows Support**: Complete Windows binary support with .exe packaging
+- **Multi-Architecture macOS**: Support for both Intel (amd64) and Apple Silicon (arm64) Macs
+- **Automated Checksums**: SHA256 checksum generation for all release artifacts
+
+### Fixed
+- **Build Script Issues**: Fixed truncated build scripts and improved reliability
+- **Version Consistency**: Ensured all components use consistent version numbering
+
 ## [v0.15.5] - 2025-09-18
 
 ### Fixed
