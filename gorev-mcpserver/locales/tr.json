@@ -672,6 +672,16 @@
     "filterProfileCreated": "✅ Filter profili oluşturuldu: {{.Name}}",
     "filterProfileDeleted": "✅ Filter profili silindi: {{.Name}}",
     "searchQueryFailed": "Arama sorgusu başarısız: {{.Error}}",
-    "searchScanFailed": "Arama sonuçları okunamadı: {{.Error}}"
+    "searchScanFailed": "Arama sonuçları okunamadı: {{.Error}}",
+    "serverStart": "Sunucu başlatılamadı: {{.Error}}",
+    "migrationFailed": "Veritabanı migration'u başarısız: {{.Error}}",
+    "dbInitFailed": "Veritabanı başlatılamadı: {{.Error}}",
+    "migrationExtractFailed": "Gömülü migration'lar çıkarılamadı: {{.Error}}",
+    "migrationDirCreateFailed": "Migration dizini oluşturulamadı: {{.Error}}",
+    "migrationFileWriteFailed": "Migration dosyaları yazılamadı: {{.Error}}",
+    "dbOpenFailed": "Veritabanı açılamadı: {{.Error}}",
+    "migrationDriverFailed": "Migration sürücüsü oluşturulamadı: {{.Error}}",
+    "migrationInstanceFailed": "Migration örneği oluşturulamadı: {{.Error}}",
+    "migrationProcessFailed": "Migration işlemi başarısız: {{.Error}}"
   }
 }

@@ -106,7 +106,7 @@ func (vy *VeriYonetici) migrateDBWithFS(migrationsFS fs.FS) error {
 	// Extract embedded migrations to temporary directory
 	tempDir, err := os.MkdirTemp("", "gorev-migrations-*")
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.migrationDriverFailed", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.T("error.migrationDirCreateFailed", map[string]interface{}{"Error": err}))
 	}
 	defer os.RemoveAll(tempDir)
 
@@ -127,10 +127,13 @@ func (vy *VeriYonetici) migrateDBWithFS(migrationsFS fs.FS) error {
 
 		// Write to temp directory
 		destPath := filepath.Join(tempDir, path)
-		return os.WriteFile(destPath, content, 0644)
+		if err := os.WriteFile(destPath, content, 0644); err != nil {
+			return fmt.Errorf(i18n.T("error.migrationFileWriteFailed", map[string]interface{}{"Error": err}))
+		}
+		return nil
 	})
 	if err != nil {
-		return fmt.Errorf(i18n.T("error.migrationInstanceFailed", map[string]interface{}{"Error": err}))
+		return fmt.Errorf(i18n.T("error.migrationExtractFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Now use regular file-based migration

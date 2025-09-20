@@ -127,7 +127,16 @@
     "filterProfileGetFailed": "failed to get filter profile: {{.Error}}",
     "filterProfileListFailed": "failed to list filter profiles: {{.Error}}",
     "filterProfileUseFailed": "failed to mark filter profile as used: {{.Error}}",
-    "filterProfileSearchFailed": "failed to search filter profiles: {{.Error}}"
+    "filterProfileSearchFailed": "failed to search filter profiles: {{.Error}}",
+    "migrationFailed": "Database migration failed: {{.Error}}",
+    "dbInitFailed": "Database initialization failed: {{.Error}}",
+    "migrationExtractFailed": "Failed to extract embedded migrations: {{.Error}}",
+    "migrationDirCreateFailed": "Failed to create migration directory: {{.Error}}",
+    "migrationFileWriteFailed": "Failed to write migration files: {{.Error}}",
+    "dbOpenFailed": "Failed to open database: {{.Error}}",
+    "migrationDriverFailed": "Failed to create migration driver: {{.Error}}",
+    "migrationInstanceFailed": "Failed to create migration instance: {{.Error}}",
+    "migrationProcessFailed": "Migration process failed: {{.Error}}"
   },
   "success": {
     "activeProjectSet": "✓ Active project set: {{.Project}}",
@@ -641,6 +650,15 @@
     }
   },
   "error": {
+    "migrationFailed": "Database migration failed",
+    "dbInitFailed": "Database initialization failed",
+    "migrationExtractFailed": "Failed to extract embedded migrations",
+    "migrationDirCreateFailed": "Failed to create migration directory",
+    "migrationFileWriteFailed": "Failed to write migration file",
+    "dbOpenFailed": "Failed to open database",
+    "migrationDriverFailed": "Failed to create migration driver",
+    "migrationInstanceFailed": "Failed to create migration instance",
+    "migrationProcessFailed": "Failed to process migrations",
     "dbConnectionClosed": "database connection is closed",
     "filterProfileIdRequired": "Filter profile ID is required",
     "filterProfileGetFailed": "Failed to get filter profile: {{.Error}}",
@@ -652,6 +670,7 @@
     "filterProfileCreated": "✅ Filter profile created: {{.Name}}",
     "filterProfileDeleted": "✅ Filter profile deleted: {{.Name}}",
     "searchQueryFailed": "Search query failed: {{.Error}}",
-    "searchScanFailed": "Failed to read search results: {{.Error}}"
+    "searchScanFailed": "Failed to read search results: {{.Error}}",
+    "serverStart": "Failed to start server: {{.Error}}"
   }
 }
