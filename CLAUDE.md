@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 20 September 2025 | **Version:** v0.15.13
+**Last Updated:** 20 September 2025 | **Version:** v0.15.18
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,21 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.13 - Final Windows Migration Fix for NPX Package (20 Sep 2025)**
+**v0.15.18 - OpenCode.ai Compatibility & Project Cleanup (20 Sep 2025)**
+
+- **OpenCode.ai Debug Support**: Added debug logging to investigate "Expected 'id' to be a string" issue
+  - **Root Cause Analysis**: Comprehensive testing confirms all ID fields are properly serialized as strings
+  - **Debug Logging**: Added structured logging to `gorev_listele` handler for empty project cases
+  - **Test Coverage**: New test suite validates JSON serialization and ID field types
+  - **Conclusion**: Issue appears to be in OpenCode.ai MCP client, not our server code
+
+- **Project Cleanup**: Major cleanup of development artifacts and old releases
+  - **Removed**: Old release directories (v0.9.0, v0.12.0, v0.15.8)
+  - **Cleaned**: Build logs, test caches, temporary files, old VSIX packages
+  - **Retained**: Latest VSIX (v0.15.10), active NPM binaries, necessary dependencies
+  - **Result**: Cleaner repository structure with 20+ unnecessary files removed
+
+**Previous: v0.15.13 - Final Windows Migration Fix for NPX Package (20 Sep 2025)**
 
 - **DEFINITIVE Windows Fix**: Resolved golang-migrate library incompatibility with file:// URLs on Windows
   - **Root Cause**: golang-migrate cannot parse file:// URLs correctly on Windows platform

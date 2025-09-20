@@ -1,10 +1,10 @@
 # MCP Araçları Referansı
 
-Gorev'in sağladığı 41 MCP tool'unun detaylı açıklaması.
+Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprecated).
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` artık kullanılamaz! Template kullanımı zorunludur. Detaylar için [templateden_gorev_olustur](#templateden_gorev_olustur) bölümüne bakın.
 
-> **Not**: AI Context Management araçları için [AI MCP Araçları Dokümantasyonu](../../tr/mcp-araclari-ai.md)'na bakın.
+> **Not**: Tüm AI Context Management araçları artık bu dokümanda tam olarak açıklanmıştır.
 
 ## 📋 Araç Listesi
 
@@ -31,7 +31,7 @@ Gorev'in sağladığı 41 MCP tool'unun detaylı açıklaması.
 13. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
 14. [proje_listele](#proje_listele) - Tüm projeleri listeleme
 15. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
-16. [proje_aktif_yap](#proje_aktif_yap) - Projeyi aktif olarak ayarlama
+16. [aktif_proje_ayarla](#aktif_proje_ayarla) - Projeyi aktif olarak ayarlama
 17. [aktif_proje_goster](#aktif_proje_goster) - Aktif projeyi görüntüleme
 18. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
 
@@ -39,20 +39,45 @@ Gorev'in sağladığı 41 MCP tool'unun detaylı açıklaması.
 19. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
 
 ### AI Context Management (v0.9.0+)
-20. [gorev_set_active](#ai-araçları) - Aktif görevi ayarlama ve otomatik durum yönetimi
-21. [gorev_get_active](#ai-araçları) - Aktif görevi görüntüleme
-22. [gorev_recent](#ai-araçları) - Son görüntülenen görevleri listeleme
-23. [gorev_context_summary](#ai-araçları) - AI oturum özeti
-24. [gorev_batch_update](#ai-araçları) - Toplu görev güncelleme
-25. [gorev_nlp_query](#ai-araçları) - Doğal dil ile görev arama
+20. [gorev_set_active](#gorev_set_active) - Aktif görevi ayarlama ve otomatik durum yönetimi
+21. [gorev_get_active](#gorev_get_active) - Aktif görevi görüntüleme
+22. [gorev_recent](#gorev_recent) - Son görüntülenen görevleri listeleme
+23. [gorev_context_summary](#gorev_context_summary) - AI oturum özeti
+24. [gorev_batch_update](#gorev_batch_update) - Toplu görev güncelleme
+25. [gorev_nlp_query](#gorev_nlp_query) - Doğal dil ile görev arama
 
-> **Detaylı bilgi için**: [AI MCP Araçları Dokümantasyonu](../../tr/mcp-araclari-ai.md)
+### Dosya İzleme (v0.8.0+)
+26. [gorev_file_watch_add](#gorev_file_watch_add) - Dosya izleme ekleme
+27. [gorev_file_watch_remove](#gorev_file_watch_remove) - Dosya izleme kaldırma
+28. [gorev_file_watch_list](#gorev_file_watch_list) - Dosya izleme listesi
+29. [gorev_file_watch_stats](#gorev_file_watch_stats) - Dosya izleme istatistikleri
+
+### Gelişmiş Arama & Filtreleme (v0.15.0+)
+30. [gorev_search_advanced](#gorev_search_advanced) - Gelişmiş arama (FTS5, fuzzy matching)
+31. [gorev_filter_profile_save](#gorev_filter_profile_save) - Filtre profili kaydet
+32. [gorev_filter_profile_load](#gorev_filter_profile_load) - Filtre profili yükle
+33. [gorev_filter_profile_list](#gorev_filter_profile_list) - Filtre profilleri listele
+34. [gorev_filter_profile_delete](#gorev_filter_profile_delete) - Filtre profili sil
+35. [gorev_search_history](#gorev_search_history) - Arama geçmişi
+
+### Veri Aktarımı (v0.12.0+)
+36. [gorev_export](#gorev_export) - Veri dışa aktarma (JSON/CSV)
+37. [gorev_import](#gorev_import) - Veri içe aktarma (çakışma çözümü ile)
+
+### IDE Yönetimi (v0.13.0+)
+38. [gorev_ide_detect](#gorev_ide_detect) - IDE tespiti (VS Code, Cursor, Windsurf)
+39. [gorev_ide_install](#gorev_ide_install) - IDE extension kurulumu
+40. [gorev_ide_uninstall](#gorev_ide_uninstall) - IDE extension kaldırma
+41. [gorev_ide_status](#gorev_ide_status) - IDE extension durumu
+42. [gorev_ide_update](#gorev_ide_update) - IDE extension güncelleme
 
 ---
 
 ## gorev_olustur
 
-⚠️ **DEPRECATED (v0.10.0)**: Bu araç artık kullanılamaz! Template kullanımı zorunludur.
+⚠️ **DEPRECATED & REMOVED (v0.10.0)**: Bu araç tamamen kaldırılmıştır! Template kullanımı zorunludur.
+
+**❌ DİKKAT**: Bu araç v0.10.0'dan itibaren çalışmaz ve MCP call error verir.
 
 ### Migration
 `gorev_olustur` yerine artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanılmalıdır.
@@ -89,13 +114,23 @@ Gorev'in sağladığı 41 MCP tool'unun detaylı açıklaması.
 ### Error Message
 Bu araç çağrıldığında aşağıdaki hata mesajı döner:
 
-> ❌ gorev_olustur artık kullanılmıyor!
-> 
-> Template kullanımı zorunludur. Önce kullanılabilir template'leri görmek için:
-> template_listele
-> 
-> Sonra template kullanarak görev oluşturmak için:
-> templateden_gorev_olustur template_id='...' degerler={...}
+```json
+{
+  "error": {
+    "code": -32601,
+    "message": "Method not found: gorev_olustur is deprecated since v0.10.0"
+  }
+}
+```
+
+**Alternatif Kullanım:**
+```bash
+# Önce template'leri listele
+template_listele
+
+# Sonra template kullanarak görev oluştur
+templateden_gorev_olustur template_id='bug-report' degerler={...}
+```
 
 ### ✅ Çözüm
 Artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanın. Bu daha iyi çünkü:
@@ -561,7 +596,7 @@ Bu araç parametre almaz.
 
 ---
 
-## proje_aktif_yap
+## aktif_proje_ayarla
 
 Bir projeyi aktif proje olarak ayarlar. Aktif proje ayarlandığında, `templateden_gorev_olustur` ve `gorev_listele` komutları varsayılan olarak bu projeyi kullanır.
 
@@ -575,7 +610,7 @@ Bir projeyi aktif proje olarak ayarlar. Aktif proje ayarlandığında, `template
 
 ```json
 {
-  "name": "proje_aktif_yap",
+  "name": "aktif_proje_ayarla",
   "arguments": {
     "proje_id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
   }
@@ -923,6 +958,456 @@ Bir görevin tüm hiyerarşisini (üst görevler ve alt görevler) gösterir.
   └─ [✓] Veritabanı tasarımı (orta öncelik)
   └─ [⏳] API endpoint'leri (yüksek öncelik)
 ```
+
+---
+
+## gorev_set_active
+
+Bir görevi aktif görev olarak ayarlar. AI assistants için context yönetimi sağlar.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `task_id` | string | ✅ | Aktif yapılacak görev ID'si |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_set_active",
+  "arguments": {
+    "task_id": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+```
+
+### Yanıt
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "✓ Aktif görev ayarlandı: API authentication implementasyonu"
+  }]
+}
+```
+
+---
+
+## gorev_get_active
+
+Mevcut aktif görevi görüntüler.
+
+### Parametreler
+
+Bu araç parametre almaz.
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_get_active",
+  "arguments": {}
+}
+```
+
+### Yanıt
+
+```markdown
+## Aktif Görev
+
+**Görev:** API authentication implementasyonu
+**ID:** 550e8400-e29b-41d4-a716-446655440000
+**Durum:** devam_ediyor
+**Öncelik:** yuksek
+```
+
+---
+
+## gorev_recent
+
+Son görüntülenen görevleri listeler.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `limit` | number | ❌ | Maksimum görev sayısı | 5 |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_recent",
+  "arguments": {
+    "limit": 10
+  }
+}
+```
+
+---
+
+## gorev_context_summary
+
+AI oturum context'inin özetini gösterir.
+
+### Parametreler
+
+Bu araç parametre almaz.
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_context_summary",
+  "arguments": {}
+}
+```
+
+---
+
+## gorev_batch_update
+
+Birden fazla görevi toplu olarak günceller.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `updates` | array | ✅ | Güncelleme listesi |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_batch_update",
+  "arguments": {
+    "updates": [
+      {
+        "id": "task-1",
+        "durum": "tamamlandi"
+      },
+      {
+        "id": "task-2",
+        "oncelik": "yuksek"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## gorev_nlp_query
+
+Doğal dil ile görev arama yapar.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `query` | string | ✅ | Doğal dil sorgusu |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_nlp_query",
+  "arguments": {
+    "query": "bu hafta tamamlanması gereken acil görevler"
+  }
+}
+```
+
+---
+
+## gorev_file_watch_add
+
+Bir görev için dosya izleme ekler.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `task_id` | string | ✅ | Görev ID'si |
+| `file_path` | string | ✅ | İzlenecek dosya yolu |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_file_watch_add",
+  "arguments": {
+    "task_id": "550e8400-e29b-41d4-a716-446655440000",
+    "file_path": "/path/to/project/src/auth.js"
+  }
+}
+```
+
+---
+
+## gorev_file_watch_remove
+
+Görev için dosya izlemeyi kaldırır.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `task_id` | string | ✅ | Görev ID'si |
+| `file_path` | string | ✅ | İzleme kaldırılacak dosya yolu |
+
+---
+
+## gorev_file_watch_list
+
+Bir görevin izlenen dosyalarını listeler.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `task_id` | string | ✅ | Görev ID'si |
+
+---
+
+## gorev_file_watch_stats
+
+Dosya izleme istatistiklerini gösterir.
+
+### Parametreler
+
+Bu araç parametre almaz.
+
+---
+
+## gorev_search_advanced
+
+Gelişmiş arama ve filtreleme yapar (FTS5, fuzzy matching).
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `query` | string | ❌ | Arama sorgusu | - |
+| `filters` | object | ❌ | Filtre koşulları | - |
+| `use_fuzzy_search` | boolean | ❌ | Fuzzy search kullan | true |
+| `fuzzy_threshold` | number | ❌ | Fuzzy eşik (0.0-1.0) | 0.6 |
+| `max_results` | integer | ❌ | Maksimum sonuç sayısı | 50 |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_search_advanced",
+  "arguments": {
+    "query": "authentication bug",
+    "filters": {
+      "durum": "beklemede",
+      "oncelik": "yuksek"
+    },
+    "use_fuzzy_search": true
+  }
+}
+```
+
+---
+
+## gorev_filter_profile_save
+
+Filtre profilini kaydeder.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `name` | string | ✅ | Profil adı |
+| `filters` | object | ❌ | Filtre konfigürasyonu |
+| `description` | string | ❌ | Profil açıklaması |
+
+---
+
+## gorev_filter_profile_load
+
+Kayıtlı filtre profilini yükler.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `profile_id` | integer | ❌ | Profil ID'si |
+| `profile_name` | string | ❌ | Profil adı |
+
+---
+
+## gorev_filter_profile_list
+
+Kayıtlı filtre profillerini listeler.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `defaults_only` | boolean | ❌ | Sadece varsayılan profiller | false |
+
+---
+
+## gorev_filter_profile_delete
+
+Filtre profilini siler.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `profile_id` | integer | ✅ | Silinecek profil ID'si |
+
+---
+
+## gorev_search_history
+
+Arama geçmişini gösterir.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `limit` | integer | ❌ | Maksimum geçmiş sayısı | 20 |
+
+---
+
+## gorev_export
+
+Görev verilerini dışa aktarır (JSON/CSV).
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `output_path` | string | ✅ | Çıktı dosya yolu | - |
+| `format` | string | ❌ | Format (json/csv) | json |
+| `include_completed` | boolean | ❌ | Tamamlanmış görevler dahil | true |
+| `include_dependencies` | boolean | ❌ | Bağımlılıklar dahil | true |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_export",
+  "arguments": {
+    "output_path": "/path/to/backup.json",
+    "format": "json",
+    "include_completed": true
+  }
+}
+```
+
+---
+
+## gorev_import
+
+Görev verilerini içe aktarır (çakışma çözümü ile).
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `file_path` | string | ✅ | İçe aktarılacak dosya yolu | - |
+| `import_mode` | string | ❌ | İçe aktarma modu (merge/replace) | merge |
+| `conflict_resolution` | string | ❌ | Çakışma çözümü (skip/overwrite) | skip |
+| `dry_run` | boolean | ❌ | Deneme modu | false |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_import",
+  "arguments": {
+    "file_path": "/path/to/backup.json",
+    "import_mode": "merge",
+    "conflict_resolution": "skip",
+    "dry_run": true
+  }
+}
+```
+
+---
+
+## gorev_ide_detect
+
+Sisteme kurulu IDE'leri tespit eder (VS Code, Cursor, Windsurf).
+
+### Parametreler
+
+Bu araç parametre almaz.
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_ide_detect",
+  "arguments": {}
+}
+```
+
+---
+
+## gorev_ide_install
+
+IDE'lere Gorev extension'ı kurar.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `ide_type` | string | ✅ | IDE tipi (vscode/cursor/windsurf/all) |
+
+### Örnek Kullanım
+
+```json
+{
+  "name": "gorev_ide_install",
+  "arguments": {
+    "ide_type": "all"
+  }
+}
+```
+
+---
+
+## gorev_ide_uninstall
+
+IDE'lerden Gorev extension'ı kaldırır.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama | Varsayılan |
+|-----------|-----|---------|----------|------------|
+| `ide_type` | string | ✅ | IDE tipi | - |
+| `extension_id` | string | ❌ | Extension ID | mehmetsenol.gorev-vscode |
+
+---
+
+## gorev_ide_status
+
+IDE extension kurulum durumunu kontrol eder.
+
+### Parametreler
+
+Bu araç parametre almaz.
+
+---
+
+## gorev_ide_update
+
+IDE extension'ını son sürüme günceller.
+
+### Parametreler
+
+| Parametre | Tip | Zorunlu | Açıklama |
+|-----------|-----|---------|----------|
+| `ide_type` | string | ✅ | IDE tipi (vscode/cursor/windsurf/all) |
 
 ---
 
