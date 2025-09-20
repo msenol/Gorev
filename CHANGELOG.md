@@ -5,6 +5,17 @@ All notable changes to Gorev will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Critical VS Code Extension Bug**: Fixed task dependency display issue where dependencies weren't showing in VS Code extension
+  - **MCP Server Fix**: Expanded dependency type support in `handlers.go` to include "blocker" and "depends_on" types alongside "onceki"
+  - **Parser Enhancement**: Fixed VS Code markdown parser format detection for mixed format with emoji status icons (⏳, 🔄, ✅)
+  - **Regex Update**: Updated legacy parser regex to support both emoji and text status formats
+  - **Priority Support**: Added support for priority letters (Y, O, D) in addition to Turkish text priorities
+  - **Result**: All 8 tasks now display with real UUIDs (no fallback IDs) and dependencies show correctly
+- **Localization**: Added missing i18n keys for better consistency in Turkish and English interfaces
+
 ## [v0.15.8] - 2025-09-20
 
 ### Changed

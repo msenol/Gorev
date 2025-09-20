@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 20 September 2025 | **Version:** v0.15.18
+**Last Updated:** 21 September 2025 | **Version:** v0.15.19
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,23 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.18 - OpenCode.ai Compatibility & Project Cleanup (20 Sep 2025)**
+**v0.15.19 - Critical VS Code Extension Dependency Display Fix (21 Sep 2025)**
+
+- **Critical Bug Fix**: Fixed task dependency display issue in VS Code extension
+  - **Problem**: SQL Injection task and others showed "This task has no dependencies yet" despite having dependencies in database
+  - **Root Cause**: Dual issue - MCP server only supported "onceki" dependency type, VS Code parser couldn't handle emoji status icons
+  - **MCP Server Fix**: Expanded `handlers.go:748` to support multiple dependency types (`onceki`, `blocker`, `depends_on`)
+  - **Parser Enhancement**: Fixed VS Code markdown parser format detection for mixed format with emoji status icons (⏳, 🔄, ✅)
+  - **Regex Update**: Updated legacy parser regex to support both emoji and text status formats
+  - **Priority Support**: Added support for priority letters (Y, O, D) in mixed format parsing
+  - **Result**: All 8 tasks now display with real UUIDs (no fallback IDs) and dependencies show correctly
+  - **Quality**: Rule 15 compliant permanent fix without workarounds
+
+- **Localization Enhancement**: Added missing i18n keys for Turkish and English interfaces
+  - **Turkish**: Added headers.projectList, messages.noProjects, messages.noTasks, success.activeProjectRemoved
+  - **English**: Added corresponding English translations for consistency
+
+**Previous: v0.15.18 - OpenCode.ai Compatibility & Project Cleanup (20 Sep 2025)**
 
 - **OpenCode.ai Debug Support**: Added debug logging to investigate "Expected 'id' to be a string" issue
   - **Root Cause Analysis**: Comprehensive testing confirms all ID fields are properly serialized as strings

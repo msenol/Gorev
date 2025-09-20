@@ -1,6 +1,6 @@
 # 📚 Gorev Türkçe Belgelendirme
 
-**Sürüm**: v0.15.2 | **Production Hazır** | **Rule 15 Uyumlu**
+**Sürüm**: v0.15.19 | **Production Hazır** | **Rule 15 Uyumlu**
 
 <div align="center">
 

@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Complete reference for all 48 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
+Complete reference for all 41 MCP tools implemented by the Gorev server, moved from CLAUDE.md for better organization.
 
 **Note**: `gorev_olustur` was removed in v0.11.1 - use `templateden_gorev_olustur` with template aliases instead.
 
