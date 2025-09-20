@@ -13,9 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 	"github.com/msenol/gorev/internal/constants"
@@ -58,44 +55,76 @@ func YeniVeriYoneticiWithEmbeddedMigrations(dbYolu string, migrationsFS fs.FS) (
 func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	log.Printf("DEBUG: migrateDB called with path: %s", migrationsYolu)
 
-	driver, err := sqlite3.WithInstance(vy.db, &sqlite3.Config{})
+	// Create schema_migrations table if it doesn't exist
+	_, err := vy.db.Exec(`
+		CREATE TABLE IF NOT EXISTS schema_migrations (
+			version INTEGER PRIMARY KEY,
+			dirty INTEGER NOT NULL DEFAULT 0
+		)
+	`)
 	if err != nil {
-		log.Printf("ERROR: Failed to create sqlite3 driver: %v", err)
-		return fmt.Errorf(i18n.T("error.migrationDriverFailed", map[string]interface{}{"Error": err}))
+		log.Printf("ERROR: Failed to create schema_migrations table: %v", err)
+		return fmt.Errorf(i18n.T("error.migrationTableFailed", map[string]interface{}{"Error": err}))
 	}
-	log.Printf("DEBUG: SQLite driver created successfully")
+	log.Printf("DEBUG: Schema migrations table ready")
 
-	m, err := migrate.NewWithDatabaseInstance(
-		migrationsYolu,
-		"sqlite3",
-		driver,
-	)
+	// Read migration files from directory
+	migrationFiles, err := filepath.Glob(filepath.Join(migrationsYolu, "*.up.sql"))
 	if err != nil {
-		log.Printf("ERROR: Failed to create migration instance with path '%s': %v", migrationsYolu, err)
-		return fmt.Errorf(i18n.T("error.migrationInstanceFailed", map[string]interface{}{"Error": err}))
+		log.Printf("ERROR: Failed to read migration files from %s: %v", migrationsYolu, err)
+		return fmt.Errorf(i18n.T("error.migrationFileReadFailed", map[string]interface{}{"Error": err}))
 	}
-	log.Printf("DEBUG: Migration instance created successfully")
+	log.Printf("DEBUG: Found %d migration files", len(migrationFiles))
 
-	// Hata ayıklama için versiyonları logla
-	version, dirty, err := m.Version()
-	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
-		log.Printf("WARNING: Could not get migration version before migration: %v", err)
-	} else {
-		log.Printf("DEBUG: Database version before migration: %d, dirty: %v", version, dirty)
-	}
+	for _, migrationFile := range migrationFiles {
+		// Extract version from filename (e.g., 000001_initial_schema.up.sql -> 1)
+		filename := filepath.Base(migrationFile)
+		parts := strings.Split(filename, "_")
+		if len(parts) < 2 {
+			continue
+		}
+		versionStr := parts[0]
+		version := 0
+		if _, parseErr := fmt.Sscanf(versionStr, "%d", &version); parseErr != nil {
+			log.Printf("WARNING: Could not parse version from %s: %v", filename, parseErr)
+			continue
+		}
 
-	log.Printf("DEBUG: Running migrations...")
-	err = m.Up()
-	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Printf("ERROR: Migration failed: %v", err)
-		return fmt.Errorf(i18n.T("error.migrationProcessFailed", map[string]interface{}{"Error": err}))
-	}
+		// Check if migration is already applied
+		var exists int
+		err = vy.db.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE version = ?", version).Scan(&exists)
+		if err != nil {
+			log.Printf("ERROR: Failed to check migration status for version %d: %v", version, err)
+			return fmt.Errorf(i18n.T("error.migrationCheckFailed", map[string]interface{}{"Version": version, "Error": err}))
+		}
 
-	version, dirty, err = m.Version()
-	if err != nil {
-		log.Printf("WARNING: Could not get migration version after migration: %v", err)
-	} else {
-		log.Printf("DEBUG: Database version after migration: %d, dirty: %v", version, dirty)
+		if exists > 0 {
+			log.Printf("DEBUG: Migration %d already applied, skipping", version)
+			continue
+		}
+
+		// Read and execute migration file
+		migrationSQL, err := os.ReadFile(migrationFile)
+		if err != nil {
+			log.Printf("ERROR: Failed to read migration file %s: %v", migrationFile, err)
+			return fmt.Errorf(i18n.T("error.migrationFileReadFailed", map[string]interface{}{"File": migrationFile, "Error": err}))
+		}
+
+		log.Printf("DEBUG: Applying migration %d from %s", version, filename)
+		_, err = vy.db.Exec(string(migrationSQL))
+		if err != nil {
+			log.Printf("ERROR: Failed to execute migration %d: %v", version, err)
+			return fmt.Errorf(i18n.T("error.migrationExecuteFailed", map[string]interface{}{"Version": version, "Error": err}))
+		}
+
+		// Mark migration as applied
+		_, err = vy.db.Exec("INSERT INTO schema_migrations (version) VALUES (?)", version)
+		if err != nil {
+			log.Printf("ERROR: Failed to record migration %d: %v", version, err)
+			return fmt.Errorf(i18n.T("error.migrationRecordFailed", map[string]interface{}{"Version": version, "Error": err}))
+		}
+
+		log.Printf("DEBUG: Migration %d applied successfully", version)
 	}
 
 	log.Println("SUCCESS: Database migrated successfully")
@@ -157,22 +186,9 @@ func (vy *VeriYonetici) migrateDBWithFS(migrationsFS fs.FS) error {
 	}
 	log.Printf("DEBUG: Extracted %d migration files to %s", fileCount, tempDir)
 
-	// Now use regular file-based migration
-	// golang-migrate requires proper file:// URL format on all platforms
-	// Windows needs file:/// (3 slashes) with forward slashes
-	if runtime.GOOS == "windows" {
-		// Windows: Convert backslashes to forward slashes and use file:/// prefix
-		// Example: C:\Temp\migrations -> file:///C:/Temp/migrations
-		cleanPath := filepath.ToSlash(tempDir)
-		migrationURL := "file:///" + cleanPath
-		log.Printf("DEBUG: Windows migration URL: %s", migrationURL)
-		return vy.migrateDB(migrationURL)
-	} else {
-		// Linux/macOS: Use file:// URL format
-		migrationURL := "file://" + tempDir
-		log.Printf("DEBUG: Unix migration URL: %s", migrationURL)
-		return vy.migrateDB(migrationURL)
-	}
+	// Now use regular file-based migration with the temp directory
+	log.Printf("DEBUG: Using temp directory for migrations: %s", tempDir)
+	return vy.migrateDB(tempDir)
 }
 
 // GorevListele retrieves tasks based on filters
