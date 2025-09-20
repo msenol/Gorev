@@ -302,6 +302,13 @@
     "templateUsageTip": "💡 **Kullanım:** `templateden_gorev_olustur` komutunu template ID'si ve alan değerleriyle kullanın.",
     "noIDEsDetected": "Henüz IDE algılanamadı."
   },
+  "headers.projectList": "## Proje Listesi",
+  "messages.noProjects": "Henüz proje bulunmuyor.",
+  "messages.noTasks": "Görev bulunmuyor",
+  "messages.noActiveProject": "Henüz aktif proje ayarlanmamış",
+  "messages.noTemplates": "Henüz template bulunmuyor",
+  "success.activeProjectRemoved": "✓ Aktif proje ayarı kaldırıldı.",
+  "display.noIDEsDetected": "Henüz IDE algılanamadı.",
   "common": {
     "validation": {
       "required": "{{.Param}} parametresi gerekli",

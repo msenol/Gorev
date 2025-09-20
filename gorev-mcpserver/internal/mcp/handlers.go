@@ -745,7 +745,7 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		var sonrakiler []string
 
 		for _, b := range baglantilar {
-			if b.BaglantiTip == "onceki" {
+			if b.BaglantiTip == "onceki" || b.BaglantiTip == "blocker" || b.BaglantiTip == "depends_on" {
 				if b.HedefID == id {
 					// Bu görev hedefse, kaynak önceki görevdir
 					kaynakGorev, err := h.isYonetici.GorevGetir(b.KaynakID)

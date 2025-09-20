@@ -672,5 +672,12 @@
     "searchQueryFailed": "Search query failed: {{.Error}}",
     "searchScanFailed": "Failed to read search results: {{.Error}}",
     "serverStart": "Failed to start server: {{.Error}}"
-  }
+  },
+  "headers.projectList": "## Project List",
+  "messages.noProjects": "No projects found yet.",
+  "messages.noTasks": "No tasks found yet.",
+  "messages.noActiveProject": "No active project set yet",
+  "messages.noTemplates": "No templates found yet.",
+  "success.activeProjectRemoved": "✓ Active project setting removed.",
+  "display.noIDEsDetected": "No IDEs detected yet."
 }

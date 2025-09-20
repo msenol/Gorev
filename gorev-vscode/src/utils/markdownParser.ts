@@ -116,15 +116,27 @@ export class MarkdownParser {
     static parseGorevListesi(markdown: string): Gorev[] {
         const lines = markdown.split('\n');
         
-        // Check if this is the new compact format - check for indented lines and subtasks too
-        const hasCompactFormat = lines.some(line => {
+        // Check if this is the new compact format vs mixed format
+        // Mixed format has ## headers, true compact format doesn't
+        const hasStatusIcons = lines.some(line => {
             const trimmed = line.trim();
-            return /^\[⏳\]|\[🚀\]|\[✅\]|\[🔄\]|\[✓\]/.test(trimmed) || 
+            return /^\[⏳\]|\[🚀\]|\[✅\]|\[🔄\]|\[✓\]/.test(trimmed) ||
                    /^└─\s*\[⏳\]|^└─\s*\[🚀\]|^└─\s*\[✅\]|^└─\s*\[🔄\]|^└─\s*\[✓\]/.test(trimmed);
         });
-        
-        Logger.debug('[MarkdownParser] Starting to parse tasks...');
-        Logger.debug('[MarkdownParser] Format detected:', hasCompactFormat ? 'Compact (v0.8.1+)' : 'Legacy');
+
+        const hasMixedFormatHeaders = lines.some(line =>
+            line.trim().startsWith('##')
+        );
+
+        // True compact format: has status icons but NO ## headers
+        const hasCompactFormat = hasStatusIcons && !hasMixedFormatHeaders;
+
+        Logger.info('[MarkdownParser] Format Detection Debug:');
+        Logger.info(`[MarkdownParser] - hasStatusIcons: ${hasStatusIcons}`);
+        Logger.info(`[MarkdownParser] - hasMixedFormatHeaders: ${hasMixedFormatHeaders}`);
+        Logger.info(`[MarkdownParser] - hasCompactFormat: ${hasCompactFormat}`);
+        Logger.info('[MarkdownParser] Starting to parse tasks...');
+        Logger.info('[MarkdownParser] Format detected:', hasCompactFormat ? 'Compact (v0.8.1+)' : 'Legacy');
         Logger.debug('[MarkdownParser] First 5 lines:', lines.slice(0, 5));
         Logger.debug('[MarkdownParser] Total lines:', lines.length);
         
@@ -139,7 +151,17 @@ export class MarkdownParser {
         const parentStack: { id: string, level: number }[] = [];
         let currentGorev: Partial<Gorev> | null = null;
         let descriptionLines: string[] = [];
-        
+
+        // DEBUG: Log raw markdown content for legacy parser
+        Logger.info('[MarkdownParser] LEGACY PARSER - Raw markdown first 500 chars:');
+        Logger.info(markdown.substring(0, 500));
+        Logger.info(`[MarkdownParser] LEGACY PARSER - Total characters: ${markdown.length}`);
+        Logger.info(`[MarkdownParser] LEGACY PARSER - Total lines: ${lines.length}`);
+        Logger.info('[MarkdownParser] LEGACY PARSER - First 10 lines:');
+        lines.slice(0, 10).forEach((line, idx) => {
+            Logger.info(`[MarkdownParser] Line ${idx}: "${line}"`);
+        });
+
         Logger.debug('[MarkdownParser] Total lines:', lines.length);
         
         for (let i = 0; i < lines.length; i++) {
@@ -155,9 +177,10 @@ export class MarkdownParser {
             
             // Görev satırı formatları:
             // └─ [durum] başlık (öncelik) - alt görev
-            // [durum] başlık (öncelik) - normal görev  
-            // - [durum] başlık (öncelik) - liste formatında görev
-            const taskRegex = /^(└─\s*|-\s*)?\[([^\]]+)\] (.+) \(([a-zA-ZğüşıöçĞÜŞİÖÇ]+) öncelik\)/;
+            // Support both legacy text status and new emoji status
+            // [emoji] title (priority_letter) - mixed format
+            // [text] title (öncelik) - legacy format
+            const taskRegex = /^(└─\s*)?\[(⏳|🚀|✅|✓|🔄|[^\]]+)\]\s+(.+?)\s+\(([YOD]|[a-zA-ZğüşıöçĞÜŞİÖÇ]+)\s?(öncelik)?\)$/;
             const taskMatch = trimmedLine.match(taskRegex);
             
             if (i < 10 && trimmedLine.includes('[')) {
@@ -214,7 +237,7 @@ export class MarkdownParser {
                 
                 // Yeni görev
                 // taskMatch groups: [full match, prefix (└─ or -), durum, baslik, oncelik]
-                const [, prefix, durum, baslik, oncelik] = taskMatch;
+                const [, prefix, durum, baslik, oncelik, oncelikSuffix] = taskMatch;
                 currentGorev = {
                     baslik,
                     durum: this.parseDurum(durum),
@@ -467,6 +490,11 @@ export class MarkdownParser {
                         // Try finding ID anywhere in the line
                         idMatch = detailsLine.match(/ID:([a-f0-9-]+)/);
                     }
+
+                    // DEBUG: Log ID extraction attempts
+                    Logger.info(`[MarkdownParser] Trying to extract ID from detailsLine: "${detailsLine}"`);
+                    Logger.info(`[MarkdownParser] ID match result: ${idMatch ? idMatch[1] : 'NULL'}`);
+                    Logger.info(`[MarkdownParser] Task title: "${title}"`);
                     
                     let remainingContent = detailsLine;
                     
@@ -998,7 +1026,18 @@ export class MarkdownParser {
      */
     private static parseOncelik(oncelik: string): GorevOncelik {
         const normalizedOncelik = oncelik.toLowerCase();
-        
+
+        // Handle priority letters from mixed format
+        switch (oncelik.toUpperCase()) {
+            case 'Y':
+                return GorevOncelik.Yuksek;
+            case 'O':
+                return GorevOncelik.Orta;
+            case 'D':
+                return GorevOncelik.Dusuk;
+        }
+
+        // Handle text priorities
         switch (normalizedOncelik) {
             case 'yuksek':
             case 'yüksek':

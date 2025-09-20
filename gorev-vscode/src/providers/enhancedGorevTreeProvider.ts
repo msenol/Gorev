@@ -371,7 +371,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 }
                 
                 const responseText = result.content[0].text;
-                
+
                 // Check for pagination info: "Görevler (1-100 / 147)"
                 const paginationMatch = responseText.match(/Görevler \((\d+)-(\d+) \/ (\d+)\)/);
                 if (paginationMatch) {
