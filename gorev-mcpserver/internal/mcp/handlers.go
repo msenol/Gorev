@@ -449,6 +449,13 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	if toplamGorevSayisi == 0 {
 		mesaj := i18n.T("messages.noTasks")
 		if aktifProje != nil {
+			// Debug logging for OpenCode.ai issue
+			if h.debug {
+				slog.Debug("GorevListele: Empty project case",
+					"project_id", aktifProje.ID,
+					"project_name", aktifProje.Isim,
+					"project_id_type", fmt.Sprintf("%T", aktifProje.ID))
+			}
 			mesaj = i18n.T("messages.noTasksInProject", map[string]interface{}{"Project": aktifProje.Isim})
 		}
 		return mcp.NewToolResultText(mesaj), nil

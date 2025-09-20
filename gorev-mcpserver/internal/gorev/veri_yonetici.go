@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	_ "modernc.org/sqlite"
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
+	_ "modernc.org/sqlite"
 )
 
 type VeriYonetici struct {
