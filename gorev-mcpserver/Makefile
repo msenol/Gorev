@@ -11,7 +11,7 @@ GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 # Build flags
 LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.gitCommit=$(GIT_COMMIT)"
 
-.PHONY: all build clean test run install lint fmt
+.PHONY: all build build-all clean test run install lint fmt
 
 all: clean test build
 

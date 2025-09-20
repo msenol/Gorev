@@ -1,0 +1,108 @@
+---description: Comprehensive release process for all Gorev components ---
+Execute comprehensive release process for Gorev project covering all components:
+
+## 1. Pre-release Checks
+!`make lint`
+!`make test`
+!`make test-coverage`
+!`cd gorev-vscode && npm test`
+!`cd gorev-npm && npm test`
+
+## 2. Version Management
+Check current version:!`cat VERSION`
+Verify version consistency across all components:!`cd gorev-vscode && grep -r "version" package.json`!`cd gorev-npm && grep -r "version" package.json`
+Update version numbers if needed in all package.json files and VERSION file
+
+## 3. Build All Components
+### Go Server (gorev-mcpserver)
+!`cd gorev-mcpserver && make build`
+!`cd gorev-mcpserver && make build-all-platforms`
+
+### VS Code Extension (gorev-vscode)
+!`cd gorev-vscode && npm install`
+!`cd gorev-vscode && npm run compile`
+!`cd gorev-vscode && npm run package`
+!`cd gorev-vscode && npm run lint`
+
+### NPM Package (gorev-npm)
+!`cd gorev-npm && npm install`
+!`cd gorev-npm && npm run build`
+!`cd gorev-npm && npm run lint`
+
+### Docker Images
+!`cd docker && docker build -f Dockerfile.release -t gorev:latest .`
+!`cd docker && docker-compose -f docker-compose.release.yml build`
+
+## 4. Create Release Artifacts
+!`./scripts/build-release.sh`
+Verify all binaries are created:!`ls -la release-v*/`
+Generate checksums:!`cd release-v* && sha256sum * > checksums.txt`
+Test binary functionality on local system
+
+## 5. GitHub Release Preparation
+Check git status:!`git status`
+Create and push release tag:!`git tag -a v$(cat VERSION) -m "Release v$(cat VERSION)"`!`git push origin v$(cat VERSION)`
+Generate comprehensive changelog:!`git log --oneline $(git describe --tags --abbrev=0)..HEAD`
+
+## 6. NPM Package Release
+Login to npm:!`cd gorev-npm && npm login`
+Publish npm package:!`cd gorev-npm && npm publish --access public`
+Verify npm package publication:!`npm view gorev-mcp`
+
+## 7. VS Code Extension Release
+Install vsce globally if needed:!`npm install -g @vscode/vsce`
+Publish extension:!`cd gorev-vscode && vsce publish`
+Verify extension publication in marketplace
+
+## 8. GitHub Release Creation
+Create GitHub release with:
+- All binary artifacts (gorev-linux-amd64, gorev-darwin-amd64, gorev-windows-amd64.zip)
+- Checksums file
+- Comprehensive release notes
+- Installation instructions
+- Changelog
+- Breaking changes documentation
+
+## 9. Docker Image Publishing
+Tag Docker images:!`docker tag gorev:latest gorev:$(cat VERSION)`
+Push to Docker Hub/registry:!`docker push gorev:latest`!`docker push gorev:$(cat VERSION)`
+
+## 10. Quality Assurance
+- Test installation from npm: `npm install -g gorev-mcp`
+- Test VS Code extension installation
+- Verify binary downloads from GitHub release
+- Test Docker image functionality
+- Validate all documentation links
+
+## 11. Documentation Updates
+Update version references in:
+- README.md files
+- Documentation files
+- CHANGELOG.md
+- API documentation
+- Installation guides
+
+## 12. Post-release Tasks
+- Create release announcement in Discord/community
+- Update project roadmap
+- Archive release artifacts
+- Clean up temporary files
+- Monitor for post-release issues
+- Update version to next development version
+
+## 13. Verification Checklist
+- [ ] All tests pass
+- [ ] Linting successful
+- [ ] Version numbers consistent
+- [ ] All binaries built successfully
+- [ ] Checksums generated
+- [ ] Git tag created and pushed
+- [ ] NPM package published
+- [ ] VS Code extension published
+- [ ] GitHub release created
+- [ ] Docker images pushed
+- [ ] Documentation updated
+- [ ] Installation tested
+- [ ] Release notes published
+
+Focus on any issues found during the process and provide detailed feedback on release readiness. Report any failures with specific error messages and suggested fixes.

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Build script for Gorev v0.12.0 release
+# Build script for Gorev release
 # This script builds binaries for all supported platforms
 
 set -e
 
-VERSION="v0.12.0"
+VERSION=$(cat gorev-mcpserver/VERSION)
 BUILD_DIR="release-${VERSION}"
 
 echo "🚀 Building Gorev ${VERSION} for all platforms..."
