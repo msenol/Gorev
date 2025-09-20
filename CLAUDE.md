@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 20 September 2025 | **Version:** v0.15.8
+**Last Updated:** 20 September 2025 | **Version:** v0.15.13
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,60 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.5 - NPX Embedded Migrations Fix (18 Sep 2025)**
+**v0.15.13 - Final Windows Migration Fix for NPX Package (20 Sep 2025)**
+
+- **DEFINITIVE Windows Fix**: Resolved golang-migrate library incompatibility with file:// URLs on Windows
+  - **Root Cause**: golang-migrate cannot parse file:// URLs correctly on Windows platform
+  - **Solution**: Platform-specific migration path handling - Windows uses direct filesystem paths, Unix uses file:// URLs
+  - **Implementation**: `runtime.GOOS == "windows"` conditional to bypass problematic file:// URL parsing
+  - **Result**: Windows now receives raw filesystem paths (e.g., `C:\Temp\migrations`) instead of URLs
+  - **Compatibility**: Linux/macOS continue using file:// URLs without any changes
+
+- **Technical Implementation**:
+  ```go
+  if runtime.GOOS == "windows" {
+      // Windows: Direct path without file:// prefix
+      return vy.migrateDB(tempDir)
+  } else {
+      // Linux/macOS: Use file:// URL format
+      return vy.migrateDB("file://" + tempDir)
+  }
+  ```
+
+- **Why This Works**: golang-migrate accepts both raw filesystem paths and file:// URLs, but Windows has URL parsing bugs
+
+**Previous: v0.15.12 - Windows Path Separator Fix for NPX Package (20 Sep 2025)**
+
+- **Critical Windows Fix**: Resolved Windows-specific "error.migrationFailed" issue in NPX package
+  - **Root Cause**: Windows path separators (`\`) incompatible with file:// URL scheme requiring forward slashes (`/`)
+  - **Solution**: Added proper path conversion using `filepath.ToSlash()` and Windows-specific file:// URL formatting
+  - **Windows URL Fix**: Converts `C:\Temp\migrations` → `file:///C:/Temp/migrations` for proper migration loading
+  - **Cross-Platform**: Maintains compatibility with Linux/macOS while fixing Windows functionality
+  - **Implementation**: Runtime OS detection with platform-specific URL formatting
+
+- **Technical Details**:
+  - **Path Conversion**: Uses `filepath.ToSlash()` for consistent forward slash paths
+  - **Windows URLs**: Adds triple slash (`file:///`) prefix for Windows drive letters
+  - **Runtime Detection**: `runtime.GOOS == "windows"` for platform-specific handling
+  - **Backward Compatibility**: No changes to Linux/macOS behavior
+
+**Previous: v0.15.11 - Critical NPX Package Migration Fix (20 Sep 2025)**
+
+- **Critical Bug Fix**: Resolved "error.migrationFailed" issue in NPX package initialization
+  - **Root Cause**: Missing `migrateDBWithFS()` function implementation - function was declared but not defined
+  - **Solution**: Implemented complete `migrateDBWithFS()` function that extracts embedded migrations to temporary directory
+  - **User Impact**: NPX package `init` command now works correctly without errors
+  - **Implementation**: Properly extracts embedded migrations using `fs.WalkDir()` and delegates to existing file-based migration logic
+  - **Compatibility**: Maintains full backward compatibility with filesystem-based migrations
+
+- **Function Implementation Details**:
+  - **Temporary Directory**: Creates secure temp directory for migration extraction
+  - **File Extraction**: Copies all embedded migration files to filesystem
+  - **Cleanup**: Automatic cleanup of temporary files after migration
+  - **Error Handling**: Comprehensive error handling with i18n support
+  - **Delegation**: Uses existing `migrateDB()` function for actual migration execution
+
+**Previous: v0.15.5 - NPX Embedded Migrations Fix (18 Sep 2025)**
 
 - **Critical NPX Fix**: Resolved "error.dataManagerInit" issue in NPX package environments
   - **Root Cause**: NPX package couldn't find migration files, causing database initialization failures

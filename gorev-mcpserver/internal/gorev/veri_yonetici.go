@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -54,11 +56,14 @@ func YeniVeriYoneticiWithEmbeddedMigrations(dbYolu string, migrationsFS fs.FS) (
 }
 
 func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
-	// log.Printf("Migration path: %s", migrationsYolu)
+	log.Printf("DEBUG: migrateDB called with path: %s", migrationsYolu)
+
 	driver, err := sqlite3.WithInstance(vy.db, &sqlite3.Config{})
 	if err != nil {
+		log.Printf("ERROR: Failed to create sqlite3 driver: %v", err)
 		return fmt.Errorf(i18n.T("error.migrationDriverFailed", map[string]interface{}{"Error": err}))
 	}
+	log.Printf("DEBUG: SQLite driver created successfully")
 
 	m, err := migrate.NewWithDatabaseInstance(
 		migrationsYolu,
@@ -66,35 +71,38 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 		driver,
 	)
 	if err != nil {
+		log.Printf("ERROR: Failed to create migration instance with path '%s': %v", migrationsYolu, err)
 		return fmt.Errorf(i18n.T("error.migrationInstanceFailed", map[string]interface{}{"Error": err}))
 	}
+	log.Printf("DEBUG: Migration instance created successfully")
 
 	// Hata ayıklama için versiyonları logla
-	_, _, err = m.Version()
+	version, dirty, err := m.Version()
 	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
-		// log.Printf("Migration öncesi versiyon alınamadı: %v", err)
+		log.Printf("WARNING: Could not get migration version before migration: %v", err)
 	} else {
-		// log.Printf("Migration öncesi veritabanı versiyonu: %d, dirty: %v", version, dirty)
+		log.Printf("DEBUG: Database version before migration: %d, dirty: %v", version, dirty)
 	}
 
+	log.Printf("DEBUG: Running migrations...")
 	err = m.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		// log.Printf("Migration failed: %v", err)
+		log.Printf("ERROR: Migration failed: %v", err)
 		return fmt.Errorf(i18n.T("error.migrationProcessFailed", map[string]interface{}{"Error": err}))
 	}
 
-	_, _, err = m.Version()
+	version, dirty, err = m.Version()
 	if err != nil {
-		// log.Printf("Migration sonrası versiyon alınamadı: %v", err)
+		log.Printf("WARNING: Could not get migration version after migration: %v", err)
 	} else {
-		// log.Printf("Migration sonrası veritabanı versiyonu: %d, dirty: %v", version, dirty)
+		log.Printf("DEBUG: Database version after migration: %d, dirty: %v", version, dirty)
 	}
 
-	// log.Println("Veritabanı başarıyla migrate edildi.")
+	log.Println("SUCCESS: Database migrated successfully")
 
 	// Varsayılan template'leri oluştur
 	if err := vy.VarsayilanTemplateleriOlustur(); err != nil {
-		// log.Printf("Varsayılan template'ler oluşturulurken uyarı: %v", err)
+		log.Printf("WARNING: Failed to create default templates: %v", err)
 		// Hata durumunda devam et, kritik değil
 	}
 
@@ -103,41 +111,68 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 
 // migrateDBWithFS migrates database using embedded filesystem
 func (vy *VeriYonetici) migrateDBWithFS(migrationsFS fs.FS) error {
+	log.Printf("DEBUG: migrateDBWithFS called for platform: %s", runtime.GOOS)
+
 	// Extract embedded migrations to temporary directory
 	tempDir, err := os.MkdirTemp("", "gorev-migrations-*")
 	if err != nil {
+		log.Printf("ERROR: Failed to create temp dir: %v", err)
 		return fmt.Errorf(i18n.T("error.migrationDirCreateFailed", map[string]interface{}{"Error": err}))
 	}
+	log.Printf("DEBUG: Created temp dir: %s", tempDir)
 	defer os.RemoveAll(tempDir)
 
 	// Copy all migration files from embedded FS to temp directory
+	fileCount := 0
 	err = fs.WalkDir(migrationsFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			log.Printf("ERROR: WalkDir error for %s: %v", path, err)
 			return err
 		}
 		if d.IsDir() {
+			log.Printf("DEBUG: Skipping directory: %s", path)
 			return nil
 		}
 
 		// Read file from embedded FS
 		content, err := fs.ReadFile(migrationsFS, path)
 		if err != nil {
+			log.Printf("ERROR: Failed to read embedded file %s: %v", path, err)
 			return err
 		}
 
 		// Write to temp directory
 		destPath := filepath.Join(tempDir, path)
+		log.Printf("DEBUG: Writing file %s to %s", path, destPath)
 		if err := os.WriteFile(destPath, content, 0644); err != nil {
+			log.Printf("ERROR: Failed to write file %s: %v", destPath, err)
 			return fmt.Errorf(i18n.T("error.migrationFileWriteFailed", map[string]interface{}{"Error": err}))
 		}
+		fileCount++
 		return nil
 	})
 	if err != nil {
+		log.Printf("ERROR: Failed to extract migrations: %v", err)
 		return fmt.Errorf(i18n.T("error.migrationExtractFailed", map[string]interface{}{"Error": err}))
 	}
+	log.Printf("DEBUG: Extracted %d migration files to %s", fileCount, tempDir)
 
 	// Now use regular file-based migration
-	return vy.migrateDB("file://" + tempDir)
+	// golang-migrate requires proper file:// URL format on all platforms
+	// Windows needs file:/// (3 slashes) with forward slashes
+	if runtime.GOOS == "windows" {
+		// Windows: Convert backslashes to forward slashes and use file:/// prefix
+		// Example: C:\Temp\migrations -> file:///C:/Temp/migrations
+		cleanPath := filepath.ToSlash(tempDir)
+		migrationURL := "file:///" + cleanPath
+		log.Printf("DEBUG: Windows migration URL: %s", migrationURL)
+		return vy.migrateDB(migrationURL)
+	} else {
+		// Linux/macOS: Use file:// URL format
+		migrationURL := "file://" + tempDir
+		log.Printf("DEBUG: Unix migration URL: %s", migrationURL)
+		return vy.migrateDB(migrationURL)
+	}
 }
 
 // GorevListele retrieves tasks based on filters
