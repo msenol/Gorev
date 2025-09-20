@@ -24,7 +24,7 @@ type VeriYonetici struct {
 }
 
 func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, error) {
-	db, err := sql.Open("sqlite3", dbYolu)
+	db, err := sql.Open("sqlite", dbYolu)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
 	}
@@ -39,7 +39,7 @@ func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, erro
 
 // YeniVeriYoneticiWithEmbeddedMigrations creates a new VeriYonetici with embedded migrations
 func YeniVeriYoneticiWithEmbeddedMigrations(dbYolu string, migrationsFS fs.FS) (*VeriYonetici, error) {
-	db, err := sql.Open("sqlite3", dbYolu)
+	db, err := sql.Open("sqlite", dbYolu)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
 	}
