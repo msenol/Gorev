@@ -318,17 +318,13 @@ export class RefreshManager {
         Logger.debug(`[RefreshManager] Refreshing targets: ${targetArray.join(', ')} (reasons: ${reasons.join(', ')})`);
 
         // Use setTimeout to yield control back to the event loop for better UI responsiveness
-        if (false) {
-            // requestIdleCallback is not available in Node.js context
-        } else {
-            // Use setTimeout to yield control back to the event loop
-            await new Promise<void>((resolve) => {
-                setTimeout(async () => {
-                    await this.refreshTargets(targetArray);
-                    resolve();
-                }, 0);
-            });
-        }
+        // requestIdleCallback is not available in Node.js context, so always use setTimeout
+        await new Promise<void>((resolve) => {
+            setTimeout(async () => {
+                await this.refreshTargets(targetArray);
+                resolve();
+            }, 0);
+        });
     }
 
     private async refreshTargets(targets: RefreshTarget[]): Promise<void> {
