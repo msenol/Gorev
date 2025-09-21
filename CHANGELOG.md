@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.15.22] - 2025-09-21
+
+### Fixed
+- **Critical i18n System Enhancement**: Fixed remaining untranslated keys for NPX package environments
+  - **Root Cause**: Missing `error.noArguments` and `error.parameterRequired` keys in locale files
+  - **Solution**: Added missing error keys to both Turkish and English locale files
+  - **Implementation**: Updated embedded locale system with missing keys for NPX compatibility
+  - **Fallback Enhancement**: Added fallback strings in handlers for all error keys
+  - **User Impact**: Complete i18n coverage ensures robust operation across all deployment methods
+  - **Affected Components**: MCP server, NPX package, VS Code extension
+
+### Changed
+- **Version Synchronization**: Updated all components to v0.15.22 for consistency
+  - **gorev-mcpserver**: v0.15.20 → v0.15.22
+  - **gorev-npm**: v0.15.20 → v0.15.22
+  - **gorev-vscode**: v0.15.21 → v0.15.22
+  - **VSIX Package**: Created gorev-vscode-0.15.22.vsix (325.75 KB, 147 files)
+
+## [v0.15.20] - 2025-09-21
+
+### Fixed
+- **Migration State Repair**: Fixed "table already exists" errors in NPX package environments
+  - **Root Cause**: Existing databases had tables but missing migration state records
+  - **Solution**: Added `repairMigrationStateIfNeeded()` function to auto-detect and repair migration state
+  - **Implementation**: Checks for existing core tables (projeler, gorevler, baglantilar) and reconstructs migration history
+  - **Safety**: Non-destructive repair that only adds missing migration records
+  - **User Impact**: NPX package now works seamlessly with existing databases
+
+### Added
+- **Linux ARM64 Support**: Added native binary support for ARM64 Linux platforms
+  - **New Binary**: `gorev-npm/binaries/linux-arm64/gorev` for Raspberry Pi and ARM64 servers
+  - **Cross-platform Build**: Complete multi-architecture support (Windows x64, macOS x64/ARM64, Linux x64/ARM64)
+  - **NPM Package**: Automatic platform detection and binary download
+
+### Changed
+- **Version Update**: NPM package version bumped to v0.15.20 for proper semver tracking
+
+## [v0.15.19] - 2025-09-21
+
 ### Fixed
 - **Critical VS Code Extension Bug**: Fixed task dependency display issue where dependencies weren't showing in VS Code extension
   - **MCP Server Fix**: Expanded dependency type support in `handlers.go` to include "blocker" and "depends_on" types alongside "onceki"

@@ -156,6 +156,8 @@
     "filterProfileListFailed": "filtre profilleri listelenemedi: {{.Error}}",
     "filterProfileUseFailed": "filtre profili kullanım işaretlemesi başarısız: {{.Error}}",
     "filterProfileSearchFailed": "filtre profili arama başarısız: {{.Error}}",
+    "noArguments": "Parametre belirtilmedi",
+    "parameterRequired": "{{.Param}} parametresi zorunludur",
     "ide": {
       "unsupportedType": "Desteklenmeyen IDE türü: {{.Type}}",
       "notFound": "{{.IDE}} bulunamadı",

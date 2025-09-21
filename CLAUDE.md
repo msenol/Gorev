@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 21 September 2025 | **Version:** v0.15.19
+**Last Updated:** 21 September 2025 | **Version:** v0.15.22
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,41 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.19 - Critical VS Code Extension Dependency Display Fix (21 Sep 2025)**
+**v0.15.22 - Critical i18n System Enhancement (21 Sep 2025)**
+
+- **Critical i18n System Enhancement**: Fixed remaining untranslated keys for NPX package environments
+  - **Problem**: Missing `error.noArguments` and `error.parameterRequired` keys caused raw key display in error scenarios
+  - **Root Cause**: Incomplete locale files and embedded locale system missing error keys
+  - **Solution**: Added missing error keys to both Turkish and English locale files
+  - **Implementation**: Updated embedded locale system with missing keys for NPX compatibility
+  - **Fallback Enhancement**: Added fallback strings in handlers for all error keys (lines 2389, 2502, 2651, 2731, 2837)
+  - **User Impact**: Complete i18n coverage ensures robust operation across all deployment methods
+  - **Quality**: Rule 15 compliant with comprehensive solution, no workarounds
+
+- **Version Synchronization**: Updated all components to v0.15.22 for consistency
+  - **gorev-mcpserver**: v0.15.20 → v0.15.22
+  - **gorev-npm**: v0.15.20 → v0.15.22
+  - **gorev-vscode**: v0.15.21 → v0.15.22
+  - **VSIX Package**: Created gorev-vscode-0.15.22.vsix (325.75 KB, 147 files)
+
+**Previous: v0.15.20 - Migration State Repair & Linux ARM64 Support (21 Sep 2025)**
+
+- **Migration State Repair**: Fixed migration issues in NPX package environments
+  - **Problem**: Users reported "table already exists" errors when running `npx @mehmetsenol/gorev-mcp-server@latest`
+  - **Root Cause**: Existing databases had tables but missing migration state records
+  - **Solution**: Added `repairMigrationStateIfNeeded()` function to auto-detect and repair migration state
+  - **Implementation**: Checks for existing core tables (projeler, gorevler, baglantilar) and reconstructs migration history
+  - **Safety**: Non-destructive repair that only adds missing migration records
+  - **User Impact**: NPX package now works seamlessly with existing databases
+
+- **Linux ARM64 Support**: Added native binary support for ARM64 Linux platforms
+  - **New Binary**: `gorev-npm/binaries/linux-arm64/gorev` for Raspberry Pi and ARM64 servers
+  - **Cross-platform Build**: Complete multi-architecture support (Windows x64, macOS x64/ARM64, Linux x64/ARM64)
+  - **NPM Package**: Automatic platform detection and binary download
+
+- **Version Update**: NPM package version bumped to v0.15.20 for proper semver tracking
+
+**Previous: v0.15.19 - Critical VS Code Extension Dependency Display Fix (21 Sep 2025)**
 
 - **Critical Bug Fix**: Fixed task dependency display issue in VS Code extension
   - **Problem**: SQL Injection task and others showed "This task has no dependencies yet" despite having dependencies in database

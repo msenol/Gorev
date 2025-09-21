@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 20, 2025 | **Version:** v0.15.18
+**Last Updated:** September 21, 2025 | **Version:** v0.15.22
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -79,6 +79,8 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 
 ### 🚀 NPX Easy Setup (Easiest!)
 
+> ⚠️ **Windows Users**: NPX requires Node.js installation. [Download Node.js](https://nodejs.org/) and restart your system after installation.
+
 For MCP clients, simply add to your `mcp.json` configuration:
 
 ```json
@@ -125,6 +127,33 @@ For MCP clients, simply add to your `mcp.json` configuration:
   }
 }
 ```
+
+#### 🔧 Windows NPX Troubleshooting
+
+If you get `ENOENT: spawn npx` error:
+
+1. **Check if Node.js is installed:**
+   ```cmd
+   node --version
+   npm --version
+   npx --version
+   ```
+
+2. **Install Node.js:**
+   - Download LTS version from [Node.js website](https://nodejs.org/)
+   - Check "Add to PATH" option during installation
+   - Restart your computer after installation
+
+3. **Install NPX separately (if needed):**
+   ```cmd
+   npm install -g npx
+   ```
+
+4. **Check PATH:**
+   ```cmd
+   echo %PATH%
+   ```
+   Should include Node.js paths (`C:\Program Files\nodejs\`).
 
 **For Cursor:**
 ```json

@@ -136,7 +136,9 @@
     "dbOpenFailed": "Failed to open database: {{.Error}}",
     "migrationDriverFailed": "Failed to create migration driver: {{.Error}}",
     "migrationInstanceFailed": "Failed to create migration instance: {{.Error}}",
-    "migrationProcessFailed": "Migration process failed: {{.Error}}"
+    "migrationProcessFailed": "Migration process failed: {{.Error}}",
+    "noArguments": "No arguments provided",
+    "parameterRequired": "Parameter {{.Param}} is required"
   },
   "success": {
     "activeProjectSet": "✓ Active project set: {{.Project}}",

@@ -68,8 +68,27 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	}
 	log.Printf("DEBUG: Schema migrations table ready")
 
+	// Check if database needs migration state repair
+	if err := vy.repairMigrationStateIfNeeded(); err != nil {
+		log.Printf("WARNING: Migration state repair failed: %v", err)
+		// Continue with normal migration process
+	}
+
+	// Parse migration path and remove file:// prefix if present
+	migrationsPath := migrationsYolu
+	if strings.HasPrefix(migrationsPath, "file://") {
+		migrationsPath = strings.TrimPrefix(migrationsPath, "file://")
+		// Make relative paths absolute
+		if !filepath.IsAbs(migrationsPath) {
+			if abs, err := filepath.Abs(migrationsPath); err == nil {
+				migrationsPath = abs
+			}
+		}
+	}
+	log.Printf("DEBUG: Using filesystem path: %s", migrationsPath)
+
 	// Read migration files from directory
-	migrationFiles, err := filepath.Glob(filepath.Join(migrationsYolu, "*.up.sql"))
+	migrationFiles, err := filepath.Glob(filepath.Join(migrationsPath, "*.up.sql"))
 	if err != nil {
 		log.Printf("ERROR: Failed to read migration files from %s: %v", migrationsYolu, err)
 		return fmt.Errorf(i18n.T("error.migrationFileReadFailed", map[string]interface{}{"Error": err}))
@@ -1471,4 +1490,103 @@ func (vy *VeriYonetici) DosyaYoluGorevleriGetir(path string) ([]string, error) {
 	// This would need proper implementation with a file_paths table
 	// For now, return empty slice as a placeholder
 	return []string{}, nil
+}
+
+// repairMigrationStateIfNeeded checks if existing tables exist but migration state is missing
+// and repairs the migration state to prevent "table already exists" errors
+func (vy *VeriYonetici) repairMigrationStateIfNeeded() error {
+	log.Printf("DEBUG: Checking if migration state repair is needed")
+
+	// Check if there are any migrations recorded
+	var migrationCount int
+	err := vy.db.QueryRow("SELECT COUNT(*) FROM schema_migrations").Scan(&migrationCount)
+	if err != nil {
+		log.Printf("DEBUG: Could not check migration count: %v", err)
+		return nil // Not critical, continue
+	}
+
+	// If we have migrations recorded, no repair needed
+	if migrationCount > 0 {
+		log.Printf("DEBUG: Found %d recorded migrations, no repair needed", migrationCount)
+		return nil
+	}
+
+	log.Printf("DEBUG: No migrations recorded, checking for existing tables")
+
+	// Check if core tables exist (indicating migrations were run before)
+	tables := []string{"projeler", "gorevler", "baglantilar"}
+	tablesExist := 0
+
+	for _, table := range tables {
+		var exists int
+		query := "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?"
+		err := vy.db.QueryRow(query, table).Scan(&exists)
+		if err == nil && exists > 0 {
+			tablesExist++
+			log.Printf("DEBUG: Table %s exists", table)
+		}
+	}
+
+	// If most core tables exist, repair migration state
+	if tablesExist >= 2 {
+		log.Printf("DEBUG: Found %d core tables, repairing migration state", tablesExist)
+		return vy.repairMigrationState(tablesExist)
+	}
+
+	log.Printf("DEBUG: Only %d core tables exist, normal migration will proceed", tablesExist)
+	return nil
+}
+
+// repairMigrationState adds migration records for already applied migrations
+func (vy *VeriYonetici) repairMigrationState(tablesExist int) error {
+	log.Printf("DEBUG: Starting migration state repair")
+
+	// Define expected migrations based on table existence
+	migrations := []struct {
+		version int
+		tables  []string
+	}{
+		{1, []string{"projeler", "gorevler", "baglantilar", "etiketler", "gorev_etiketleri"}},
+		{2, []string{"gorevler"}}, // due_date column
+		{3, []string{"etiketler", "gorev_etiketleri"}},
+		{4, []string{"gorev_templateleri"}},
+		{5, []string{"gorevler"}}, // parent_id column
+		{6, []string{"ai_interactions", "ai_context", "aktif_proje"}},
+		{7, []string{"baglantilar"}}, // indexes
+		{8, []string{"file_watches", "file_changes"}},
+		{9, []string{"gorev_templateleri"}}, // alias column
+		{10, []string{"gorevler_fts", "filter_profiles", "search_history"}},
+	}
+
+	for _, migration := range migrations {
+		// Check if tables for this migration exist
+		allTablesExist := true
+		for _, table := range migration.tables {
+			var exists int
+			query := "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?"
+			err := vy.db.QueryRow(query, table).Scan(&exists)
+			if err != nil || exists == 0 {
+				allTablesExist = false
+				break
+			}
+		}
+
+		// Special handling for migration 1 - if core tables exist, mark it as applied
+		if migration.version == 1 && tablesExist >= 2 {
+			allTablesExist = true
+		}
+
+		if allTablesExist {
+			// Mark this migration as applied
+			_, err := vy.db.Exec("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)", migration.version)
+			if err != nil {
+				log.Printf("WARNING: Failed to record migration %d during repair: %v", migration.version, err)
+			} else {
+				log.Printf("DEBUG: Marked migration %d as applied during repair", migration.version)
+			}
+		}
+	}
+
+	log.Printf("DEBUG: Migration state repair completed")
+	return nil
 }

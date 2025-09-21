@@ -483,11 +483,22 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 			min(offset+limit, toplamRootGorevSayisi),
 			toplamRootGorevSayisi)
 	} else {
-		metin = i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi}) + "\n"
+		// Use i18n with fallback to prevent raw key return
+		taskListMsg := i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi})
+		if taskListMsg == "messages.taskListCount" {
+			// Fallback to hardcoded string if i18n fails
+			taskListMsg = fmt.Sprintf("Toplam %d görev", toplamRootGorevSayisi)
+		}
+		metin = taskListMsg + "\n"
 	}
 
 	if aktifProje != nil && !tumProjeler {
-		metin += i18n.T("messages.projectHeader", map[string]interface{}{"Name": aktifProje.Isim}) + "\n"
+		projectHeaderMsg := i18n.T("messages.projectHeader", map[string]interface{}{"Name": aktifProje.Isim})
+		if projectHeaderMsg == "messages.projectHeader" {
+			// Fallback to hardcoded string if i18n fails
+			projectHeaderMsg = fmt.Sprintf("=== %s ===", aktifProje.Isim)
+		}
+		metin += projectHeaderMsg + "\n"
 	}
 	metin += "\n"
 
@@ -520,7 +531,13 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 
 		if estimatedSize+gorevSize > maxResponseSize && len(gorevlerToShow) > 0 {
 			// Boyut aşılacak, daha fazla görev ekleme
-			metin += "\n" + i18n.T("messages.sizeWarning", map[string]interface{}{"Count": len(paginatedKokGorevler) - len(gorevlerToShow)}) + "\n"
+			remainingCount := len(paginatedKokGorevler) - len(gorevlerToShow)
+			sizeWarningMsg := i18n.T("messages.sizeWarning", map[string]interface{}{"Count": remainingCount})
+			if sizeWarningMsg == "messages.sizeWarning" {
+				// Fallback to hardcoded string if i18n fails
+				sizeWarningMsg = fmt.Sprintf("⚠️ %d görev daha var (sayfalama ile sınırlandı)", remainingCount)
+			}
+			metin += "\n" + sizeWarningMsg + "\n"
 			break
 		}
 		estimatedSize += gorevSize
@@ -2369,7 +2386,11 @@ func (h *Handlers) GorevExport(params map[string]interface{}) (*mcp.CallToolResu
 
 	// Parse parameters
 	if params == nil {
-		return mcp.NewToolResultError(i18n.T("error.noArguments", nil)), nil
+		noArgsMsg := i18n.T("error.noArguments", nil)
+		if noArgsMsg == "error.noArguments" {
+			noArgsMsg = "No arguments provided"
+		}
+		return mcp.NewToolResultError(noArgsMsg), nil
 	}
 
 	// Extract parameters
@@ -2478,7 +2499,11 @@ func (h *Handlers) GorevImport(params map[string]interface{}) (*mcp.CallToolResu
 
 	// Parse parameters
 	if params == nil {
-		return mcp.NewToolResultError(i18n.T("error.noArguments", nil)), nil
+		noArgsMsg := i18n.T("error.noArguments", nil)
+		if noArgsMsg == "error.noArguments" {
+			noArgsMsg = "No arguments provided"
+		}
+		return mcp.NewToolResultError(noArgsMsg), nil
 	}
 
 	// Extract parameters
@@ -2623,7 +2648,11 @@ func (h *Handlers) IDEInstallExtension(params map[string]interface{}) (*mcp.Call
 	// Parse parameters
 	ideType, exists := params["ide_type"].(string)
 	if !exists {
-		return nil, fmt.Errorf(i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"}))
+		paramRequiredMsg := i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"})
+		if paramRequiredMsg == "error.parameterRequired" {
+			paramRequiredMsg = "Parameter ide_type is required"
+		}
+		return nil, fmt.Errorf(paramRequiredMsg)
 	}
 
 	installToAll := false
@@ -2699,7 +2728,11 @@ func (h *Handlers) IDEUninstallExtension(params map[string]interface{}) (*mcp.Ca
 	// Parse parameters
 	ideType, exists := params["ide_type"].(string)
 	if !exists {
-		return nil, fmt.Errorf(i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"}))
+		paramRequiredMsg := i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"})
+		if paramRequiredMsg == "error.parameterRequired" {
+			paramRequiredMsg = "Parameter ide_type is required"
+		}
+		return nil, fmt.Errorf(paramRequiredMsg)
 	}
 
 	extensionID, exists := params["extension_id"].(string)
@@ -2801,7 +2834,11 @@ func (h *Handlers) IDEUpdateExtension(params map[string]interface{}) (*mcp.CallT
 	// Parse parameters
 	ideType, exists := params["ide_type"].(string)
 	if !exists {
-		return nil, fmt.Errorf(i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"}))
+		paramRequiredMsg := i18n.T("error.parameterRequired", map[string]interface{}{"Param": "ide_type"})
+		if paramRequiredMsg == "error.parameterRequired" {
+			paramRequiredMsg = "Parameter ide_type is required"
+		}
+		return nil, fmt.Errorf(paramRequiredMsg)
 	}
 
 	updateAll := false

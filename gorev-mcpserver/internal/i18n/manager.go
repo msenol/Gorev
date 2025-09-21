@@ -19,15 +19,24 @@ var globalManager *Manager
 
 // Initialize sets up the i18n system with the specified language
 func Initialize(lang string) error {
+	// Try embedded locales first for better reliability
+	err := initializeWithEmbedded(lang)
+	if err == nil {
+		return nil
+	}
+
+	// Fallback to original initialization for backward compatibility
 	bundle := i18n.NewBundle(language.Turkish) // Default language is Turkish
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+
+	loadSuccess := false
 
 	// Load Turkish translations (default)
 	trPath := getLocaleFilePath("tr.json")
 	if _, err := os.Stat(trPath); err == nil {
 		_, err = bundle.LoadMessageFile(trPath)
-		if err != nil {
-			return fmt.Errorf("failed to load Turkish translations: %w", err)
+		if err == nil {
+			loadSuccess = true
 		}
 	}
 
@@ -35,9 +44,13 @@ func Initialize(lang string) error {
 	enPath := getLocaleFilePath("en.json")
 	if _, err := os.Stat(enPath); err == nil {
 		_, err = bundle.LoadMessageFile(enPath)
-		if err != nil {
-			return fmt.Errorf("failed to load English translations: %w", err)
+		if err == nil {
+			loadSuccess = true
 		}
+	}
+
+	if !loadSuccess {
+		return fmt.Errorf("failed to load any translations from filesystem and embedded fallback failed: %w", err)
 	}
 
 	// Create localizer for the specified language with Turkish fallback

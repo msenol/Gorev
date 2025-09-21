@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 21, 2025 | **Version:** v0.15.19
+**Last Updated:** September 21, 2025 | **Version:** v0.15.22
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -94,6 +94,8 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 
 ### 🚀 NPX ile Kolay Kurulum (En Kolay!)
 
+> ⚠️ **Windows Kullanıcıları**: NPX kullanımı için Node.js kurulumu gereklidir. [Node.js indirin](https://nodejs.org/) ve yükledikten sonra sistemi yeniden başlatın.
+
 MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
 
 ```json
@@ -140,6 +142,33 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
   }
 }
 ```
+
+#### 🔧 Windows NPX Kurulum Sorunu Giderme
+
+Eğer `ENOENT: spawn npx` hatası alıyorsanız:
+
+1. **Node.js kurulu mu kontrol edin:**
+   ```cmd
+   node --version
+   npm --version
+   npx --version
+   ```
+
+2. **Node.js kurulumunu yapın:**
+   - [Node.js websitesinden](https://nodejs.org/) LTS sürümü indirin
+   - Installer'ı çalıştırırken "Add to PATH" seçeneğini işaretleyin
+   - Kurulum sonrası bilgisayarı yeniden başlatın
+
+3. **NPX ayrı kurulumu (gerekirse):**
+   ```cmd
+   npm install -g npx
+   ```
+
+4. **PATH kontrolü:**
+   ```cmd
+   echo %PATH%
+   ```
+   Node.js paths (`C:\Program Files\nodejs\`) görünmeli.
 
 ### 🔧 Geleneksel Kurulum (Otomatik)
 
