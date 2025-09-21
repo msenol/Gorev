@@ -85,3 +85,6 @@ gorev-mcpserver/artifacts/
 code_search_index/
 .sequential-thoughts/
 
+# NPM package binaries - auto-generated during release
+gorev-npm/binaries/
+
