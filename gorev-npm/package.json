@@ -1,6 +1,6 @@
 {
   "name": "@mehmetsenol/gorev-mcp-server",
-  "version": "0.15.18",
+  "version": "0.15.22",
   "description": "Gorev MCP Server - Task management for AI assistants via Model Context Protocol (MCP)",
   "main": "index.js",
   "bin": {
