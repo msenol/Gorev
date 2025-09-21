@@ -475,19 +475,19 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	metin := ""
 
 	// Kompakt başlık ve pagination bilgisi
-	// NOT: Artık sadece root görev sayısını gösteriyoruz
+	// FIX: Tüm görev sayısını göster (root + subtasks)
 	toplamRootGorevSayisi := len(kokGorevler)
 	if toplamRootGorevSayisi > limit || offset > 0 {
 		metin = fmt.Sprintf("Görevler (%d-%d / %d)\n",
 			offset+1,
 			min(offset+limit, toplamRootGorevSayisi),
-			toplamRootGorevSayisi)
+			toplamGorevSayisi) // FIX: Total task count instead of root only
 	} else {
 		// Use i18n with fallback to prevent raw key return
-		taskListMsg := i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi})
+		taskListMsg := i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamGorevSayisi}) // FIX: Total task count
 		if taskListMsg == "messages.taskListCount" {
 			// Fallback to hardcoded string if i18n fails
-			taskListMsg = fmt.Sprintf("Toplam %d görev", toplamRootGorevSayisi)
+			taskListMsg = fmt.Sprintf("Toplam %d görev", toplamGorevSayisi) // FIX: Total task count
 		}
 		metin = taskListMsg + "\n"
 	}

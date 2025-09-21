@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.15.23] - 2025-09-22
+
+### Fixed
+- **Critical Task Listing Bug**: Fixed incorrect total task count in `gorev_listele` MCP handler
+  - **Problem**: API showed 18 tasks instead of actual 20 tasks in database
+  - **Root Cause**: Pagination logic only counted root tasks (parent_id empty), excluding subtasks
+  - **Solution**: Updated handlers.go to use `toplamGorevSayisi` (all tasks) instead of `toplamRootGorevSayisi`
+  - **Changed Lines**: handlers.go:484, 487, 490 - fixed task count calculations
+  - **User Impact**: API now correctly displays total task count including subtasks
+  - **Affected Components**: MCP server `gorev_listele` handler
+
 ## [v0.15.22] - 2025-09-21
 
 ### Fixed

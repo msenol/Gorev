@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 21 September 2025 | **Version:** v0.15.22
+**Last Updated:** 22 September 2025 | **Version:** v0.15.23
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,17 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.22 - Critical i18n System Enhancement (21 Sep 2025)**
+**v0.15.23 - Task Listing Pagination Bug Fix (22 Sep 2025)**
+
+- **Critical Bug Fix**: Fixed task listing pagination calculation in MCP server
+  - **Problem**: `gorev_listele` API showed incorrect total task count (18 instead of 20 tasks)
+  - **Root Cause**: GorevListele handler was only counting root tasks (parent_id empty), excluding subtasks
+  - **Solution**: Updated pagination logic to use `toplamGorevSayisi` (all tasks) instead of `toplamRootGorevSayisi` (root only)
+  - **Implementation**: Fixed 3 instances in handlers.go lines 484, 487, 490
+  - **User Impact**: API now displays correct total task count including all tasks and subtasks
+  - **Quality**: Rule 15 compliant permanent fix without workarounds
+
+**Previous: v0.15.22 - Critical i18n System Enhancement (21 Sep 2025)**
 
 - **Critical i18n System Enhancement**: Fixed remaining untranslated keys for NPX package environments
   - **Problem**: Missing `error.noArguments` and `error.parameterRequired` keys caused raw key display in error scenarios
