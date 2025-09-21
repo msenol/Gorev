@@ -400,6 +400,34 @@ export class RefreshManager {
     }
 
     /**
+     * Clear all provider caches to force fresh data load
+     */
+    clearAllCaches(): void {
+        Logger.info('[RefreshManager] Clearing all provider caches');
+
+        // Clear any internal caches
+        this.clearPendingRequests();
+
+        // Force all providers to clear their caches if they have any
+        this.providers.forEach((providers, target) => {
+            Logger.debug(`[RefreshManager] Clearing cache for target: ${target}`);
+            providers.forEach(provider => {
+                // If provider has a cache clearing method, call it
+                if ('clearCache' in provider && typeof provider.clearCache === 'function') {
+                    try {
+                        (provider as any).clearCache();
+                        Logger.debug('[RefreshManager] Provider cache cleared successfully');
+                    } catch (error) {
+                        Logger.warn('[RefreshManager] Failed to clear provider cache:', error);
+                    }
+                }
+            });
+        });
+
+        Logger.info('[RefreshManager] All caches cleared');
+    }
+
+    /**
      * Dispose and cleanup
      */
     dispose(): void {

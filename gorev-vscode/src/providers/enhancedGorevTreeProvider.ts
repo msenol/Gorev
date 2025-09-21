@@ -100,6 +100,18 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     }
 
     /**
+     * Clear all internal caches
+     */
+    clearCache(): void {
+        Logger.info('[EnhancedGorevTreeProvider] Clearing all caches');
+        this.treeDataCache.clear();
+        this.expansionStateCache.clear();
+        this.previousTasksHash = '';
+        this.previousProjectsHash = '';
+        Logger.debug('[EnhancedGorevTreeProvider] All caches cleared');
+    }
+
+    /**
      * TreeView konfigürasyonunu yükler
      */
     private loadConfiguration(): void {
@@ -185,9 +197,30 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 this.config.sorting, 
                 this.config.sortAscending
             );
-            // Show all tasks (temporarily disable root filtering due to subtask hierarchy issues)
-            const rootTasks = sortedTasks; // TODO: Fix subtask hierarchy display
-            return rootTasks.map(task => new TaskTreeViewItem(task, this.selection));
+            // Apply proper hierarchy handling for flat view too
+            const allTaskIds = new Set(sortedTasks.map(t => t.id));
+            const rootTasks = sortedTasks.filter(task => !task.parent_id);
+            const orphanedSubtasks = sortedTasks.filter(task =>
+                task.parent_id && !allTaskIds.has(task.parent_id)
+            );
+
+            Logger.debug(`[EnhancedGorevTreeProvider] Flat view: ${sortedTasks.length} total, ${rootTasks.length} root, ${orphanedSubtasks.length} orphaned`);
+
+            // Combine root tasks and orphaned subtasks to prevent task loss
+            const visibleTasks = [...rootTasks, ...orphanedSubtasks];
+
+            if (sortedTasks.length > 0 && visibleTasks.length === 0) {
+                Logger.warn(`[EnhancedGorevTreeProvider] No visible tasks in flat view after hierarchy filtering!`);
+                Logger.warn(`[EnhancedGorevTreeProvider] Sample tasks:`, sortedTasks.slice(0, 3).map(t => ({
+                    id: t.id,
+                    baslik: t.baslik,
+                    parent_id: t.parent_id
+                })));
+                // Show all tasks to prevent complete loss of visibility
+                return sortedTasks.map(task => new TaskTreeViewItem(task, this.selection));
+            }
+
+            return visibleTasks.map(task => new TaskTreeViewItem(task, this.selection));
         }
 
         // Görevleri grupla
@@ -451,6 +484,26 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             
             // IMPORTANT: Set filtered tasks after loading with duplicate removal
             this.filteredTasks = this.removeDuplicateTasks([...this.tasks]);
+
+            // DEBUG: Log detailed task information
+            Logger.info(`[EnhancedGorevTreeProvider] FINAL TASK ANALYSIS:`);
+            Logger.info(`[EnhancedGorevTreeProvider] - Raw tasks loaded: ${this.tasks.length}`);
+            Logger.info(`[EnhancedGorevTreeProvider] - Filtered tasks after dedup: ${this.filteredTasks.length}`);
+            Logger.info(`[EnhancedGorevTreeProvider] - Task titles loaded:`);
+            this.tasks.forEach((task, idx) => {
+                Logger.info(`[EnhancedGorevTreeProvider]   ${idx + 1}. "${task.baslik}" (ID: ${task.id}, parent: ${task.parent_id || 'none'})`);
+            });
+
+            // Check if we have the missing tasks
+            const expectedMissingTasks = ['T001: Project Structure Setup', 'T002: Initialize Rust Workspace', 'T003: Initialize TypeScript Project', 'T009: Contract Test - search_code Tool'];
+            expectedMissingTasks.forEach(title => {
+                const found = this.tasks.find(t => t.baslik?.includes(title) || t.baslik?.includes(title.split(':')[0]));
+                if (found) {
+                    Logger.info(`[EnhancedGorevTreeProvider] ✅ Found expected task: "${found.baslik}" (ID: ${found.id})`);
+                } else {
+                    Logger.warn(`[EnhancedGorevTreeProvider] ❌ Missing expected task: "${title}"`);
+                }
+            });
             Logger.debug(`[EnhancedGorevTreeProvider] Filtered ${this.tasks.length} tasks to ${this.filteredTasks.length} after duplicate removal`);
             // Tasks filtered and ready
         } catch (error) {
@@ -645,16 +698,6 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         }
     }
 
-    /**
-     * Clear all caches and force complete rebuild
-     */
-    clearCache(): void {
-        this.treeDataCache.clear();
-        this.expansionStateCache.clear();
-        this.previousTasksHash = '';
-        this.previousProjectsHash = '';
-        Logger.debug('[EnhancedGorevTreeProvider] All caches cleared');
-    }
 
     /**
      * Get cache statistics for debugging

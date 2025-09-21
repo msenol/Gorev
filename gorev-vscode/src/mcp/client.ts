@@ -41,16 +41,23 @@ export class MCPClient extends EventEmitter {
     let args: string[];
 
     if (serverMode === 'npx') {
-      command = 'npx';
-      args = ['@mehmetsenol/gorev-mcp-server@latest', 'serve'];
-      Logger.info('Connecting to MCP server via NPX: npx @mehmetsenol/gorev-mcp-server@latest serve');
+      // Windows needs cmd wrapper, others can use npx directly
+      if (process.platform === 'win32') {
+        command = 'cmd';
+        args = ['/c', 'npx', '-y', '@mehmetsenol/gorev-mcp-server@latest'];
+        Logger.info('Connecting to MCP server via NPX (Windows): cmd /c npx -y @mehmetsenol/gorev-mcp-server@latest');
+      } else {
+        command = 'npx';
+        args = ['-y', '@mehmetsenol/gorev-mcp-server@latest'];
+        Logger.info('Connecting to MCP server via NPX: npx -y @mehmetsenol/gorev-mcp-server@latest');
+      }
     } else {
       // Binary mode
       if (!serverPath) {
         throw new Error('Server path is required for binary mode');
       }
       command = serverPath;
-      args = ['serve'];
+      args = []; // Remove 'serve' argument - binary runs in MCP mode by default
       Logger.info(`Connecting to MCP server at: ${serverPath}`);
     }
 
@@ -116,7 +123,7 @@ export class MCPClient extends EventEmitter {
       // Spawn the MCP server process
       const spawnOptions: any = {
         stdio: ['pipe', 'pipe', 'pipe'],
-        shell: false,
+        shell: process.platform === 'win32' && serverMode === 'npx', // Use shell on Windows for cmd wrapper
         env: env,
       };
       // Set working directory for NPX or binary mode
@@ -190,10 +197,29 @@ export class MCPClient extends EventEmitter {
       throw new Error('Not connected to MCP server');
     }
 
+    // DEBUG: Log tool call for debugging
+    Logger.info(`[MCPClient] Calling tool: ${name} with params:`, params);
+
     const result = await this.sendRequest('tools/call', {
       name,
       arguments: params || {},
     } as MCPToolCallParams);
+
+    // DEBUG: Log response for gorev_listele specifically
+    if (name === 'gorev_listele') {
+      Logger.info(`[MCPClient] gorev_listele RESPONSE:`);
+      Logger.info(`[MCPClient] - Response type: ${typeof result}`);
+      Logger.info(`[MCPClient] - Response keys:`, Object.keys(result || {}));
+      if (result && result.content && Array.isArray(result.content)) {
+        Logger.info(`[MCPClient] - Content array length: ${result.content.length}`);
+        result.content.forEach((content: any, idx: number) => {
+          if (content.type === 'text') {
+            Logger.info(`[MCPClient] - Content ${idx} text length: ${content.text?.length}`);
+            Logger.info(`[MCPClient] - Content ${idx} first 500 chars:`, content.text?.substring(0, 500));
+          }
+        });
+      }
+    }
 
     return result as MCPToolResult;
   }

@@ -397,6 +397,15 @@ export class MarkdownParser {
         
         Logger.debug('[MarkdownParser] Parsing compact format with hierarchy...');
         Logger.debug('[MarkdownParser] Total lines to parse:', lines.length);
+
+        // DEBUG: Log raw markdown for analysis
+        Logger.info('[MarkdownParser] COMPACT PARSER - Raw markdown first 1000 chars:');
+        Logger.info(markdown.substring(0, 1000));
+        Logger.info(`[MarkdownParser] COMPACT PARSER - Total characters: ${markdown.length}`);
+        Logger.info('[MarkdownParser] COMPACT PARSER - First 20 lines:');
+        lines.slice(0, 20).forEach((line, idx) => {
+            Logger.info(`[MarkdownParser] Line ${idx}: "${line}"`);
+        });
         
         while (i < lines.length) {
             const line = lines[i];
@@ -731,7 +740,17 @@ export class MarkdownParser {
             Logger.warn('[MarkdownParser] No tasks were parsed! First 10 lines of markdown:');
             lines.slice(0, 10).forEach((line, idx) => Logger.debug(`  ${idx}: ${line}`));
         }
-        
+
+        // DEBUG: Log parsing results
+        Logger.info(`[MarkdownParser] COMPACT PARSER RESULTS:`);
+        Logger.info(`[MarkdownParser] - Total tasks parsed: ${gorevler.length}`);
+        Logger.info(`[MarkdownParser] - Seen task IDs: ${seenTaskIds.size}`);
+        Logger.info(`[MarkdownParser] - Tasks by title:`);
+        gorevler.forEach((task, idx) => {
+            Logger.info(`[MarkdownParser]   ${idx + 1}. "${task.baslik}" (ID: ${task.id})`);
+        });
+        Logger.info(`[MarkdownParser] - Duplicate checks: Seen IDs:`, Array.from(seenTaskIds));
+
         // Return all tasks from the array (which should include all tasks regardless of hierarchy)
         return gorevler;
     }
