@@ -10,7 +10,29 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.23 - Task Listing Pagination Bug Fix (22 Sep 2025)**
+**v0.15.23+ - Critical Database Compatibility & MCP Tools Fix (22 Sep 2025)**
+
+- **Database Compatibility Enhancement**: Fixed new database version compatibility issues
+  - **Advanced Search Fix**: Resolved SearchEngine connection errors with proper database connection
+    - **Problem**: `gorev_search_advanced` tools failed with connection errors on new database versions
+    - **Root Cause**: SearchEngine created with `nil` database connection in handlers.go:3024
+    - **Solution**: Added proper DB connection via `h.isYonetici.VeriYonetici().GetDB()`
+    - **Interface Enhancement**: Added `GetDB() (*sql.DB, error)` to VeriYoneticiInterface
+  - **IDE Management Tools Activation**: Connected registered IDE tools to MCP handlers
+    - **Problem**: 5 IDE tools registered but not callable (gorev_ide_detect, install, uninstall, status, update)
+    - **Root Cause**: Missing switch cases in CallTool() method
+    - **Solution**: Added all 5 IDE tool cases to handlers.go:1972-1981
+  - **Tool Name Compatibility**: Fixed aktif_proje_ayarla tool name mismatch
+    - **Problem**: Tool registered as `aktif_proje_ayarla` but CallTool used `proje_aktif_yap`
+    - **Solution**: Added backward-compatible alias case for `aktif_proje_ayarla`
+  - **Result**: Advanced search now works in 27ms, IDE tools functional, 100% MCP tool compatibility
+
+- **VS Code Extension Stability**: Enhanced performance and eliminated infinite loops
+  - **Auto-refresh Disabled**: Changed default `gorev.refreshInterval` from 300s → 0 (disabled)
+  - **Infinite Loop Protection**: Added safety checks in enhancedGorevTreeProvider.ts
+  - **User Impact**: Eliminated continuous logging and connection loop issues
+
+**Previous: v0.15.23 - Task Listing Pagination Bug Fix (22 Sep 2025)**
 
 - **Critical Bug Fix**: Fixed task listing pagination calculation in MCP server
   - **Problem**: `gorev_listele` API showed incorrect total task count (18 instead of 20 tasks)
