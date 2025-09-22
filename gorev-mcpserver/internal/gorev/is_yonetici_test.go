@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"database/sql"
 	"errors"
 	"strings"
 	"testing"
@@ -562,6 +563,12 @@ func (m *MockVeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (
 		result[id] = count
 	}
 	return result, nil
+}
+
+func (m *MockVeriYonetici) GetDB() (*sql.DB, error) {
+	// Return a mock DB connection or nil for testing
+	// In real tests that need DB access, this should be mocked appropriately
+	return nil, nil
 }
 
 // Tests

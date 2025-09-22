@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"testing"
@@ -382,6 +383,11 @@ func (m *MockVeriYoneticiAI) GorevOlustur(params map[string]interface{}) (string
 func (m *MockVeriYoneticiAI) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
 	args := m.Called(taskID)
 	return args.Get(0).([]*Gorev), args.Error(1)
+}
+
+func (m *MockVeriYoneticiAI) GetDB() (*sql.DB, error) {
+	args := m.Called()
+	return args.Get(0).(*sql.DB), args.Error(1)
 }
 
 // TestSetActiveTask tests the SetActiveTask functionality

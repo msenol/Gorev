@@ -1,6 +1,9 @@
 package gorev
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 // VeriYoneticiInterface defines the data access interface
 type VeriYoneticiInterface interface {
@@ -59,6 +62,7 @@ type VeriYoneticiInterface interface {
 	GorevListele(filters map[string]interface{}) ([]*Gorev, error)
 	GorevOlustur(params map[string]interface{}) (string, error)
 	GorevBagimlilikGetir(taskID string) ([]*Gorev, error)
+	GetDB() (*sql.DB, error)
 
 	Kapat() error
 }

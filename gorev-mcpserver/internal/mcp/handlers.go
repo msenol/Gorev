@@ -478,9 +478,24 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	// FIX: Tüm görev sayısını göster (root + subtasks)
 	toplamRootGorevSayisi := len(kokGorevler)
 	if toplamRootGorevSayisi > limit || offset > 0 {
+		// Check if offset is beyond available data
+		if offset >= toplamRootGorevSayisi {
+			// No data available at this offset - return empty result
+			mesaj := i18n.T("messages.noMoreTasks")
+			if mesaj == "messages.noMoreTasks" {
+				mesaj = "Daha fazla görev yok"
+			}
+			return mcp.NewToolResultText(mesaj), nil
+		}
+
+		// FIX: Pagination end calculation düzeltildi - root görev sayısına göre hesaplama
+		actualEnd := offset + limit
+		if actualEnd > toplamRootGorevSayisi {
+			actualEnd = toplamRootGorevSayisi
+		}
 		metin = fmt.Sprintf("Görevler (%d-%d / %d)\n",
 			offset+1,
-			min(offset+limit, toplamRootGorevSayisi),
+			actualEnd,
 			toplamGorevSayisi) // FIX: Total task count instead of root only
 	} else {
 		// Use i18n with fallback to prevent raw key return
@@ -1902,6 +1917,8 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.ProjeGorevleri(params)
 	case "proje_aktif_yap":
 		return h.AktifProjeAyarla(params)
+	case "aktif_proje_ayarla":
+		return h.AktifProjeAyarla(params)
 	case "aktif_proje_goster":
 		return h.AktifProjeGoster(params)
 	case "aktif_proje_kaldir":
@@ -1954,6 +1971,16 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.GorevExport(params)
 	case "gorev_import":
 		return h.GorevImport(params)
+	case "gorev_ide_detect":
+		return h.IDEDetect(params)
+	case "gorev_ide_install":
+		return h.IDEInstallExtension(params)
+	case "gorev_ide_uninstall":
+		return h.IDEUninstallExtension(params)
+	case "gorev_ide_status":
+		return h.IDEExtensionStatus(params)
+	case "gorev_ide_update":
+		return h.IDEUpdateExtension(params)
 	default:
 		return mcp.NewToolResultError(fmt.Sprintf("bilinmeyen araç: %s", toolName)), nil
 	}
@@ -3006,7 +3033,11 @@ func (h *Handlers) GorevSearchAdvanced(params map[string]interface{}) (*mcp.Call
 	}
 
 	// Create search engine and perform search
-	searchEngine := gorev.NewSearchEngine(h.isYonetici.VeriYonetici(), nil) // TODO: Pass DB connection
+	db, err := h.isYonetici.VeriYonetici().GetDB()
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Database access failed: %v", err)), nil
+	}
+	searchEngine := gorev.NewSearchEngine(h.isYonetici.VeriYonetici(), db)
 	response, err := searchEngine.Search(options)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Search failed: %v", err)), nil
