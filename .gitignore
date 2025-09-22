@@ -31,6 +31,9 @@ test-*.js
 test-*.sh
 *.backup
 
+# VS Code extension temporary files
+gorev-vscode/.call_overflow/
+
 # Debug scripts and files
 *-debug.sh
 *-wrapper.sh
