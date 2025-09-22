@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 22 September 2025 | **Version:** v0.15.23
+**Last Updated:** 22 September 2025 | **Version:** v0.15.24
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -10,7 +10,7 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 
 ## 🚀 Recent Major Update
 
-**v0.15.23+ - Critical Database Compatibility & MCP Tools Fix (22 Sep 2025)**
+**v0.15.24 - Database Compatibility & VS Code Stability Fixes (22 Sep 2025)**
 
 - **Database Compatibility Enhancement**: Fixed new database version compatibility issues
   - **Advanced Search Fix**: Resolved SearchEngine connection errors with proper database connection
