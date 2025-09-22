@@ -104,7 +104,7 @@ export class RefreshManager {
     private constructor() {
         this.initializeDebouncing();
         this.loadConfiguration();
-        Logger.debug('[RefreshManager] Initialized');
+        // Logger.debug('[RefreshManager] Initialized'); // Reduced logging
     }
 
     private initializeDebouncing(): void {
@@ -148,7 +148,7 @@ export class RefreshManager {
             }
             this.providers.get(target)!.push(provider);
         }
-        Logger.debug(`[RefreshManager] Registered provider '${provider.getName()}' for targets: ${targets.join(', ')}`);
+        // Logger.debug(`[RefreshManager] Registered provider '${provider.getName()}' for targets: ${targets.join(', ')}`); // Reduced logging
     }
 
     /**
@@ -190,14 +190,14 @@ export class RefreshManager {
         // Check for deduplication
         if (this.config.enableDeduplication && this.isDuplicateRequest(request)) {
             this.stats.deduplicatedRequests++;
-            Logger.debug(`[RefreshManager] Deduplicated request: ${request.id} (${reason})`);
+            // Logger.debug(`[RefreshManager] Deduplicated request: ${request.id} (${reason})`); // Reduced logging
             return;
         }
 
         this.pendingRequests.set(request.id, request);
         this.stats.pendingRequests = this.pendingRequests.size;
 
-        Logger.debug(`[RefreshManager] Queued refresh request: ${request.id} (${reason}, ${RefreshPriority[priority]})`);
+        // Logger.debug(`[RefreshManager] Queued refresh request: ${request.id} (${reason}, ${RefreshPriority[priority]})`); // Reduced logging
 
         // Schedule processing based on priority
         await this.scheduleProcessing(request);
@@ -220,7 +220,7 @@ export class RefreshManager {
             metadata
         };
 
-        Logger.debug(`[RefreshManager] Processing immediate refresh: ${request.id} (${reason})`);
+        // Logger.debug(`[RefreshManager] Processing immediate refresh: ${request.id} (${reason})`); // Reduced logging
 
         await measureAsync(
             'immediate-refresh',
@@ -251,7 +251,7 @@ export class RefreshManager {
 
     private async processRequestsByPriority(priority: RefreshPriority): Promise<void> {
         if (this.isProcessing) {
-            Logger.debug('[RefreshManager] Already processing, skipping');
+            // Logger.debug('[RefreshManager] Already processing, skipping'); // Reduced logging
             return;
         }
 
@@ -271,7 +271,7 @@ export class RefreshManager {
 
             const batch = requests.slice(0, batchSize);
 
-            Logger.debug(`[RefreshManager] Processing batch of ${batch.length} requests (priority: ${RefreshPriority[priority]})`);
+            // Logger.debug(`[RefreshManager] Processing batch of ${batch.length} requests (priority: ${RefreshPriority[priority]})`); // Reduced logging
 
             await measureAsync(
                 'batch-refresh',

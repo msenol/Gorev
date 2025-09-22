@@ -136,7 +136,7 @@
         },
         "gorev.refreshInterval": {
           "type": "number",
-          "default": 300,
+          "default": 0,
           "minimum": 0,
           "maximum": 3600,
           "description": "%config.refreshInterval%"

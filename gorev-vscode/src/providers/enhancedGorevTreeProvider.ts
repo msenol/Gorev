@@ -387,9 +387,31 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             let offset = 0;
             let hasMoreTasks = true;
             let totalTaskCount = 0;
-            
+            let previousOffset = -1;
+            let sameOffsetCount = 0;
+            const maxIterations = 50; // Safety limit for iterations
+            let iterationCount = 0;
+
             // Fetch all tasks with pagination
             while (hasMoreTasks) {
+                // Safety check for infinite loop prevention
+                iterationCount++;
+                if (iterationCount > maxIterations) {
+                    Logger.error(`[EnhancedGorevTreeProvider] Maximum iterations (${maxIterations}) reached, breaking loop to prevent infinite pagination`);
+                    break;
+                }
+
+                // Check if we're stuck at the same offset
+                if (offset === previousOffset) {
+                    sameOffsetCount++;
+                    if (sameOffsetCount >= 3) {
+                        Logger.error(`[EnhancedGorevTreeProvider] Detected infinite loop at offset ${offset}, breaking pagination`);
+                        break;
+                    }
+                } else {
+                    sameOffsetCount = 0;
+                }
+                previousOffset = offset;
                 // Fetching tasks
                 
                 const result = await this.mcpClient.callTool('gorev_listele', {
@@ -409,20 +431,37 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 const paginationMatch = responseText.match(/Görevler \((\d+)-(\d+) \/ (\d+)\)/);
                 if (paginationMatch) {
                     const [_, start, end, total] = paginationMatch;
+                    const endNumber = parseInt(end);
+                    const startNumber = parseInt(start);
                     totalTaskCount = parseInt(total);
+
                     Logger.info(`[EnhancedGorevTreeProvider] Pagination: ${start}-${end} / ${total}`);
-                    
+
+                    // Check for invalid pagination response (110-109 case)
+                    if (startNumber > endNumber) {
+                        Logger.error(`[EnhancedGorevTreeProvider] Invalid pagination response: start(${start}) > end(${end}), breaking loop`);
+                        hasMoreTasks = false;
+                        break;
+                    }
+
                     // Parse the markdown content to extract tasks
                     const pageTasks = MarkdownParser.parseGorevListesi(responseText);
                     Logger.info('[EnhancedGorevTreeProvider] Parsed tasks from page:', pageTasks.length);
-                    
+
+                    // If no tasks parsed and we're not at the beginning, stop
+                    if (pageTasks.length === 0 && offset > 0) {
+                        Logger.info('[EnhancedGorevTreeProvider] No tasks parsed from page, assuming end of data');
+                        hasMoreTasks = false;
+                        break;
+                    }
+
                     // Add to our task list
                     this.tasks.push(...pageTasks);
-                    
+
                     // Update offset for next page based on server response, not pageSize
                     // This handles server-side response limits correctly
-                    offset = parseInt(end);
-                    
+                    offset = endNumber;
+
                     // Check if we need to fetch more
                     if (offset >= totalTaskCount) {
                         hasMoreTasks = false;
@@ -504,7 +543,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                     Logger.warn(`[EnhancedGorevTreeProvider] ❌ Missing expected task: "${title}"`);
                 }
             });
-            Logger.debug(`[EnhancedGorevTreeProvider] Filtered ${this.tasks.length} tasks to ${this.filteredTasks.length} after duplicate removal`);
+            // Logger.debug(`[EnhancedGorevTreeProvider] Filtered ${this.tasks.length} tasks to ${this.filteredTasks.length} after duplicate removal`); // Reduced logging
             // Tasks filtered and ready
         } catch (error) {
             Logger.error('Failed to load tasks:', error);
@@ -519,7 +558,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         await measureAsync(
             'enhanced-tree-refresh',
             async () => {
-                Logger.debug('[EnhancedGorevTreeProvider] Starting refresh...');
+                // Logger.debug('[EnhancedGorevTreeProvider] Starting refresh...'); // Reduced logging
 
                 try {
                     // Load fresh data
@@ -533,7 +572,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                     const projectsChanged = currentProjectsHash !== this.previousProjectsHash;
 
                     if (tasksChanged || projectsChanged) {
-                        Logger.debug('[EnhancedGorevTreeProvider] Data changed, updating tree');
+                        // Logger.debug('[EnhancedGorevTreeProvider] Data changed, updating tree'); // Reduced logging
 
                         // Update hashes
                         this.previousTasksHash = currentTasksHash;
@@ -547,9 +586,9 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                         // Fire selective change event
                         this._onDidChangeTreeData.fire(undefined);
 
-                        Logger.debug('[EnhancedGorevTreeProvider] Tree refreshed with new data');
+                        // Logger.debug('[EnhancedGorevTreeProvider] Tree refreshed with new data'); // Reduced logging
                     } else {
-                        Logger.debug('[EnhancedGorevTreeProvider] No data changes detected, skipping tree update');
+                        // Logger.debug('[EnhancedGorevTreeProvider] No data changes detected, skipping tree update'); // Reduced logging
                     }
 
                 } catch (error) {
