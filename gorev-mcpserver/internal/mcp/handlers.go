@@ -496,13 +496,13 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		metin = fmt.Sprintf("Görevler (%d-%d / %d)\n",
 			offset+1,
 			actualEnd,
-			toplamGorevSayisi) // FIX: Total task count instead of root only
+			toplamRootGorevSayisi) // FIX: Use root task count for correct pagination display
 	} else {
 		// Use i18n with fallback to prevent raw key return
-		taskListMsg := i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamGorevSayisi}) // FIX: Total task count
+		taskListMsg := i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi}) // FIX: Use root task count for correct display
 		if taskListMsg == "messages.taskListCount" {
 			// Fallback to hardcoded string if i18n fails
-			taskListMsg = fmt.Sprintf("Toplam %d görev", toplamGorevSayisi) // FIX: Total task count
+			taskListMsg = fmt.Sprintf("Toplam %d görev", toplamRootGorevSayisi) // FIX: Use root task count for correct display
 		}
 		metin = taskListMsg + "\n"
 	}
