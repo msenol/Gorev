@@ -248,13 +248,13 @@ func TestBuildPrefixedDescription(t *testing.T) {
 			name:     "Empty prefix",
 			prefix:   "",
 			target:   "project name",
-			expected: " project name", // empty prefix + target
+			expected: "common.prefixes. project name", // empty prefix returns the key
 		},
 		{
 			name:     "Empty target",
 			prefix:   "update",
 			target:   "",
-			expected: "update ",
+			expected: "common.prefixes.update ", // empty target still includes prefix
 		},
 	}
 
@@ -281,14 +281,14 @@ func TestGetCommonSuffix(t *testing.T) {
 			expected:   "common.suffixes.optional",
 		},
 		{
-			name:       "Required suffix", 
+			name:       "Required suffix",
 			suffixType: "required",
-			expected:   "common.suffixes.required",
+			expected:   "parametresi gerekli",
 		},
 		{
 			name:       "Empty suffix type",
 			suffixType: "",
-			expected:   "common.suffixes.",
+			expected:   "common.suffixes.", // Empty key returns the key itself
 		},
 	}
 

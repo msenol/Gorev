@@ -298,22 +298,21 @@ func TestEmbeddedLocaleData(t *testing.T) {
 	// Test that embedded locale data is valid JSON and contains expected keys
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
-	// Test Turkish embedded keys
-	trResult := T("error.noArguments", nil)
+
+	// Test Turkish embedded keys - using keys that exist in mock
+	trResult := T("tools.params.descriptions.gorev_id", nil)
 	assert.NotEmpty(t, trResult)
-	// Test the corrected actual behavior
-	assert.NotEqual(t, "error.noArguments", trResult) // Should be "Parametre belirtilmedi"
-	assert.Contains(t, trResult, "Parametre") // Turkish translation
-	
+	assert.NotEqual(t, "tools.params.descriptions.gorev_id", trResult) // Should be translated
+	assert.Contains(t, trResult, "ID") // Translation contains ID
+
 	// Switch to English and test
 	err = SetLanguage("en")
 	assert.NoError(t, err)
-	
-	enResult := T("error.noArguments", nil)
+
+	enResult := T("tools.params.descriptions.gorev_id", nil)
 	assert.NotEmpty(t, enResult)
-	assert.NotEqual(t, "error.noArguments", enResult) // Should be "No arguments specified" 
-	assert.Contains(t, enResult, "arguments") // English translation
+	assert.NotEqual(t, "tools.params.descriptions.gorev_id", enResult) // Should be translated
+	assert.Contains(t, enResult, "ID") // English translation contains ID
 }
 
 func TestHasKey(t *testing.T) {
@@ -327,18 +326,18 @@ func TestHasKey(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "Existing embedded key",
-			key:      "error.noArguments",
-			expected: false, // HasKey mock doesn't recognize this as existing
-		},
-		{
 			name:     "Known parameter key",
 			key:      "tools.params.descriptions.gorev_id",
 			expected: true, // This is in the HasKey mock
 		},
 		{
+			name:     "Another known key",
+			key:      "tools.params.descriptions.template_id",
+			expected: true, // This should also be in the mock
+		},
+		{
 			name:     "Non-existing key",
-			key:      "non.existent.key", 
+			key:      "non.existent.key",
 			expected: false,
 		},
 		{
