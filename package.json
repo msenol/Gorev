@@ -1,0 +1,39 @@
+{
+  "name": "gorev-documentation",
+  "version": "0.15.24",
+  "description": "Documentation and quality tools for Gorev project",
+  "private": true,
+  "scripts": {
+    "lint:md": "markdownlint '**/*.md' --ignore node_modules --ignore .git",
+    "lint:md:fix": "markdownlint '**/*.md' --ignore node_modules --ignore .git --fix",
+    "lint:md:check": "markdownlint '**/*.md' --ignore node_modules --ignore .git --config .markdownlint.json",
+    "docs:validate": "npm run lint:md:check",
+    "docs:fix": "npm run lint:md:fix",
+    "docs:links": "markdown-link-check docs/**/*.md",
+    "docs:spelling": "cspell '**/*.md' --exclude 'node_modules/**' --exclude '.git/**'",
+    "quality:check": "npm run lint:md:check && npm run docs:links",
+    "quality:fix": "npm run lint:md:fix"
+  },
+  "devDependencies": {
+    "markdownlint-cli": "^0.37.0",
+    "markdown-link-check": "^3.11.2",
+    "cspell": "^7.3.8"
+  },
+  "keywords": [
+    "documentation",
+    "markdown",
+    "linting",
+    "quality",
+    "gorev"
+  ],
+  "author": "Mehmet Senol <mehmetsenol@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/msenol/Gorev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/msenol/Gorev/issues"
+  },
+  "homepage": "https://github.com/msenol/Gorev#readme"
+}

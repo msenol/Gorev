@@ -1,0 +1,144 @@
+{
+  "$schema": "https://registry.modelcontextprotocol.io/v0/schema/server.json",
+  "name": "io.github.msenol.gorev",
+  "description": "Comprehensive task management system for AI assistants with bilingual support (Turkish/English), unlimited task hierarchy, templates, dependencies, and rich VS Code integration.",
+  "version": "0.15.24",
+  "license": "MIT",
+  "author": {
+    "name": "Mehmet Senol",
+    "email": "me@mehmetsenol.dev",
+    "url": "https://github.com/msenol"
+  },
+  "homepage": "https://github.com/msenol/Gorev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/msenol/Gorev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/msenol/Gorev/issues"
+  },
+  "keywords": [
+    "task-management",
+    "productivity",
+    "turkish",
+    "bilingual",
+    "ai-assistant",
+    "mcp",
+    "claude",
+    "vs-code",
+    "golang",
+    "sqlite"
+  ],
+  "categories": [
+    "productivity",
+    "development-tools"
+  ],
+  "deployment": {
+    "packages": [
+      {
+        "type": "npm",
+        "name": "@mehmetsenol/gorev-mcp-server",
+        "registry": "https://registry.npmjs.org"
+      }
+    ],
+    "remotes": [
+      {
+        "name": "docker",
+        "description": "Run via Docker container",
+        "config": {
+          "command": "docker",
+          "args": [
+            "run",
+            "--rm",
+            "-i",
+            "--init",
+            "-v",
+            "${GOREV_DATA_DIR:-$HOME/.gorev}:/root/.gorev",
+            "ghcr.io/msenol/gorev:latest",
+            "serve"
+          ],
+          "env": {
+            "GOREV_LANG": "tr"
+          }
+        }
+      },
+      {
+        "name": "binary",
+        "description": "Direct binary execution",
+        "config": {
+          "command": "gorev",
+          "args": ["serve"],
+          "env": {
+            "GOREV_LANG": "tr"
+          }
+        },
+        "requirements": {
+          "platforms": ["linux", "darwin", "windows"],
+          "architectures": ["amd64", "arm64"]
+        }
+      }
+    ]
+  },
+  "capabilities": {
+    "tools": [
+      {
+        "name": "gorev_listele",
+        "description": "List tasks with filtering and pagination support"
+      },
+      {
+        "name": "gorev_detay",
+        "description": "Get detailed task information in markdown format"
+      },
+      {
+        "name": "templateden_gorev_olustur",
+        "description": "Create tasks from predefined templates"
+      },
+      {
+        "name": "gorev_guncelle",
+        "description": "Update task status and properties"
+      },
+      {
+        "name": "proje_olustur",
+        "description": "Create and manage projects"
+      },
+      {
+        "name": "gorev_search_advanced",
+        "description": "Advanced search with fuzzy matching and FTS5"
+      },
+      {
+        "name": "gorev_export",
+        "description": "Export tasks and projects to JSON/CSV"
+      },
+      {
+        "name": "gorev_import",
+        "description": "Import tasks with conflict resolution"
+      },
+      {
+        "name": "gorev_ide_detect",
+        "description": "Detect and manage IDE extensions (VS Code, Cursor, Windsurf)"
+      },
+      {
+        "name": "ozet_goster",
+        "description": "Show comprehensive system summary"
+      }
+    ],
+    "resources": [],
+    "prompts": []
+  },
+  "config": {
+    "mcpVersion": "2024-11-05",
+    "environments": {
+      "development": {
+        "env": {
+          "GOREV_LANG": "tr",
+          "GOREV_DB_PATH": ".gorev/gorev-dev.db"
+        }
+      },
+      "production": {
+        "env": {
+          "GOREV_LANG": "tr"
+        }
+      }
+    }
+  }
+}

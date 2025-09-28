@@ -1,0 +1,41 @@
+# Generated files
+node_modules/
+*.min.js
+*.min.css
+
+# Package manager files
+package-lock.json
+yarn.lock
+
+# Build artifacts
+dist/
+build/
+target/
+
+# VS Code extension
+gorev-vscode/out/
+gorev-vscode/node_modules/
+
+# Git
+.git/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Cache directories
+.cache/
+.vscode/
+
+# Legacy documentation that may have formatting issues
+docs/legacy/
+
+# External documentation
+docs/external/
+
+# Auto-generated API docs (if any)
+docs/api/generated/
+
+# Third-party markdown files
+vendor/
+third-party/

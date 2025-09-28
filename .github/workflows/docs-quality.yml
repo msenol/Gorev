@@ -1,0 +1,310 @@
+name: Documentation Quality Check
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '.markdownlint.json'
+      - 'cspell.json'
+      - 'package.json'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '.markdownlint.json'
+      - 'cspell.json'
+      - 'package.json'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  lint-markdown:
+    name: Markdown Linting
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run markdown linting
+      run: npm run lint:md:check
+
+    - name: Upload markdown lint results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: markdown-lint-results
+        path: |
+          **/*.md
+        retention-days: 7
+
+  check-links:
+    name: Link Validation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Check internal links
+      run: npm run docs:links
+      continue-on-error: true
+
+    - name: Check external links (limited)
+      run: |
+        # Only check critical external links to avoid rate limiting
+        echo "Checking critical external links..."
+        npx markdown-link-check README.md --config .github/link-check-config.json || true
+        npx markdown-link-check docs/tr/README.md --config .github/link-check-config.json || true
+
+  spell-check:
+    name: Spell Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run spell check
+      run: npm run docs:spelling
+
+    - name: Upload spell check results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: spell-check-results
+        path: cspell-report.txt
+        retention-days: 7
+
+  version-consistency:
+    name: Version Consistency Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Check version consistency
+      run: |
+        echo "Checking version consistency across project files..."
+
+        # Extract versions from different files
+        MAKEFILE_VERSION=""
+        PACKAGE_JSON_VERSION=""
+        SERVER_JSON_VERSION=""
+        CHANGELOG_VERSION=""
+
+        if [ -f "gorev-mcpserver/Makefile" ]; then
+          MAKEFILE_VERSION=$(grep "^VERSION" gorev-mcpserver/Makefile | cut -d'=' -f2 | tr -d ' ' | tr -d 'v')
+        fi
+
+        if [ -f "gorev-npm/package.json" ]; then
+          PACKAGE_JSON_VERSION=$(grep '"version"' gorev-npm/package.json | cut -d'"' -f4)
+        fi
+
+        if [ -f "server.json" ]; then
+          SERVER_JSON_VERSION=$(grep '"version"' server.json | cut -d'"' -f4)
+        fi
+
+        if [ -f "CHANGELOG.md" ]; then
+          CHANGELOG_VERSION=$(grep -E "^## \[v[0-9]+\.[0-9]+\.[0-9]+\]" CHANGELOG.md | head -1 | sed -E 's/^## \[v([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
+        fi
+
+        echo "Found versions:"
+        echo "  Makefile: $MAKEFILE_VERSION"
+        echo "  package.json: $PACKAGE_JSON_VERSION"
+        echo "  server.json: $SERVER_JSON_VERSION"
+        echo "  CHANGELOG.md: $CHANGELOG_VERSION"
+
+        # Check consistency
+        VERSIONS=("$MAKEFILE_VERSION" "$PACKAGE_JSON_VERSION" "$SERVER_JSON_VERSION" "$CHANGELOG_VERSION")
+        FIRST_VERSION="${VERSIONS[0]}"
+        INCONSISTENT=false
+
+        for VERSION in "${VERSIONS[@]}"; do
+          if [ "$VERSION" != "$FIRST_VERSION" ] && [ -n "$VERSION" ]; then
+            INCONSISTENT=true
+            break
+          fi
+        done
+
+        if [ "$INCONSISTENT" = true ]; then
+          echo "❌ Version inconsistency detected!"
+          echo "  Makefile: $MAKEFILE_VERSION"
+          echo "  package.json: $PACKAGE_JSON_VERSION"
+          echo "  server.json: $SERVER_JSON_VERSION"
+          echo "  CHANGELOG.md: $CHANGELOG_VERSION"
+          exit 1
+        else
+          echo "✅ Version consistency check passed (v$FIRST_VERSION)"
+        fi
+
+  documentation-structure:
+    name: Documentation Structure Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Check required documentation files
+      run: |
+        echo "Checking documentation structure..."
+
+        REQUIRED_FILES=(
+          "README.md"
+          "CHANGELOG.md"
+          "LICENSE"
+          "docs/tr/kurulum.md"
+          "docs/tr/kullanim.md"
+          "docs/tr/mcp-araclari.md"
+          "docs/api/api-referans.md"
+          "docs/development/gelistirme.md"
+          ".markdownlint.json"
+          "cspell.json"
+        )
+
+        MISSING_FILES=()
+
+        for FILE in "${REQUIRED_FILES[@]}"; do
+          if [ ! -f "$FILE" ]; then
+            MISSING_FILES+=("$FILE")
+          fi
+        done
+
+        if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+          echo "❌ Missing required files:"
+          printf '  %s\n' "${MISSING_FILES[@]}"
+          exit 1
+        else
+          echo "✅ Documentation structure check passed"
+        fi
+
+  comprehensive-quality-check:
+    name: Comprehensive Quality Check
+    runs-on: ubuntu-latest
+    needs: [lint-markdown, check-links, spell-check, version-consistency, documentation-structure]
+    if: always()
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Make validation script executable
+      run: chmod +x scripts/validate-docs.sh
+
+    - name: Run comprehensive validation
+      run: ./scripts/validate-docs.sh --verbose
+      continue-on-error: true
+
+    - name: Generate quality report
+      run: |
+        echo "# Documentation Quality Report" > quality-report.md
+        echo "" >> quality-report.md
+        echo "**Date:** $(date)" >> quality-report.md
+        echo "**Commit:** ${{ github.sha }}" >> quality-report.md
+        echo "" >> quality-report.md
+
+        echo "## Check Results" >> quality-report.md
+        echo "" >> quality-report.md
+
+        # Check job results
+        if [ "${{ needs.lint-markdown.result }}" = "success" ]; then
+          echo "- ✅ Markdown Linting: PASSED" >> quality-report.md
+        else
+          echo "- ❌ Markdown Linting: FAILED" >> quality-report.md
+        fi
+
+        if [ "${{ needs.check-links.result }}" = "success" ]; then
+          echo "- ✅ Link Validation: PASSED" >> quality-report.md
+        else
+          echo "- ❌ Link Validation: FAILED" >> quality-report.md
+        fi
+
+        if [ "${{ needs.spell-check.result }}" = "success" ]; then
+          echo "- ✅ Spell Check: PASSED" >> quality-report.md
+        else
+          echo "- ❌ Spell Check: FAILED" >> quality-report.md
+        fi
+
+        if [ "${{ needs.version-consistency.result }}" = "success" ]; then
+          echo "- ✅ Version Consistency: PASSED" >> quality-report.md
+        else
+          echo "- ❌ Version Consistency: FAILED" >> quality-report.md
+        fi
+
+        if [ "${{ needs.documentation-structure.result }}" = "success" ]; then
+          echo "- ✅ Documentation Structure: PASSED" >> quality-report.md
+        else
+          echo "- ❌ Documentation Structure: FAILED" >> quality-report.md
+        fi
+
+        echo "" >> quality-report.md
+        echo "## Recommendations" >> quality-report.md
+        echo "" >> quality-report.md
+        echo "- Run \`npm run docs:fix\` to automatically fix markdown issues" >> quality-report.md
+        echo "- Use \`./scripts/validate-docs.sh --fix\` for comprehensive fixes" >> quality-report.md
+        echo "- Check artifact uploads for detailed error information" >> quality-report.md
+
+    - name: Upload quality report
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-quality-report
+        path: quality-report.md
+        retention-days: 30
+
+    - name: Comment on PR (if applicable)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('quality-report.md', 'utf8');
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
