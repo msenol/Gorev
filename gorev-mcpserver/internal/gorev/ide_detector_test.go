@@ -1,6 +1,8 @@
 package gorev
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -168,5 +170,254 @@ func TestIDEDetectionError(t *testing.T) {
 		for ideType, ide := range detectedIDEs {
 			t.Logf("Detected: %s - %s at %s", ideType, ide.Name, ide.ExecutablePath)
 		}
+	}
+}
+
+// TestDetectIDEUnsupportedType tests error handling for unsupported IDE types
+func TestDetectIDEUnsupportedType(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Test with invalid IDE type
+	_, err := detector.detectIDE("unsupported")
+	if err == nil {
+		t.Error("Expected error for unsupported IDE type")
+	}
+}
+
+// TestGetDetectedIDECoverage improves coverage for GetDetectedIDE
+func TestGetDetectedIDECoverage(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Test with empty detector
+	ide, exists := detector.GetDetectedIDE(IDETypeVSCode)
+	if exists {
+		t.Error("GetDetectedIDE should return false for empty detector")
+	}
+	if ide != nil {
+		t.Error("GetDetectedIDE should return nil for empty detector")
+	}
+
+	// Test with multiple IDE types
+	for _, ideType := range []IDEType{IDETypeVSCode, IDETypeCursor, IDETypeWindsurf} {
+		ide, exists = detector.GetDetectedIDE(ideType)
+		if exists {
+			t.Errorf("GetDetectedIDE should return false for %s in empty detector", ideType)
+		}
+		if ide != nil {
+			t.Errorf("GetDetectedIDE should return nil for %s in empty detector", ideType)
+		}
+	}
+}
+
+// TestGetAllDetectedIDEsCoverage improves coverage for GetAllDetectedIDEs
+func TestGetAllDetectedIDEsCoverage(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Test with empty detector (already covered in existing test)
+	ides := detector.GetAllDetectedIDEs()
+	if len(ides) != 0 {
+		t.Error("GetAllDetectedIDEs should return empty map for new detector")
+	}
+
+	// Test with single IDE
+	detector.detectedIDEs[IDETypeVSCode] = &IDEInfo{Type: IDETypeVSCode, Name: "VS Code"}
+	ides = detector.GetAllDetectedIDEs()
+	if len(ides) != 1 {
+		t.Errorf("Expected 1 detected IDE, got %d", len(ides))
+	}
+
+	// Test that returned map is a copy (modifying it shouldn't affect detector)
+	ides[IDETypeCursor] = &IDEInfo{Type: IDETypeCursor, Name: "Cursor"}
+	if _, exists := detector.detectedIDEs[IDETypeCursor]; exists {
+		t.Error("Modifying returned map should not affect detector")
+	}
+}
+
+// TestIsExtensionInstalled tests extension installation detection
+func TestIsExtensionInstalled(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Test with no IDEs detected
+	installed, err := detector.IsExtensionInstalled(IDETypeVSCode, "mehmetsenol.gorev-vscode")
+	if err == nil {
+		t.Error("Expected error when IDE is not detected")
+	}
+	if installed {
+		t.Error("Should return false when IDE is not detected")
+	}
+
+	// Test with IDE detected but no extensions path
+	detector.detectedIDEs[IDETypeVSCode] = &IDEInfo{
+		Type:        IDETypeVSCode,
+		Name:        "VS Code",
+		IsInstalled: true,
+	}
+	installed, err = detector.IsExtensionInstalled(IDETypeVSCode, "mehmetsenol.gorev-vscode")
+	if err == nil {
+		t.Error("Expected error when extensions path is empty")
+	}
+	if installed {
+		t.Error("Should return false when extensions path is empty")
+	}
+
+	// Test with valid IDE info but non-existent extensions path
+	detector.detectedIDEs[IDETypeVSCode].ExtensionsPath = "/nonexistent/extensions/path"
+	installed, err = detector.IsExtensionInstalled(IDETypeVSCode, "mehmetsenol.gorev-vscode")
+	if err != nil {
+		t.Logf("Expected error for non-existent extensions path: %v", err)
+	}
+	if installed {
+		t.Error("Should return false for non-existent extensions path")
+	}
+}
+
+// TestGetExtensionVersion tests extension version retrieval
+func TestGetExtensionVersion(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Test with no IDEs detected
+	version, err := detector.GetExtensionVersion(IDETypeVSCode, "mehmetsenol.gorev-vscode")
+	if err == nil {
+		t.Error("Expected error when IDE is not detected")
+	}
+	if version != "" {
+		t.Error("Should return empty version when IDE is not detected")
+	}
+
+	// Test with IDE detected but no extensions path
+	detector.detectedIDEs[IDETypeVSCode] = &IDEInfo{
+		Type:        IDETypeVSCode,
+		Name:        "VS Code",
+		IsInstalled: true,
+	}
+	version, err = detector.GetExtensionVersion(IDETypeVSCode, "mehmetsenol.gorev-vscode")
+	if err == nil {
+		t.Error("Expected error when extensions path is empty")
+	}
+	if version != "" {
+		t.Error("Should return empty version when extensions path is empty")
+	}
+
+	// Test with valid IDE info but non-existent extensions path
+	detector.detectedIDEs[IDETypeVSCode].ExtensionsPath = "/nonexistent/extensions/path"
+	version, err = detector.GetExtensionVersion(IDETypeVSCode, "mehmetsenol.gorev-vscode")
+	if err == nil {
+		t.Log("Note: No error for non-existent extensions path (this is expected)")
+	}
+	if version != "" {
+		t.Error("Should return empty version for non-existent extensions path")
+	}
+}
+
+// TestGetIDEVersion tests the getIDEVersion method
+func TestGetIDEVersion(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Test with non-existent executable
+	version := detector.getIDEVersion("/nonexistent/path", []string{"--version"})
+	if version != "unknown" {
+		t.Errorf("Expected 'unknown' version for non-existent executable, got '%s'", version)
+	}
+
+	// Test with empty path
+	version = detector.getIDEVersion("", []string{"--version"})
+	if version != "unknown" {
+		t.Errorf("Expected 'unknown' version for empty path, got '%s'", version)
+	}
+
+	// Test with different args
+	version = detector.getIDEVersion("/nonexistent/path", []string{"version"})
+	if version != "unknown" {
+		t.Errorf("Expected 'unknown' version with different args, got '%s'", version)
+	}
+}
+
+// TestFileExistsWithVariousInputs tests fileExists with different inputs
+func TestFileExistsWithVariousInputs(t *testing.T) {
+	// Test with directory path (should return false)
+	tempDir := t.TempDir()
+	if fileExists(tempDir) {
+		t.Error("fileExists should return false for directory path")
+	}
+
+	// Test with non-existent file
+	if fileExists(filepath.Join(tempDir, "nonexistent.txt")) {
+		t.Error("fileExists should return false for non-existent file")
+	}
+
+	// Test with existing file
+	testFile := filepath.Join(tempDir, "test.txt")
+	err := os.WriteFile(testFile, []byte("test"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	if !fileExists(testFile) {
+		t.Error("fileExists should return true for existing file")
+	}
+}
+
+// TestDirExistsWithVariousInputs tests dirExists with different inputs
+func TestDirExistsWithVariousInputs(t *testing.T) {
+	// Test with file path (should return false)
+	tempDir := t.TempDir()
+	testFile := filepath.Join(tempDir, "test.txt")
+	os.WriteFile(testFile, []byte("test"), 0644)
+	if dirExists(testFile) {
+		t.Error("dirExists should return false for file path")
+	}
+
+	// Test with non-existent directory
+	if dirExists(filepath.Join(tempDir, "nonexistent")) {
+		t.Error("dirExists should return false for non-existent directory")
+	}
+
+	// Test with existing directory
+	if !dirExists(tempDir) {
+		t.Error("dirExists should return true for existing directory")
+	}
+}
+
+// TestDetectAllIDEsThreadSafety tests thread safety of DetectAllIDEs
+func TestDetectAllIDEsThreadSafety(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Call DetectAllIDEs concurrently
+	done := make(chan bool, 10)
+	for i := 0; i < 10; i++ {
+		go func() {
+			_, err := detector.DetectAllIDEs()
+			if err != nil {
+				t.Logf("Concurrent detection error: %v", err)
+			}
+			done <- true
+		}()
+	}
+
+	// Wait for all goroutines to complete
+	for i := 0; i < 10; i++ {
+		<-done
+	}
+}
+
+// TestDetectAllIDEsReturnsCopy tests that DetectAllIDEs returns a copy of the map
+func TestDetectAllIDEsReturnsCopy(t *testing.T) {
+	detector := NewIDEDetector()
+
+	// Get initial results
+	ides1, err := detector.DetectAllIDEs()
+	if err != nil {
+		t.Fatalf("DetectAllIDEs failed: %v", err)
+	}
+
+	// Get results again
+	ides2, err := detector.DetectAllIDEs()
+	if err != nil {
+		t.Fatalf("DetectAllIDEs failed: %v", err)
+	}
+
+	// Modifying the first map should not affect the second
+	ides1["test"] = &IDEInfo{Type: "test", Name: "Test"}
+	if _, exists := ides2["test"]; exists {
+		t.Error("Modifying returned map should not affect detector")
 	}
 }

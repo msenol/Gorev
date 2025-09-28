@@ -1166,3 +1166,468 @@ func TestVeriYonetici_BulkDependencyCounts(t *testing.T) {
 		}
 	})
 }
+
+// ==================== PERFORMANCE AND CONCURRENCY TESTS ====================
+
+// Benchmark functions for performance testing
+func BenchmarkVeriYonetici_GorevKaydet(b *testing.B) {
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	if err != nil {
+		b.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		gorev := &Gorev{
+			ID:              fmt.Sprintf("benchmark-%d", i),
+			Baslik:          fmt.Sprintf("Benchmark Task %d", i),
+			Aciklama:        "This is a benchmark task for performance testing",
+			Durum:           "beklemede",
+			Oncelik:         "orta",
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		}
+		err = vy.GorevKaydet(gorev)
+		if err != nil {
+			b.Fatalf("failed to save task: %v", err)
+		}
+	}
+}
+
+func BenchmarkVeriYonetici_GorevleriGetir(b *testing.B) {
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	if err != nil {
+		b.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	// Pre-populate with some tasks
+	for i := 0; i < 100; i++ {
+		gorev := &Gorev{
+			ID:              fmt.Sprintf("benchmark-%d", i),
+			Baslik:          fmt.Sprintf("Benchmark Task %d", i),
+			Durum:           "beklemede",
+			Oncelik:         "orta",
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		}
+		vy.GorevKaydet(gorev)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = vy.GorevleriGetir("", "", "")
+		if err != nil {
+			b.Fatalf("failed to get tasks: %v", err)
+		}
+	}
+}
+
+func BenchmarkVeriYonetici_ProjeKaydet(b *testing.B) {
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	if err != nil {
+		b.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		proje := &Proje{
+			ID:              fmt.Sprintf("benchmark-proje-%d", i),
+			Isim:            fmt.Sprintf("Benchmark Project %d", i),
+			Tanim:           fmt.Sprintf("Benchmark project description %d", i),
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		}
+		err = vy.ProjeKaydet(proje)
+		if err != nil {
+			b.Fatalf("failed to save project: %v", err)
+		}
+	}
+}
+
+func BenchmarkVeriYonetici_GorevGuncelle(b *testing.B) {
+	vy, err := YeniVeriYonetici(":memory:", "file://../../internal/veri/migrations")
+	if err != nil {
+		b.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	// Create a task to update
+	gorev := &Gorev{
+		ID:              "benchmark-update",
+		Baslik:          "Benchmark Update Task",
+		Durum:           "beklemede",
+		Oncelik:         "orta",
+		OlusturmaTarih:  time.Now(),
+		GuncellemeTarih: time.Now(),
+	}
+	err = vy.GorevKaydet(gorev)
+	if err != nil {
+		b.Fatalf("failed to create task: %v", err)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		taskID := fmt.Sprintf("benchmark-update-%d", i)
+		gorev := &Gorev{
+			ID:              taskID,
+			Baslik:          "Benchmark Update Task",
+			Durum:           "beklemede",
+			Oncelik:         "orta",
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		}
+		// Create task first
+		err = vy.GorevKaydet(gorev)
+		if err != nil {
+			b.Fatalf("failed to create task: %v", err)
+		}
+
+		// Then update it
+		params := map[string]interface{}{
+			"durum": "devam_ediyor",
+		}
+		err = vy.GorevGuncelle(taskID, params)
+		if err != nil {
+			b.Fatalf("failed to update task: %v", err)
+		}
+	}
+}
+
+// Advanced concurrency tests
+func TestVeriYonetici_HighConcurrencyAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping high concurrency test in short mode")
+	}
+
+	// Use temporary file for true concurrency testing
+	tempDB := fmt.Sprintf("/tmp/test_high_concurrent_%d.db", time.Now().UnixNano())
+	defer os.Remove(tempDB)
+
+	vy, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	if err != nil {
+		t.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	// Test with high concurrency (100 goroutines)
+	concurrentOps := 100
+	done := make(chan error, concurrentOps)
+	startTime := time.Now()
+
+	for i := 0; i < concurrentOps; i++ {
+		go func(id int) {
+			// Perform a mix of read and write operations
+			if id%2 == 0 {
+				// Write operation
+				gorev := &Gorev{
+					ID:              fmt.Sprintf("high-concurrent-%d", id),
+					Baslik:          fmt.Sprintf("High Concurrent Task %d", id),
+					Durum:           "beklemede",
+					Oncelik:         "orta",
+					OlusturmaTarih:  time.Now(),
+					GuncellemeTarih: time.Now(),
+				}
+				done <- vy.GorevKaydet(gorev)
+			} else {
+				// Read operation
+				_, err := vy.GorevleriGetir("", "", "")
+				done <- err
+			}
+		}(i)
+	}
+
+	// Wait for all operations
+	var errors []error
+	successCount := 0
+	for i := 0; i < concurrentOps; i++ {
+		if err := <-done; err != nil {
+			errors = append(errors, err)
+		} else {
+			successCount++
+		}
+	}
+
+	duration := time.Since(startTime)
+	t.Logf("Completed %d operations in %v (%.2f ops/sec)", concurrentOps, duration, float64(concurrentOps)/duration.Seconds())
+
+	// Allow some failures, but at least 80% should succeed
+	if successCount < concurrentOps*80/100 {
+		t.Errorf("Too many high concurrency failures. Success: %d/%d, Errors: %v", successCount, concurrentOps, errors)
+	}
+
+	// Verify data integrity
+	gorevler, err := vy.GorevleriGetir("", "", "")
+	if err != nil {
+		t.Fatalf("failed to verify data: %v", err)
+	}
+	t.Logf("Final task count: %d", len(gorevler))
+}
+
+func TestVeriYonetici_MixedOperationsConcurrency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping mixed operations concurrency test in short mode")
+	}
+
+	// Use temporary file for true concurrency testing
+	tempDB := fmt.Sprintf("/tmp/test_mixed_concurrent_%d.db", time.Now().UnixNano())
+	defer os.Remove(tempDB)
+
+	vy, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	if err != nil {
+		t.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	// Create some initial data
+	for i := 0; i < 20; i++ {
+		proje := &Proje{
+			ID:              fmt.Sprintf("proje-%d", i),
+			Isim:            fmt.Sprintf("Proje %d", i),
+			OlusturmaTarih:  time.Now(),
+			GuncellemeTarih: time.Now(),
+		}
+		vy.ProjeKaydet(proje)
+	}
+
+	// Test concurrent mixed operations
+	workers := 10
+	operationsPerWorker := 20
+	done := make(chan error, workers*operationsPerWorker)
+
+	for worker := 0; worker < workers; worker++ {
+		go func(wid int) {
+			for op := 0; op < operationsPerWorker; op++ {
+				taskID := fmt.Sprintf("mixed-task-%d-%d", wid, op)
+
+				switch op % 5 {
+				case 0: // Create task
+					gorev := &Gorev{
+						ID:              taskID,
+						Baslik:          fmt.Sprintf("Mixed Task %d-%d", wid, op),
+						Durum:           "beklemede",
+						Oncelik:         "orta",
+						ProjeID:         fmt.Sprintf("proje-%d", wid%20),
+						OlusturmaTarih:  time.Now(),
+						GuncellemeTarih: time.Now(),
+					}
+					done <- vy.GorevKaydet(gorev)
+
+				case 1: // Update task
+					gorev, err := vy.GorevGetir(taskID)
+					if err == nil {
+						params := map[string]interface{}{
+							"durum": "devam_ediyor",
+						}
+						done <- vy.GorevGuncelle(gorev.ID, params)
+					} else {
+						done <- nil // Task doesn't exist yet, that's ok
+					}
+
+				case 2: // List tasks
+					_, err := vy.GorevleriGetir("", "", "")
+					done <- err
+
+				case 3: // List projects
+					_, err := vy.ProjeleriGetir()
+					done <- err
+
+				case 4: // Get task details
+					_, err := vy.GorevGetir(taskID)
+					done <- err
+				}
+			}
+		}(worker)
+	}
+
+	// Wait for all operations
+	var errors []error
+	successCount := 0
+	totalOps := workers * operationsPerWorker
+
+	for i := 0; i < totalOps; i++ {
+		if err := <-done; err != nil {
+			errors = append(errors, err)
+		} else {
+			successCount++
+		}
+	}
+
+	// At least 90% should succeed
+	if successCount < totalOps*90/100 {
+		t.Errorf("Too many mixed operations failures. Success: %d/%d, Errors: %v", successCount, totalOps, errors)
+	}
+
+	t.Logf("Mixed operations: %d/%d successful", successCount, totalOps)
+}
+
+func TestVeriYonetici_ConnectionPoolStress(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping connection pool stress test in short mode")
+	}
+
+	// Use temporary file for connection pool testing
+	tempDB := fmt.Sprintf("/tmp/test_pool_stress_%d.db", time.Now().UnixNano())
+	defer os.Remove(tempDB)
+
+	vy, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	if err != nil {
+		t.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	// Rapid connection cycling test
+	iterations := 1000
+	done := make(chan error, iterations)
+
+	startTime := time.Now()
+	for i := 0; i < iterations; i++ {
+		go func(id int) {
+			// Each goroutine performs rapid successive operations
+			for j := 0; j < 10; j++ {
+				gorev := &Gorev{
+					ID:              fmt.Sprintf("pool-stress-%d-%d", id, j),
+					Baslik:          fmt.Sprintf("Pool Stress Task %d-%d", id, j),
+					Durum:           "beklemede",
+					Oncelik:         "orta",
+					OlusturmaTarih:  time.Now(),
+					GuncellemeTarih: time.Now(),
+				}
+
+				err := vy.GorevKaydet(gorev)
+				if err != nil {
+					done <- err
+					return
+				}
+
+				// Immediate read after write
+				_, err = vy.GorevGetir(gorev.ID)
+				if err != nil {
+					done <- err
+					return
+				}
+			}
+			done <- nil
+		}(i)
+	}
+
+	// Wait for completion
+	var errors []error
+	successCount := 0
+
+	for i := 0; i < iterations; i++ {
+		if err := <-done; err != nil {
+			errors = append(errors, err)
+		} else {
+			successCount++
+		}
+	}
+
+	duration := time.Since(startTime)
+	totalOps := iterations * 10
+
+	t.Logf("Connection pool stress test: %d total operations in %v (%.2f ops/sec)",
+		totalOps, duration, float64(totalOps)/duration.Seconds())
+	t.Logf("Success rate: %d/%d (%.1f%%)", successCount, totalOps, float64(successCount)*100/float64(totalOps))
+
+	// Verify no database corruption
+	gorevler, err := vy.GorevleriGetir("", "", "")
+	if err != nil {
+		t.Fatalf("database potentially corrupted after stress test: %v", err)
+	}
+	t.Logf("Final database integrity check: %d tasks stored", len(gorevler))
+
+	// Should have very high success rate (at least 95%)
+	if successCount < totalOps*95/100 {
+		t.Errorf("Connection pool stress test had too many failures. Success: %d/%d", successCount, totalOps)
+	}
+}
+
+// TestVeriYonetici_LongRunningConcurrency tests database behavior under prolonged concurrent load
+func TestVeriYonetici_LongRunningConcurrency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping long running concurrency test")
+	}
+
+	tempDB := fmt.Sprintf("/tmp/test_long_running_%d.db", time.Now().UnixNano())
+	defer os.Remove(tempDB)
+
+	vy, err := YeniVeriYonetici(tempDB, "file://../../internal/veri/migrations")
+	if err != nil {
+		t.Fatalf("failed to create VeriYonetici: %v", err)
+	}
+	defer vy.Kapat()
+
+	// Run concurrent operations for 5 seconds
+	duration := 5 * time.Second
+	done := make(chan bool)
+	errorChan := make(chan error, 100)
+	operations := make(chan int, 1000)
+
+	// Start workers
+	workerCount := 5
+	for i := 0; i < workerCount; i++ {
+		go func(workerID int) {
+			opCount := 0
+			for {
+				select {
+				case <-done:
+					operations <- opCount
+					return
+				default:
+					// Perform random operation
+					taskID := fmt.Sprintf("long-running-%d-%d", workerID, opCount)
+					gorev := &Gorev{
+						ID:              taskID,
+						Baslik:          fmt.Sprintf("Long Running Task %d-%d", workerID, opCount),
+						Durum:           "beklemede",
+						Oncelik:         "orta",
+						OlusturmaTarih:  time.Now(),
+						GuncellemeTarih: time.Now(),
+					}
+
+					err := vy.GorevKaydet(gorev)
+					if err != nil {
+						errorChan <- fmt.Errorf("worker %d: %v", workerID, err)
+					} else {
+						opCount++
+					}
+
+					// Small delay to simulate realistic load
+					time.Sleep(time.Millisecond * time.Duration(10+workerID))
+				}
+			}
+		}(i)
+	}
+
+	// Let it run for the specified duration
+	time.Sleep(duration)
+
+	// Signal workers to stop
+	for i := 0; i < workerCount; i++ {
+		done <- true
+	}
+
+	// Collect results
+	totalOps := 0
+	for i := 0; i < workerCount; i++ {
+		totalOps += <-operations
+	}
+
+	// Collect any errors
+	close(errorChan)
+	var errors []error
+	for err := range errorChan {
+		errors = append(errors, err)
+	}
+
+	t.Logf("Long running concurrency test completed in %v", duration)
+	t.Logf("Total operations: %d (%.2f ops/sec)", totalOps, float64(totalOps)/duration.Seconds())
+	t.Logf("Errors encountered: %d", len(errors))
+
+	if len(errors) > 0 {
+		t.Errorf("Long running concurrency test had %d errors: %v", len(errors), errors)
+	}
+}
