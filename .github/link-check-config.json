@@ -1,0 +1,45 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://github.com/msenol/Gorev/(issues|discussions|releases|blob|tree)"
+    },
+    {
+      "pattern": "^https://marketplace.visualstudio.com"
+    },
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^https://registry.modelcontextprotocol.io"
+    },
+    {
+      "pattern": "^https://raw.githubusercontent.com"
+    },
+    {
+      "pattern": "^https://api.github.com"
+    },
+    {
+      "pattern": "^mailto:"
+    }
+  ],
+  "timeout": "20s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [200, 999],
+  "ignoreStatus": [429, 503, 500],
+  "replacementPatterns": [
+    {
+      "pattern": "^/",
+      "replacement": "{{BASEURL}}/"
+    }
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://github.com", "https://api.github.com"],
+      "headers": {
+        "User-Agent": "Documentation Link Checker"
+      }
+    }
+  ]
+}
