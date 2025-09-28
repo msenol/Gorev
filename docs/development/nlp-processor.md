@@ -132,6 +132,7 @@ Creates a new NLP processor instance with default configuration.
 **Returns**: `*NLPProcessor` - Configured processor instance
 
 **Example**:
+
 ```go
 nlp := NewNLPProcessor()
 ```
@@ -145,13 +146,16 @@ func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error)
 Main processing method that analyzes natural language input and extracts actionable intent.
 
 **Parameters**:
+
 - `query`: Raw natural language input string
 
-**Returns**: 
+**Returns**:
+
 - `*QueryIntent` - Structured intent with extracted parameters
 - `error` - Processing error if any
 
 **Example**:
+
 ```go
 intent, err := nlp.ProcessQuery("yeni görev oluştur: API entegrasyonu yarın deadline ile")
 if err != nil {
@@ -172,12 +176,15 @@ func (nlp *NLPProcessor) ExtractTaskContent(query string) map[string]interface{}
 Extracts task creation parameters from natural language input.
 
 **Parameters**:
+
 - `query`: Natural language task description
 
 **Returns**:
+
 - `map[string]interface{}` - Extracted task parameters
 
 **Example**:
+
 ```go
 content := nlp.ExtractTaskContent("Frontend geliştirme: Kullanıcı login sayfası yarın teslim")
 // Returns: {
@@ -196,12 +203,15 @@ func (nlp *NLPProcessor) ValidateIntent(intent *QueryIntent) error
 Validates extracted intent and ensures required parameters are present.
 
 **Parameters**:
+
 - `intent`: QueryIntent to validate
 
 **Returns**:
+
 - `error` - Validation error or nil if valid
 
 **Example**:
+
 ```go
 if err := nlp.ValidateIntent(intent); err != nil {
     return fmt.Errorf("invalid intent: %w", err)
@@ -217,14 +227,17 @@ func (nlp *NLPProcessor) FormatResponse(action string, results interface{}, lang
 Formats response messages in appropriate language.
 
 **Parameters**:
+
 - `action`: Action that was performed
-- `results`: Operation results 
+- `results`: Operation results
 - `lang`: Response language ("tr" or "en")
 
 **Returns**:
+
 - `string` - Formatted response message
 
 **Example**:
+
 ```go
 response := nlp.FormatResponse("create", taskResult, "tr")
 // Returns: "✓ Görev başarıyla oluşturuldu: API entegrasyonu"
@@ -400,6 +413,7 @@ BenchmarkNLPProcessor_FormatResponse-8         200000     5678 ns/op      128 B/
 ### 🔧 Performance Optimization Tips
 
 #### 1. **Processor Reuse**
+
 ```go
 // ✅ GOOD: Reuse processor instances
 var nlpProcessor = gorev.NewNLPProcessor()
@@ -417,6 +431,7 @@ func handleQueryBad(query string) {
 ```
 
 #### 2. **Batch Processing**
+
 ```go
 // ✅ GOOD: Process multiple queries efficiently
 func processBatch(queries []string) []*gorev.QueryIntent {
@@ -431,6 +446,7 @@ func processBatch(queries []string) []*gorev.QueryIntent {
 ```
 
 #### 3. **Context Timeout**
+
 ```go
 // ✅ GOOD: Use context for timeout control
 ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -600,6 +616,7 @@ jobs:
 ### ✅ Development Guidelines
 
 #### 1. **Rule 15 Compliance**
+
 ```go
 // ✅ GOOD: Proper error handling without suppressions
 func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error) {
@@ -624,6 +641,7 @@ func processQueryBad(query string) *QueryIntent {
 ```
 
 #### 2. **DRY Principles**
+
 ```go
 // ✅ GOOD: Centralized pattern definitions
 var (
@@ -658,6 +676,7 @@ func detectCreateIntentBad(query string) bool {
 ```
 
 #### 3. **Thread Safety**
+
 ```go
 // ✅ GOOD: Thread-safe processor with mutex protection
 type NLPProcessor struct {
@@ -692,11 +711,13 @@ func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error) {
 ### 🎯 Usage Recommendations
 
 #### 1. **Query Optimization**
+
 - **Keep queries specific**: "Create bug task: Login error with high priority" vs "Create task"
 - **Use natural language**: "Show urgent tasks for today" vs "list tasks status=urgent date=today"  
 - **Include context**: "Update project Alpha task #123 status to completed"
 
 #### 2. **Error Handling Strategy**
+
 ```go
 intent, err := nlp.ProcessQuery(userInput)
 if err != nil {
@@ -713,6 +734,7 @@ if err != nil {
 ```
 
 #### 3. **Language Handling**
+
 ```go
 // Auto-detect and switch languages
 if intent.Language == "tr" {
@@ -733,11 +755,13 @@ if intent.Language == "tr" {
 **Problem**: Queries returning confidence scores below 0.5
 
 **Symptoms**:
+
 ```go
 intent.Confidence = 0.3 // Too low for reliable processing
 ```
 
 **Solutions**:
+
 ```go
 // ✅ Improve query specificity
 "create task"                    → confidence: 0.4
@@ -757,12 +781,14 @@ intent.Confidence = 0.3 // Too low for reliable processing
 **Problem**: Wrong language detected or mixed language queries
 
 **Symptoms**:
+
 ```
 Query: "yeni task oluştur"
 Detected: English (should be Turkish)
 ```
 
 **Solutions**:
+
 ```go
 // ✅ Improve language indicators
 func (nlp *NLPProcessor) detectLanguage(query string) string {
@@ -793,12 +819,14 @@ func (nlp *NLPProcessor) handleMixedLanguage(query string) (*QueryIntent, error)
 **Problem**: Temporal expressions not recognized correctly
 
 **Symptoms**:
+
 ```
 "tomorrow deadline" → No time range detected
 "yarın son tarih"   → TimeRange is nil
 ```
 
 **Solutions**:
+
 ```go
 // ✅ Enhanced time pattern matching
 var timePatterns = map[string][]string{
@@ -827,12 +855,14 @@ func (nlp *NLPProcessor) parseTimeExpressions(query string) *TimeRange {
 **Problem**: High memory consumption during processing
 
 **Symptoms**:
+
 ```
 Memory usage: 50MB+ per processor instance
 Garbage collection: Frequent GC pauses
 ```
 
 **Solutions**:
+
 ```go
 // ✅ Implement caching with size limits
 type NLPProcessor struct {

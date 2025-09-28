@@ -49,6 +49,7 @@ npx vsce publish
 ## 📝 Screenshot İçeriği Önerileri
 
 ### TreeView Screenshot
+
 ```
 Gorev
 ├── 📁 Tasks
@@ -65,6 +66,7 @@ Gorev
 ```
 
 ### Task Detail Screenshot
+
 - Başlık: "Ödeme sistemi entegrasyonu"
 - Markdown editor açık
 - Dependency bölümü görünür
@@ -72,6 +74,7 @@ Gorev
 - Tags: payment, critical, backend
 
 ### Filter Toolbar Screenshot
+
 - Search box'ta "api" yazılı
 - Status dropdown açık
 - Priority filter seçili

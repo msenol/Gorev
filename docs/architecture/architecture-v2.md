@@ -74,6 +74,7 @@ graph TB
 ### 1. **Core Business Logic (`internal/gorev/`)**
 
 #### **Task Management Engine**
+
 ```go
 // Centralized task operations with built-in validation
 type TaskManager struct {
@@ -109,12 +110,14 @@ func (tm *TaskManager) CreateTask(params *TaskParams) (*Task, error) {
 ```
 
 #### **Project Organization System**
+
 - **Hierarchical Structure**: Unlimited project nesting
 - **Active Project Context**: Single active project for focused work
 - **Cross-Project Dependencies**: Tasks can depend on tasks from different projects
 - **Resource Isolation**: Project-level resource quotas and limits
 
 #### **Template Management Engine**
+
 - **Dynamic Templates**: Runtime template compilation and validation
 - **Inheritance Support**: Template inheritance for DRY compliance
 - **Parameterization**: Type-safe parameter injection
@@ -123,6 +126,7 @@ func (tm *TaskManager) CreateTask(params *TaskParams) (*Task, error) {
 ### 2. **Advanced NLP Processor (`internal/gorev/nlp_processor.go`)**
 
 #### **Intelligence Architecture**
+
 ```go
 type NLPProcessor struct {
     languageDetector *LanguageDetector
@@ -188,6 +192,7 @@ func (nlp *NLPProcessor) ProcessQuery(query string) (*QueryIntent, error) {
 ### 3. **Auto State Manager (`internal/gorev/auto_state_manager.go`)**
 
 #### **File System Integration**
+
 ```go
 type AutoStateManager struct {
     watcher       *fsnotify.Watcher
@@ -225,6 +230,7 @@ func (asm *AutoStateManager) handleFileEvent(event fsnotify.Event) error {
 ```
 
 #### **State Transition Rules**
+
 - **pending → in_progress**: File modification detected
 - **in_progress → completed**: Completion markers found
 - **completed → in_progress**: File modification after completion
@@ -233,6 +239,7 @@ func (asm *AutoStateManager) handleFileEvent(event fsnotify.Event) error {
 ### 4. **MCP Protocol Layer (`internal/mcp/`)**
 
 #### **Handler Architecture**
+
 ```go
 type Handlers struct {
     businessLogic *gorev.BusinessLogic
@@ -279,6 +286,7 @@ func (h *Handlers) HandleRequest(toolName string, params map[string]interface{})
 ```
 
 #### **Tool Registry Modernization**
+
 - **Dynamic Registration**: Runtime tool registration and modification
 - **Capability Discovery**: Automatic tool capability advertisement
 - **Version Management**: Tool versioning with backward compatibility
@@ -287,6 +295,7 @@ func (h *Handlers) HandleRequest(toolName string, params map[string]interface{})
 ### 5. **VS Code Extension Architecture (`gorev-vscode/`)**
 
 #### **Component Architecture**
+
 ```typescript
 // Extension activation and lifecycle management
 export class GorevExtension {
@@ -332,6 +341,7 @@ export class GorevExtension {
 ```
 
 #### **Enhanced Tree Provider**
+
 - **Real-time Updates**: WebSocket-based live updates
 - **Hierarchical Display**: Project → Task → Subtask visualization
 - **Context Actions**: Right-click context menus with smart actions
@@ -404,6 +414,7 @@ graph TD
 ### **Architecture Components**
 
 #### **1. Language Detection Engine**
+
 ```go
 type LanguageDetector struct {
     turkishPatterns map[string]float64
@@ -434,6 +445,7 @@ func (ld *LanguageDetector) Detect(text string) string {
 ```
 
 #### **2. Intent Classification System**
+
 ```go
 type IntentClassifier struct {
     patterns map[string]map[string][]Pattern // language -> action -> patterns
@@ -462,6 +474,7 @@ func (ic *IntentClassifier) Classify(query, language string) string {
 ```
 
 #### **3. Parameter Extraction Engine**
+
 ```go
 type ParameterExtractor struct {
     extractors map[string]map[string]Extractor // language -> parameter -> extractor
@@ -501,6 +514,7 @@ func (pe *ParameterExtractor) Extract(query, language, action string) map[string
 ### **Memory Management Architecture**
 
 #### **1. Connection Pool Management**
+
 ```go
 type ConnectionPool struct {
     pool        chan *sql.DB
@@ -527,6 +541,7 @@ func (cp *ConnectionPool) Return(conn *sql.DB) {
 ```
 
 #### **2. File Handle Management**
+
 ```go
 type FileManager struct {
     openFiles map[string]*os.File
@@ -566,6 +581,7 @@ func (fm *FileManager) CloseFile(path string) error {
 ```
 
 #### **3. Memory Pool for NLP Processing**
+
 ```go
 var nlpProcessorPool = &sync.Pool{
     New: func() interface{} {
@@ -603,6 +619,7 @@ func ReturnNLPProcessor(processor *NLPProcessor) {
 ### **Security Layers**
 
 #### **1. Input Validation & Sanitization**
+
 ```go
 type SecurityValidator struct {
     sqlInjectionDetector *SQLInjectionDetector
@@ -642,6 +659,7 @@ func (sv *SecurityValidator) ValidateInput(input interface{}) error {
 ```
 
 #### **2. Database Security**
+
 ```go
 // All database operations use prepared statements
 func (db *Database) CreateTask(task *Task) error {
@@ -669,6 +687,7 @@ func (db *Database) CreateTask(task *Task) error {
 ```
 
 #### **3. File System Security**
+
 ```go
 func (fs *FileSystem) ValidatePath(path string) error {
     // Clean the path
@@ -715,6 +734,7 @@ func (fs *FileSystem) ValidatePath(path string) error {
 ### **Horizontal Scaling Patterns**
 
 #### **1. Database Scaling Strategy**
+
 ```go
 type DatabaseCluster struct {
     master   *sql.DB
@@ -735,6 +755,7 @@ func (dc *DatabaseCluster) Query(query string, args ...interface{}) (*sql.Rows, 
 ```
 
 #### **2. Load Balancing for NLP Processing**
+
 ```go
 type NLPLoadBalancer struct {
     processors []*NLPProcessor
@@ -754,6 +775,7 @@ func (nlb *NLPLoadBalancer) ProcessQuery(query string) (*QueryIntent, error) {
 ```
 
 #### **3. Caching Strategy**
+
 ```go
 type CacheManager struct {
     local   *lru.Cache       // L1 cache (in-memory)
@@ -796,6 +818,7 @@ func (cm *CacheManager) Get(key string) (interface{}, bool) {
 ### **Container Architecture**
 
 #### **Docker Composition**
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
@@ -842,6 +865,7 @@ volumes:
 ```
 
 #### **Kubernetes Deployment**
+
 ```yaml
 # k8s/deployment.yml
 apiVersion: apps/v1
@@ -894,6 +918,7 @@ spec:
 ### **Cloud Architecture Options**
 
 #### **AWS Deployment**
+
 ```mermaid
 graph TB
     subgraph "AWS Cloud"
@@ -932,6 +957,7 @@ graph TB
 ### **Metrics Collection Architecture**
 
 #### **Custom Metrics System**
+
 ```go
 type MetricsCollector struct {
     counters   map[string]*prometheus.CounterVec
@@ -965,6 +991,7 @@ func (mc *MetricsCollector) RecordNLPMetrics(language, action string, confidence
 ```
 
 #### **Health Check System**
+
 ```go
 type HealthChecker struct {
     db          *Database
@@ -1021,6 +1048,7 @@ func (hc *HealthChecker) CheckHealth() *HealthStatus {
 | **NLP** | Processing Accuracy | >85% | 89% |
 
 #### **Alerting Configuration**
+
 ```yaml
 # alerts.yml
 groups:

@@ -37,6 +37,7 @@ After evaluating testing frameworks for gorev-mcpserver, we have decided to cont
 ## When to Reconsider
 
 Only reconsider this decision if:
+
 - Complex E2E testing scenarios emerge
 - BDD-style acceptance tests become necessary
 - Team grows and prefers BDD approach

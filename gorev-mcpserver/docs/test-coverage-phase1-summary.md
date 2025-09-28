@@ -6,11 +6,13 @@
 
 ## 📊 Coverage Improvements
 
-### Before:
+### Before
+
 - MCP Package: 75.1%
 - Overall Project: ~70%
 
-### After:
+### After
+
 - MCP Package: **81.5%** (+6.4%)
 - Gorev Package: 71.2%
 - Overall Project: **75.8%** (+5.8%)
@@ -18,6 +20,7 @@
 ## ✅ Completed Tasks
 
 ### 1. Template Handler Tests
+
 - Created comprehensive tests for `template_listele` and `templateden_gorev_olustur`
 - Added unit tests in `template_yonetici_test.go`
 - Tested all 4 default templates (Bug Report, Feature Request, Technical Debt, Research)
@@ -25,6 +28,7 @@
 - Implemented concurrent template operation tests
 
 ### 2. Edge Case Testing
+
 - Created `handlers_edge_cases_test.go` with 600+ lines of comprehensive edge case tests
 - Covered:
   - Input validation (empty strings, whitespace, SQL injection)
@@ -37,12 +41,14 @@
   - Tag handling edge cases
 
 ### 3. Testing Framework Decision
+
 - Evaluated testify vs ginkgo
 - **Decision**: Continue with testify
 - Created `testing-framework-decision.md` documenting the rationale
 - Key factors: 152x faster execution, already integrated, Go idiomatic
 
 ### 4. Concurrent Access Tests
+
 - Implemented tests for concurrent task creation
 - Tested concurrent updates to same task
 - Tested concurrent active project changes

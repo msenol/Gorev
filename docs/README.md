@@ -9,15 +9,18 @@
 ## 🎯 Quick Navigation
 
 ### 🚀 Getting Started
+
 - **[Installation Guide](guides/getting-started/installation.md)** - Complete setup instructions for all platforms
 - **[Usage Guide](guides/user/usage.md)** - Basic usage and workflow
 - **[VS Code Extension](guides/user/vscode-extension.md)** - Visual interface setup
 
 ### 📖 API & Tools
+
 - **[MCP Tools Reference](api/MCP_TOOLS_REFERENCE.md)** - All 41 MCP tools documentation
 - **[API Reference](api/reference.md)** - Technical API documentation
 
 ### 🏗️ Architecture & Development
+
 - **[Technical Specification](architecture/technical-specification-v2.md)** - System architecture
 - **[Architecture v2.0](architecture/architecture-v2.md)** - Updated system design
 - **[Contributing Guide](development/contributing.md)** - How to contribute
@@ -25,16 +28,19 @@
 - **[Project Roadmap](development/ROADMAP.md)** - Future plans
 
 ### 🔧 Guides & Tutorials
+
 - **[Turkish Guides](tr/)** - Türkçe dokümantasyon
 - **[Export/Import Guide](guides/user/vscode-data-export-import.md)** - Data portability
 - **[Debugging Guide](debugging/)** - Troubleshooting
 
 ### 🛠️ Development Resources
+
 - **[Testing Strategy](development/testing-strategy.md)** - Testing methodology
 - **[NLP Processor](development/nlp-processor.md)** - Natural language processing
 - **[Security Guidelines](security/thread-safety.md)** - Security best practices
 
 ### 📊 Reports & Analysis
+
 - **[Release Notes](releases/)** - Version history and changelogs
 - **[Quality Reports](reports/)** - Documentation and security reports
 - **[System Analysis](analysis/)** - Performance and usage analysis
@@ -51,6 +57,7 @@
 ## 📋 Documentation Categories
 
 ### By Audience
+
 | Audience | Primary Directories | Key Files |
 |----------|-------------------|-----------|
 | **End Users** | `guides/user/` | `usage.md`, `vscode-extension.md` |
@@ -59,6 +66,7 @@
 | **AI Assistants** | Root directory | `../CLAUDE.md` |
 
 ### By Topic
+
 | Topic | Directory | Description |
 |-------|-----------|-------------|
 | **Installation** | `guides/getting-started/` | Setup instructions |

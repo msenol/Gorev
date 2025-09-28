@@ -3,6 +3,7 @@
 ## TreeView Refresh Sorunu
 
 ### Sorun
+
 TreeView'da görevler görünmüyor veya refresh edilmiyor.
 
 ### Debug Adımları
@@ -27,6 +28,7 @@ TreeView'da görevler görünmüyor veya refresh edilmiyor.
 
 4. **Response Formatını Kontrol Edin**
    MCP server'dan gelen response şu formatta olmalı:
+
    ```markdown
    ## Görev Listesi
 
@@ -52,6 +54,7 @@ TreeView'da görevler görünmüyor veya refresh edilmiyor.
 ### Developer Console'u Kullanma
 
 Extension geliştirme modunda çalışıyorsanız:
+
 1. `Help > Toggle Developer Tools` menüsünü açın
 2. Console sekmesine gidin
 3. `[MarkdownParser]` prefix'li log'ları kontrol edin
@@ -59,6 +62,7 @@ Extension geliştirme modunda çalışıyorsanız:
 ### Hata Raporlama
 
 Sorun devam ediyorsa, lütfen şu bilgilerle bir issue açın:
+
 - VS Code versiyonu
 - Gorev extension versiyonu
 - Output panel'deki tüm log'lar

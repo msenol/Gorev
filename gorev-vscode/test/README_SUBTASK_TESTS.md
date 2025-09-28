@@ -7,7 +7,9 @@ This document describes the test coverage for the subtask UI functionality in th
 ### 1. Unit Tests
 
 #### `test/unit/subtaskUI.test.js`
+
 Tests the basic subtask UI components:
+
 - **Gorev Model Tests**: Verifies parent_id, alt_gorevler, and seviye fields
 - **GorevHiyerarsi Structure**: Tests hierarchy information structure
 - **MarkdownParser Hierarchy Tests**: Ensures correct parsing of hierarchical task structures
@@ -15,7 +17,9 @@ Tests the basic subtask UI components:
 - **Tree Item Context Values**: Tests task:parent, task:child context values
 
 #### `test/unit/dragDropController.test.js`
+
 Tests drag & drop functionality for parent changes:
+
 - **Single Task Drag**: Tests dragging individual tasks
 - **Multiple Tasks Drag**: Tests dragging multiple selected tasks
 - **Drop on Task**: Tests parent change and dependency creation options
@@ -24,7 +28,9 @@ Tests drag & drop functionality for parent changes:
 - **Configuration**: Tests allowParentChange configuration option
 
 #### `test/unit/enhancedTreeViewHierarchy.test.js`
+
 Tests hierarchical display in TreeView:
+
 - **Root Task Display**: Only root tasks shown at top level
 - **Task Expansion**: Parent tasks can be expanded to show children
 - **Subtask Count**: Shows completion count (e.g., "📁 2/5")
@@ -33,7 +39,9 @@ Tests hierarchical display in TreeView:
 - **Context Menus**: Correct options for parent/child tasks
 
 #### `test/unit/taskDetailPanelHierarchy.test.js`
+
 Tests hierarchy display in task detail panel:
+
 - **Hierarchy API Call**: Calls gorev_hiyerarsi_goster
 - **Hierarchy Section**: Renders hierarchy statistics
 - **Progress Bar**: Shows subtask completion progress
@@ -44,7 +52,9 @@ Tests hierarchy display in task detail panel:
 ### 2. Integration Tests
 
 #### `test/integration/subtaskCommands.test.js`
+
 Tests command execution flow:
+
 - **Create Subtask Command**: Full flow with user inputs
 - **Change Parent Command**: Task selection and parent change
 - **Remove Parent Command**: Making task root
@@ -54,11 +64,13 @@ Tests command execution flow:
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 npm test
 ```
 
 ### Run Only Subtask Tests
+
 ```bash
 # Using grep pattern
 npm test -- --grep "Subtask|Hierarchy|Drag.*Drop.*parent"
@@ -74,6 +86,7 @@ npm test test/integration/subtaskCommands.test.js
 ## Test Coverage Areas
 
 ### ✅ Covered
+
 1. **Model Changes**: parent_id, alt_gorevler, seviye fields
 2. **Hierarchical Display**: Tree structure with parent-child relationships
 3. **Drag & Drop**: Parent changing via drag operations
@@ -83,11 +96,13 @@ npm test test/integration/subtaskCommands.test.js
 7. **Markdown Parsing**: Hierarchical task structure parsing
 
 ### 🔄 Partially Covered
+
 1. **Deep Nesting**: Tests up to 3 levels, but unlimited depth supported
 2. **Performance**: Large hierarchy performance not tested
 3. **Concurrent Updates**: Race conditions not tested
 
 ### ❌ Not Covered
+
 1. **E2E Tests**: Full user workflow from UI to backend
 2. **Visual Regression**: Screenshot comparisons
 3. **Accessibility**: Keyboard navigation, screen readers
@@ -96,6 +111,7 @@ npm test test/integration/subtaskCommands.test.js
 ## Test Data Examples
 
 ### Simple Parent-Child
+
 ```javascript
 const parentTask = {
     id: 'parent1',
@@ -108,6 +124,7 @@ const parentTask = {
 ```
 
 ### Multi-Level Hierarchy
+
 ```javascript
 const deepHierarchy = {
     id: 'root',
@@ -127,6 +144,7 @@ const deepHierarchy = {
 ```
 
 ### Hierarchy Statistics
+
 ```javascript
 const hierarchyInfo = {
     gorev: task,
@@ -142,6 +160,7 @@ const hierarchyInfo = {
 ## Mock Objects
 
 ### Mock MCP Client
+
 ```javascript
 const mockMcpClient = {
     callTool: sinon.stub(),
@@ -150,6 +169,7 @@ const mockMcpClient = {
 ```
 
 ### Mock DataTransfer (Drag & Drop)
+
 ```javascript
 const mockDataTransfer = {
     get: sinon.stub(),
@@ -158,6 +178,7 @@ const mockDataTransfer = {
 ```
 
 ### Mock VS Code Window
+
 ```javascript
 sinon.stub(vscode.window, 'showQuickPick');
 sinon.stub(vscode.window, 'showInputBox');
@@ -168,6 +189,7 @@ sinon.stub(vscode.window, 'showInformationMessage');
 ## Common Test Patterns
 
 ### Testing Async Commands
+
 ```javascript
 test('should handle async operation', async () => {
     mockMcpClient.callTool.resolves({ content: [{ text: 'response' }] });
@@ -177,6 +199,7 @@ test('should handle async operation', async () => {
 ```
 
 ### Testing Error Scenarios
+
 ```javascript
 test('should handle error', async () => {
     mockMcpClient.callTool.rejects(new Error('dairesel bağımlılık'));
@@ -186,6 +209,7 @@ test('should handle error', async () => {
 ```
 
 ### Testing UI Updates
+
 ```javascript
 test('should refresh tree', async () => {
     await command();

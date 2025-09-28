@@ -1,18 +1,21 @@
 # AI Context Management & Automation System Implementation Plan
 
 ## 🎯 Objective
+
 Transform Gorev into an AI-optimized task management system that solves critical issues: 77.5% tasks stuck in "beklemede", 0% active tasks, and context loss in AI interactions.
 
 ## 🔍 Current Problem Analysis
 
-### Critical Issues:
+### Critical Issues
+
 - **77.5% tasks in "beklemede"** - No automatic state transitions
 - **0% tasks in "devam_ediyor"** - AI forgets to update task states  
 - **Context loss** - Long conversations lose track of active work
 - **Manual everything** - No automation or smart suggestions
 - **Session discontinuity** - No persistent task context between interactions
 
-### Root Causes:
+### Root Causes
+
 1. **AI behavioral patterns**: AIs naturally create tasks but forget to manage states
 2. **Lack of context persistence**: Each conversation starts fresh
 3. **No automation hooks**: Everything requires explicit commands
@@ -21,10 +24,13 @@ Transform Gorev into an AI-optimized task management system that solves critical
 ## 📋 Implementation Plan
 
 ### Phase 1: Context Management Foundation (Week 1) ✅ COMPLETED
+
 **Goal**: Build core context system and automatic state management
 
 #### Task 1.1: Database Schema Updates
+
 - [x] Create `ai_context` table:
+
   ```sql
   CREATE TABLE ai_context (
     id INTEGER PRIMARY KEY,
@@ -37,6 +43,7 @@ Transform Gorev into an AI-optimized task management system that solves critical
   ```
 
 - [x] Create `ai_interactions` table:
+
   ```sql
   CREATE TABLE ai_interactions (
     id INTEGER PRIMARY KEY,
@@ -49,6 +56,7 @@ Transform Gorev into an AI-optimized task management system that solves critical
   ```
 
 - [x] Add columns to `gorevler` table:
+
   ```sql
   ALTER TABLE gorevler ADD COLUMN last_ai_interaction TIMESTAMP;
   ALTER TABLE gorevler ADD COLUMN estimated_hours REAL;
@@ -57,6 +65,7 @@ Transform Gorev into an AI-optimized task management system that solves critical
   ```
 
 #### Task 1.2: Core Context Manager (Go)
+
 - [x] Create `internal/gorev/ai_context_manager.go`:
   - `SetActiveTask(sessionID, taskID)` - Set active task for session
   - `GetActiveTask(sessionID)` - Get current active task
@@ -65,6 +74,7 @@ Transform Gorev into an AI-optimized task management system that solves critical
   - `GetContextSummary(sessionID)` - Generate AI-optimized summary
 
 #### Task 1.3: Auto-State Management System
+
 - [x] Create `internal/gorev/auto_state_manager.go`:
   - `AutoTransitionToInProgress(taskID)` - Auto-start when accessed
   - `AutoTransitionToPending(taskID)` - Auto-pause after inactivity
@@ -72,15 +82,18 @@ Transform Gorev into an AI-optimized task management system that solves critical
   - `ScheduleInactivityCheck(taskID)` - 30-minute inactivity timer
 
 #### Task 1.4: New MCP Tools
+
 - [x] `gorev_set_active` - Set active task context
 - [x] `gorev_get_active` - Get current active task
 - [x] `gorev_recent` - Get recent task interactions  
 - [x] `gorev_context_summary` - AI-optimized session summary
 
-### Phase 2: Natural Language & Batch Operations (Week 2) ✅ COMPLETED 
+### Phase 2: Natural Language & Batch Operations (Week 2) ✅ COMPLETED
+
 **Goal**: Enable natural language queries and efficient batch operations
 
 #### Task 2.1: NLP Query System
+
 - [x] Create `internal/gorev/nlp_processor.go`:
   - Parse relative references: "son oluşturduğum görev", "bugün"
   - Handle date expressions: "yarın yapalım" → tomorrow date
@@ -94,6 +107,7 @@ Transform Gorev into an AI-optimized task management system that solves critical
   - Fuzzy matching for task titles
 
 #### Task 2.2: Batch Operations System
+
 - [x] Create `internal/gorev/batch_processor.go`:
   - `ProcessBatchUpdate(updates)` - Multiple task updates
   - `BulkStatusTransition(taskIDs, newStatus)` - Mass status change
@@ -106,6 +120,7 @@ Transform Gorev into an AI-optimized task management system that solves critical
   - `gorev_bulk_tag` - Add/remove tags from multiple tasks ✅ COMPLETED
 
 #### Task 2.3: Smart Suggestions System ✅ COMPLETED
+
 - [x] Create `internal/gorev/suggestion_engine.go`:
   - Suggest next actions based on priorities
   - Detect similar tasks and recommend templates
@@ -113,21 +128,25 @@ Transform Gorev into an AI-optimized task management system that solves critical
   - Deadline risk analysis
 
 ### Phase 3: Automation & Intelligence (Week 3) ⏳ READY TO START
+
 **Goal**: Add intelligent automation and predictive features
 
 #### Task 3.1: Intelligent Task Creation ✅ COMPLETED
+
 - [x] Auto-subtask splitting based on description analysis
 - [x] ML-based time estimation using historical data
 - [x] Similar task detection and template recommendation
 - [x] Smart priority assignment based on keywords
 
 #### Task 3.2: Integration Hooks [~] IN PROGRESS
+
 - [x] File system watcher for project files
 - [ ] Git commit hook integration
 - [ ] VS Code workspace integration
 - [ ] Automatic task updates based on code changes
 
 #### Task 3.3: Predictive Analytics
+
 - [ ] Task completion probability calculation
 - [ ] Deadline miss risk assessment
 - [ ] Bottleneck detection in task dependencies
@@ -136,18 +155,21 @@ Transform Gorev into an AI-optimized task management system that solves critical
 ## 🧪 Testing Strategy
 
 ### Unit Tests
+
 - [ ] Context manager operations (95% coverage)
 - [ ] Auto-state transitions (100% coverage)
 - [ ] NLP query processing (90% coverage)
 - [ ] Batch operations (95% coverage)
 
 ### Integration Tests
+
 - [ ] MCP tool integration tests
 - [ ] Database transaction consistency
 - [ ] Cross-session context persistence
 - [ ] Performance tests with 10K+ tasks
 
 ### E2E Tests
+
 - [ ] Complete AI workflow scenarios
 - [ ] Multi-session context preservation
 - [ ] Batch operation performance
@@ -155,13 +177,15 @@ Transform Gorev into an AI-optimized task management system that solves critical
 
 ## 📊 Success Metrics
 
-### Immediate Impact (After Phase 1):
+### Immediate Impact (After Phase 1)
+
 - **Active task ratio**: >20% (from current 0%)
 - **Context switches per session**: <5 (target: 2-3)
 - **Auto-state accuracy**: >80%
 - **User satisfaction**: Measurable through usage patterns
 
-### Long-term Impact (After Phase 3):
+### Long-term Impact (After Phase 3)
+
 - **Task completion rate**: >40% (from current 22.5%)
 - **Average task lifecycle**: <7 days
 - **Bulk operation usage**: >30% of all updates
@@ -170,6 +194,7 @@ Transform Gorev into an AI-optimized task management system that solves critical
 ## 🛠️ Technical Implementation Details
 
 ### Database Migrations
+
 ```sql
 -- Migration 001: AI Context Tables
 CREATE TABLE ai_context (...);
@@ -184,6 +209,7 @@ ALTER TABLE gorevler ADD COLUMN actual_hours REAL;
 ```
 
 ### New MCP Tools Interface
+
 ```go
 type AIContextTools struct {
     contextManager *AIContextManager
@@ -205,6 +231,7 @@ func (t *AIContextTools) BulkTransition(taskIDs []int, status string) error
 ```
 
 ### Auto-State Logic
+
 ```go
 type AutoStateManager struct {
     inactivityTimer time.Duration // 30 minutes
@@ -225,19 +252,22 @@ func (m *AutoStateManager) OnInactivity(taskID int) {
 
 ## 🚀 Deployment Strategy
 
-### Phase 1 Rollout (Week 1):
+### Phase 1 Rollout (Week 1)
+
 1. **Database migration** with backward compatibility
 2. **Gradual MCP tool introduction** (feature flag controlled)
 3. **User education** through documentation updates
 4. **Monitoring** auto-state transition accuracy
 
-### Phase 2 Rollout (Week 2):
+### Phase 2 Rollout (Week 2)
+
 1. **NLP query beta** with limited users
 2. **Batch operations** with safety limits
 3. **Performance monitoring** for large datasets
 4. **Feedback collection** from power users
 
-### Phase 3 Rollout (Week 3):
+### Phase 3 Rollout (Week 3)
+
 1. **Full feature activation** for all users
 2. **Advanced analytics** dashboard
 3. **Integration documentation** for developers
@@ -245,13 +275,15 @@ func (m *AutoStateManager) OnInactivity(taskID int) {
 
 ## 🔄 Rollback Plan
 
-### Immediate Rollback Triggers:
+### Immediate Rollback Triggers
+
 - Auto-state accuracy below 70%
 - Performance degradation >20%
 - Critical bugs in context management
 - User productivity decrease
 
-### Rollback Procedure:
+### Rollback Procedure
+
 1. **Feature flags** to disable new tools
 2. **Database rollback** scripts prepared
 3. **Fallback to v0.11.0** behavior
@@ -259,7 +291,8 @@ func (m *AutoStateManager) OnInactivity(taskID int) {
 
 ## 📈 Monitoring & Analytics
 
-### Key Metrics to Track:
+### Key Metrics to Track
+
 - Task state distribution (beklemede/devam_ediyor/tamamlandi)
 - Average session context switches
 - Auto-state transition accuracy
@@ -267,7 +300,8 @@ func (m *AutoStateManager) OnInactivity(taskID int) {
 - NLP query success rate
 - User engagement metrics
 
-### Alerting Thresholds:
+### Alerting Thresholds
+
 - Auto-state accuracy drops below 75%
 - Context retrieval latency >500ms
 - Batch operation failure rate >5%
@@ -275,13 +309,15 @@ func (m *AutoStateManager) OnInactivity(taskID int) {
 
 ## 🎓 Learning & Adaptation
 
-### Continuous Improvement:
+### Continuous Improvement
+
 - **Weekly performance reviews** during first month
 - **User feedback integration** into feature refinements
 - **ML model training** for better predictions
 - **Pattern analysis** for workflow optimization
 
-### Success Celebration:
+### Success Celebration
+
 When we achieve **>20% active tasks** and **<5 context switches per session**, we'll have fundamentally transformed Gorev from a static task tracker into an intelligent AI companion! 🎉
 
 ---

@@ -58,17 +58,20 @@ Gorev VS Code Extension, kullanıcıların VS Code içinden doğrudan görev yö
 ### Katmanlar
 
 #### 1. UI Katmanı
+
 - **TreeView Providers**: Veri görselleştirme
 - **Command Handlers**: Kullanıcı etkileşimleri
 - **Status Bar**: Durum gösterimi
 - **WebView** (Planlanan): Gelişmiş görev editörü
 
 #### 2. MCP Client Katmanı
+
 - **Client**: Server bağlantı yönetimi
 - **Types**: TypeScript tip tanımları
 - **Protocol**: JSON-RPC mesajlaşma
 
 #### 3. Model Katmanı
+
 - **Gorev**: Görev veri modeli
 - **Proje**: Proje veri modeli
 - **Template**: Şablon veri modeli
@@ -79,6 +82,7 @@ Gorev VS Code Extension, kullanıcıların VS Code içinden doğrudan görev yö
 ### TreeView Panelleri
 
 #### Görevler TreeView
+
 ```typescript
 interface GorevTreeItem {
   id: string;
@@ -92,6 +96,7 @@ interface GorevTreeItem {
 ```
 
 **Özellikler:**
+
 - Durum bazlı gruplandırma (Beklemede, Devam Ediyor, Tamamlandı)
 - Öncelik renklendirmesi (Yüksek: kırmızı, Orta: sarı, Düşük: yeşil)
 - Son tarih gösterimi
@@ -106,6 +111,7 @@ interface GorevTreeItem {
 - Advanced filtering ve search
 
 #### Projeler TreeView
+
 ```typescript
 interface ProjeTreeItem {
   id: string;
@@ -116,11 +122,13 @@ interface ProjeTreeItem {
 ```
 
 **Özellikler:**
+
 - Aktif proje vurgulama
 - Görev sayısı gösterimi
 - Hızlı aktif yapma
 
 #### Şablonlar TreeView
+
 ```typescript
 interface TemplateTreeItem {
   id: string;
@@ -131,6 +139,7 @@ interface TemplateTreeItem {
 ```
 
 **Özellikler:**
+
 - Kategori bazlı gruplandırma
 - Alan bilgisi önizleme
 - Hızlı görev oluşturma
@@ -156,6 +165,7 @@ interface TemplateTreeItem {
 ### Status Bar
 
 Status bar şu bilgileri gösterir:
+
 - Bağlantı durumu (🟢 Bağlı / 🔴 Bağlı Değil)
 - Toplam görev sayısı
 - Tamamlanan görev sayısı
@@ -190,6 +200,7 @@ Task'a tıkladığınızda açılan detail panel'de:
 #### Context Menu Dependencies
 
 Task'a sağ tıklayıp **Add Dependency** seçeneği ile:
+
 - Mevcut task'ları listeleyen picker açılır
 - Seçilen task bu task'ın bağımlılığı olur
 - Circular dependency kontrolü otomatik yapılır
@@ -197,6 +208,7 @@ Task'a sağ tıklayıp **Add Dependency** seçeneği ile:
 ## Kurulum
 
 ### 🚀 Marketplace'den Kurulum (Önerilen)
+
 ```
 1. VS Code Extensions panelini aç (Ctrl+Shift+X)
 2. "Gorev" ara
@@ -219,6 +231,7 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 ```
 
 ### Local Development Kurulumu
+
 ```bash
 # Repository'yi klonla
 git clone https://github.com/msenol/gorev.git
@@ -236,6 +249,7 @@ code .
 ```
 
 ### VSIX Dosyasından Kurulum
+
 ```bash
 # VSIX paketi oluştur
 npm run package
@@ -354,6 +368,7 @@ interface GorevCommands {
 ## Geliştirme
 
 ### Gereksinimler
+
 - Node.js 16+
 - npm 7+
 - VS Code 1.95.0+
@@ -362,17 +377,20 @@ interface GorevCommands {
 ### Development Workflow
 
 1. **Setup**
+
    ```bash
    npm install
    npm run compile
    ```
 
 2. **Watch Mode**
+
    ```bash
    npm run watch
    ```
 
 3. **Testing**
+
    ```bash
    # Unit tests
    npm test
@@ -382,6 +400,7 @@ interface GorevCommands {
    ```
 
 4. **Linting**
+
    ```bash
    npm run lint
    npm run format
@@ -390,6 +409,7 @@ interface GorevCommands {
 ### Debug Yapılandırması
 
 `.vscode/launch.json`:
+
 ```json
 {
   "version": "0.2.0",
@@ -437,6 +457,7 @@ suite('Extension Test Suite', () => {
 **Sorun**: Extension server'a bağlanamıyor
 
 **Çözümler**:
+
 1. Server path'inin doğru olduğunu kontrol et
 2. Server'ın çalıştığını doğrula: `gorev serve`
 3. Windows'ta tam path kullan: `C:\\Program Files\\gorev\\gorev.exe`
@@ -447,6 +468,7 @@ suite('Extension Test Suite', () => {
 **Sorun**: Görevler TreeView'da görünmüyor
 
 **Çözümler**:
+
 1. Refresh butonuna tıkla
 2. Aktif proje seçili mi kontrol et
 3. Server response'larını Output'ta kontrol et
@@ -457,6 +479,7 @@ suite('Extension Test Suite', () => {
 **Sorun**: Extension yavaş çalışıyor
 
 **Çözümler**:
+
 1. `gorev.refreshInterval` değerini artır
 2. `gorev.maxTasksPerGroup` değerini azalt
 3. Gereksiz extension'ları devre dışı bırak
@@ -502,12 +525,14 @@ Output panelinde "Gorev" kanalını seçerek detaylı logları görüntüleyebil
 ## Gelecek Özellikler
 
 ### v0.2.0 (Planlanan)
+
 - [ ] WebView görev editörü
 - [ ] Drag & drop desteği
 - [ ] Bulk operations
 - [ ] Görev filtreleme UI
 
 ### v0.3.0 (Planlanan)
+
 - [ ] Gantt chart görünümü
 - [ ] Notification sistemi
 - [ ] Keyboard shortcuts

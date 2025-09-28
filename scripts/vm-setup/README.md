@@ -5,7 +5,9 @@ Bu klasör, Gorev projesini VirtualBox Linux VM'de test etmek için kapsamlı ku
 ## 📁 Script'ler
 
 ### 1. `01-install-prerequisites.sh`
+
 **Temel gereksinimler kurulumu**
+
 - Go 1.23.5 kurulumu
 - Node.js 20 LTS kurulumu
 - VS Code kurulumu
@@ -19,7 +21,9 @@ chmod +x 01-install-prerequisites.sh
 ```
 
 ### 2. `02-build-gorev.sh`
+
 **Proje build ve konfigürasyon**
+
 - GitHub'dan proje klonlama
 - Go dependencies yükleme
 - MCP server build etme
@@ -33,7 +37,9 @@ chmod +x 02-build-gorev.sh
 ```
 
 ### 3. `03-setup-vscode.sh`
+
 **VS Code extension kurulumu**
+
 - Extension dependencies yükleme
 - TypeScript compilation
 - VSIX paketi oluşturma
@@ -47,7 +53,9 @@ chmod +x 03-setup-vscode.sh
 ```
 
 ### 4. `04-run-tests.sh`
+
 **Kapsamlı test suite**
+
 - Prerequisites verification
 - Project structure validation
 - Database tests
@@ -63,7 +71,9 @@ chmod +x 04-run-tests.sh
 ```
 
 ### 5. `05-debug-helper.sh`
+
 **Debug ve troubleshooting araçları**
+
 - Interaktif debug menüsü
 - System health check
 - Database inspection tools
@@ -81,6 +91,7 @@ chmod +x 05-debug-helper.sh
 ## 🚀 Hızlı Kurulum
 
 ### Tam Otomatik Kurulum
+
 ```bash
 # Tüm script'leri sırayla çalıştır
 cd ~/Projects/Gorev/scripts/vm-setup
@@ -92,6 +103,7 @@ source ~/.bashrc
 ```
 
 ### Manuel Adım Adım
+
 ```bash
 # 1. Prerequisites
 ./01-install-prerequisites.sh
@@ -113,12 +125,14 @@ source ~/.bashrc
 ## 📋 Sistem Gereksinimleri
 
 ### Minimum Donanım
+
 - **RAM**: 4GB (8GB önerilen)
 - **Disk**: 10GB boş alan
 - **CPU**: 2 core (4 core önerilen)
 - **İnternet**: GitHub'a erişim
 
 ### İşletim Sistemi
+
 - Ubuntu 20.04+ LTS
 - Debian 11+
 - Linux Mint 20+
@@ -128,6 +142,7 @@ source ~/.bashrc
 ## 🔧 Post-Installation
 
 ### Aliases (Kurulum sonrası kullanılabilir)
+
 ```bash
 # Navigation
 gorev-cd           # cd ~/workspace/Gorev
@@ -156,6 +171,7 @@ gorev-pull         # Git pull
 ```
 
 ### Development Workflow
+
 ```bash
 # 1. Start server
 gorev-serve
@@ -176,6 +192,7 @@ gorev-ext-package
 ## 🧪 Test Senaryoları
 
 ### 1. Server Testing
+
 ```bash
 cd ~/workspace/Gorev/gorev-mcpserver
 
@@ -189,6 +206,7 @@ cd ~/workspace/Gorev/gorev-mcpserver
 ```
 
 ### 2. Extension Testing
+
 ```bash
 # VS Code'da extension debug
 cd ~/workspace/Gorev/gorev-vscode
@@ -201,6 +219,7 @@ code .
 ```
 
 ### 3. Database Testing
+
 ```bash
 # Global database
 sqlite3 ~/.gorev/gorev.db
@@ -217,12 +236,14 @@ sqlite3 ~/workspace/Gorev/.gorev/gorev.db
 ### Yaygın Problemler
 
 **1. Go not found**
+
 ```bash
 source ~/.bashrc
 go version
 ```
 
 **2. Server build fails**
+
 ```bash
 cd ~/workspace/Gorev/gorev-mcpserver
 make clean
@@ -231,6 +252,7 @@ make build
 ```
 
 **3. Extension tests fail**
+
 ```bash
 cd ~/workspace/Gorev/gorev-vscode
 rm -rf node_modules
@@ -239,6 +261,7 @@ npm run compile
 ```
 
 **4. Database missing**
+
 ```bash
 cd ~/workspace/Gorev/gorev-mcpserver
 ./gorev init --global
@@ -246,6 +269,7 @@ cd ~/workspace/Gorev/gorev-mcpserver
 ```
 
 ### Debug Helper Menu
+
 ```bash
 ./05-debug-helper.sh
 # Menüden seçin:
@@ -258,6 +282,7 @@ cd ~/workspace/Gorev/gorev-mcpserver
 ## 📊 Test Coverage
 
 Script'ler şu alanları test eder:
+
 - ✅ Prerequisites installation
 - ✅ Go module compilation
 - ✅ Database initialization
@@ -300,6 +325,7 @@ Script'ler şu alanları test eder:
 ## 🔗 Yararlı Komutlar
 
 ### Database Queries
+
 ```sql
 -- Global database
 sqlite3 ~/.gorev/gorev.db
@@ -318,6 +344,7 @@ SELECT id, ad, aciklama FROM gorev_templateleri;
 ```
 
 ### Server Commands
+
 ```bash
 # Version check
 ./gorev version
@@ -336,6 +363,7 @@ SELECT id, ad, aciklama FROM gorev_templateleri;
 ```
 
 ### Extension Commands
+
 ```bash
 # Compile
 npm run compile

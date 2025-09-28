@@ -1,6 +1,6 @@
 # 🧪 Gorev Testing Strategy - Comprehensive Test Infrastructure
 
-**Version**: v0.15.5
+**Version**: v0.15.24
 **Coverage**: 90%+ Overall | 95%+ NLP Module
 **Status**: Production Ready
 **Compliance**: Rule 15 Compliant
@@ -54,6 +54,7 @@ Gorev v0.14.0 introduces a **comprehensive testing infrastructure expansion** wi
 Our testing strategy strictly adheres to **Rule 15 compliance**:
 
 #### ✅ Zero Suppressions Policy
+
 ```go
 // ✅ GOOD: Proper error handling in tests
 func TestTaskCreation(t *testing.T) {
@@ -70,6 +71,7 @@ func TestTaskCreationBad(t *testing.T) {
 ```
 
 #### 🏗️ DRY Test Patterns
+
 ```go
 // ✅ GOOD: Reusable test helpers
 func setupTestEnvironment(t *testing.T) (*TestEnv, func()) {
@@ -96,6 +98,7 @@ func TestUserOperations(t *testing.T) {
 ```
 
 #### 🔧 Comprehensive Resource Cleanup
+
 ```go
 func TestDatabaseOperations(t *testing.T) {
     db, cleanup := testinghelpers.SetupTestDatabase(t)
@@ -149,21 +152,25 @@ gorev-mcpserver/
 ### 🧩 Test Categories
 
 #### 1. **Unit Tests** (`*_test.go`)
+
 - **Scope**: Individual function/method testing
 - **Purpose**: Validate core business logic in isolation
 - **Coverage**: 90%+ for all business logic modules
 
 #### 2. **Integration Tests** (`integration_test.go`)
+
 - **Scope**: Component interaction testing  
 - **Purpose**: Validate system integration points
 - **Coverage**: All major feature workflows
 
 #### 3. **Performance Tests** (`benchmark_test.go`)
+
 - **Scope**: Performance validation and regression detection
 - **Purpose**: Ensure optimal resource usage
 - **Coverage**: Critical path operations
 
 #### 4. **End-to-End Tests** (`test/integration/`)
+
 - **Scope**: Full system workflow testing
 - **Purpose**: Validate complete user scenarios
 - **Coverage**: Major user journeys
@@ -177,6 +184,7 @@ gorev-mcpserver/
 **Purpose**: Comprehensive testing of natural language processing capabilities
 
 **Key Test Cases**:
+
 ```go
 func TestNLPProcessor_ProcessQuery(t *testing.T) {
     tests := []struct {
@@ -217,6 +225,7 @@ func TestNLPProcessor_ProcessQuery(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - Intent recognition accuracy
 - Bilingual query processing
 - Parameter extraction validation
@@ -228,6 +237,7 @@ func TestNLPProcessor_ProcessQuery(t *testing.T) {
 **Purpose**: Validate error handling in AI context management
 
 **Key Test Cases**:
+
 ```go
 func TestAIContextManager_ErrorHandling(t *testing.T) {
     tests := []struct {
@@ -272,6 +282,7 @@ func TestAIContextManager_ErrorHandling(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - Database connection failures
 - Invalid input handling
 - Resource exhaustion scenarios
@@ -283,6 +294,7 @@ func TestAIContextManager_ErrorHandling(t *testing.T) {
 **Purpose**: Test behavior when dependencies are unavailable
 
 **Key Test Cases**:
+
 ```go
 func TestAIContextManager_MissingDependencies(t *testing.T) {
     t.Run("Missing NLP processor", func(t *testing.T) {
@@ -314,6 +326,7 @@ func TestAIContextManager_MissingDependencies(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - Graceful fallback mechanisms
 - Error propagation
 - Service discovery failures
@@ -324,6 +337,7 @@ func TestAIContextManager_MissingDependencies(t *testing.T) {
 **Purpose**: Test automatic task state management based on file changes
 
 **Key Test Cases**:
+
 ```go
 func TestAutoStateManager_FileWatchIntegration(t *testing.T) {
     tempDir := t.TempDir()
@@ -362,6 +376,7 @@ func TestAutoStateManager_FileWatchIntegration(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - File system monitoring
 - State transition automation  
 - File-task associations
@@ -373,6 +388,7 @@ func TestAutoStateManager_FileWatchIntegration(t *testing.T) {
 **Purpose**: Validate bulk tag deletion and management operations
 
 **Key Test Cases**:
+
 ```go
 func TestBatchProcessor_TagDeletion(t *testing.T) {
     processor := NewBatchProcessor()
@@ -411,6 +427,7 @@ func TestBatchProcessor_TagDeletion(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - Bulk tag operations
 - Transaction management
 - Error handling during batch operations
@@ -421,6 +438,7 @@ func TestBatchProcessor_TagDeletion(t *testing.T) {
 **Purpose**: Test bulk operations for tasks, projects, and templates
 
 **Key Test Cases**:
+
 ```go
 func TestBatchProcessor_BulkOperations(t *testing.T) {
     processor := NewBatchProcessor()
@@ -457,6 +475,7 @@ func TestBatchProcessor_BulkOperations(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - Bulk CRUD operations
 - Performance optimization
 - Memory usage during batch processing
@@ -467,6 +486,7 @@ func TestBatchProcessor_BulkOperations(t *testing.T) {
 **Purpose**: Test file system watching and event processing
 
 **Key Test Cases**:
+
 ```go
 func TestFileWatcher_EventProcessing(t *testing.T) {
     tempDir := t.TempDir()
@@ -513,6 +533,7 @@ func TestFileWatcher_EventProcessing(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - File system event detection
 - Event filtering and debouncing
 - Resource cleanup and watcher lifecycle
@@ -523,6 +544,7 @@ func TestFileWatcher_EventProcessing(t *testing.T) {
 **Purpose**: Comprehensive NLP functionality validation
 
 **Key Test Cases**:
+
 ```go
 func TestNLPProcessor_ComprehensiveScenarios(t *testing.T) {
     nlp := NewNLPProcessor()
@@ -578,6 +600,7 @@ func TestNLPProcessor_ComprehensiveScenarios(t *testing.T) {
 ```
 
 **Coverage Areas**:
+
 - Complex query processing
 - Multi-parameter extraction
 - Language-specific pattern matching
@@ -1210,6 +1233,7 @@ func TestHighLoadScenario(t *testing.T) {
 ### ✅ Test Writing Guidelines
 
 #### 1. **Descriptive Test Names**
+
 ```go
 // ✅ GOOD: Descriptive and specific
 func TestNLPProcessor_ShouldReturnHighConfidenceForExplicitTaskCreationQuery(t *testing.T) {
@@ -1231,6 +1255,7 @@ func TestValidation(t *testing.T) {
 ```
 
 #### 2. **Comprehensive Error Testing**
+
 ```go
 // ✅ GOOD: Test both success and failure cases
 func TestTaskCreation(t *testing.T) {
@@ -1258,6 +1283,7 @@ func TestTaskCreation(t *testing.T) {
 ```
 
 #### 3. **Resource Management in Tests**
+
 ```go
 // ✅ GOOD: Proper resource cleanup
 func TestDatabaseOperations(t *testing.T) {
@@ -1275,6 +1301,7 @@ func TestDatabaseOperations(t *testing.T) {
 ```
 
 #### 4. **Mock and Stub Usage**
+
 ```go
 // ✅ GOOD: Use mocks for external dependencies
 func TestTaskManager_WithExternalAPI(t *testing.T) {
@@ -1298,6 +1325,7 @@ func TestTaskManager_WithExternalAPI(t *testing.T) {
 ### 🔧 Test Organization
 
 #### 1. **Test File Structure**
+
 ```
 internal/gorev/
 ├── task_manager.go
@@ -1307,6 +1335,7 @@ internal/gorev/
 ```
 
 #### 2. **Test Helper Functions**
+
 ```go
 // helpers_test.go
 func setupTestEnvironment(t *testing.T) (*TestEnvironment, func()) {
@@ -1339,6 +1368,7 @@ func createTestTask(t *testing.T, manager *TaskManager, title string) *Task {
 ### 📊 Test Data Management
 
 #### 1. **Fixtures and Test Data**
+
 ```go
 // fixtures/tasks.go
 var TestTasks = []*Task{
@@ -1370,6 +1400,7 @@ func LoadTestTasks() []*Task {
 ```
 
 #### 2. **Database Seeding**
+
 ```go
 func seedTestDatabase(t *testing.T, db *Database) {
     tasks := fixtures.LoadTestTasks()
@@ -1397,6 +1428,7 @@ func seedTestDatabase(t *testing.T, db *Database) {
 **Problem**: Tests interfere with each other
 
 **Symptoms**:
+
 ```
 Test A passes when run alone
 Test A fails when run with Test B
@@ -1404,6 +1436,7 @@ Random test failures in CI/CD
 ```
 
 **Solutions**:
+
 ```go
 // ✅ SOLUTION: Proper test isolation
 func TestTaskOperations(t *testing.T) {
@@ -1431,6 +1464,7 @@ func TestTaskOperations(t *testing.T) {
 **Problem**: Tests fail intermittently due to race conditions
 
 **Symptoms**:
+
 ```
 go test -race -count=10 ./...
 WARNING: DATA RACE
@@ -1439,6 +1473,7 @@ Write at 0x... by goroutine 1:
 ```
 
 **Solutions**:
+
 ```go
 // ✅ SOLUTION: Proper synchronization
 func TestConcurrentOperations(t *testing.T) {
@@ -1483,6 +1518,7 @@ func TestConcurrentOperations(t *testing.T) {
 **Problem**: Tests cause resource leaks affecting subsequent tests
 
 **Symptoms**:
+
 ```
 Too many open files
 Database connection pool exhausted
@@ -1490,6 +1526,7 @@ Memory usage continuously increasing
 ```
 
 **Solutions**:
+
 ```go
 // ✅ SOLUTION: Comprehensive cleanup
 func TestWithResourceCleanup(t *testing.T) {
@@ -1519,6 +1556,7 @@ func TestWithResourceCleanup(t *testing.T) {
 **Problem**: Tests pass/fail inconsistently
 
 **Diagnosis Commands**:
+
 ```bash
 # Run tests multiple times to identify flaky tests
 go test -count=100 -failfast ./internal/gorev/
@@ -1534,6 +1572,7 @@ go test -run TestSpecificFunction -count=20
 ```
 
 **Common Fixes**:
+
 ```go
 // ✅ FIX: Add proper timeouts
 func TestAsyncOperation(t *testing.T) {

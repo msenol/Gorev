@@ -1,6 +1,6 @@
 # Gorev API Reference
 
-> **Version**: This documentation is valid for v0.15.22+
+> **Version**: This documentation is valid for v0.15.24+
 > **Last Updated**: September 21, 2025
 
 Complete API reference for Gorev MCP server, data models, and programmatic interfaces.
@@ -89,6 +89,7 @@ type GorevTemplate struct {
 ```
 
 **Available Templates:**
+
 - `bug-report` - Bug reports and fixes
 - `feature` - New features and enhancements
 - `task` - General tasks and activities
@@ -110,6 +111,7 @@ type TemplateAlan struct {
 ```
 
 **Field Types:**
+
 - `text` - Text input
 - `number` - Numeric input
 - `select` - Dropdown selection
@@ -123,6 +125,7 @@ type TemplateAlan struct {
 Gorev provides 25+ MCP tools for comprehensive task management:
 
 #### Core Task Management
+
 - `gorev_template_olustur` - Create task from template
 - `gorev_listele` - List tasks with filtering
 - `gorev_detay` - Get task details
@@ -131,12 +134,14 @@ Gorev provides 25+ MCP tools for comprehensive task management:
 - `gorev_durum_degistir` - Change task status
 
 #### Project Management
+
 - `proje_olustur` - Create new project
 - `proje_listele` - List projects
 - `proje_aktif_yap` - Set active project
 - `proje_detay` - Get project details
 
 #### Advanced Features
+
 - `gorev_etiket_ekle` - Add tags to task
 - `gorev_etiket_kaldir` - Remove tags from task
 - `gorev_son_tarih` - Set due date
@@ -145,12 +150,14 @@ Gorev provides 25+ MCP tools for comprehensive task management:
 - `gorev_ust_degistir` - Change parent task
 
 #### Search and Filtering
+
 - `gorev_ara` - Search tasks
 - `etiket_listele` - List all tags
 - `gorev_oncelik_filtrele` - Filter by priority
 - `gorev_durum_filtrele` - Filter by status
 
 #### Templates and AI
+
 - `template_listele` - List available templates
 - `template_detay` - Get template details
 - `ai_context_yonetici` - AI context management (v0.9.0+)
@@ -265,6 +272,7 @@ gorev serve --test
 ### Tables
 
 **gorevler** (tasks)
+
 ```sql
 CREATE TABLE gorevler (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -282,6 +290,7 @@ CREATE TABLE gorevler (
 ```
 
 **projeler** (projects)
+
 ```sql
 CREATE TABLE projeler (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -294,6 +303,7 @@ CREATE TABLE projeler (
 ```
 
 **gorev_etiketler** (task tags)
+
 ```sql
 CREATE TABLE gorev_etiketler (
     gorev_id INTEGER REFERENCES gorevler(id),
@@ -303,6 +313,7 @@ CREATE TABLE gorev_etiketler (
 ```
 
 **gorev_templates** (task templates)
+
 ```sql
 CREATE TABLE gorev_templates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -440,8 +451,9 @@ type Event struct {
 ```
 
 **Available Events:**
+
 - `task.created`
-- `task.updated` 
+- `task.updated`
 - `task.deleted`
 - `task.status_changed`
 - `project.created`

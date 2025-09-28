@@ -3,6 +3,7 @@
 This guide provides practical guidance for developers working with concurrent programming patterns in the Gorev project. It covers established patterns, development workflows, and testing strategies specific to the Gorev codebase.
 
 ## Table of Contents
+
 - [Gorev Concurrency Patterns](#gorev-concurrency-patterns)
 - [Development Workflow](#development-workflow)
 - [Testing Strategies](#testing-strategies)
@@ -16,6 +17,7 @@ This guide provides practical guidance for developers working with concurrent pr
 The `AIContextYonetici` implements the canonical concurrent access pattern for Gorev:
 
 #### Structure
+
 ```go
 type AIContextYonetici struct {
     veriYonetici     VeriYoneticiInterface
@@ -25,6 +27,7 @@ type AIContextYonetici struct {
 ```
 
 #### Implementation Pattern
+
 ```go
 // Public API with synchronization
 func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
@@ -52,6 +55,7 @@ func (acy *AIContextYonetici) getContextUnsafe() (*AIContext, error) {
 ```
 
 #### Key Benefits
+
 - **No Deadlocks**: Internal unsafe methods prevent recursive locking
 - **Read Optimization**: RWMutex allows concurrent reads
 - **Clear API**: Public methods always safe, unsafe methods clearly marked
@@ -96,6 +100,7 @@ db.SetConnMaxLifetime(time.Hour)
 ```
 
 #### Transaction Pattern
+
 ```go
 func (vy *VeriYonetici) AtomicUpdate(updates []func(*sql.Tx) error) error {
     tx, err := vy.db.Begin()
@@ -121,6 +126,7 @@ func (vy *VeriYonetici) AtomicUpdate(updates []func(*sql.Tx) error) error {
 When adding new components that may be accessed concurrently:
 
 #### Step 1: Design Phase
+
 ```markdown
 1. Identify shared state that needs protection
 2. Choose appropriate synchronization mechanism:
@@ -132,6 +138,7 @@ When adding new components that may be accessed concurrently:
 ```
 
 #### Step 2: Implementation
+
 ```go
 // Example: Adding a new concurrent manager
 type NewConcurrentManager struct {
@@ -157,6 +164,7 @@ func (ncm *NewConcurrentManager) SetData(key string, value interface{}) {
 ```
 
 #### Step 3: Testing
+
 ```go
 func TestNewConcurrentManager_RaceCondition(t *testing.T) {
     ncm := &NewConcurrentManager{
@@ -202,6 +210,7 @@ When reviewing concurrent code:
 When integrating concurrent components with existing Gorev systems:
 
 #### Database Integration
+
 ```go
 // Ensure database operations are atomic
 func (manager *ConcurrentManager) UpdateWithDatabase(key string, value interface{}) error {
@@ -217,6 +226,7 @@ func (manager *ConcurrentManager) UpdateWithDatabase(key string, value interface
 ```
 
 #### MCP Handler Integration
+
 ```go
 func (h *GorevHandlers) NewConcurrentOperation(args map[string]interface{}) (*mcp.CallToolResult, error) {
     // Validate arguments first (outside of locks)
@@ -240,6 +250,7 @@ func (h *GorevHandlers) NewConcurrentOperation(args map[string]interface{}) (*mc
 ### 1. Race Condition Detection
 
 #### Standard Race Detector Usage
+
 ```bash
 # Run all tests with race detector
 go test -race ./...
@@ -253,6 +264,7 @@ go build -race ./cmd/gorev
 ```
 
 #### Custom Race Detection Tests
+
 ```go
 func TestAIContextManager_ConcurrentAccess(t *testing.T) {
     // Test demonstrates comprehensive concurrent testing pattern
@@ -305,6 +317,7 @@ func TestAIContextManager_ConcurrentAccess(t *testing.T) {
 ### 2. Load Testing Patterns
 
 #### MCP Tool Load Testing
+
 ```bash
 #!/bin/bash
 # Script: test_concurrent_mcp.sh
@@ -329,6 +342,7 @@ echo "Concurrent MCP test completed"
 ```
 
 #### Performance Measurement
+
 ```go
 func BenchmarkConcurrentAccess(b *testing.B) {
     manager := setupBenchmarkManager()
@@ -353,6 +367,7 @@ func BenchmarkConcurrentAccess(b *testing.B) {
 ### 3. Integration Testing
 
 #### End-to-End Concurrent Scenarios
+
 ```go
 func TestE2E_ConcurrentClientUsage(t *testing.T) {
     // Start test server
@@ -409,6 +424,7 @@ func TestE2E_ConcurrentClientUsage(t *testing.T) {
 ### 1. Lock Granularity
 
 #### Coarse-Grained Locking (Current Pattern)
+
 ```go
 // Good: Single mutex for related data
 type AIContextYonetici struct {
@@ -420,6 +436,7 @@ type AIContextYonetici struct {
 ```
 
 #### Fine-Grained Locking (When Needed)
+
 ```go
 // Use sparingly: Only when contention is proven problematic
 type FineLockingExample struct {
@@ -434,6 +451,7 @@ type FineLockingExample struct {
 ### 2. Performance Monitoring
 
 #### Identifying Lock Contention
+
 ```go
 func init() {
     // Enable lock profiling in development
@@ -444,6 +462,7 @@ func init() {
 ```
 
 #### Profiling Commands
+
 ```bash
 # Run with profiling
 go test -mutexprofile=mutex.prof ./internal/gorev/
@@ -457,6 +476,7 @@ go tool pprof mutex.prof
 ### 3. Alternative Approaches
 
 #### Channel-Based Coordination
+
 ```go
 // For complex coordination, consider channels
 type ChannelBasedManager struct {
@@ -479,6 +499,7 @@ func (cbm *ChannelBasedManager) Start() {
 ```
 
 #### Atomic Operations
+
 ```go
 // For simple counters and flags
 type AtomicCounter struct {
@@ -499,6 +520,7 @@ func (ac *AtomicCounter) Get() int64 {
 ### 1. Deadlock Prevention
 
 #### Problem: Lock Ordering
+
 ```go
 // BAD: Inconsistent lock ordering can cause deadlocks
 func badTransfer(from, to *Account, amount int) {
@@ -511,6 +533,7 @@ func badTransfer(from, to *Account, amount int) {
 ```
 
 #### Solution: Consistent Ordering
+
 ```go
 // GOOD: Always acquire locks in the same order
 func goodTransfer(from, to *Account, amount int) {
@@ -530,6 +553,7 @@ func goodTransfer(from, to *Account, amount int) {
 ### 2. Resource Leaks
 
 #### Problem: Missing Unlock
+
 ```go
 // BAD: Missing unlock in error path
 func badFunction() error {
@@ -545,6 +569,7 @@ func badFunction() error {
 ```
 
 #### Solution: Always Use Defer
+
 ```go
 // GOOD: Defer ensures unlock happens
 func goodFunction() error {
@@ -562,6 +587,7 @@ func goodFunction() error {
 ### 3. Race Conditions in Tests
 
 #### Problem: Unreliable Test Timing
+
 ```go
 // BAD: Relying on timing for synchronization
 func badTest(t *testing.T) {
@@ -572,6 +598,7 @@ func badTest(t *testing.T) {
 ```
 
 #### Solution: Proper Synchronization
+
 ```go
 // GOOD: Use channels or WaitGroup for coordination
 func goodTest(t *testing.T) {
@@ -596,17 +623,21 @@ func goodTest(t *testing.T) {
 Concurrency patterns in Gorev must follow Rule 15 principles:
 
 ### Comprehensive Solutions Only
+
 - **NO Quick Fixes**: Don't add locks "just in case" without understanding the problem
 - **Root Cause Analysis**: Identify actual race conditions, not just potential ones
 - **Proper Testing**: Every concurrent component must have race condition tests
 
 ### No Technical Debt
+
 - **Complete Implementation**: Concurrent safety from the start, not added later
 - **No Workarounds**: Fix synchronization properly, don't disable race detector
 - **Clean Abstractions**: Clear separation between safe and unsafe operations
 
 ### Example: v0.11.1 Implementation
+
 The AI Context Manager thread-safety implementation exemplifies Rule 15 compliance:
+
 - ✅ **Comprehensive**: All methods properly synchronized
 - ✅ **No Workarounds**: Clean mutex implementation, no "temporary" solutions
 - ✅ **Fully Tested**: 50-goroutine stress test with race detector
@@ -618,6 +649,7 @@ The AI Context Manager thread-safety implementation exemplifies Rule 15 complian
 Concurrent programming in Gorev follows established patterns that prioritize correctness, maintainability, and performance. The AI Context Manager implementation in v0.11.1 serves as the reference implementation for thread-safety patterns in the project.
 
 Key principles:
+
 1. **Use established patterns** from the AI Context Manager
 2. **Test thoroughly** with race detector and stress tests
 3. **Follow Rule 15** - no shortcuts or workarounds

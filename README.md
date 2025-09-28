@@ -22,7 +22,7 @@
 
 ## 🌍 English Summary
 
-**Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation. 
+**Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation.
 
 **Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, advanced search & filtering with FTS5, 41 MCP tools, and optional VS Code extension with rich visual interface.
 
@@ -30,7 +30,7 @@
 
 ---
 
-## 🎯 Gorev Nedir?
+## 🎯 Gorev Nedir
 
 Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm AI editörler (Claude Desktop, VS Code, Windsurf, Cursor, Zed vb.) ile doğal dilde iletişim kurabilen, Go dilinde yazılmış güçlü bir görev yönetim sunucusudur. Proje yönetimi, görev takibi ve organizasyon ihtiyaçlarınızı AI asistanlarının yetenekleriyle birleştirerek verimliliğinizi artırır.
 
@@ -44,6 +44,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 ## ✨ Özellikler
 
 ### 📝 Görev Yönetimi
+
 - **Akıllı görev oluşturma** - Doğal dil komutlarıyla
 - **Markdown desteği** - Zengin açıklama formatı
 - **Durum yönetimi** - Beklemede → Devam ediyor → Tamamlandı
@@ -51,12 +52,14 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **Esnek düzenleme** - Tüm görev özelliklerini güncelleme
 
 ### 📁 Proje Organizasyonu
+
 - **Hiyerarşik yapı** - Projeler altında görev gruplandırma
 - **Aktif proje sistemi** - Varsayılan proje ile hızlı işlem
 - **Proje bazlı raporlama** - Detaylı istatistikler
 - **Çoklu proje desteği** - Sınırsız proje oluşturma
 
 ### 🔗 Gelişmiş Özellikler
+
 - **📅 Son tarih takibi** - Deadline yönetimi ve acil görev filtreleme
 - **🏷️ Etiketleme sistemi** - Çoklu etiket ile kategorilendirme
 - **🔄 Görev bağımlılıkları** - İlişkili görevler arası otomasyon
@@ -69,16 +72,19 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **⚙️ Konfigürasyon Yönetimi** - Ignore patterns ve izleme kuralları özelleştirmesi
 
 ### 🤖 AI Entegrasyonu
+
 - **🔍 Gelişmiş Arama & Filtreleme** - FTS5 full-text search ve akıllı filtreleme (v0.15.0)
 - **🧠 Gelişmiş NLP İşleme** - Akıllı doğal dil anlama ve yorumlama (v0.14.0)
 - **Doğal dil işleme** - AI asistanlarla konuşarak görev yönetimi
 - **Çoklu editör desteği** - Claude, VS Code, Windsurf, Cursor, Zed
 - **Bağlamsal anlama** - Akıllı komut yorumlama ve parametre çıkarımı
 - **MCP standardı** - Tüm MCP uyumlu araçlarla uyumluluk
+- **🌐 MCP Registry** - Otomatik keşfedilebilirlik ve kolay kurulum (v0.15.24+)
 - **🌍 Uluslararası Destek** - Türkçe ve İngilizce tam dil desteği (v0.11.0+)
 - **⚡ Thread Safety** - 100% race condition free operation (v0.14.0)
 
 ### 🎨 VS Code Extension Özellikleri (Opsiyonel)
+
 - **İki Dil Desteği** - Türkçe ve İngilizce arayüz (v0.5.0+) 🌍
 - **TreeView Panelleri** - Görev, proje ve şablon listeleri
 - **Görsel Arayüz** - Tıkla ve kullan deneyimi
@@ -113,6 +119,7 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
 ```
 
 **Claude Desktop için:**
+
 ```json
 // ~/.config/Claude/claude_desktop_config.json (Linux)
 // ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
@@ -131,6 +138,7 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
 ```
 
 **VS Code için:**
+
 ```json
 // .vscode/mcp.json
 {
@@ -148,6 +156,7 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
 Eğer `ENOENT: spawn npx` hatası alıyorsanız:
 
 1. **Node.js kurulu mu kontrol edin:**
+
    ```cmd
    node --version
    npm --version
@@ -160,14 +169,17 @@ Eğer `ENOENT: spawn npx` hatası alıyorsanız:
    - Kurulum sonrası bilgisayarı yeniden başlatın
 
 3. **NPX ayrı kurulumu (gerekirse):**
+
    ```cmd
    npm install -g npx
    ```
 
 4. **PATH kontrolü:**
+
    ```cmd
    echo %PATH%
    ```
+
    Node.js paths (`C:\Program Files\nodejs\`) görünmeli.
 
 ### 🔧 Geleneksel Kurulum (Otomatik)
@@ -181,6 +193,7 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERS
 ```
 
 > **Not**: Kurulum sonrası eğer "unable to open database file" hatası alırsanız, GOREV_ROOT environment variable'ını ayarlayın:
+>
 > ```bash
 > export GOREV_ROOT=/path/to/gorev-mcpserver  # Projenin bulunduğu dizin
 > echo 'export GOREV_ROOT=/path/to/gorev-mcpserver' >> ~/.bashrc  # Kalıcı yapmak için
@@ -192,6 +205,7 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERS
 <summary><b>🪟 Windows</b></summary>
 
 **Otomatik Kurulum (PowerShell):**
+
 ```powershell
 # PowerShell'de çalıştırın (Admin yetkisi gerekmez)
 irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
@@ -201,6 +215,7 @@ $env:VERSION="v0.15.4"; irm https://raw.githubusercontent.com/msenol/Gorev/main/
 ```
 
 **Manuel Kurulum:**
+
 ```powershell
 # PowerShell (Admin olarak çalıştırın)
 New-Item -ItemType Directory -Force -Path "C:\Program Files\gorev"
@@ -260,6 +275,7 @@ gorev version
 <summary><b>🤖 Claude Desktop</b></summary>
 
 Konfigürasyon dosyası konumları:
+
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
@@ -280,9 +296,10 @@ Konfigürasyon dosyası konumları:
 ```
 
 > **🌍 Dil Desteği**: `GOREV_LANG` environment variable ile dil seçimi:
+>
 > - `tr` (varsayılan) - Türkçe
 > - `en` - English
-> 
+>
 > Alternatif olarak `--lang` parametresi: `gorev serve --lang=en`
 
 </details>
@@ -295,12 +312,15 @@ Konfigürasyon dosyası konumları:
 1. **Extension'ı Yükleyin**:
    - **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** üzerinden
    - Veya komut satırından:
+
    ```bash
    code --install-extension mehmetsenol.gorev-vscode
    ```
+
    - Veya VS Code içinde: Extensions → "gorev" ara → Install
 
 2. **Extension Ayarları** (`settings.json`):
+
    ```json
    {
      "gorev.serverPath": "/path/to/gorev-mcpserver/gorev",
@@ -428,6 +448,7 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 - 🚀 **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** - Extension'ı indir
 
 ### AI Assistant Documentation
+
 - 🤖 [CLAUDE.md](CLAUDE.md) - Turkish AI assistant guidance
 - 🌍 [CLAUDE.en.md](CLAUDE.en.md) - English AI assistant guidance
 - 📋 [MCP Tools Reference](docs/api/MCP_TOOLS_REFERENCE.md) - Detailed MCP tool documentation
@@ -477,6 +498,7 @@ gorev/
 ## 🧪 Geliştirme
 
 ### Gereksinimler
+
 - Go 1.23+
 - Make (opsiyonel)
 - golangci-lint (kod kalitesi için)
@@ -516,7 +538,7 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/development/contributing.md)'ne
 ## 📊 Proje Durumu
 
 - **Versiyon**: v0.15.24 🚀
-- **Test Coverage**: %75+ (Comprehensive test coverage with ongoing improvements) 
+- **Test Coverage**: %75+ (Comprehensive test coverage with ongoing improvements)
 - **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
 - **Database**: SQLite (embedded)
@@ -532,16 +554,18 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/development/contributing.md)'ne
 
 ## ⚠️ BREAKING CHANGE: Template Zorunluluğu
 
-### v0.10.0'dan İtibaren Template Kullanımı Zorunludur!
+### v0.10.0'dan İtibaren Template Kullanımı Zorunludur
 
 `gorev_olustur` tool artık kullanılamaz. Tüm görevler template kullanılarak oluşturulmalıdır.
 
-#### 🔄 Eski Kullanım (Artık Çalışmaz):
+#### 🔄 Eski Kullanım (Artık Çalışmaz)
+
 ```bash
 gorev_olustur baslik="Bug fix" aciklama="..." oncelik="yuksek"
 ```
 
-#### ✅ Yeni Kullanım (Zorunlu):
+#### ✅ Yeni Kullanım (Zorunlu)
+
 ```bash
 # 1. Önce template listesini görün
 template_listele
@@ -556,14 +580,16 @@ templateden_gorev_olustur template_id='bug_report_v2' degerler={
 }
 ```
 
-#### 🆕 Yeni Template'ler:
+#### 🆕 Yeni Template'ler
+
 - **bug_report_v2** - Gelişmiş bug raporu (severity, steps, environment)
 - **spike_research** - Time-boxed araştırma görevleri
 - **performance_issue** - Performans sorunları (metrics, targets)
 - **security_fix** - Güvenlik düzeltmeleri (CVSS, components)
 - **refactoring** - Kod iyileştirme (code smell, strategy)
 
-#### 🎯 Neden Template Zorunlu?
+#### 🎯 Neden Template Zorunlu
+
 - **Tutarlılık**: Her görev belirli standartlara uygun
 - **Kalite**: Zorunlu alanlar eksik bilgi girişini engeller
 - **Otomasyon**: Template tipine göre otomatik workflow

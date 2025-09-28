@@ -16,10 +16,12 @@ The Gorev VS Code Extension provides a comprehensive visual interface for export
 Features a 4-step wizard for comprehensive export configuration:
 
 #### Step 1: Format Selection
+
 - **JSON**: Structured data format, ideal for backup and migration
 - **CSV**: Tabular format, perfect for analysis in spreadsheet applications
 
 #### Step 2: Filtering Options
+
 - **Include Completed Tasks**: Toggle to include/exclude completed tasks
 - **Include Dependencies**: Export task dependency relationships
 - **Include Templates**: Export task templates (optional)
@@ -29,11 +31,13 @@ Features a 4-step wizard for comprehensive export configuration:
 - **Date Range**: Export tasks within a specific date range
 
 #### Step 3: Output Location
+
 - **File Browser**: Choose where to save your export file
 - **Format Detection**: Automatic file extension based on chosen format
 - **Path Validation**: Ensures output directory is accessible
 
 #### Step 4: Review and Export
+
 - **Configuration Summary**: Review all export settings
 - **Size Estimation**: Preview approximate export file size
 - **Progress Tracking**: Real-time export progress with VS Code progress API
@@ -73,17 +77,20 @@ Fastest export option with automatic settings:
 Features a 4-step wizard for safe data import:
 
 #### Step 1: File Selection
+
 - **File Browser**: Select JSON or CSV file to import
 - **Format Detection**: Automatic format detection based on file extension
 - **File Validation**: Basic file accessibility and format checks
 
 #### Step 2: Project Mapping
+
 - **Existing Projects**: View current projects in your system
 - **Project Remapping**: Map imported project names to existing projects
 - **New Project Creation**: Option to create new projects for unmatched imports
 - **Conflict Preview**: See potential project conflicts before import
 
 #### Step 3: Dry Run Preview
+
 - **Safe Analysis**: Analyze import data without making changes
 - **Conflict Detection**: Identify tasks that would conflict with existing data
 - **Import Statistics**: Preview how many tasks, projects will be imported
@@ -93,6 +100,7 @@ Features a 4-step wizard for safe data import:
   - **Merge**: Attempt to merge conflicting data
 
 #### Step 4: Import Execution
+
 - **Final Confirmation**: Review all import settings
 - **Progress Tracking**: Real-time import progress with detailed status
 - **Success Summary**: Complete import statistics with success/failure counts

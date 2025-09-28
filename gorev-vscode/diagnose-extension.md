@@ -5,19 +5,24 @@
 Based on the debugging, here are the findings and solutions:
 
 ### 1. **Root Cause**
+
 The VS Code extension is not displaying tasks even though the MCP server returns them. The issue appears to be related to:
+
 - The new compact format parser in v0.8.1 not assigning project IDs to tasks
 - The executable path configured in VS Code settings may not exist
 
 ### 2. **Changes Made**
+
 I've updated the following files to fix the issue:
 
 #### a) Enhanced TreeView Provider (`src/providers/enhancedGorevTreeProvider.ts`)
+
 - Added code to fetch the active project ID when loading tasks
 - Tasks without project_id now get assigned the active project ID automatically
 - Added detailed logging for debugging
 
 #### b) Markdown Parser (`src/utils/markdownParser.ts`)
+
 - Enhanced the compact format parser with better error handling
 - Added support for tasks with empty descriptions
 - Added detailed logging to help debug parsing issues
@@ -25,12 +30,14 @@ I've updated the following files to fix the issue:
 ### 3. **Steps to Fix**
 
 1. **Build the MCP Server**
+
    ```bash
    cd /mnt/f/Development/Projects/Gorev/gorev-mcpserver
    go build -o gorev cmd/gorev/main.go
    ```
 
 2. **Verify the executable exists**
+
    ```bash
    ls -la /mnt/f/Development/Projects/Gorev/gorev-mcpserver/gorev
    ```
@@ -77,14 +84,18 @@ If the issue persists, check:
    - Check the Output panel for detailed logs
 
 ### 6. **Expected Behavior**
+
 After these fixes, you should see:
+
 - Tasks appearing in the TreeView under their respective groups (by status)
 - Progress bars for parent tasks with subtasks
 - Priority badges and due date indicators
 - Dependency counts with lock/unlock icons
 
 ### 7. **Notes on v0.8.1 Changes**
+
 The MCP server now uses a compact format to prevent token limit errors:
+
 - Status icons: [⏳] Beklemede, [🚀] DevamEdiyor, [✅] Tamamlandi
 - Priority: Y (Yüksek), O (Orta), D (Düşük)
 - Format: `[Icon] Title (Priority)` followed by details line

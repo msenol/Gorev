@@ -8,19 +8,22 @@ The VS Code extension cannot reliably connect to the MCP server. Based on the lo
 
 The MCP server is using `log.Printf()` statements that output to stderr, which interferes with the MCP protocol communication. The MCP protocol expects clean JSON-RPC messages on stdin/stdout, but these log messages are contaminating the communication channel.
 
-### Evidence from logs:
+### Evidence from logs
+
 1. `/home/msenol/.vscode-server/data/logs/20250709T154654/exthost13/output_logging_20250709T164742/1-Gorev.log` shows:
    - Initial successful API calls (gorev_listele, proje_listele, template_listele)
    - Then timeout errors: "Request timeout for tools/call"
    - Server error: "sunucu başlatılamadı: context canceled"
 
 2. When running the server manually:
+
    ```
    2025/07/09 21:55:03 Migration öncesi veritabanı versiyonu: 6, dirty: false
    2025/07/09 21:55:03 Migration sonrası veritabanı versiyonu: 6, dirty: false
    2025/07/09 21:55:03 Veritabanı başarıyla migrate edildi.
    Gorev MCP sunucusu başlatılıyor...
    ```
+
    These log messages are sent to stderr/stdout and interfere with JSON-RPC protocol.
 
 ## Solution
@@ -40,11 +43,13 @@ sed -i 's/log\.Println/\/\/log.Println/g' gorev-mcpserver/internal/gorev/veri_yo
 
 2. **Remove the startup message in main.go:**
 Edit `/mnt/f/Development/Projects/Gorev/gorev-mcpserver/cmd/gorev/main.go` and comment out line 233:
+
 ```go
 // fmt.Fprintln(os.Stderr, "Gorev MCP sunucusu başlatılıyor...")
 ```
 
 3. **Rebuild the server:**
+
 ```bash
 cd gorev-mcpserver
 make build
@@ -55,6 +60,7 @@ make build
 1. **Create a logger that writes to a file instead of stderr:**
 
 Create `/mnt/f/Development/Projects/Gorev/gorev-mcpserver/internal/gorev/logger.go`:
+
 ```go
 package gorev
 
@@ -100,6 +106,7 @@ func LogPrintln(v ...interface{}) {
 ```
 
 2. **Replace all log calls in veri_yonetici.go:**
+
 ```bash
 # In veri_yonetici.go, replace:
 # log.Printf -> LogPrintf
@@ -125,18 +132,21 @@ if debugMode {
 After applying the fix:
 
 1. **Rebuild the server:**
+
 ```bash
 cd gorev-mcpserver
 make build
 ```
 
 2. **Test manually:**
+
 ```bash
 # Should produce NO output to stderr except for JSON-RPC messages
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}' | ./build/gorev serve
 ```
 
 3. **Test in VS Code:**
+
 - Restart VS Code
 - Check the Gorev output panel
 - Verify no timeout errors occur
@@ -145,6 +155,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}
 
 1. **Update VS Code extension timeout:**
    In `/mnt/f/Development/Projects/Gorev/gorev-vscode/src/mcp/client.ts`, consider increasing the timeout from 10 seconds to 30 seconds:
+
    ```typescript
    }, 30000); // 30 second timeout
    ```
@@ -158,17 +169,20 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}
 ## Verification Steps
 
 1. Check that the server binary exists and is executable:
+
    ```bash
    ls -la /mnt/f/Development/Projects/Gorev/gorev-mcpserver/build/gorev
    ```
 
 2. Verify the server starts without output:
+
    ```bash
    ./build/gorev serve 2>/dev/null
    # Should wait for input without printing anything
    ```
 
 3. Monitor VS Code logs:
+
    ```bash
    tail -f /home/msenol/.vscode-server/data/logs/*/exthost*/output_logging_*/1-Gorev.log
    ```

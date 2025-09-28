@@ -5,6 +5,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 ## [0.6.0-dev] - Geliştirme Aşamasında
 
 ### Planlanan Özellikler
+
 - GitHub Actions entegrasyonu
 - Binary release otomasyonu
 - Docker registry kurulumu
@@ -14,6 +15,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 ### Eklenen Özellikler
 
 #### Görev Şablon Sistemi
+
 - **Yeni tablo**: `gorev_templateleri` - Görev şablonlarını saklar
 - **Yeni MCP araçları**:
   - `template_listele` - Mevcut şablonları listele
@@ -27,6 +29,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 - **Alan doğrulama**: Zorunlu/opsiyonel alanlar
 
 ### Teknik Değişiklikler
+
 - `GorevTemplate` ve `TemplateAlan` domain modelleri eklendi
 - `template_yonetici.go` dosyası eklendi
 - `VeriYoneticiInterface`'e 5 yeni template metodu eklendi
@@ -36,6 +39,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 ### Eklenen Özellikler
 
 #### Son Tarih Desteği
+
 - **Veritabanı değişikliği**: `gorevler` tablosuna `son_tarih` kolonu eklendi
 - **Güncellenmiş araçlar**:
   - `gorev_olustur` - `son_tarih` parametresi (YYYY-MM-DD formatında)
@@ -44,6 +48,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
   - `gorev_listele` - Yeni filtreler: `acil` (7 gün içinde), `gecmis` (geçmiş)
 
 #### Etiketleme Sistemi
+
 - **Yeni tablolar**:
   - `etiketler` - Etiket tanımları
   - `gorev_etiketleri` - Many-to-many ilişki tablosu
@@ -53,6 +58,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
   - `gorev_detay` - Etiketleri gösterir
 
 #### Görev Bağımlılıkları
+
 - **Yeni MCP aracı**: `gorev_bagimlilik_ekle` - Görevler arası bağımlılık oluştur
 - **İş mantığı**:
   - Bağımlı görevler tamamlanmadan "devam_ediyor" durumuna geçilemez
@@ -62,6 +68,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
   - `gorev_detay` - Bağımlılıkları durum göstergeleriyle gösterir (✅/⏳)
 
 ### Breaking Changes
+
 - `GorevOlustur` fonksiyonu artık 6 parametre alıyor (son_tarih, etiketler eklendi)
 - `GorevListele` fonksiyonu artık 3 parametre alıyor (sirala, filtre eklendi)
 - `VeriYonetici` constructor artık migrations path gerektiriyor
@@ -69,6 +76,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 ## [0.3.0] - 2025-06-25
 
 ### Değişiklikler
+
 - MCP SDK entegrasyonu tamamlandı (`mark3labs/mcp-go` v0.6.0)
 - Go 1.22 minimum gereksinimi belirlendi
 - Modül yolu `github.com/msenol/gorev` olarak güncellendi
@@ -76,6 +84,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 ## [0.2.0] - 2025-06-24
 
 ### Eklenen Özellikler
+
 - Aktif proje sistemi
 - Proje bazlı görev filtreleme
 - Özet istatistikleri
@@ -83,6 +92,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 ## [0.1.0] - 2025-06-23
 
 ### İlk Sürüm
+
 - Temel görev yönetimi (CRUD)
 - Proje yönetimi
 - SQLite veritabanı desteği

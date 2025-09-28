@@ -1,11 +1,13 @@
 # TestDataSeeder Template Mapping Strategy
 
 ## Overview
+
 The TestDataSeeder currently uses the deprecated `gorev_olustur` command directly. We need to convert it to use the `templateden_gorev_olustur` command with appropriate templates.
 
 ## Available Templates
 
-### Current Templates in Database:
+### Current Templates in Database
+
 1. **Bug Raporu** (ID: 4dd56a2a-caf4-472c-8c0f-276bc8a1f880)
    - For bug reports and issues
    - Fields: baslik, aciklama, modul, ortam, adimlar, beklenen, mevcut, ekler, cozum, oncelik, etiketler
@@ -22,7 +24,8 @@ The TestDataSeeder currently uses the deprecated `gorev_olustur` command directl
    - For research tasks
    - Fields: konu, amac, sorular, kaynaklar, alternatifler, kriterler, son_tarih, oncelik, etiketler
 
-### New Templates (Need to be added to DB):
+### New Templates (Need to be added to DB)
+
 5. **Bug Raporu v2** - Enhanced bug report
 6. **Spike Araştırma** - Time-boxed research
 7. **Performans Sorunu** - Performance issues
@@ -32,49 +35,64 @@ The TestDataSeeder currently uses the deprecated `gorev_olustur` command directl
 ## Task Mapping Strategy
 
 ### 1. Bug/Issue Tasks → Bug Raporu Template
+
 Tasks with tags like "bug", "critical", "urgent" or titles containing "hatası", "404", "error":
+
 - "Login sayfası 404 hatası veriyor" → Bug Raporu
 - "SSL sertifikası yenile" → Bug Raporu (infrastructure issue)
 
 ### 2. Feature Tasks → Özellik İsteği Template
+
 Tasks with tags like "feature", "enhancement" or titles containing "implement", "ekle", "sistemi":
+
 - "Kullanıcı giriş sistemi implement et" → Özellik İsteği
 - "Push notification sistemi" → Özellik İsteği
 - "Dark mode tema" → Özellik İsteği
 - "Contact form entegrasyonu" → Özellik İsteği
 
 ### 3. Technical/Backend Tasks → Teknik Borç Template
+
 Tasks with tags like "backend", "refactoring", "infrastructure", "performance":
+
 - "Redis cache entegrasyonu" → Teknik Borç
 - "Rate limiting implement et" → Teknik Borç
 - "API dokümantasyonu güncelle" → Teknik Borç
 - "ETL pipeline kurulumu" → Teknik Borç
 
 ### 4. Research/Analysis Tasks → Araştırma Görevi Template
+
 Tasks with tags like "research", "araştırma", "analytics" or titles containing "araştırma", "analizi":
+
 - "Chart library araştırması" → Araştırma Görevi
 - "Makine öğrenmesi modeli" → Araştırma Görevi
 - "SEO optimizasyonu" → Araştırma Görevi (can be research)
 
 ### 5. UI/Design Tasks → Özellik İsteği or Teknik Borç
+
 Tasks with tags like "design", "ui", "frontend":
+
 - "Ana sayfa tasarımını tamamla" → Özellik İsteği
 - "Dashboard prototype hazırla" → Özellik İsteği
 - "Responsive grid sistemi" → Teknik Borç
 
 ### 6. Security Tasks → Bug Raporu (until Güvenlik Düzeltmesi is available)
+
 Tasks with tags like "security" or titles containing "güvenlik", "penetrasyon":
+
 - "Penetrasyon testi yap" → Bug Raporu (security category)
 - "2FA implementasyonu" → Özellik İsteği (security feature)
 
 ### 7. General/Meeting Tasks → Create without template
+
 Tasks like meetings, reviews, documentation:
+
 - "Team meeting hazırlığı" → Use gorev_olustur directly
 - "Code review yapılacak PR'lar" → Use gorev_olustur directly
 
 ## Implementation Steps
 
 1. **Add helper function to determine template**:
+
    ```typescript
    private getTemplateForTask(task: any): { templateId: string; fields: any } | null
    ```
@@ -95,6 +113,7 @@ Tasks like meetings, reviews, documentation:
 ## Sample Conversions
 
 ### Example 1: Bug Task
+
 ```typescript
 // Old way
 await this.mcpClient.callTool('gorev_olustur', {
@@ -124,6 +143,7 @@ await this.mcpClient.callTool('templateden_gorev_olustur', {
 ```
 
 ### Example 2: Feature Task
+
 ```typescript
 // Old way
 await this.mcpClient.callTool('gorev_olustur', {

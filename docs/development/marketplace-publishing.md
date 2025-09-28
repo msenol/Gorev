@@ -12,10 +12,12 @@ This guide covers the process of publishing the Gorev VS Code extension to the V
 ## 1. Create Publisher Account
 
 ### Step 1: Sign in to Azure DevOps
+
 1. Go to https://dev.azure.com/
 2. Sign in with your Microsoft account
 
 ### Step 2: Create Personal Access Token (PAT)
+
 1. Navigate to User Settings → Personal Access Tokens
 2. Click "New Token"
 3. Configure the token:
@@ -26,6 +28,7 @@ This guide covers the process of publishing the Gorev VS Code extension to the V
 4. Copy and securely save the token!
 
 ### Step 3: Create Publisher
+
 1. Go to https://marketplace.visualstudio.com/manage
 2. Click "Create Publisher"
 3. Fill in details:
@@ -44,7 +47,9 @@ vsce login mehmetsenol
 ## 3. Prepare Extension for Publishing
 
 ### Update package.json
+
 Ensure all required fields are present:
+
 ```json
 {
   "name": "gorev-vscode",
@@ -63,6 +68,7 @@ Ensure all required fields are present:
 ```
 
 ### Create/Update .vscodeignore
+
 ```
 .vscode/**
 .vscode-test/**
@@ -77,6 +83,7 @@ test/**
 ```
 
 ### Ensure Icon Requirements
+
 - Format: PNG (SVG not supported)
 - Size: 128x128 or 256x256 pixels
 - Location: As specified in package.json
@@ -111,13 +118,17 @@ vsce publish 0.3.0
 ## 6. Post-Publishing
 
 ### Marketplace URL
+
 Your extension will be available at:
+
 ```
 https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode
 ```
 
 ### Installation
+
 Users can install via:
+
 ```bash
 # Command line
 code --install-extension mehmetsenol.gorev-vscode
@@ -129,6 +140,7 @@ code --install-extension mehmetsenol.gorev-vscode
 ## 7. Updates and Maintenance
 
 ### Publishing Updates
+
 ```bash
 # Update version in package.json
 npm version patch  # or minor/major
@@ -138,6 +150,7 @@ vsce publish
 ```
 
 ### Monitor Statistics
+
 View download counts, ratings, and reviews at:
 https://marketplace.visualstudio.com/manage/publishers/mehmetsenol
 
@@ -163,15 +176,18 @@ https://marketplace.visualstudio.com/manage/publishers/mehmetsenol
 ## Troubleshooting
 
 ### "Personal Access Token verification failure"
+
 - Ensure PAT has Marketplace > Manage scope
 - Check PAT hasn't expired
 - Try creating a new PAT
 
 ### "Missing publisher name"
+
 - Add `"publisher": "your-id"` to package.json
 - Ensure you're logged in: `vsce login your-id`
 
 ### "Icon not found"
+
 - Check icon path in package.json
 - Ensure icon is PNG format
 - Verify icon file exists
@@ -179,6 +195,7 @@ https://marketplace.visualstudio.com/manage/publishers/mehmetsenol
 ## Checklist
 
 Before publishing, ensure:
+
 - [ ] Publisher account created
 - [ ] PAT token obtained and saved
 - [ ] package.json has all required fields

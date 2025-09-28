@@ -7,6 +7,7 @@ This guide covers testing procedures for both the Gorev VS Code extension and MC
 ### Unit Tests
 
 Located in `gorev-vscode/test/unit/`:
+
 - `markdownParser.test.js` - Tests for parsing MCP responses (207 LOC)
 - `mcpClient.test.js` - Tests for MCP client functionality (100 LOC)
 - `treeProviders.test.js` - Tests for tree view providers (149 LOC)
@@ -17,6 +18,7 @@ Located in `gorev-vscode/test/unit/`:
 - `utils.test.js` - Utility function tests (307 LOC)
 
 #### Running Unit Tests
+
 ```bash
 cd gorev-vscode
 npm test
@@ -27,9 +29,11 @@ npm test -- --grep "markdownParser"
 ### Integration Tests
 
 Located in `gorev-vscode/test/integration/`:
+
 - `extension.test.js` - Tests extension activation and command registration
 
 #### Running Integration Tests
+
 ```bash
 cd gorev-vscode
 npm test -- --grep "integration"
@@ -38,9 +42,11 @@ npm test -- --grep "integration"
 ### End-to-End Tests
 
 Located in `gorev-vscode/test/e2e/`:
+
 - `workflow.test.js` - Complete user workflows including server connection
 
 #### Running E2E Tests
+
 ```bash
 cd gorev-vscode
 # Ensure MCP server is built first
@@ -53,6 +59,7 @@ npm test -- --grep "E2E"
 #### Advanced Filtering Toolbar Test
 
 1. **Launch Extension:**
+
    ```bash
    cd gorev-vscode
    code .
@@ -99,6 +106,7 @@ npm test -- --grep "E2E"
 ### Test Coverage
 
 Generate coverage reports:
+
 ```bash
 cd gorev-vscode
 npm run test-coverage  # or npm run coverage
@@ -107,7 +115,9 @@ npm run test-coverage  # or npm run coverage
 ```
 
 #### Custom Coverage Tool
+
 The project includes a custom coverage analysis tool (`test-coverage.js`) that:
+
 - Analyzes TypeScript source files and their test coverage
 - Provides detailed LOC (Lines of Code) metrics
 - Shows test/source ratio (optimized with DRY patterns)
@@ -118,12 +128,14 @@ The project includes a custom coverage analysis tool (`test-coverage.js`) that:
 ### Unit Tests
 
 Located in `gorev-mcpserver/internal/gorev/`:
+
 - `veri_yonetici_test.go` - Data layer tests
 - `is_yonetici_test.go` - Business logic tests
 - `ai_context_yonetici_test.go` - AI context thread-safety tests
 - `export_import_test.go` - Data export/import functionality tests (570+ lines, 20 test cases)
 
 Located in `gorev-mcpserver/internal/mcp/`:
+
 - `handlers_test.go` - MCP protocol handler tests (all 31 tools)
 - `server_test.go` - MCP server initialization tests
 - `test_helpers.go` - DRY test infrastructure (NEW)
@@ -137,6 +149,7 @@ Located in `gorev-mcpserver/internal/mcp/`:
 The testing infrastructure implements comprehensive DRY patterns to eliminate duplicate test code:
 
 #### Table-Driven Test Structure
+
 ```go
 type TestCase struct {
     Name        string
@@ -150,6 +163,7 @@ type TestCase struct {
 ```
 
 #### Benchmark Configuration
+
 ```go
 type BenchmarkConfig struct {
     Name        string
@@ -163,6 +177,7 @@ type BenchmarkConfig struct {
 ```
 
 #### Concurrency Test Patterns
+
 ```go
 type ConcurrencyTestConfig struct {
     Name         string
@@ -177,6 +192,7 @@ type ConcurrencyTestConfig struct {
 ```
 
 #### Running Tests
+
 ```bash
 cd gorev-mcpserver
 # All tests with coverage
@@ -197,9 +213,11 @@ make test-coverage
 ### Integration Tests
 
 Located in `gorev-mcpserver/test/`:
+
 - `integration_test.go` - MCP handler tests
 
 #### Running Integration Tests
+
 ```bash
 cd gorev-mcpserver
 go test ./test/...
@@ -208,6 +226,7 @@ go test ./test/...
 ### Manual MCP Testing
 
 Test MCP tools directly:
+
 ```bash
 # Start server in debug mode
 ./gorev serve --debug
@@ -223,6 +242,7 @@ echo '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"gorev_listele","a
 All test files must use centralized constants from `internal/constants/test_constants.go`:
 
 #### Template Constants
+
 ```go
 // ✅ Correct - Use constants
 result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
@@ -242,6 +262,7 @@ result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 ```
 
 #### Test Iteration Constants
+
 ```go
 // ✅ Correct - Use constants for pagination and loops
 for i := 0; i < constants.TestIterationSmall; i++ {
@@ -263,6 +284,7 @@ params := map[string]interface{}{
 ```
 
 #### Concurrency Test Constants
+
 ```go
 // ✅ Correct - Use predefined concurrency levels
 config := ConcurrencyTestConfig{
@@ -284,6 +306,7 @@ config := ConcurrencyTestConfig{
 The testing infrastructure includes comprehensive reusable patterns:
 
 #### Test Helper Functions
+
 ```go
 // Use centralized test environment setup
 env := SetupTestEnvironment(t)
@@ -295,6 +318,7 @@ taskID := CreateTestTask(t, env, constants.TestTemplateFeatureRequest, taskValue
 ```
 
 #### Table-Driven Test Patterns
+
 ```go
 // Use standardized TestCase struct
 testCases := []TestCase{
@@ -325,12 +349,14 @@ All test code must follow Rule 15 principles:
 ### Creating Test Data
 
 VS Code Extension:
+
 ```javascript
 // Use test data seeder
 vscode.commands.executeCommand('gorev.debug.seedTestData');
 ```
 
 MCP Server:
+
 ```bash
 # Use SQL directly
 sqlite3 gorev.db
@@ -390,6 +416,7 @@ jobs:
 The Go race detector is essential for detecting race conditions in concurrent code. All tests must pass with the race detector enabled.
 
 #### Running Tests with Race Detector
+
 ```bash
 # Run all tests with race detector
 cd gorev-mcpserver
@@ -404,7 +431,9 @@ go build -race ./cmd/gorev
 ```
 
 #### Continuous Integration
+
 The CI pipeline includes race detection:
+
 ```bash
 # In CI scripts
 make test-race  # Equivalent to go test -race ./...
@@ -413,6 +442,7 @@ make test-race  # Equivalent to go test -race ./...
 ### Concurrent Testing Patterns
 
 #### Standard Race Condition Test Pattern
+
 ```go
 func TestComponentName_ConcurrentAccess(t *testing.T) {
     // Setup component under test
@@ -455,6 +485,7 @@ func TestComponentName_ConcurrentAccess(t *testing.T) {
 ```
 
 #### AI Context Manager Example
+
 The `TestAIContextRaceCondition` in `ai_context_yonetici_test.go` demonstrates comprehensive concurrent testing:
 
 ```go
@@ -473,6 +504,7 @@ func TestAIContextRaceCondition(t *testing.T) {
 ### Load Testing for Concurrency
 
 #### MCP Tool Concurrent Access
+
 ```bash
 #!/bin/bash
 # test_concurrent_mcp.sh
@@ -496,6 +528,7 @@ echo "Concurrent MCP test completed"
 ### Benchmarking Concurrent Performance
 
 #### Concurrent Benchmark Pattern
+
 ```go
 func BenchmarkConcurrentAccess(b *testing.B) {
     component := setupBenchmarkComponent()
@@ -531,6 +564,7 @@ When testing concurrent components:
 ### Integration with CI/CD
 
 #### GitHub Actions Race Detection
+
 ```yaml
 name: Race Condition Tests
 on: [push, pull_request]
@@ -586,16 +620,19 @@ jobs:
 ### Common Issues
 
 1. **"Extension not found" in tests**
+
    ```bash
    npm run compile
    ```
 
 2. **"Server not found" in E2E tests**
+
    ```bash
    cd ../gorev-mcpserver && make build
    ```
 
 3. **Timeout errors**
+
    ```javascript
    this.timeout(10000); // Increase timeout
    ```
@@ -624,6 +661,7 @@ jobs:
 After the major refactoring in v0.11.1, ensure that architectural improvements maintain functionality:
 
 #### 1. Tool Registration Testing
+
 Verify that the new `ToolRegistry` pattern correctly registers all 25 MCP tools:
 
 ```bash
@@ -635,6 +673,7 @@ Verify that the new `ToolRegistry` pattern correctly registers all 25 MCP tools:
 ```
 
 #### 2. Helper Class Unit Testing
+
 Test the extracted helper classes individually:
 
 ```go
@@ -657,6 +696,7 @@ func TestTaskFormatter(t *testing.T) {
 ```
 
 #### 3. Integration Testing Pattern
+
 Verify that refactored components work together correctly:
 
 ```bash
@@ -666,6 +706,7 @@ go test -v ./internal/mcp/  # Specific MCP package tests
 ```
 
 #### 4. Regression Testing Checklist
+
 After any refactoring, verify:
 
 - [ ] **All MCP tools register correctly** (`./gorev mcp list`)

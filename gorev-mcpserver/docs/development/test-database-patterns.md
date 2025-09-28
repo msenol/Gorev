@@ -13,18 +13,22 @@ Currently, the codebase has 40+ instances of duplicate database initialization p
 ### Available Helpers
 
 #### 1. `DefaultTestDatabaseConfig()`
+
 Returns default configuration for most test scenarios:
+
 - Memory database (`:memory:`)
 - Default migrations path
 - Creates default templates
 - Initializes i18n
 
 #### 2. `SetupTestDatabase(t *testing.T, config *TestDatabaseConfig)`
+
 Creates configured test database with proper cleanup.
 
 **Returns**: `*gorev.VeriYonetici, cleanup func()`
 
 #### 3. `SetupTestEnvironmentBasic(t *testing.T)`
+
 Creates complete test environment with business logic layer.
 
 **Returns**: `*gorev.IsYonetici, cleanup func()`
@@ -32,6 +36,7 @@ Creates complete test environment with business logic layer.
 ### Migration Path
 
 **Current Pattern** (40+ occurrences):
+
 ```go
 veriYonetici, err := gorev.YeniVeriYonetici(constants.TestDatabaseURI, constants.TestMigrationsPath)
 require.NoError(t, err)
@@ -42,6 +47,7 @@ require.NoError(t, err)
 ```
 
 **New Standardized Pattern**:
+
 ```go
 import "github.com/msenol/gorev/internal/testing"
 

@@ -1,6 +1,6 @@
 # Kurulum Kılavuzu
 
-> **Versiyon**: Bu dokümantasyon v0.15.5+ için geçerlidir
+> **Versiyon**: Bu dokümantasyon v0.15.24+ için geçerlidir
 > **Son Güncelleme**: 18 Eylül 2025
 
 Gorev'in tüm platformlarda kurulumu için detaylı talimatlar.
@@ -32,6 +32,7 @@ MCP istemcileri için `mcp.json` konfigürasyonunuza basitçe ekleyin:
 ```
 
 **Claude Desktop için:**
+
 ```json
 // Windows: %APPDATA%/Claude/claude_desktop_config.json
 // macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
@@ -50,6 +51,7 @@ MCP istemcileri için `mcp.json` konfigürasyonunuza basitçe ekleyin:
 ```
 
 **VS Code için:**
+
 ```json
 // .vscode/mcp.json
 {
@@ -65,23 +67,27 @@ MCP istemcileri için `mcp.json` konfigürasyonunuza basitçe ekleyin:
 ### 🖥️ Otomatik Kurulum (Geleneksel)
 
 **Linux/macOS:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 ```
 
 **Belirli versiyon için:**
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.15.5 bash
+curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.15.24 bash
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 **Belirli versiyon için:**
+
 ```powershell
-$env:VERSION="v0.15.5"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+$env:VERSION="v0.15.24"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 ### ✅ Kurulumu Doğrulama
@@ -98,11 +104,13 @@ gorev help
 Claude Desktop konfigürasyon dosyanıza şu ayarları ekleyin:
 
 **Dosya Konumları:**
+
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
 **NPX ile (Önerilen):**
+
 ```json
 {
   "mcpServers": {
@@ -118,6 +126,7 @@ Claude Desktop konfigürasyon dosyanıza şu ayarları ekleyin:
 ```
 
 **Yerel kurulum ile:**
+
 ```json
 {
   "mcpServers": {
@@ -199,13 +208,13 @@ GitHub Releases sayfasından platform-specific binary'leri indirin:
 
 ```bash
 # Linux AMD64
-wget https://github.com/msenol/gorev/releases/download/v0.15.5/gorev-linux-amd64.tar.gz
+wget https://github.com/msenol/gorev/releases/download/v0.15.24/gorev-linux-amd64.tar.gz
 
 # macOS
-wget https://github.com/msenol/gorev/releases/download/v0.15.5/gorev-darwin-amd64.tar.gz
+wget https://github.com/msenol/gorev/releases/download/v0.15.24/gorev-darwin-amd64.tar.gz
 
 # Windows
-curl -L -o gorev-windows-amd64.zip https://github.com/msenol/gorev/releases/download/v0.15.5/gorev-windows-amd64.zip
+curl -L -o gorev-windows-amd64.zip https://github.com/msenol/gorev/releases/download/v0.15.24/gorev-windows-amd64.zip
 ```
 
 ### 🔧 Kaynak Koddan Derleme
@@ -255,6 +264,7 @@ services:
 ```
 
 Çalıştırma:
+
 ```bash
 docker-compose up -d
 ```
@@ -305,11 +315,13 @@ gorev serve --host 0.0.0.0
 ### ❌ Yaygın Sorunlar
 
 **1. Permission Denied (Linux/macOS)**
+
 ```bash
 sudo chmod +x /usr/local/bin/gorev
 ```
 
 **2. Command Not Found**
+
 ```bash
 # PATH'e ekleyin
 echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
@@ -317,6 +329,7 @@ source ~/.bashrc
 ```
 
 **3. MCP Bağlantı Sorunu**
+
 ```bash
 # Sunucunun çalışıp çalışmadığını kontrol edin
 gorev serve --debug
@@ -326,6 +339,7 @@ netstat -tlnp | grep 8080
 ```
 
 **4. VS Code Uzantısı Çalışmıyor**
+
 - VS Code'u yeniden başlatın
 - MCP sunucusunun çalıştığından emin olun
 - Extension Host'u yeniden yükleyin (Ctrl+Shift+P → "Developer: Reload Window")

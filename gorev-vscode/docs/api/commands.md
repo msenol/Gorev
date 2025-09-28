@@ -11,9 +11,11 @@ Yeni görev oluşturma dialogu açar.
 **Command ID**: `gorev.createTask`
 
 **Parameters**:
+
 - `project?: Proje` - Opsiyonel proje. Belirtilmezse aktif proje kullanılır.
 
 **Usage**:
+
 ```typescript
 // Basit kullanım
 vscode.commands.executeCommand('gorev.createTask');
@@ -24,6 +26,7 @@ vscode.commands.executeCommand('gorev.createTask', project);
 ```
 
 **Dialog Fields**:
+
 - Başlık (zorunlu)
 - Açıklama (opsiyonel, markdown)
 - Öncelik (dropdown: Düşük/Orta/Yüksek)
@@ -42,11 +45,13 @@ Hızlı görev oluşturma - sadece başlık ister.
 **Parameters**: None
 
 **Usage**:
+
 ```typescript
 vscode.commands.executeCommand('gorev.quickCreateTask');
 ```
 
 **Behavior**:
+
 - Tek input box ile başlık alır
 - Varsayılan değerler: Orta öncelik, aktif proje
 - Başarılı olunca bildirim gösterir
@@ -62,11 +67,13 @@ Tüm TreeView'ları yeniler.
 **Parameters**: None
 
 **Usage**:
+
 ```typescript
 vscode.commands.executeCommand('gorev.refreshTasks');
 ```
 
 **Behavior**:
+
 - Görev listesini yeniler
 - Proje listesini yeniler
 - Şablon listesini yeniler
@@ -83,11 +90,13 @@ Yeni proje oluşturma dialogu açar.
 **Parameters**: None
 
 **Usage**:
+
 ```typescript
 vscode.commands.executeCommand('gorev.createProject');
 ```
 
 **Dialog Fields**:
+
 - İsim (zorunlu)
 - Tanım (opsiyonel)
 
@@ -100,9 +109,11 @@ Projeyi aktif yapar.
 **Command ID**: `gorev.setActiveProject`
 
 **Parameters**:
+
 - `project: Proje` - Aktif yapılacak proje
 
 **Usage**:
+
 ```typescript
 const project = { id: 'prj-123', isim: 'My Project' };
 vscode.commands.executeCommand('gorev.setActiveProject', project);
@@ -119,15 +130,18 @@ Görev detaylarını markdown formatında gösterir.
 **Command ID**: `gorev.showTaskDetail`
 
 **Parameters**:
+
 - `task: Gorev` - Detayı gösterilecek görev
 
 **Usage**:
+
 ```typescript
 const task = { id: 'tsk-123', baslik: 'My Task' };
 vscode.commands.executeCommand('gorev.showTaskDetail', task);
 ```
 
 **Display Format**:
+
 ```markdown
 # Görev Başlığı
 
@@ -155,20 +169,24 @@ Görev durumunu güncelleme menüsü açar.
 **Command ID**: `gorev.updateTaskStatus`
 
 **Parameters**:
+
 - `task: Gorev` - Durumu güncellenecek görev
 
 **Usage**:
+
 ```typescript
 const task = { id: 'tsk-123', baslik: 'My Task', durum: 'beklemede' };
 vscode.commands.executeCommand('gorev.updateTaskStatus', task);
 ```
 
 **Status Options**:
+
 - Beklemede
 - Devam Ediyor
 - Tamamlandı
 
 **Validation**:
+
 - Bağımlı görevler tamamlanmadan "Devam Ediyor" seçilemez
 
 ---
@@ -180,15 +198,18 @@ Görevi onay dialogu ile siler.
 **Command ID**: `gorev.deleteTask`
 
 **Parameters**:
+
 - `task: Gorev` - Silinecek görev
 
 **Usage**:
+
 ```typescript
 const task = { id: 'tsk-123', baslik: 'My Task' };
 vscode.commands.executeCommand('gorev.deleteTask', task);
 ```
 
 **Confirmation Dialog**:
+
 - Title: "Görevi Sil"
 - Message: "'{task.baslik}' görevini silmek istediğinizden emin misiniz?"
 - Buttons: Yes/No
@@ -204,11 +225,13 @@ vscode.commands.executeCommand('gorev.deleteTask', task);
 **Parameters**: None
 
 **Usage**:
+
 ```typescript
 vscode.commands.executeCommand('gorev.showSummary');
 ```
 
 **Display Format**:
+
 ```
 📊 Görev Özeti
 
@@ -232,11 +255,13 @@ MCP server'a bağlanır.
 **Parameters**: None
 
 **Usage**:
+
 ```typescript
 vscode.commands.executeCommand('gorev.connect');
 ```
 
 **Behavior**:
+
 - Server path'i kontrol eder
 - Bağlantı kurar
 - Status bar'ı günceller
@@ -253,11 +278,13 @@ MCP server bağlantısını keser.
 **Parameters**: None
 
 **Usage**:
+
 ```typescript
 vscode.commands.executeCommand('gorev.disconnect');
 ```
 
 **Behavior**:
+
 - Aktif bağlantıyı kapatır
 - Status bar'ı günceller
 - TreeView'ları temizler
@@ -271,9 +298,11 @@ vscode.commands.executeCommand('gorev.disconnect');
 **Command ID**: `gorev.createFromTemplate`
 
 **Parameters**:
+
 - `template: Template` - Kullanılacak şablon
 
 **Usage**:
+
 ```typescript
 const template = { 
   id: 'bug-report', 
@@ -284,6 +313,7 @@ vscode.commands.executeCommand('gorev.createFromTemplate', template);
 ```
 
 **Dynamic Form**:
+
 - Şablon alanlarına göre dinamik form oluşturur
 - Alan tiplerine göre input kontrolü (text, select, date, number)
 - Zorunlu alan validasyonu
@@ -295,15 +325,18 @@ vscode.commands.executeCommand('gorev.createFromTemplate', template);
 TreeView'larda sağ tık menüsünde görünen komutlar:
 
 ### Tasks TreeView
+
 - `gorev.showTaskDetail` - Detayları Göster
 - `gorev.updateTaskStatus` - Durumu Güncelle
 - `gorev.deleteTask` - Görevi Sil
 
 ### Projects TreeView
+
 - `gorev.setActiveProject` - Aktif Yap
 - `gorev.createTask` - Bu Projede Görev Oluştur
 
 ### Templates TreeView
+
 - `gorev.createFromTemplate` - Bu Şablondan Oluştur
 
 ## Command Registration

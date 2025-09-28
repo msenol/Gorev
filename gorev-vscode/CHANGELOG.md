@@ -41,6 +41,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ## [0.6.13] - 2025-09-18
 
 ### Fixed
+
 - **Debug Message Cleanup**: Removed all debug logging messages from production build
   - Cleaned up extension.ts and mcp/client.ts debug code
   - Removed network connectivity test logging
@@ -49,17 +50,20 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ## [0.6.12] - 2025-09-18
 
 ### Changed
+
 - **NPM Package Reference Updated**: Extension now uses the published @mehmetsenol/gorev-mcp-server package
   - Updated MCP client to use correct NPM package name in NPX mode
   - Fixed client.ts NPX command: `npx @mehmetsenol/gorev-mcp-server@latest serve`
   - All references to @gorev/mcp-server updated to @mehmetsenol/gorev-mcp-server
 
 ### Added
+
 - **NPM Package Distribution Support**: Full support for new NPM package distribution
   - Seamless NPX integration with published package
   - Ready for marketplace users to use zero-installation setup
 
 ### Documentation
+
 - **README Updates**: Enhanced setup instructions with NPX and binary mode options
   - Added clear NPX mode setup instructions (recommended)
   - Updated version badges to v0.6.12
@@ -69,6 +73,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ## [0.6.11] - 2025-09-18
 
 ### Added
+
 - **NPX Mode Support**: Added serverMode configuration for NPX vs binary execution
   - New `gorev.serverMode` setting with "npx" and "binary" options
   - NPX mode as default for zero-installation experience
@@ -76,6 +81,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
   - Smart path validation only required for binary mode
 
 ### Enhanced
+
 - **User Experience**: Eliminated need for manual binary installation for new users
   - NPX mode provides zero-configuration setup
   - Backward compatibility maintained for existing binary installations
@@ -140,6 +146,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ## [0.6.7] - 2025-09-13
 
 ### Fixed
+
 - **Critical L10n Bug Resolution**: Completely fixed localization system showing translation keys instead of actual text
   - **Root Cause**: JSON syntax errors in bundle files (missing commas at line 340 in both EN and TR bundles)
   - **Status Bar Fix**: "statusBar.connected" → "$(check) Gorev: Connected"
@@ -150,11 +157,13 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 - **Logger Initialization**: Fixed debug level timing issue that prevented log visibility during extension activation
 
 ### Performance
+
 - **Verbose Logging Cleanup**: Removed 15+ excessive debug messages from EnhancedGorevTreeProvider
 - **Simplified Fallback**: Streamlined l10n lookup mechanism for better performance
 - **Bundle Validation**: Both EN and TR bundles verified with 668 keys each
 
 ### Technical
+
 - **Rule 15 Compliance**: Complete root cause analysis and proper solution without workarounds
 - **VS Code Marketplace**: Published v0.6.7 with working localization system
 - **GitHub Release**: Updated v0.14.0 release with working VSIX file
@@ -163,27 +172,32 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ## [0.6.3] - 2025-09-13
 
 ### Added
+
 - **Debug System**: Added comprehensive debug logging system with [GOREV-L10N] prefix for l10n issue diagnosis
 - **Enhanced Error Handling**: Improved error reporting in localization system
 
 ### Technical
+
 - **Logger Integration**: Migrated from console.log to Logger.debug for proper output channel integration
 - **Debug Visibility**: Enhanced debug message visibility in Output Channel
 
 ## [0.5.1] - 2025-08-19
 
 ### Changed
+
 - **Server Compatibility Update**: Enhanced compatibility with Gorev MCP Server v0.11.1
 - **Template Alias Support**: Ready for new template alias system (bug, feature, task, etc.)
 - **Performance Optimization**: Optimized for 500x faster server response times
 - **Resource Management**: Enhanced MCP client connection stability with FileWatcher improvements
 
 ### Fixed
+
 - **Connection Stability**: Improved MCP server connection handling for better reliability  
 - **Template System**: Enhanced template selection compatibility with server alias system
 - **Error Handling**: Better error messages for server communication issues
 
 ### Technical
+
 - **MCP Protocol**: Full compatibility with server's enhanced MCP tool registration
 - **FileWatcher Integration**: Ready for automatic file monitoring capabilities
 - **Thread Safety**: Compatible with server's thread-safe AI context management
@@ -192,6 +206,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ## [0.5.0] - 2025-07-21
 
 ### Added
+
 - **Complete Bilingual Support (English/Turkish)**
   - Automatic language detection based on VS Code language settings (vscode.env.language)
   - Localized all UI strings across 36 source files (500+ translations)
@@ -201,11 +216,13 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
   - All commands, notifications, error messages, and UI elements now support both languages
 
 ### Changed
+
 - Migrated from hardcoded strings to VS Code's modern l10n API
 - Updated all user-facing strings to use vscode.l10n.t() for dynamic translation
 - Enhanced user experience for international users
 
 ### Technical Details
+
 - Localized components:
   - Commands (21 commands with localized titles and descriptions)
   - TreeView providers (tasks, projects, templates)
@@ -236,12 +253,14 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ### Migration Guide
 
 To create tasks in v0.4.0:
+
 1. Use the template wizard (Ctrl+Shift+G or "Create Task" command)
 2. Select a template from the available options
 3. Fill in the required fields for the template
 4. The task will be created with consistent structure
 
 Available templates include:
+
 - Bug Report v2 (detailed bug tracking)
 - Spike Research (time-boxed investigations)
 - Performance Issue (performance optimization tasks)
@@ -252,32 +271,38 @@ Available templates include:
 ## [0.3.9] - 2025-07-10
 
 ### Fixed
+
 - Pagination logic in MCP server v0.9.1 that was causing incomplete task lists
 - VS Code extension now correctly displays all tasks when there are many subtasks
 
 ### Changed
+
 - Updated to work with MCP server v0.9.1 pagination improvements
 
 ## [0.3.8] - 2025-07-09
 
 ### Fixed
+
 - Task count display issue where only 38 tasks were shown instead of all 147 tasks
 - MCP server pagination logic that was counting all tasks but only paginating root tasks
 - Empty response for second page (offset 100+) when fetching tasks
 
 ### Changed
+
 - Updated MCP server pagination to correctly handle all tasks (root and subtasks)
 - Improved task fetching to display complete task hierarchy across all pages
 
 ## [0.3.7] - 2025-07-09
 
 ### Fixed
+
 - Task list not showing any tasks due to parser not recognizing new status emoji (🔄)
 - Subtask hierarchy not being preserved in TreeView
 - Multiline task descriptions not being parsed correctly
 - Parser format detection not recognizing compact format v0.8.1+
 
 ### Changed
+
 - Enhanced MarkdownParser to support all task status emojis (⏳, 🚀, ✅, ✓, 🔄)
 - Improved compact format parser with proper hierarchy support
 - Better handling of multiline descriptions where ID appears on a separate line
@@ -285,30 +310,36 @@ Available templates include:
 ## [0.3.6] - 2025-07-09
 
 ### Added
+
 - Screenshot support in package.json for VS Code marketplace
 - Gallery banner configuration for better marketplace appearance
 
 ### Changed
+
 - Updated extension description to highlight key features
 
 ## [0.3.5] - 2025-07-09
 
 ### Added
+
 - Pagination support integration with MCP server v0.9.0
 - Configuration option `gorev.pagination.pageSize` (default: 100)
 - Automatic token limit prevention
 
 ### Changed
+
 - Updated to work with MCP server v0.9.0 AI features
 - Improved performance with large task lists
 
 ### Fixed
+
 - Token limit errors when displaying many tasks
 - Performance issues with large projects
 
 ## [0.3.4] - 2025-07-05
 
 ### Added
+
 - Visual progress bars for parent tasks showing subtask completion
 - Priority badges (🔥⚡ℹ️) with color coding
 - Smart due date formatting (Today, Tomorrow, 3d left, etc.)
@@ -319,12 +350,14 @@ Available templates include:
 - 9 new configuration options for visual preferences
 
 ### Fixed
+
 - Dependency data transmission between MCP handlers and UI
 - MarkdownParser to correctly parse dependency information
 
 ## [0.3.3] - 2025-06-30
 
 ### Fixed
+
 - Fixed circular progress chart percentage not being visible in task detail panel
 - Implemented CSS overlay solution with absolute positioning for percentage text
 - Progress percentage now displays correctly in the center of the circular progress indicator
@@ -335,6 +368,7 @@ Available templates include:
 ## [0.3.2] - 2025-06-30
 
 ### Added
+
 - Enhanced TreeView with grouping, multi-select, and priority-based color coding
 - Drag & Drop support for moving tasks, changing status, and creating dependencies
 - Inline editing with F2/double-click, context menus, and date pickers
@@ -345,6 +379,7 @@ Available templates include:
 - Progress indicators showing subtask completion percentage
 
 ### Fixed
+
 - Filter state persistence issue
 - Tag display when tasks created via CLI
 - Project task count showing as 0 in TreeView
@@ -354,6 +389,7 @@ Available templates include:
 ## [0.3.0] - 2025-06-29
 
 ### Added
+
 - Subtask hierarchy support with unlimited depth
 - Visual hierarchy indicators in TreeView
 - Progress tracking for parent tasks
@@ -361,6 +397,7 @@ Available templates include:
 ## [0.2.0] - 2025-06-28
 
 ### Added
+
 - Task templates support
 - Tag filtering in TreeView
 - Due date indicators
@@ -368,6 +405,7 @@ Available templates include:
 ## [0.1.0] - 2025-06-27
 
 ### Initial Release
+
 - Basic TreeView for tasks and projects
 - MCP client integration
 - Status bar integration

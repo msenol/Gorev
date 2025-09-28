@@ -1,6 +1,6 @@
 # Kullanım Kılavuzu
 
-> **Versiyon**: Bu dokümantasyon v0.15.5 için geçerlidir.
+> **Versiyon**: Bu dokümantasyon v0.15.24+ için geçerlidir.
 > **Son Güncelleme**: 18 Eylül 2025
 
 Gorev ile görev yönetiminin temelleri ve gelişmiş özellikler.
@@ -8,6 +8,7 @@ Gorev ile görev yönetiminin temelleri ve gelişmiş özellikler.
 ## 🎯 Temel Kavramlar
 
 ### Görev (Task)
+
 - Yapılacak işlerin temel birimi
 - Her görevin benzersiz bir ID'si vardır
 - **Durum**: `beklemede`, `devam_ediyor`, `tamamlandi`
@@ -16,12 +17,14 @@ Gorev ile görev yönetiminin temelleri ve gelişmiş özellikler.
 - **Bağımlılıklar**: Görevler arası ilişki kurma
 
 ### Proje (Project)
+
 - Görevleri gruplamak için kullanılır
 - Birden fazla görev içerebilir
 - Aktif proje sistemi ile hızlı işlemler
 - İsteğe bağlıdır
 
 ### Şablonlar (Templates)
+
 - Standart görev yapıları
 - Hızlı görev oluşturma
 - Template alias sistemi (bug, feature, research vs.)
@@ -69,6 +72,7 @@ Gorev ile görev yönetiminin temelleri ve gelişmiş özellikler.
 ## 🔧 Komut Satırı Kullanımı
 
 ### Sunucuyu Başlatma
+
 ```bash
 # Normal modda başlat
 gorev serve
@@ -84,6 +88,7 @@ gorev serve --lang=tr
 ```
 
 ### Veritabanı Yönetimi
+
 ```bash
 # Workspace veritabanı başlat (.gorev/gorev.db)
 gorev init
@@ -96,6 +101,7 @@ gorev version
 ```
 
 ### Template Alias Sistemi (v0.11.1+)
+
 ```bash
 # Template alias'larını görüntüle
 gorev template aliases
@@ -109,7 +115,7 @@ gorev template show bug
 
 ## 📋 Template Alias Referansı
 
-### Mevcut Alias'lar (v0.15.5)
+### Mevcut Alias'lar (v0.15.24+)
 
 - **`bug`** → bug-report: Hata raporları ve düzeltmeler
 - **`feature`** → feature: Yeni özellik ve geliştirmeler
@@ -169,16 +175,19 @@ gorev template show bug
 ## 🔍 Gelişmiş Arama Özellikleri (v0.15.0)
 
 ### Fuzzy Search
+
 - Yazım hatalarını tolere eden arama
 - Benzer kelimeleri bulma
 - Akıllı öneri sistemi
 
 ### Filter Profiles
+
 - Kayıtlı arama filtrelerinin yönetimi
 - Sık kullanılan filtreleri saklama
 - Hızlı filtre uygulama
 
 ### Arama Geçmişi
+
 - Önceki aramaları takip etme
 - Arama istatistikleri
 - Popüler arama terimlerini analiz
@@ -212,6 +221,7 @@ gorev template show bug
 ```
 
 ### Multi-IDE Desteği
+
 - VS Code
 - Cursor
 - Windsurf
@@ -232,17 +242,20 @@ gorev serve --lang=tr
 ```
 
 ### Desteklenen Diller
+
 - **Türkçe (tr)**: Tam dil desteği
 - **İngilizce (en)**: Tam dil desteği
 
 ## ⚡ Performans ve Thread Safety (v0.14.0+)
 
 ### Concurrent Access
+
 - %100 thread-safe operasyonlar
 - Race condition koruması
 - Yüksek performanslı eşzamanlı erişim
 
 ### Memory Optimization
+
 - %15-20 bellek tasarrufu
 - Optimize edilmiş veritabanı sorguları
 - %30 daha hızlı başlangıç
@@ -250,11 +263,13 @@ gorev serve --lang=tr
 ## 🔒 Güvenlik ve En İyi Pratikler
 
 ### Veritabanı Güvenliği
+
 - SQLite encryption desteği
 - Backup ve recovery prosedürleri
 - Veri bütünlüğü kontrolü
 
 ### API Güvenliği
+
 - MCP protokol standardları
 - Güvenli parametre validasyonu
 - Error handling best practices
@@ -264,6 +279,7 @@ gorev serve --lang=tr
 ### Yaygın Sorunlar
 
 **1. MCP Bağlantı Sorunu**
+
 ```bash
 # Server durumunu kontrol et
 gorev serve --debug
@@ -273,6 +289,7 @@ netstat -tlnp | grep 8080
 ```
 
 **2. Veritabanı Kilit Sorunu**
+
 ```bash
 # Server'ı yeniden başlat
 pkill gorev
@@ -280,6 +297,7 @@ gorev serve
 ```
 
 **3. VS Code Extension Çalışmıyor**
+
 ```
 - VS Code'u yeniden başlat
 - Developer: Reload Window komutunu çalıştır
@@ -302,16 +320,19 @@ gorev version --verbose
 ## 📚 İleri Seviye Kullanım
 
 ### Batch Operations
+
 - Toplu görev işlemleri
 - Mass update operasyonları
 - Bulk import/export
 
 ### API Customization
+
 - Özel MCP tool'lar
 - Custom template'ler
 - Workflow automation
 
 ### Integration Patterns
+
 - CI/CD entegrasyonu
 - Project management tools
 - Time tracking systems

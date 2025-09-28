@@ -7,6 +7,7 @@
 MCP görev yönetim sistemi, doğal dil işleme yetenekleri ve esnek yapısıyla AI kullanımına uygun bir sistem. Ancak, AI'ların daha efektif kullanabilmesi için context yönetimi, otomatik durum güncellemeleri ve görselleştirme araçları gibi alanlarda iyileştirmeler gerekiyor.
 
 **Kritik Metrikler:**
+
 - 147 görevden 114'ü (%77.5) "beklemede" durumunda
 - 0 görev aktif olarak "devam ediyor" durumunda
 - Bu durum, AI kullanıcıların görev durumlarını güncellemeyi unuttuğunu gösteriyor
@@ -50,6 +51,7 @@ API Komutları:
 ### 1. Context Management Problemi
 
 **Sorun**: Uzun konuşmalarda hangi görev üzerinde çalışıldığının takibi
+
 ```
 Örnek Senaryo:
 - AI: "123 ID'li görevi oluşturdum"
@@ -63,6 +65,7 @@ API Komutları:
 ### 2. State Transition Unutkanlığı
 
 **Sorun**: Görev durumlarını güncellemeyi unutma
+
 ```
 Tipik Akış:
 1. Görev oluştur → "beklemede"
@@ -75,6 +78,7 @@ Tipik Akış:
 ### 3. Bulk Operations Eksikliği
 
 **Sorun**: Birden fazla ilişkili görevi tek tek güncelleme zorunluluğu
+
 ```
 Mevcut:
 - Her görev için ayrı API çağrısı
@@ -85,6 +89,7 @@ Mevcut:
 ### 4. Visualization Gap
 
 **Sorun**: 147 görevin mental modelini oluşturma zorluğu
+
 ```
 İhtiyaç:
 - Proje bazlı görev dağılımı
@@ -208,6 +213,7 @@ onCommit: (commit) => {
 ### Phase 1: Quick Wins (1-2 hafta)
 
 1. **Context Management API**
+
    ```bash
    # Basit context yönetimi
    - gorev_set_active(task_id)
@@ -216,6 +222,7 @@ onCommit: (commit) => {
    ```
 
 2. **State Auto-Updates**
+
    ```python
    # Hook sistemi
    on_task_viewed: set_status("devam_ediyor")
@@ -223,6 +230,7 @@ onCommit: (commit) => {
    ```
 
 3. **Batch Operations**
+
    ```bash
    # Toplu işlemler
    gorev_bulk_update([
@@ -234,6 +242,7 @@ onCommit: (commit) => {
 ### Phase 2: Advanced Features (3-4 hafta)
 
 1. **AI Summary Dashboard**
+
    ```yaml
    Format: YAML veya JSON
    İçerik:
@@ -244,6 +253,7 @@ onCommit: (commit) => {
    ```
 
 2. **Natural Language Queries**
+
    ```sql
    -- Örnek sorgular
    "Show me all high priority bugs"
@@ -252,6 +262,7 @@ onCommit: (commit) => {
    ```
 
 3. **Smart Notifications**
+
    ```python
    # AI-relevant notifications
    - Task dependencies resolved
@@ -383,6 +394,7 @@ CREATE TABLE ai_interactions (
 MCP görev yönetim sistemi, AI kullanıcılar için güçlü bir temel sunuyor. Önerilen iyileştirmelerle, sistem basit bir task tracker'dan AI-native bir proje yönetim platformuna dönüşebilir. Öncelikli olarak context yönetimi ve otomatik durum güncellemeleri ile başlanmalı, ardından daha gelişmiş AI özellikleri eklenmelidir.
 
 **Next Steps:**
+
 1. Context management API implementasyonu
 2. Auto-state update rules engine
 3. Batch operations support

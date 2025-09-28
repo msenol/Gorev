@@ -60,12 +60,14 @@ gorev/
 ### 1. MCP Katmanı (`internal/mcp`)
 
 **Sorumluluklar:**
+
 - JSON-RPC protokolü işleme
 - Stdin/stdout üzerinden iletişim
 - Tool tanımları ve routing
 - Request/response yönetimi
 
 **Temel Bileşenler:**
+
 ```go
 type Sunucu struct {
     isYonetici *gorev.IsYonetici
@@ -78,11 +80,13 @@ type Sunucu struct {
 ### 2. İş Mantığı Katmanı (`internal/gorev`)
 
 **Sorumluluklar:**
+
 - Domain logic implementasyonu
 - İş kuralları ve validasyon
 - Use case orchestration
 
 **Temel Operasyonlar:**
+
 - Görev CRUD işlemleri
 - Proje yönetimi
 - Durum geçişleri
@@ -91,6 +95,7 @@ type Sunucu struct {
 ### 3. Veri Katmanı (`internal/gorev/veri_yonetici.go`)
 
 **Sorumluluklar:**
+
 - Veritabanı bağlantı yönetimi
 - SQL sorguları
 - Transaction yönetimi
@@ -135,6 +140,7 @@ CREATE TABLE baglantilar (
 ## 🔄 İstek Akışı
 
 1. **Claude → Gorev:**
+
    ```json
    {
      "jsonrpc": "2.0",
@@ -164,6 +170,7 @@ CREATE TABLE baglantilar (
    - Transaction commit edilir
 
 5. **Gorev → Claude:**
+
    ```json
    {
      "jsonrpc": "2.0",
@@ -180,16 +187,19 @@ CREATE TABLE baglantilar (
 ## 🎯 Tasarım Prensipleri
 
 ### 1. Katmanlı Mimari
+
 - Her katmanın net sorumlulukları var
 - Katmanlar arası bağımlılık tek yönlü
 - Test edilebilirlik ön planda
 
 ### 2. Domain-Driven Design
+
 - İş mantığı domain modellerinde
 - Altyapı detayları izole edilmiş
 - Ubiquitous language kullanımı
 
 ### 3. SOLID Prensipleri
+
 - **S**ingle Responsibility
 - **O**pen/Closed
 - **L**iskov Substitution
@@ -197,6 +207,7 @@ CREATE TABLE baglantilar (
 - **D**ependency Inversion
 
 ### 4. Go İdiomları
+
 - Explicit error handling
 - Interface kullanımı
 - Composition over inheritance
@@ -205,16 +216,19 @@ CREATE TABLE baglantilar (
 ## 🔒 Güvenlik Mimarisi
 
 ### 1. Input Validasyonu
+
 - Tüm MCP inputları validate edilir
 - SQL injection koruması
 - Path traversal koruması
 
 ### 2. Veri İzolasyonu
+
 - Her kullanıcı kendi veritabanına sahip
 - Cross-user erişim yok
 - Dosya sistemi izolasyonu
 
 ### 3. Error Handling
+
 - Hassas bilgiler loglanmaz
 - Stack trace'ler gizlenir
 - Güvenli varsayılanlar
@@ -222,16 +236,19 @@ CREATE TABLE baglantilar (
 ## 🚀 Performans Optimizasyonları
 
 ### 1. Veritabanı
+
 - Index'ler eklendi (durum, proje_id)
 - Prepared statements kullanımı
 - Connection pooling (gelecek)
 
 ### 2. Bellek Yönetimi
+
 - Minimal allocation
 - Buffer reuse
 - Lazy loading
 
 ### 3. Concurrency
+
 - Goroutine kullanımı (gelecek)
 - Channel-based communication
 - Lock-free algoritmalar
@@ -239,11 +256,13 @@ CREATE TABLE baglantilar (
 ## 📈 Ölçeklenebilirlik
 
 ### Mevcut Limitler
+
 - Tek SQLite dosyası
 - Senkron işlem modeli
 - Lokal dosya sistemi
 
 ### Gelecek İyileştirmeler
+
 1. **Veri Katmanı:**
    - PostgreSQL desteği
    - Redis cache katmanı
@@ -262,6 +281,7 @@ CREATE TABLE baglantilar (
 ## 🔧 Konfigürasyon
 
 ### Environment Variables
+
 ```bash
 GOREV_DATA_DIR=/path/to/data
 GOREV_LOG_LEVEL=debug|info|warn|error
@@ -270,6 +290,7 @@ GOREV_TIMEOUT=30s
 ```
 
 ### Yapılandırma Dosyası (Planlanan)
+
 ```yaml
 server:
   transport: stdio
@@ -288,12 +309,14 @@ logging:
 ## 📊 Monitoring ve Metrics
 
 ### Planlanan Metrikler
+
 - Request/response süreleri
 - Tool kullanım istatistikleri
 - Hata oranları
 - Veritabanı performansı
 
 ### Health Check Endpoint
+
 ```go
 GET /health
 {
@@ -307,11 +330,13 @@ GET /health
 ## 🔄 Versiyon Yönetimi
 
 ### Semantic Versioning
+
 - Major: Breaking changes
 - Minor: Yeni özellikler
 - Patch: Bug fix'ler
 
 ### Backward Compatibility
+
 - MCP protokol versiyonu korunur
 - Veritabanı migration'ları
 - Deprecation politikası
@@ -325,6 +350,7 @@ GET /health
 A significant refactoring was completed to eliminate code smells and improve maintainability:
 
 #### File Structure Changes
+
 ```
 internal/mcp/
 ├── handlers.go           # 2,362 lines (reduced from 3,060)
@@ -345,12 +371,15 @@ internal/i18n/
 #### Architecture Improvements
 
 ##### 1. Tool Registration Pattern
+
 **Before (Code Smell):**
+
 - Single massive `RegisterTools` method: 703 lines
 - Mixed concerns: registration + schema definition + documentation
 - Hard to maintain and test
 
 **After (Clean Architecture):**
+
 ```go
 // Simplified delegation pattern
 func (h *Handlers) RegisterTools(s *server.MCPServer) {
@@ -370,7 +399,9 @@ func (tr *ToolRegistry) RegisterAllTools(s *server.MCPServer) {
 ```
 
 ##### 2. Helper Class Architecture
+
 **Common Utility Classes:**
+
 - `ParameterValidator` - Centralized input validation
 - `TaskFormatter` - Consistent formatting with emojis
 - `ErrorFormatter` - Standardized error messages
@@ -378,13 +409,16 @@ func (tr *ToolRegistry) RegisterAllTools(s *server.MCPServer) {
 - `CommonValidators` - Frequently used validations
 
 **Benefits:**
+
 - DRY principle enforcement
 - Consistent behavior across tools
 - Easier testing and maintenance
 - Reusable components
 
 ##### 3. Tool Categories
+
 **Organized by Domain:**
+
 1. **Task Management** (7 tools): CRUD operations
 2. **Project Management** (6 tools): Project lifecycle  
 3. **Templates** (2 tools): Template-based creation
@@ -395,6 +429,7 @@ func (tr *ToolRegistry) RegisterAllTools(s *server.MCPServer) {
 #### DRY Patterns Implementation
 
 **i18n DRY Patterns (internal/i18n/helpers.go):**
+
 ```go
 // Helper functions for consistent translation patterns
 func TParam(key string, data interface{}) string
@@ -403,12 +438,14 @@ func FormatInvalidValue(param, value, expected string) string
 ```
 
 **Testing DRY Infrastructure:**
+
 - **TestCase struct**: Standardized table-driven test patterns
 - **BenchmarkConfig struct**: Reusable benchmark configuration
 - **ConcurrencyTestConfig struct**: Thread-safety validation patterns
 - **Helper functions**: CreateTestServer(), RunTableDrivenTest(), RunBenchmarkSuite()
 
 **Code Quality Metrics:**
+
 - **12 total test files**: Comprehensive coverage with reusable patterns
 - **11,124+ lines**: Well-organized Go code across all files
 - **60% reduction**: Duplicate strings and validation patterns eliminated
@@ -416,6 +453,7 @@ func FormatInvalidValue(param, value, expected string) string
 #### Refactoring Impact
 
 **Quantitative Improvements:**
+
 - **File Size**: 698 lines removed (23% reduction)
 - **Method Size**: 703-line method → 4-line delegation
 - **Code Reuse**: Extracted 286 lines of reusable utilities
@@ -424,6 +462,7 @@ func FormatInvalidValue(param, value, expected string) string
 - **Organization**: 25 tools organized into 6 logical categories
 
 **Qualitative Benefits:**
+
 - ✅ Eliminated massive method code smell
 - ✅ Comprehensive DRY patterns implementation
 - ✅ Reusable test infrastructure for maintainability
@@ -433,6 +472,7 @@ func FormatInvalidValue(param, value, expected string) string
 - ✅ Zero breaking changes (API compatibility maintained)
 
 **Rule 15 Compliance:**
+
 - **NO Code Duplication**: DRY principle strictly enforced
 - **NO Workarounds**: Proper abstraction and reusability
 - **Comprehensive Testing**: Production-ready test patterns

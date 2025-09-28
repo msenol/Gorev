@@ -146,12 +146,14 @@ Migrations: `gorev-mcpserver/internal/veri/migrations/`
 ## 🌍 Language Support
 
 **Environment Setup:**
+
 ```bash
 export GOREV_LANG=en     # English
 export GOREV_LANG=tr     # Turkish (default)
 ```
 
 **CLI Usage:**
+
 ```bash
 gorev serve --lang=en    # English interface
 gorev serve --lang=tr    # Turkish interface
@@ -171,14 +173,16 @@ gorev serve --lang=tr    # Turkish interface
 
 **ZERO TOLERANCE for shortcuts, workarounds, or temporary fixes**
 
-### Core Principles:
+### Core Principles
+
 1. **NO Workarounds**: Every problem requires root cause analysis and proper solution
 2. **NO Code Duplication**: DRY (Don't Repeat Yourself) principle is absolute
 3. **NO Technical Debt**: "Şimdilik böyle kalsın" approach is FORBIDDEN
 4. **NO Quick Fixes**: Every solution must be production-ready
 5. **NO Disabled Tests/Lints**: Fix test and lint errors instead of bypassing them
 
-### Implementation Rules:
+### Implementation Rules
+
 - ❌ `"temporary"`, `"workaround"`, `"quick fix"`, `"hotfix"`, `"band-aid"`
 - ❌ `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `//nolint`
 - ❌ Hardcoded values "for speed"
@@ -188,14 +192,16 @@ gorev serve --lang=tr    # Turkish interface
 - ✅ Comprehensive testing
 - ✅ Clean, maintainable code
 
-### For Gorev Project Specifically:
+### For Gorev Project Specifically
+
 - **Template Enforcement**: All tasks MUST use templates (v0.10.0+)
 - **Domain Terms**: Turkish domain terminology must be preserved
 - **i18n Compliance**: Use `i18n.T()` for all user-facing strings
 - **Test Coverage**: Maintain %90+ (server), %100 (extension)
 - **Atomic Tasks**: Even atomic tasks must be comprehensive
 
-### Quality Checklist:
+### Quality Checklist
+
 - [ ] Root cause identified and addressed
 - [ ] No temporary workarounds introduced
 - [ ] DRY principle followed (no duplication)

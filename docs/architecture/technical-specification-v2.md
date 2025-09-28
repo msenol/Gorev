@@ -31,6 +31,7 @@
 Gorev v0.14.0 is an enterprise-grade task management system built with Go, featuring advanced AI integration, MCP (Model Context Protocol) support, and comprehensive VS Code extension capabilities. The system maintains 100% Rule 15 compliance with zero error/warning tolerance and follows strict DRY principles throughout the codebase.
 
 ### Key Features
+
 - **Multi-Platform Support**: Windows, macOS, Linux
 - **AI-Powered NLP**: Advanced natural language processing for task analysis
 - **MCP Integration**: 29 standardized tools for AI assistants
@@ -46,6 +47,7 @@ Gorev v0.14.0 is an enterprise-grade task management system built with Go, featu
 ### Minimum Requirements
 
 #### Runtime Environment
+
 ```yaml
 Go Runtime:
   version: ">= 1.21.0"
@@ -63,6 +65,7 @@ Resources:
 ```
 
 #### Database Requirements
+
 ```yaml
 SQLite:
   version: ">= 3.35.0"
@@ -185,6 +188,7 @@ const (
 ```
 
 #### Responsibilities
+
 - Task lifecycle management
 - Business logic execution
 - Resource coordination
@@ -192,6 +196,7 @@ const (
 - Performance monitoring
 
 #### Error Handling Strategy
+
 ```go
 // Rule 15 compliant error handling
 type TaskError struct {
@@ -230,6 +235,7 @@ type MCPHandler interface {
 ```
 
 #### Tool Registry Architecture
+
 ```yaml
 Tool Categories:
   Task Management: ["gorev_listele", "gorev_detay", "gorev_guncelle", "gorev_duzenle", "gorev_sil"]
@@ -272,6 +278,7 @@ const (
 ```
 
 #### NLP Capabilities
+
 - Turkish and English language support
 - Task intent classification (create, update, delete, query)
 - Entity extraction (dates, priorities, projects)
@@ -494,6 +501,7 @@ erDiagram
 ### Table Specifications
 
 #### Projects Table
+
 ```sql
 CREATE TABLE projects (
     id TEXT PRIMARY KEY DEFAULT (hex(randomblob(16))),
@@ -509,6 +517,7 @@ CREATE INDEX idx_projects_created_at ON projects(created_at);
 ```
 
 #### Tasks Table
+
 ```sql
 CREATE TABLE tasks (
     id TEXT PRIMARY KEY DEFAULT (hex(randomblob(16))),
@@ -557,6 +566,7 @@ Backup Strategy:
 ### MCP Protocol Implementation
 
 #### Tool Call Request Format
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -574,6 +584,7 @@ Backup Strategy:
 ```
 
 #### Tool Call Response Format
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -593,6 +604,7 @@ Backup Strategy:
 ### REST API (Internal)
 
 #### Authentication
+
 ```http
 Authorization: Bearer <jwt-token>
 Content-Type: application/json
@@ -601,6 +613,7 @@ X-API-Version: v2.0
 ```
 
 #### Rate Limiting Headers
+
 ```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -649,6 +662,7 @@ graph TB
 ### Security Requirements
 
 #### Input Validation
+
 ```go
 // Rule 15 compliant validation
 type InputValidator struct {
@@ -676,6 +690,7 @@ func (v *InputValidator) Validate(data map[string]interface{}) error {
 ```
 
 #### SQL Injection Prevention
+
 ```go
 // 100% parameterized queries - NO string concatenation
 func (db *Database) CreateTask(task *Task) error {
@@ -687,6 +702,7 @@ func (db *Database) CreateTask(task *Task) error {
 ```
 
 #### Authentication & Authorization
+
 ```yaml
 Authentication Methods:
   - JWT tokens (default)

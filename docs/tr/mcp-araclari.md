@@ -19,15 +19,18 @@ Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprec
 7. [gorev_bagimlilik_ekle](#gorev_bagimlilik_ekle) - Görevler arası bağımlılık oluşturma
 
 ### Subtask Yönetimi (v0.8.0+)
+
 8. [gorev_altgorev_olustur](#gorev_altgorev_olustur) - Alt görev oluşturma
 9. [gorev_ust_degistir](#gorev_ust_degistir) - Görevin üst görevini değiştirme
 10. [gorev_hiyerarsi_goster](#gorev_hiyerarsi_goster) - Görev hiyerarşisini gösterme
 
 ### Görev Şablonları
+
 11. [template_listele](#template_listele) - Görev şablonlarını listeleme
 12. [templateden_gorev_olustur](#templateden_gorev_olustur) - Şablondan görev oluşturma
 
 ### Proje Yönetimi
+
 13. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
 14. [proje_listele](#proje_listele) - Tüm projeleri listeleme
 15. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
@@ -36,9 +39,11 @@ Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprec
 18. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
 
 ### Raporlama
+
 19. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
 
 ### AI Context Management (v0.9.0+)
+
 20. [gorev_set_active](#gorev_set_active) - Aktif görevi ayarlama ve otomatik durum yönetimi
 21. [gorev_get_active](#gorev_get_active) - Aktif görevi görüntüleme
 22. [gorev_recent](#gorev_recent) - Son görüntülenen görevleri listeleme
@@ -47,12 +52,14 @@ Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprec
 25. [gorev_nlp_query](#gorev_nlp_query) - Doğal dil ile görev arama
 
 ### Dosya İzleme (v0.8.0+)
+
 26. [gorev_file_watch_add](#gorev_file_watch_add) - Dosya izleme ekleme
 27. [gorev_file_watch_remove](#gorev_file_watch_remove) - Dosya izleme kaldırma
 28. [gorev_file_watch_list](#gorev_file_watch_list) - Dosya izleme listesi
 29. [gorev_file_watch_stats](#gorev_file_watch_stats) - Dosya izleme istatistikleri
 
 ### Gelişmiş Arama & Filtreleme (v0.15.0+)
+
 30. [gorev_search_advanced](#gorev_search_advanced) - Gelişmiş arama (FTS5, fuzzy matching)
 31. [gorev_filter_profile_save](#gorev_filter_profile_save) - Filtre profili kaydet
 32. [gorev_filter_profile_load](#gorev_filter_profile_load) - Filtre profili yükle
@@ -61,10 +68,12 @@ Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprec
 35. [gorev_search_history](#gorev_search_history) - Arama geçmişi
 
 ### Veri Aktarımı (v0.12.0+)
+
 36. [gorev_export](#gorev_export) - Veri dışa aktarma (JSON/CSV)
 37. [gorev_import](#gorev_import) - Veri içe aktarma (çakışma çözümü ile)
 
 ### IDE Yönetimi (v0.13.0+)
+
 38. [gorev_ide_detect](#gorev_ide_detect) - IDE tespiti (VS Code, Cursor, Windsurf)
 39. [gorev_ide_install](#gorev_ide_install) - IDE extension kurulumu
 40. [gorev_ide_uninstall](#gorev_ide_uninstall) - IDE extension kaldırma
@@ -80,9 +89,11 @@ Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprec
 **❌ DİKKAT**: Bu araç v0.10.0'dan itibaren çalışmaz ve MCP call error verir.
 
 ### Migration
+
 `gorev_olustur` yerine artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanılmalıdır.
 
 **Eski Kullanım:**
+
 ```json
 {
   "name": "gorev_olustur",
@@ -95,6 +106,7 @@ Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprec
 ```
 
 **Yeni Kullanım:**
+
 ```json
 {
   "name": "templateden_gorev_olustur", 
@@ -112,6 +124,7 @@ Gorev'in sağladığı 41 aktif MCP tool'unun detaylı açıklaması (+ 1 deprec
 ```
 
 ### Error Message
+
 Bu araç çağrıldığında aşağıdaki hata mesajı döner:
 
 ```json
@@ -124,6 +137,7 @@ Bu araç çağrıldığında aşağıdaki hata mesajı döner:
 ```
 
 **Alternatif Kullanım:**
+
 ```bash
 # Önce template'leri listele
 template_listele
@@ -133,7 +147,9 @@ templateden_gorev_olustur template_id='bug-report' degerler={...}
 ```
 
 ### ✅ Çözüm
+
 Artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanın. Bu daha iyi çünkü:
+
 - **Tutarlılık**: Her görev belirli standartlara uygun
 - **Kalite**: Zorunlu alanlar eksik bilgi girişini engeller  
 - **Otomasyon**: Template tipine göre otomatik workflow
@@ -171,6 +187,7 @@ Görevleri filtreleyerek listeler.
 ### Örnek Kullanım
 
 **Tüm görevler:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -179,6 +196,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Duruma göre filtreleme:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -189,6 +207,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Tüm projelerdeki görevler:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -199,6 +218,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Acil görevler (7 gün içinde son tarih):**
+
 ```json
 {
   "name": "gorev_listele",
@@ -210,6 +230,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Etiketle filtreleme:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -220,6 +241,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Pagination kullanımı:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -230,7 +252,8 @@ Görevleri filtreleyerek listeler.
 }
 ```
 
-**Not:** 
+**Not:**
+
 - `tum_projeler` parametresi `false` veya verilmezse ve aktif proje varsa, sadece aktif projenin görevleri listelenir.
 - Pagination özelliği v0.8.1+ sürümünde eklenmiştir. Büyük görev listeleri için token limit hatalarını önler.
 
@@ -353,6 +376,7 @@ Bir görevin başlık, açıklama, öncelik veya proje bilgilerini düzenler.
 ### Örnek Kullanım
 
 **Başlık ve açıklama güncelleme:**
+
 ```json
 {
   "name": "gorev_duzenle",
@@ -365,6 +389,7 @@ Bir görevin başlık, açıklama, öncelik veya proje bilgilerini düzenler.
 ```
 
 **Öncelik değiştirme:**
+
 ```json
 {
   "name": "gorev_duzenle",
@@ -440,6 +465,7 @@ Yeni bir proje oluşturur. Projeler görevleri gruplamak için kullanılır.
 ### Örnek Kullanım
 
 **Basit proje:**
+
 ```json
 {
   "name": "proje_olustur",
@@ -450,6 +476,7 @@ Yeni bir proje oluşturur. Projeler görevleri gruplamak için kullanılır.
 ```
 
 **Detaylı proje:**
+
 ```json
 {
   "name": "proje_olustur",
@@ -659,6 +686,7 @@ Bu araç parametre almaz.
 ```
 
 Aktif proje yoksa:
+
 ```
 Henüz aktif proje ayarlanmamış.
 ```
@@ -839,17 +867,21 @@ Yeni araç önerileri için [GitHub Issues](https://github.com/msenol/gorev/issu
 ## 💡 Kullanım İpuçları
 
 ### 1. ID Yönetimi
+
 - Görev ID'leri UUID formatındadır
 - Claude genellikle son oluşturulan görevin ID'sini hatırlar
 - ID yerine görev başlığı ile referans verebilirsiniz
 
 ### 2. Durum Geçişleri
+
 Önerilen durum geçiş sırası:
+
 ```
 beklemede → devam_ediyor → tamamlandi
 ```
 
 ### 3. Öncelik Seviyeleri
+
 - **yuksek**: Acil ve kritik işler
 - **orta**: Normal iş akışı
 - **dusuk**: İleride yapılabilecek işler

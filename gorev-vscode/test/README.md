@@ -28,16 +28,19 @@ test/
 ### Prerequisites
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Compile TypeScript:
+
 ```bash
 npm run compile
 ```
 
 3. Ensure the Gorev MCP server is built:
+
 ```bash
 cd ../gorev-mcpserver
 make build
@@ -173,6 +176,7 @@ Coverage reports will be generated in the `coverage/` directory.
 ### Tests fail with "Extension not found"
 
 Make sure the extension is compiled and the manifest is correct:
+
 ```bash
 npm run compile
 ```
@@ -180,6 +184,7 @@ npm run compile
 ### E2E tests fail with "Server not found"
 
 1. Build the Gorev server:
+
 ```bash
 cd ../gorev-mcpserver
 make build
@@ -190,6 +195,7 @@ make build
 ### Timeout errors
 
 Increase timeout for slow operations:
+
 ```javascript
 test('slow test', async function() {
   this.timeout(10000); // 10 seconds

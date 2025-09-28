@@ -19,7 +19,7 @@
 
 </div>
 
-## 🌟 Why Choose Gorev?
+## 🌟 Why Choose Gorev
 
 Gorev transforms VS Code into a **professional task management powerhouse** with unique capabilities that set it apart:
 
@@ -298,6 +298,7 @@ Quick editing without leaving the tree view:
 Complete control over every aspect of the extension:
 
 #### Server Settings (5 options)
+
 ```json
 {
   "gorev.serverMode": "npx|binary",
@@ -309,6 +310,7 @@ Complete control over every aspect of the extension:
 ```
 
 #### TreeView Visuals (15 options)
+
 ```json
 {
   "gorev.treeView.grouping": "status|priority|project|tag|dueDate",
@@ -330,6 +332,7 @@ Complete control over every aspect of the extension:
 ```
 
 #### Drag & Drop (8 options)
+
 ```json
 {
   "gorev.dragDrop.allowTaskMove": true,
@@ -344,6 +347,7 @@ Complete control over every aspect of the extension:
 ```
 
 #### Performance (8 options)
+
 ```json
 {
   "gorev.refreshManager.enableBatching": true,
@@ -358,6 +362,7 @@ Complete control over every aspect of the extension:
 ```
 
 #### Database Modes (3 options)
+
 ```json
 {
   "gorev.databaseMode": "auto|workspace|global",
@@ -389,16 +394,19 @@ Complete control over every aspect of the extension:
 ### Flexible Database Modes
 
 #### Workspace Mode (Default)
+
 - **📁 Project-Specific** - Each project has its own `.gorev/gorev.db`
 - **🔍 Auto-Detection** - Automatically finds workspace databases
 - **📊 Status Indicator** - Shows current database in status bar
 
 #### Global Mode
+
 - **🌐 Shared Database** - Single database for all projects
 - **🏠 User Directory** - Stored in `~/.gorev/gorev.db`
 - **🔄 Easy Switching** - Toggle between modes via command
 
 #### Auto Mode
+
 - **🤖 Intelligent Selection** - Automatically chooses best database
 - **⬆️ Fallback Chain** - Workspace → Parent → Global
 - **⚡ Zero Configuration** - Works out of the box
@@ -406,6 +414,7 @@ Complete control over every aspect of the extension:
 ## 📋 50+ Available Commands
 
 ### Task Operations (15 commands)
+
 - `gorev.createTask` - Create new task
 - `gorev.updateTaskStatus` - Update task status
 - `gorev.showTaskDetail` - Show detailed task view
@@ -423,6 +432,7 @@ Complete control over every aspect of the extension:
 - `gorev.showTaskHistory` - View history
 
 ### Project Management (8 commands)
+
 - `gorev.createProject` - Create new project
 - `gorev.setActiveProject` - Set active project
 - `gorev.showProjectStats` - View statistics
@@ -433,6 +443,7 @@ Complete control over every aspect of the extension:
 - `gorev.duplicateProject` - Clone project
 
 ### Template System (7 commands)
+
 - `gorev.openTemplateWizard` - Template wizard
 - `gorev.createFromTemplate` - Create from template
 - `gorev.quickCreateFromTemplate` - Quick template selection
@@ -442,12 +453,14 @@ Complete control over every aspect of the extension:
 - `gorev.exportTemplate` - Export template
 
 ### Data Operations (4 commands)
+
 - `gorev.exportData` - Export data wizard
 - `gorev.importData` - Import data wizard
 - `gorev.exportCurrentView` - Export current view
 - `gorev.quickExport` - Quick export
 
 ### Filter Operations (10 commands)
+
 - `gorev.showSearchInput` - Search tasks
 - `gorev.showFilterMenu` - Filter menu
 - `gorev.showFilterProfiles` - Saved profiles
@@ -460,6 +473,7 @@ Complete control over every aspect of the extension:
 - `gorev.filterByTag` - Filter by tag
 
 ### Debug Tools (6 commands)
+
 - `gorev.showDebugInfo` - Debug information
 - `gorev.clearDebugLogs` - Clear logs
 - `gorev.testConnection` - Test MCP connection
@@ -487,7 +501,7 @@ README.md change → Update "Documentation" task
 
 ## 🏆 Advanced Capabilities
 
-### Professional Template Wizard 🎯 NEW!
+### Professional Template Wizard 🎯 NEW
 
 **Complete redesign with professional UI/UX for enhanced task creation:**
 
@@ -575,6 +589,7 @@ Built-in analytics for project insights:
 ## 🛠️ Installation Methods
 
 ### Method 1: VS Code Marketplace (Recommended)
+
 ```
 1. Open VS Code
 2. Go to Extensions (Ctrl+Shift+X)
@@ -584,11 +599,13 @@ Built-in analytics for project insights:
 ```
 
 ### Method 2: Command Line
+
 ```bash
 code --install-extension mehmetsenol.gorev-vscode
 ```
 
 ### Method 3: VSIX File
+
 Download from [GitHub Releases](https://github.com/msenol/Gorev/releases) and install manually.
 
 ## 🔧 Troubleshooting
@@ -596,6 +613,7 @@ Download from [GitHub Releases](https://github.com/msenol/Gorev/releases) and in
 ### Common Issues
 
 **NPX Mode Not Working?**
+
 ```bash
 # Check Node.js version (requires 14+)
 node --version
@@ -605,6 +623,7 @@ npx @mehmetsenol/gorev-mcp-server@latest --version
 ```
 
 **Binary Mode Connection Issues?**
+
 ```bash
 # Verify binary installation
 gorev version
@@ -614,6 +633,7 @@ gorev version
 ```
 
 **Extension Not Loading?**
+
 1. Check VS Code Output → Gorev channel
 2. Restart VS Code
 3. Check for conflicting extensions
@@ -675,18 +695,21 @@ Enable debug logging for troubleshooting:
 ## 📚 Resources & Support
 
 ### Documentation
+
 - 📖 [Main Repository](https://github.com/msenol/Gorev) - Complete source code and docs
 - 🔧 [MCP Tools Reference](https://github.com/msenol/Gorev/blob/main/docs/mcp-araclari.md) - All 48 tools documented
 - 📋 [Installation Guide](https://github.com/msenol/Gorev/blob/main/README.en.md#-installation) - Binary setup instructions
 - 🎯 [VS Code Extension Guide](https://github.com/msenol/Gorev/blob/main/docs/user-guide/vscode-extension.md) - Advanced usage
 
 ### Community & Support
+
 - 🐛 [Issue Tracker](https://github.com/msenol/Gorev/issues) - Bug reports and feature requests
 - 💬 [Discussions](https://github.com/msenol/Gorev/discussions) - Community discussions
 - ❓ [FAQ](https://github.com/msenol/Gorev/wiki/FAQ) - Frequently asked questions
 - 📧 [Contact](mailto:me@mehmetsenol.dev) - Direct developer contact
 
 ### Contribution
+
 1. 🍴 Fork the repository
 2. 🌿 Create a feature branch
 3. ✨ Make your changes

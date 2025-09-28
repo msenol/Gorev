@@ -3,6 +3,7 @@
 ## Build/Lint/Test Commands
 
 ### Go Server (gorev-mcpserver)
+
 ```bash
 make build              # Build for current platform
 make test               # Run all tests
@@ -15,6 +16,7 @@ go test -v -run TestName  # Run single test
 ```
 
 ### VS Code Extension (gorev-vscode)
+
 ```bash
 npm install             # Install dependencies
 npm run compile         # Compile TypeScript
@@ -24,6 +26,7 @@ npm run package         # Package extension
 ```
 
 ### Root Project
+
 ```bash
 make build              # Build both modules
 make test               # Run all tests
@@ -35,6 +38,7 @@ make pre-commit         # Run pre-commit checks
 ## Code Style Guidelines
 
 ### Go Code
+
 - **Imports**: Group standard library, third-party, local packages
 - **Formatting**: Use `make fmt` (go fmt)
 - **Naming**: Turkish domain terms (gorev, proje), English technical terms
@@ -43,6 +47,7 @@ make pre-commit         # Run pre-commit checks
 - **Testing**: Use standardized `internal/testing/helpers.go` patterns
 
 ### TypeScript Code
+
 - **Imports**: Use ES6 imports, organize by type
 - **Formatting**: TypeScript strict mode, ESLint configuration
 - **Naming**: camelCase for variables, PascalCase for classes/interfaces
@@ -50,6 +55,7 @@ make pre-commit         # Run pre-commit checks
 - **Testing**: Mocha with Sinon mocks, 100% coverage required
 
 ### Project Rules
+
 - **Rule 15 Compliance**: NO workarounds, NO technical debt, NO quick fixes
 - **Template Usage**: Mandatory for all task creation (v0.10.0+)
 - **Database**: SQLite with migrations, workspace/global support

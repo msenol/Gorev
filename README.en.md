@@ -20,7 +20,7 @@
 
 </div>
 
-## 🎯 What is Gorev?
+## 🎯 What is Gorev
 
 Gorev is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to all MCP-compatible AI editors (Claude Desktop, VS Code, Windsurf, Cursor, Zed, etc.). It combines project management, task tracking, and organization needs with the power of AI assistants to boost your productivity.
 
@@ -34,6 +34,7 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 ## ✨ Features
 
 ### 📝 Task Management
+
 - **Smart task creation** - Using natural language commands
 - **Markdown support** - Rich description formatting
 - **Status management** - Pending → In Progress → Completed
@@ -41,12 +42,14 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **Flexible editing** - Update all task properties
 
 ### 📁 Project Organization
+
 - **Hierarchical structure** - Task grouping under projects
 - **Active project system** - Quick operations with default project
 - **Project-based reporting** - Detailed statistics
 - **Multi-project support** - Unlimited project creation
 
 ### 🔗 Advanced Features
+
 - **📅 Due date tracking** - Deadline management and urgent task filtering
 - **🏷️ Tagging system** - Multi-tag categorization
 - **🔄 Task dependencies** - Inter-task automation
@@ -59,12 +62,14 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **⚙️ Configuration Management** - Customizable ignore patterns and watch rules
 
 ### 🤖 AI Integration
+
 - **Natural language processing** - Task management by talking to AI assistants
 - **Multi-editor support** - Claude, VS Code, Windsurf, Cursor, Zed
 - **Contextual understanding** - Smart command interpretation
 - **MCP standard** - Compatible with all MCP-compatible tools
 
 ### 🎨 VS Code Extension Features (Optional)
+
 - **Bilingual Support** - Turkish and English interface (v0.5.0+) 🌍
 - **TreeView Panels** - Task, project, and template lists
 - **Visual Interface** - Click-and-use experience
@@ -98,6 +103,7 @@ For MCP clients, simply add to your `mcp.json` configuration:
 ```
 
 **For Claude Desktop:**
+
 ```json
 // Windows: %APPDATA%/Claude/claude_desktop_config.json
 // macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
@@ -116,6 +122,7 @@ For MCP clients, simply add to your `mcp.json` configuration:
 ```
 
 **For VS Code:**
+
 ```json
 // .vscode/mcp.json
 {
@@ -133,6 +140,7 @@ For MCP clients, simply add to your `mcp.json` configuration:
 If you get `ENOENT: spawn npx` error:
 
 1. **Check if Node.js is installed:**
+
    ```cmd
    node --version
    npm --version
@@ -145,17 +153,21 @@ If you get `ENOENT: spawn npx` error:
    - Restart your computer after installation
 
 3. **Install NPX separately (if needed):**
+
    ```cmd
    npm install -g npx
    ```
 
 4. **Check PATH:**
+
    ```cmd
    echo %PATH%
    ```
+
    Should include Node.js paths (`C:\Program Files\nodejs\`).
 
 **For Cursor:**
+
 ```json
 {
   "mcpServers": {
@@ -253,6 +265,7 @@ For detailed documentation, see the [docs/](docs/) folder:
 - 🎨 [VS Code Extension](docs/guides/user/vscode-extension.md) - Extension documentation
 
 ### AI Assistant Documentation
+
 - 🌍 [CLAUDE.en.md](CLAUDE.en.md) - English AI assistant guidance
 - 🤖 [CLAUDE.md](CLAUDE.md) - Turkish AI assistant guidance
 - 📋 [MCP Tools Reference](docs/api/MCP_TOOLS_REFERENCE.md) - Detailed MCP tool documentation
@@ -282,6 +295,7 @@ gorev/
 ## 🧪 Development
 
 ### Requirements
+
 - Go 1.23+
 - Make (optional)
 - golangci-lint (for code quality)
@@ -336,16 +350,19 @@ This project is licensed under the [MIT License](LICENSE).
 ### Migration Guide
 
 **Before (v0.9.x and earlier):**
+
 ```
 Create a new task: Fix login bug
 ```
 
 **After (v0.10.0+):**
+
 ```
 Use bug-report template to create: Fix login bug
 ```
 
 Available templates:
+
 - `bug-report` - Bug reports and fixes
 - `feature` - New features and enhancements  
 - `task` - General tasks and activities

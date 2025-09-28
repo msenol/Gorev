@@ -76,29 +76,36 @@ This release introduces **AI Context Management & Automation**, a major feature 
 ## 🔧 Technical Details
 
 ### Dependencies
+
 - Added `github.com/adrg/strutil` v0.3.1 for NLP support
 
 ### Breaking Changes
+
 - None - All changes are backward compatible
 
 ### Migration Notes
+
 - Run migrations automatically on first start
 - Existing tasks will work seamlessly with new AI features
 
 ## 📦 Installation
 
 ### Quick Install (Linux/macOS)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.9.0 bash
 ```
 
 ### Quick Install (Windows PowerShell)
+
 ```powershell
 $env:VERSION="v0.9.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 ### Manual Download
+
 Download binaries for your platform:
+
 - [gorev-linux-amd64](https://github.com/msenol/Gorev/releases/download/v0.9.0/gorev-linux-amd64)
 - [gorev-darwin-amd64](https://github.com/msenol/Gorev/releases/download/v0.9.0/gorev-darwin-amd64)
 - [gorev-darwin-arm64](https://github.com/msenol/Gorev/releases/download/v0.9.0/gorev-darwin-arm64)
@@ -107,6 +114,7 @@ Download binaries for your platform:
 ## 🎨 VS Code Extension
 
 The VS Code extension (v0.3.5) has been updated with:
+
 - Pagination support for large task lists
 - Improved performance with token limit prevention
 - Better integration with AI tools

@@ -53,7 +53,9 @@ go test ./...
 ### IDE Settings
 
 #### VS Code
+
 `.vscode/settings.json`:
+
 ```json
 {
   "go.lintTool": "golangci-lint",
@@ -66,6 +68,7 @@ go test ./...
 ```
 
 #### GoLand/IntelliJ
+
 - Go Modules support: Enable
 - GOROOT: System Go installation
 - Run gofmt on save: Enable
@@ -359,17 +362,21 @@ npm run watch
 
 1. **Open Issue**: First open an issue explaining what you want to do
 2. **Fork & Branch**: Fork the project and create a feature branch
+
    ```bash
    git checkout -b feature/new-feature
    ```
+
 3. **Write Code**: Develop according to code standards
 4. **Write Tests**: Target 80%+ coverage
 5. **Commit**: Use meaningful commit messages
+
    ```bash
    git commit -m "feat: add new feature"
    git commit -m "fix: resolve bug"
    git commit -m "docs: update documentation"
    ```
+
 6. **Push & PR**: Push branch and open PR
 
 ### Commit Message Format
@@ -383,6 +390,7 @@ npm run watch
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation

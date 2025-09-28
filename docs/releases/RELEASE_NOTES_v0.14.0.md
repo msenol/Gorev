@@ -25,6 +25,7 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## 🆕 New Features
 
 ### 🧠 Advanced NLP Processor
+
 - **Natural Language Understanding**: Enhanced AI query processing for complex task management
 - **Multi-language Support**: Turkish and English query interpretation
 - **Intent Recognition**: Smart action detection from conversational inputs
@@ -39,12 +40,14 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ```
 
 ### 🔧 Auto State Manager Enhancement
+
 - **File System Integration**: Automatic task state transitions based on file changes
 - **Watch Pattern Configuration**: Customizable file monitoring rules
 - **Smart State Detection**: Intelligent pending → in-progress transitions
 - **Resource Optimization**: Efficient file system watching with minimal overhead
 
 ### 🎨 VS Code Extension Improvements
+
 - **Enhanced Tree Providers**: Improved task and project visualization
 - **Task Detail Panel**: Rich task information display
 - **Command Enhancements**: More intuitive user interactions
@@ -55,12 +58,14 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## 🛠️ Technical Improvements
 
 ### 🔒 Thread Safety & Concurrency
+
 - **Race Condition Elimination**: Complete removal of all detected race conditions
 - **Mutex Protection**: Comprehensive sync.RWMutex implementation
 - **IDE Detector Safety**: Thread-safe IDE detection and configuration
 - **Resource Pool Management**: Protected database connection pooling
 
 ### 🧹 Code Quality Enhancements
+
 - **String Handling Modernization**: Migration from deprecated `strings.Title` to Unicode-aware processing
 - **Error Handling Standardization**: Consistent error patterns across all modules
 - **Resource Management**: Enhanced cleanup patterns with proper defer usage
@@ -68,7 +73,8 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 
 ### 📊 Testing Infrastructure Expansion
 
-#### 8 New Test Suites Added:
+#### 8 New Test Suites Added
+
 1. **ai_context_nlp_test.go** - NLP processor comprehensive testing
 2. **ai_context_yonetici_error_test.go** - AI context error scenarios
 3. **ai_context_yonetici_missing_test.go** - Missing dependency handling
@@ -78,7 +84,8 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 7. **file_watcher_test.go** - File system monitoring tests
 8. **nlp_processor_test.go** - Natural language processing validation
 
-#### Testing Methodology:
+#### Testing Methodology
+
 - **Table-Driven Tests**: Systematic test case organization
 - **Race Condition Testing**: Concurrent operation validation
 - **Resource Cleanup**: Proper test isolation and cleanup
@@ -89,12 +96,14 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## 🚀 Performance Improvements
 
 ### ⚡ Speed Enhancements
+
 - **Database Query Optimization**: Improved SQLite query performance
 - **Memory Usage Reduction**: 15-20% memory footprint improvement
 - **Startup Time**: 30% faster application initialization
 - **File Processing**: Enhanced file system operation efficiency
 
 ### 🔧 Resource Management
+
 - **Connection Pool Optimization**: Efficient database connection reuse
 - **Goroutine Lifecycle**: Proper context-based cleanup
 - **File Handle Management**: Automatic file descriptor cleanup
@@ -105,6 +114,7 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## 🛡️ Security & Compliance
 
 ### 🔐 Security Audit Results
+
 - **SQL Injection Protection**: 100% parameterized queries
 - **Input Validation**: Comprehensive sanitization
 - **XSS Prevention**: Proper output escaping
@@ -112,6 +122,7 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 - **Dependency Security**: All critical vulnerabilities resolved
 
 ### 📋 Compliance Standards
+
 - **Rule 15 Compliance**: 90% adherence to zero warnings/errors policy
 - **DRY Principles**: Significant code duplication reduction
 - **Production Readiness**: Enterprise deployment ready
@@ -122,6 +133,7 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## 🐛 Bug Fixes
 
 ### Critical Fixes
+
 - **Race Conditions**: All detected race conditions eliminated
 - **Resource Leaks**: Memory and file handle leak prevention
 - **Error Handling**: Improved error propagation and logging
@@ -129,6 +141,7 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 - **Database Consistency**: Improved transaction management
 
 ### Minor Improvements  
+
 - **String Processing**: Unicode-aware text handling
 - **Logging Enhancement**: Structured logging implementation
 - **Configuration Validation**: Better configuration error messages
@@ -139,12 +152,14 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## 📚 Documentation Updates
 
 ### 📖 New Documentation
+
 - **[NLP Processor Guide](../development/nlp-processor.md)**: Comprehensive NLP documentation
 - **[Testing Strategy](../development/testing-strategy.md)**: Testing methodology and best practices
 - **[Security Compliance](../security/thread-safety.md)**: Security audit and compliance guide
 - **[Architecture v2.0](../architecture/architecture-v2.md)**: Updated system architecture
 
 ### 🌍 Bilingual Support
+
 - **Turkish Documentation**: Complete Turkish language documentation
 - **English Documentation**: Enhanced English documentation
 - **Consistent Navigation**: Unified documentation structure
@@ -155,9 +170,11 @@ Gorev v0.14.0 is a **major stability and performance release** focusing on enter
 ## ⚠️ Breaking Changes
 
 ### None! 🎉
+
 This release maintains **100% backward compatibility** with v0.13.x. All existing configurations, templates, and integrations continue to work without modification.
 
 ### Deprecated Features
+
 - **gorev_olustur**: Remains deprecated (use `templateden_gorev_olustur`)
 - **Legacy string handling**: Internal modernization (no external impact)
 
@@ -168,6 +185,7 @@ This release maintains **100% backward compatibility** with v0.13.x. All existin
 ### Upgrading from v0.13.x
 
 #### Automatic Upgrade (Recommended)
+
 ```bash
 # Linux/macOS
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.14.0 bash
@@ -177,6 +195,7 @@ $env:VERSION="v0.14.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/
 ```
 
 #### Manual Upgrade
+
 ```bash
 # Download latest binary
 wget https://github.com/msenol/gorev/releases/download/v0.14.0/gorev-linux-amd64
@@ -190,6 +209,7 @@ gorev version
 ```
 
 #### Configuration Changes
+
 No configuration changes required. All existing configurations remain valid.
 
 ---
@@ -197,6 +217,7 @@ No configuration changes required. All existing configurations remain valid.
 ## 🧪 Testing Results
 
 ### Test Suite Status
+
 ```bash
 ✅ Total Tests: 125+ (50% increase)
 ✅ Coverage: 90%+ (20% improvement) 
@@ -206,6 +227,7 @@ No configuration changes required. All existing configurations remain valid.
 ```
 
 ### Build Verification
+
 ```bash
 ✅ go build ./...           # Clean build
 ✅ go test -race ./...      # Race condition free  
@@ -242,17 +264,20 @@ Special thanks to all contributors who made v0.14.0 possible:
 ## 🔗 Links & Resources
 
 ### Download Links
+
 - **[GitHub Releases](https://github.com/msenol/gorev/releases/tag/v0.14.0)**
 - **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)**
 - **[Installation Scripts](https://github.com/msenol/gorev#installation)**
 
 ### Documentation
+
 - **[📚 Complete Documentation](https://github.com/msenol/gorev/tree/main/docs)**
 - **[🤖 Claude Integration Guide](CLAUDE.md)**
 - **[🛡️ Security Report](SECURITY_PERFORMANCE_REPORT.md)**
 - **[📈 Architecture Overview](../architecture/architecture-v2.md)**
 
 ### Support
+
 - **[🐛 Bug Reports](https://github.com/msenol/gorev/issues)**
 - **[💬 Discussions](https://github.com/msenol/gorev/discussions)**
 - **[📖 Wiki](https://github.com/msenol/gorev/wiki)**
@@ -262,6 +287,7 @@ Special thanks to all contributors who made v0.14.0 possible:
 ## 🎯 What's Next: v0.15.0 Roadmap
 
 ### Planned Features
+
 - **🌐 Web Interface**: Browser-based task management
 - **📱 Mobile Support**: Progressive web application
 - **🔄 Real-time Sync**: Multi-device synchronization
@@ -269,6 +295,7 @@ Special thanks to all contributors who made v0.14.0 possible:
 - **📊 Analytics**: Task performance analytics and insights
 
 ### Timeline
+
 - **Beta Release**: October 2025
 - **Stable Release**: November 2025
 

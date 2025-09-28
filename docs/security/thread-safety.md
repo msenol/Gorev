@@ -23,6 +23,7 @@ type AIContextYonetici struct {
 ### Read vs Write Lock Usage
 
 #### Read Operations (sync.RWMutex.RLock)
+
 Use read locks for operations that only read data without modification:
 
 ```go
@@ -36,11 +37,13 @@ func (acy *AIContextYonetici) GetActiveTask() (*Gorev, error) {
 ```
 
 **Read Lock Operations:**
+
 - `GetActiveTask()` - Reading active task ID
 - `GetRecentTasks()` - Reading recent task list
 - `GetContext()` - Reading AI context data
 
 #### Write Operations (sync.RWMutex.Lock)
+
 Use exclusive locks for operations that modify shared data:
 
 ```go
@@ -57,6 +60,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 ```
 
 **Write Lock Operations:**
+
 - `SetActiveTask()` - Modifying active task and recent tasks
 - `saveContext()` - Persisting context changes
 
@@ -89,6 +93,7 @@ func (acy *AIContextYonetici) saveContextUnsafe(context *AIContext) error {
 ```
 
 **Benefits:**
+
 - Prevents recursive locking (deadlocks)
 - Allows internal method reuse within locked sections
 - Maintains clear separation between protected and unprotected code paths
@@ -96,39 +101,46 @@ func (acy *AIContextYonetici) saveContextUnsafe(context *AIContext) error {
 ## Best Practices
 
 ### 1. Mutex Placement
+
 - **Struct-level mutexes**: For protecting entire object state
 - **Fine-grained locking**: Only when absolutely necessary for performance
 - **Avoid global mutexes**: Prefer composition and dependency injection
 
 ### 2. Lock Ordering
+
 - Always acquire locks in the same order to prevent deadlocks
 - Document lock ordering requirements in complex scenarios
 - Consider using a single mutex for related data structures
 
 ### 3. Critical Section Minimization
+
 - Keep locked sections as small as possible
 - Perform expensive operations outside of locks when safe
 - Use defer for unlock to ensure proper cleanup
 
 ### 4. Error Handling in Concurrent Code
+
 - Always use defer for unlocking, even in error paths
 - Consider returning errors rather than panicking in concurrent code
 - Log concurrent operation failures with sufficient context
 
 ### 5. Data Structure Design
+
 - Prefer immutable data structures where possible
 - Use channels for communication between goroutines
 - Consider sync.Map for concurrent map operations
 
 ## When to Use Mutexes vs Channels
 
-### Use Mutexes When:
+### Use Mutexes When
+
 - Protecting shared memory access
 - Simple critical sections
 - Performance is critical (lower overhead than channels)
 - Working with existing synchronous APIs
 
-### Use Channels When:
+### Use Channels When
+
 - Coordinating between goroutines
 - Implementing producer-consumer patterns
 - Need to pass ownership of data
@@ -139,20 +151,24 @@ func (acy *AIContextYonetici) saveContextUnsafe(context *AIContext) error {
 ### Common Race Condition Patterns in Gorev
 
 #### 1. AI Context State Management
+
 **Problem**: Multiple MCP tools accessing AI context simultaneously
 **Solution**: RWMutex protection in `AIContextYonetici`
 
 #### 2. Task Status Updates
+
 **Problem**: Concurrent status updates to the same task
 **Solution**: Database-level locking and atomic operations
 
 #### 3. File System Operations
+
 **Problem**: Multiple goroutines reading/writing project files
 **Solution**: Coordinate through channels or file-level locking
 
 ### Detection Strategies
 
 #### 1. Go Race Detector
+
 Always test with the race detector enabled:
 
 ```bash
@@ -161,6 +177,7 @@ go run -race ./cmd/gorev
 ```
 
 #### 2. Stress Testing
+
 Create tests that exercise concurrent scenarios:
 
 ```go
@@ -185,6 +202,7 @@ func TestAIContextRaceCondition(t *testing.T) {
 ```
 
 #### 3. Load Testing
+
 Test under realistic concurrent load using MCP tools:
 
 ```bash
@@ -225,6 +243,7 @@ func TestConcurrentOperations(t *testing.T) {
 ```
 
 ### Test Requirements
+
 - **Race Detector**: All concurrent tests must pass with `-race`
 - **Error Collection**: Use channels to collect errors from goroutines
 - **Deterministic Verification**: Verify final state consistency
@@ -233,11 +252,13 @@ func TestConcurrentOperations(t *testing.T) {
 ## Performance Considerations
 
 ### RWMutex Performance Characteristics
+
 - **Read locks**: Allow concurrent readers, good for read-heavy workloads
 - **Write locks**: Exclusive access, blocks all other operations
 - **Lock contention**: Monitor for performance degradation under high concurrency
 
 ### Monitoring Concurrent Performance
+
 - Use Go's built-in profiler to identify lock contention
 - Monitor goroutine counts and blocking operations
 - Consider alternative approaches if lock contention becomes problematic
@@ -245,6 +266,7 @@ func TestConcurrentOperations(t *testing.T) {
 ## Integration with MCP Protocol
 
 ### MCP Handler Thread-Safety
+
 All MCP handlers in `internal/mcp/handlers.go` must be thread-safe since multiple clients can invoke tools simultaneously:
 
 ```go
@@ -256,7 +278,9 @@ func (h *GorevHandlers) GorevSetActive(args map[string]interface{}) (*mcp.CallTo
 ```
 
 ### Database Connection Thread-Safety
+
 SQLite connections in Gorev are configured for concurrent access:
+
 - Connection pooling handled by `database/sql`
 - Transactions used for atomic operations
 - Row-level locking for concurrent updates
@@ -264,12 +288,14 @@ SQLite connections in Gorev are configured for concurrent access:
 ## Debugging Race Conditions
 
 ### Tools and Techniques
+
 1. **Go Race Detector**: Primary tool for detecting race conditions
 2. **Logging**: Add detailed logging with goroutine IDs
 3. **Stress Testing**: Reproduce issues under high concurrency
 4. **Code Review**: Focus on shared data access patterns
 
 ### Common Debugging Commands
+
 ```bash
 # Run with race detector
 go test -race -v ./internal/gorev/
@@ -285,6 +311,7 @@ go build -race ./cmd/gorev
 ## Migration Guide
 
 ### Converting Existing Code to Thread-Safe
+
 When making existing code thread-safe:
 
 1. **Identify Shared State**: Find all shared data structures
@@ -294,6 +321,7 @@ When making existing code thread-safe:
 5. **Verify with Race Detector**: Ensure no race conditions remain
 
 ### Example Migration: Simple to Thread-Safe
+
 ```go
 // Before: Not thread-safe
 type SimpleManager struct {
@@ -322,6 +350,7 @@ func (sm *SafeManager) SetActive(taskID string) {
 Thread-safety is critical for the reliability and correctness of the Gorev system, especially as it serves multiple concurrent MCP clients. The patterns established in v0.11.1 provide a solid foundation for concurrent programming in Go.
 
 Key takeaways:
+
 - Use `sync.RWMutex` for read-heavy workloads with occasional writes
 - Implement internal unsafe methods to avoid deadlocks
 - Always test concurrent code with the Go race detector

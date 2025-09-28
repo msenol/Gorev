@@ -11,6 +11,7 @@ This release includes significant improvements to the MCP debug system, enhanced
 ## 🆕 New Features
 
 ### 🛠️ Enhanced MCP Debug System
+
 - **New MCP Debug Commands**: Added comprehensive CLI commands for debugging MCP server functionality
   - `gorev mcp list` - List all available MCP tools
   - `gorev mcp call <tool> <args>` - Direct tool invocation for testing
@@ -24,6 +25,7 @@ This release includes significant improvements to the MCP debug system, enhanced
   - `docs/debugging/VS_CODE_CONNECTION_FIX_SUMMARY.md` - Fix summary
 
 ### 📊 Enhanced Test Data Seeding
+
 - **Template-Based Test Data**: Updated test data seeder to use templates instead of deprecated `gorev_olustur`
 - **Realistic Test Scenarios**: Added comprehensive test scenarios using all template types
 - **Enhanced Debugging**: Better logging and error handling in test data generation
@@ -32,11 +34,13 @@ This release includes significant improvements to the MCP debug system, enhanced
 ## 🔧 Improvements
 
 ### 🐛 Critical Bug Fixes
+
 - **Fixed Pagination Logic**: Resolved critical pagination bug where subtasks appeared twice
 - **Fixed Duplicate Task Display**: Tasks no longer appear both as independent items and under their parent
 - **Fixed Infinite Loop**: Resolved infinite loop issue in VS Code when requesting pages beyond available data
 
 ### 💻 VS Code Extension (v0.4.6)
+
 - **Enhanced Duplicate Detection**: Added detailed duplicate detection logging with context
 - **Show All Projects Toggle**: New configuration option `gorev.treeView.showAllProjects`
 - **Keyboard Shortcuts**: Added `Ctrl+Alt+P` / `Cmd+Alt+P` for toggle all projects
@@ -44,6 +48,7 @@ This release includes significant improvements to the MCP debug system, enhanced
 - **Reduced Pagination Default**: Changed default page size from 100 to 10 for better performance
 
 ### 🗄️ MCP Server Improvements
+
 - **Enhanced Database Path Resolution**: Improved logic for finding database and migrations
 - **GOREV_ROOT Support**: Better support for GOREV_ROOT environment variable
 - **Helper Methods**: Added `CallTool` method for direct tool invocation
@@ -52,11 +57,13 @@ This release includes significant improvements to the MCP debug system, enhanced
 ## 📚 Documentation Updates
 
 ### 📖 New Documentation
+
 - **Pagination Fix Documentation**: `docs/pagination-fix.md` - Detailed technical explanation
 - **Template Mapping Guide**: `docs/test-data-seeder-template-mapping.md` - Complete template usage guide
 - **Enhanced MCP Tools Reference**: Updated `docs/user-guide/mcp-tools.md` with latest tools
 
 ### 📝 Updated Documentation
+
 - **README.md**: Updated version to v0.10.2 and added latest features
 - **CLAUDE.md**: Updated with v0.10.2 changes and technical details
 - **CHANGELOG.md**: Comprehensive changelog with all recent improvements
@@ -64,11 +71,13 @@ This release includes significant improvements to the MCP debug system, enhanced
 ## 🧪 Technical Improvements
 
 ### 🔧 Build System
+
 - **Version Management**: Updated build system to v0.10.2
 - **Enhanced Makefile**: Added new build targets and improved dependency management
 - **Path Resolution**: Improved executable and migration path resolution
 
 ### 🗃️ Database & Performance
+
 - **Optimized Pagination**: Rewritten pagination logic for better performance
 - **Index Optimization**: Added database indexes for improved query performance
 - **Query Optimization**: Bulk operations for N+1 query prevention
@@ -76,11 +85,13 @@ This release includes significant improvements to the MCP debug system, enhanced
 ## 🐛 Bug Fixes
 
 ### Critical Fixes
+
 - **Fixed Subtask Pagination**: Subtasks now correctly appear with their parent regardless of pagination window
 - **Fixed Task Count Display**: Now shows root task count instead of total task count
 - **Fixed Orphan Task Logic**: Removed problematic orphan task checking that caused duplicates
 
 ### Minor Fixes
+
 - **VS Code Extension**: Fixed various UI issues in dark theme
 - **TypeScript Compilation**: Resolved compilation errors in markdown parser
 - **Package Management**: Fixed package-lock.json handling
@@ -98,11 +109,13 @@ None in this release. The template system requirement from v0.10.0 continues to 
 ## 🧰 Developer Experience
 
 ### 🛠️ Debug Tools
+
 - **MCP Communication Logging**: Debug wrapper logs all MCP communication
 - **Enhanced Error Messages**: Better error reporting with context
 - **Test Data Generation**: Improved test data seeding with realistic scenarios
 
 ### 📋 Testing
+
 - **Enhanced Test Coverage**: Improved test scenarios for pagination and template usage
 - **Better Mock Data**: More realistic test data generation
 - **Integration Testing**: Enhanced integration test coverage
@@ -110,6 +123,7 @@ None in this release. The template system requirement from v0.10.0 continues to 
 ## 📦 Installation & Upgrade
 
 ### New Installation
+
 ```bash
 # Linux/macOS
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
@@ -119,6 +133,7 @@ irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
 ### Upgrade from Previous Version
+
 ```bash
 # Backup your data
 cp gorev.db gorev.db.backup

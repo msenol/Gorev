@@ -19,7 +19,7 @@
 
 </div>
 
-## 🌟 Neden Gorev'i Seçmelisiniz?
+## 🌟 Neden Gorev'i Seçmelisiniz
 
 Gorev, VS Code'u benzersiz yetenekleri olan **profesyonel bir görev yönetimi güç merkezine** dönüştürür:
 
@@ -298,6 +298,7 @@ Ağaç görünümünden ayrılmadan hızlı düzenleme:
 Extension'ın her yönü üzerinde tam kontrol:
 
 #### Sunucu Ayarları (5 seçenek)
+
 ```json
 {
   "gorev.serverMode": "npx|binary",
@@ -309,6 +310,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 ```
 
 #### TreeView Görseller (15 seçenek)
+
 ```json
 {
   "gorev.treeView.grouping": "status|priority|project|tag|dueDate",
@@ -330,6 +332,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 ```
 
 #### Sürükle & Bırak (8 seçenek)
+
 ```json
 {
   "gorev.dragDrop.allowTaskMove": true,
@@ -344,6 +347,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 ```
 
 #### Performans (8 seçenek)
+
 ```json
 {
   "gorev.refreshManager.enableBatching": true,
@@ -358,6 +362,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 ```
 
 #### Veritabanı Modları (3 seçenek)
+
 ```json
 {
   "gorev.databaseMode": "auto|workspace|global",
@@ -389,16 +394,19 @@ Extension'ın her yönü üzerinde tam kontrol:
 ### Esnek Veritabanı Modları
 
 #### Workspace Modu (Varsayılan)
+
 - **📁 Proje Özel** - Her projenin kendi `.gorev/gorev.db`'si
 - **🔍 Otomatik Algılama** - Workspace veritabanlarını otomatik bulur
 - **📊 Durum Göstergesi** - Durum çubuğunda mevcut veritabanını gösterir
 
 #### Global Mod
+
 - **🌐 Paylaşılan Veritabanı** - Tüm projeler için tek veritabanı
 - **🏠 Kullanıcı Dizini** - `~/.gorev/gorev.db`'de saklanır
 - **🔄 Kolay Geçiş** - Komut ile modlar arası geçiş
 
 #### Otomatik Mod
+
 - **🤖 Akıllı Seçim** - Otomatik olarak en iyi veritabanını seçer
 - **⬆️ Fallback Zinciri** - Workspace → Parent → Global
 - **⚡ Sıfır Yapılandırma** - Kutudan çıktığı gibi çalışır
@@ -406,6 +414,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 ## 📋 50+ Mevcut Komut
 
 ### Görev İşlemleri (15 komut)
+
 - `gorev.createTask` - Yeni görev oluştur
 - `gorev.updateTaskStatus` - Görev durumunu güncelle
 - `gorev.showTaskDetail` - Detaylı görev görünümü
@@ -423,6 +432,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 - `gorev.showTaskHistory` - Geçmişi görüntüle
 
 ### Proje Yönetimi (8 komut)
+
 - `gorev.createProject` - Yeni proje oluştur
 - `gorev.setActiveProject` - Aktif proje belirle
 - `gorev.showProjectStats` - İstatistikleri görüntüle
@@ -433,6 +443,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 - `gorev.duplicateProject` - Proje klonla
 
 ### Şablon Sistemi (7 komut)
+
 - `gorev.openTemplateWizard` - Şablon sihirbazı
 - `gorev.createFromTemplate` - Şablondan oluştur
 - `gorev.quickCreateFromTemplate` - Hızlı şablon seçimi
@@ -442,12 +453,14 @@ Extension'ın her yönü üzerinde tam kontrol:
 - `gorev.exportTemplate` - Şablon dışa aktar
 
 ### Veri İşlemleri (4 komut)
+
 - `gorev.exportData` - Veri dışa aktarma sihirbazı
 - `gorev.importData` - Veri içe aktarma sihirbazı
 - `gorev.exportCurrentView` - Mevcut görünümü dışa aktar
 - `gorev.quickExport` - Hızlı dışa aktarma
 
 ### Filtre İşlemleri (10 komut)
+
 - `gorev.showSearchInput` - Görev ara
 - `gorev.showFilterMenu` - Filtre menüsü
 - `gorev.showFilterProfiles` - Kayıtlı profiller
@@ -460,6 +473,7 @@ Extension'ın her yönü üzerinde tam kontrol:
 - `gorev.filterByTag` - Etikete göre filtrele
 
 ### Debug Araçları (6 komut)
+
 - `gorev.showDebugInfo` - Debug bilgisi
 - `gorev.clearDebugLogs` - Logları temizle
 - `gorev.testConnection` - MCP bağlantısını test et
@@ -563,6 +577,7 @@ Proje içgörüleri için yerleşik analitik:
 ## 🛠️ Kurulum Yöntemleri
 
 ### Yöntem 1: VS Code Marketplace (Önerilen)
+
 ```
 1. VS Code'u aç
 2. Extensions'a git (Ctrl+Shift+X)
@@ -572,11 +587,13 @@ Proje içgörüleri için yerleşik analitik:
 ```
 
 ### Yöntem 2: Komut Satırı
+
 ```bash
 code --install-extension mehmetsenol.gorev-vscode
 ```
 
 ### Yöntem 3: VSIX Dosyası
+
 [GitHub Releases](https://github.com/msenol/Gorev/releases)'ten indir ve manuel kurulum yap.
 
 ## 🔧 Sorun Giderme
@@ -584,6 +601,7 @@ code --install-extension mehmetsenol.gorev-vscode
 ### Yaygın Sorunlar
 
 **NPX Modu Çalışmıyor?**
+
 ```bash
 # Node.js versiyonunu kontrol et (14+ gerekli)
 node --version
@@ -593,6 +611,7 @@ npx @mehmetsenol/gorev-mcp-server@latest --version
 ```
 
 **Binary Mod Bağlantı Sorunları?**
+
 ```bash
 # Binary kurulumunu doğrula
 gorev version
@@ -602,6 +621,7 @@ gorev version
 ```
 
 **Extension Yüklenmiyor?**
+
 1. VS Code Output → Gorev kanalını kontrol et
 2. VS Code'u yeniden başlat
 3. Çakışan extension'ları kontrol et
@@ -663,18 +683,21 @@ Sorun giderme için debug logging'i etkinleştir:
 ## 📚 Kaynaklar ve Destek
 
 ### Dokümantasyon
+
 - 📖 [Ana Repository](https://github.com/msenol/Gorev) - Tam kaynak kod ve dokümanlar
 - 🔧 [MCP Araçları Referansı](https://github.com/msenol/Gorev/blob/main/docs/mcp-araclari.md) - Tüm 48 araç dokümanlandı
 - 📋 [Kurulum Kılavuzu](https://github.com/msenol/Gorev/blob/main/README.md#-kurulum) - Binary kurulum talimatları
 - 🎯 [VS Code Extension Kılavuzu](https://github.com/msenol/Gorev/blob/main/docs/user-guide/vscode-extension.md) - Gelişmiş kullanım
 
 ### Topluluk ve Destek
+
 - 🐛 [Issue Tracker](https://github.com/msenol/Gorev/issues) - Bug raporları ve özellik istekleri
 - 💬 [Discussions](https://github.com/msenol/Gorev/discussions) - Topluluk tartışmaları
 - ❓ [SSS](https://github.com/msenol/Gorev/wiki/FAQ) - Sık sorulan sorular
 - 📧 [İletişim](mailto:me@mehmetsenol.dev) - Doğrudan geliştirici iletişimi
 
 ### Katkıda Bulunma
+
 1. 🍴 Repository'yi fork'la
 2. 🌿 Feature branch oluştur
 3. ✨ Değişikliklerini yap

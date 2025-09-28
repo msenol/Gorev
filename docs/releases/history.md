@@ -3,6 +3,7 @@
 This file contains the detailed development history and release notes for the Gorev project, moved from CLAUDE.md to optimize token usage.
 
 ## MCP Server (v0.13.1) - Test Infrastructure Standardization (4 September 2025)
+
 - **Complete Test Infrastructure Modernization**: Systematic elimination of duplicate test patterns achieving Rule 15 compliance
   - **New Testing Package**: Created `internal/testing/helpers.go` with comprehensive test infrastructure
     - **TestDatabaseConfig**: Standardized configuration struct supporting memory DB, temp files, custom paths
@@ -33,6 +34,7 @@ This file contains the detailed development history and release notes for the Go
   - **Zero Technical Debt**: No temporary fixes or "TODO" items remaining in test infrastructure
 
 ## MCP Server (v0.13.0) - IDE Extension Management System (4 September 2025)
+
 - **Comprehensive IDE Extension Management**: Complete automation system for VS Code, Cursor, and Windsurf extensions
   - **Cross-Platform IDE Detection**: Automatic detection of installed IDEs across Windows, macOS, and Linux
     - **IDE Support**: VS Code, VS Code Insiders, Cursor, Windsurf with version detection
@@ -87,6 +89,7 @@ This file contains the detailed development history and release notes for the Go
   - **Configuration System**: Integrates with existing configuration management
 
 ## MCP Server (v0.11.1 Phase 7) - Ultra-Detailed DRY Compliance Achievement (18 August 2025)
+
 - **Industry-Leading DRY Implementation**: Complete elimination of code duplication across entire codebase
   - **700+ Total Violations Eliminated**: Comprehensive 7-phase DRY compliance implementation
   - **Phase 7 Achievements**: Final ultra-detailed DRY verification and elimination
@@ -114,6 +117,7 @@ This file contains the detailed development history and release notes for the Go
   - **Rule 15 Compliance**: Zero tolerance for technical debt successfully implemented
 
 ## VS Code Extension (v0.5.1) - Data Export/Import UI Integration (20 August 2025)
+
 - **Complete Visual Interface for Data Export/Import**: Full VS Code extension integration for MCP server export/import tools
   - **4 New Commands**: Export Data, Import Data, Export Current View, Quick Export with proper icons and menu integration
   - **Multi-Step Export Dialog**: WebView-based export configuration with format selection, filtering options, output location, and review
@@ -163,6 +167,7 @@ This file contains the detailed development history and release notes for the Go
   - **Production Ready**: Thorough testing, proper localization, and user experience considerations
 
 ## MCP Server (v0.11.1 Phase 9) - Data Export/Import System (19 August 2025)
+
 - **Comprehensive Data Export/Import System**: Complete task management data portability solution
   - **Export Functionality (`gorev_export`)**: Export tasks, projects, dependencies, templates, and AI context to JSON or CSV
     - **Flexible Filtering**: Include/exclude completed tasks, filter by project, date range support
@@ -192,6 +197,7 @@ This file contains the detailed development history and release notes for the Go
   - Updated `docs/MCP_TOOLS_REFERENCE.md` - Complete documentation for new tools
 
 ## MCP Server (v0.11.1 Phase 8) - Template Alias System & User Experience Enhancement (19 August 2025)
+
 - **Template Alias System**: Major user experience improvement for task creation
   - **9 Template Shortcuts**: Added memorable aliases for common templates (`bug`, `feature`, `research`, `spike`, `security`, `performance`, `refactor`, `debt`, `bug2`)
   - **New CLI Command**: `gorev template aliases` for easy discovery of shortcuts
@@ -223,6 +229,7 @@ This file contains the detailed development history and release notes for the Go
   - **Production Ready**: Full backward compatibility with enhanced user experience
 
 ## MCP Server (v0.11.1) - DRY Patterns Implementation & Thread-Safety Enhancement (16 August 2025)
+
 - **Comprehensive DRY Patterns Implementation**: Major code quality enhancement addressing Rule 15 principles
   - **i18n DRY Patterns**: Created `internal/i18n/helpers.go` with reusable i18n helper functions
     - `TParam(key, data)` - Simplified template parameter translation
@@ -239,12 +246,12 @@ This file contains the detailed development history and release notes for the Go
     - Updated `tool_helpers.go` with i18n DRY pattern integration
     - Updated `tool_registry.go` with consistent validation and formatting
     - Eliminated code duplication in MCP tool parameter validation
-  - **Code Quality Metrics**: 
+  - **Code Quality Metrics**:
     - **Total Test Files**: 12 comprehensive test files (significant increase)
     - **Lines of Code**: 11,124+ total lines across all Go files
     - **Test Infrastructure**: Production-ready DRY patterns for maintainability
     - **Code Reduction**: Eliminated duplicate validation, formatting, and i18n patterns
-  - **Technical Excellence**: 
+  - **Technical Excellence**:
     - Reusable `BenchmarkConfig` struct for standardized performance testing
     - `ConcurrencyTestConfig` for thread-safety validation with race condition detection
     - `TestCase` struct for table-driven tests following Go best practices
@@ -297,6 +304,7 @@ This file contains the detailed development history and release notes for the Go
   - Major refactoring eliminates technical debt and improves long-term maintainability
 
 ## MCP Server (v0.11.0) - Complete Internationalization Support (21 July 2025)
+
 - **Full Bilingual MCP Server**: Implemented complete i18n system for Gorev MCP server
   - Added `go-i18n/v2` library for professional internationalization support
   - Created comprehensive translation system with Turkish (default) and English support
@@ -329,6 +337,7 @@ This file contains the detailed development history and release notes for the Go
   - Ready for international user adoption
 
 ## VS Code Extension (v0.5.0) - Complete Bilingual Support (21 July 2025)
+
 - **English/Turkish Localization**: Complete bilingual support for international users
   - Automatic language detection using `vscode.env.language`
   - 500+ UI strings localized across all 36 source files
@@ -356,34 +365,36 @@ This file contains the detailed development history and release notes for the Go
   - Preserved all special characters and escape sequences
 
 ## Comprehensive Test Infrastructure Enhancement (17 July 2025)
+
 - **Massive Test Coverage Improvement**: Systematic test development across both modules
   - **MCP Server**: Coverage improved from 66.0% to 81.3% (+15.3 percentage points)
   - **VS Code Extension**: Coverage improved from 55.6% to 100.0% (+44.4 percentage points)
   - **Total Test Files Added**: 18 new comprehensive test files (~5,300 lines of test code)
-- **MCP Server Test Enhancements**: 
+- **MCP Server Test Enhancements**:
   - Added 3 new test files: `handlers_coverage_test.go`, `handlers_hierarchy_test.go`, `server_coverage_test.go`
   - Comprehensive edge case testing: SQL injection, Unicode, concurrent access, performance benchmarks
   - Template system migration: All tests converted from deprecated `gorev_olustur` to template-based creation
   - Status validation enhancement: Added proper validation for task status transitions
   - Error handling: Complete error scenario testing with Turkish localization
-- **VS Code Extension Test Infrastructure**: 
+- **VS Code Extension Test Infrastructure**:
   - Created 15 new unit test files covering all previously untested components
   - Command testing: Enhanced task commands, template commands, project commands, filter commands
   - UI component testing: FilterToolbar, StatusBar, DecorationProvider, GroupingStrategy
   - Debug utility testing: Debug commands, MCP debug commands, test data seeders
   - Mock integration: Comprehensive VS Code API and MCP client mocking
-- **Quality Assurance**: 
+- **Quality Assurance**:
   - Table-driven tests following Go best practices
   - Jest/Mocha patterns for TypeScript testing
   - Real-world scenario testing with actual user workflows
   - Comprehensive error handling and edge case coverage
-- **Technical Excellence**: 
+- **Technical Excellence**:
   - Production-ready test infrastructure for both modules
   - Maintainable and well-documented test patterns
   - Integration testing with proper mock strategies
   - Performance testing with timing benchmarks
 
 ## MCP Server (v0.10.2) - MCP Debug System & TypeScript Fix (17 July 2025)
+
 - **Enhanced MCP Debug System**: Added comprehensive CLI commands for debugging MCP server functionality
   - `gorev mcp list` - List all available MCP tools
   - `gorev mcp call <tool> <args>` - Direct tool invocation for testing
@@ -401,6 +412,7 @@ This file contains the detailed development history and release notes for the Go
   - Updated README.md and version references across all files
 
 ## MCP Server (v0.10.1) - Critical Pagination Fix
+
 - **Fixed Duplicate Task Display Issue** (11 July 2025):
   - Fixed critical bug where subtasks appeared twice: once as independent tasks and again under their parent
   - Root cause: Pagination was applied to all tasks (root + subtasks) instead of just root tasks
@@ -415,6 +427,7 @@ This file contains the detailed development history and release notes for the Go
     - `internal/mcp/handlers.go` - Pagination logic rewrite
 
 ## MCP Server (v0.10.0) - Template Usage Now Mandatory
+
 - **BREAKING CHANGE: `gorev_olustur` Deprecated** (10 July 2025):
   - Direct task creation without templates is no longer allowed
   - All tasks must be created using `templateden_gorev_olustur`
@@ -436,6 +449,7 @@ This file contains the detailed development history and release notes for the Go
 ## Complete Historical Archive
 
 For detailed release history of versions v0.9.0 and earlier, including:
+
 - AI Context Management System (v0.9.0)
 - Pagination and Performance fixes (v0.8.1, v0.9.1, v0.9.2)
 - Subtask Hierarchy System (v0.8.0)

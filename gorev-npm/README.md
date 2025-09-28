@@ -107,12 +107,14 @@ Add to your Cursor MCP configuration:
 ## 📦 Installation Methods
 
 ### Method 1: npx (Recommended)
+
 ```bash
 # No installation needed - runs directly
 npx @mehmetsenol/gorev-mcp-server@latest --help
 ```
 
 ### Method 2: Global Installation
+
 ```bash
 # Install globally
 npm install -g @mehmetsenol/gorev-mcp-server
@@ -122,6 +124,7 @@ gorev-mcp --help
 ```
 
 ### Method 3: Local Installation
+
 ```bash
 # Install in project
 npm install @mehmetsenol/gorev-mcp-server
@@ -155,6 +158,7 @@ npx @gorev/mcp-server --version
 ## ✨ Features
 
 ### 📝 Task Management
+
 - **Natural language task creation** - Create tasks by talking to AI
 - **Unlimited subtask hierarchy** - Organize tasks in unlimited depth
 - **Smart status tracking** - Pending → In Progress → Completed
@@ -162,12 +166,14 @@ npx @gorev/mcp-server --version
 - **Due date tracking** - Deadline management with overdue detection
 
 ### 📁 Project Organization
+
 - **Hierarchical projects** - Group tasks under projects
 - **Active project system** - Quick operations with default project
 - **Multi-project support** - Unlimited project creation
 - **Project-based reporting** - Detailed statistics per project
 
 ### 🔗 Advanced Features
+
 - **Task dependencies** - Link related tasks with automation
 - **Tagging system** - Multi-tag categorization
 - **Template system** - Pre-built task templates (Bug, Feature, etc.)
@@ -176,6 +182,7 @@ npx @gorev/mcp-server --version
 - **Data export/import** - JSON/CSV export with conflict resolution
 
 ### 🤖 AI Integration
+
 - **48 MCP tools** - Complete API for AI assistants
 - **Natural language processing** - Smart command interpretation
 - **Bilingual support** - Turkish and English interfaces
@@ -199,6 +206,7 @@ The server provides 48 MCP tools organized in categories:
 ## 🔧 Troubleshooting
 
 ### Binary Download Issues
+
 ```bash
 # Clear npm cache and reinstall
 npm cache clean --force
@@ -207,6 +215,7 @@ npm install -g @mehmetsenol/gorev-mcp-server@latest
 ```
 
 ### Platform Not Supported
+
 ```bash
 # Check supported platforms
 npx @gorev/mcp-server --help
@@ -216,6 +225,7 @@ echo "Platform: $(uname -a)"
 ```
 
 ### MCP Connection Issues
+
 ```bash
 # Test server startup
 npx @gorev/mcp-server serve

@@ -18,6 +18,7 @@ make build
 ### 1. Debug Wrapper Script (`debug-wrapper.sh`)
 
 A shell script that intercepts all communication between VS Code and the MCP server, logging to:
+
 - `/tmp/gorev-debug/mcp-session-*.log` - Main debug log
 - `/tmp/gorev-debug/stdin-*.log` - Input messages (VS Code → Server)
 - `/tmp/gorev-debug/stdout-*.log` - Output messages (Server → VS Code)
@@ -25,14 +26,18 @@ A shell script that intercepts all communication between VS Code and the MCP ser
 ### 2. Test Scripts
 
 #### `test-mcp-server.sh`
+
 Basic shell script to test MCP server functionality:
+
 ```bash
 cd gorev-mcpserver
 ./test-mcp-server.sh
 ```
 
 #### `test-mcp-protocol.py`
+
 Python script for more thorough MCP protocol testing:
+
 ```bash
 cd gorev-mcpserver
 python3 test-mcp-protocol.py
@@ -41,6 +46,7 @@ python3 test-mcp-protocol.py
 ### 3. Debug Server (`cmd/gorev-debug/`)
 
 A special debug version of the server that logs all activity to a file instead of stderr:
+
 ```bash
 cd gorev-mcpserver
 ./build-debug.sh
@@ -51,6 +57,7 @@ cd gorev-mcpserver
 ### 4. VS Code Debug Commands
 
 New commands added to the extension:
+
 - **Toggle Debug Mode** - Enable/disable debug wrapper
 - **Show Debug Logs** - View debug log files
 - **Clear Debug Logs** - Remove all debug logs
@@ -77,6 +84,7 @@ Access these via Command Palette (Ctrl+Shift+P) → "Gorev Debug:"
 ## Configuration Options
 
 New settings in VS Code:
+
 - `gorev.debug.useWrapper` - Enable debug wrapper (default: false)
 - `gorev.debug.logPath` - Debug log directory (default: /tmp/gorev-debug)
 - `gorev.debug.serverTimeout` - Server timeout in ms (default: 30000)
@@ -84,15 +92,18 @@ New settings in VS Code:
 ## Troubleshooting Steps
 
 1. **Check Server Path:**
+
    ```bash
    ls -la /mnt/f/Development/Projects/Gorev/gorev-mcpserver/build/gorev
    ```
 
 2. **Test Server Manually:**
+
    ```bash
    cd gorev-mcpserver
    echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}' | ./build/gorev serve
    ```
+
    Should return a JSON response, not log messages.
 
 3. **Check VS Code Logs:**
@@ -107,15 +118,18 @@ New settings in VS Code:
 ## Common Issues
 
 ### "Request timeout" errors
+
 - Increase timeout: `gorev.debug.serverTimeout` to 60000
 - Check if server is outputting non-JSON to stdout/stderr
 
 ### "Server not found" errors
+
 - Verify server path in settings
 - Ensure server is executable: `chmod +x build/gorev`
 - Check file exists and has correct permissions
 
 ### Connection works then fails
+
 - This is the issue addressed in this fix - log output interfering with protocol
 - Rebuild server with `make build` to use commented-out logs
 

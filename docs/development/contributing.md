@@ -1,9 +1,10 @@
 # Contributing to Gorev
 
-> **Version**: This documentation is valid for v0.15.5+
+> **Version**: This documentation is valid for v0.15.24+
 > **Last Updated**: September 18, 2025
 
-This document explains the development environment setup, code standards, and contribution processes for those who want to contribute to the Gorev project.
+This document explains the development environment setup, code standards, and contribution processes for those
+who want to contribute to the Gorev project.
 
 ## Table of Contents
 
@@ -53,7 +54,9 @@ go test ./...
 ### IDE Settings
 
 #### VS Code
+
 `.vscode/settings.json`:
+
 ```json
 {
   "go.lintTool": "golangci-lint",
@@ -66,13 +69,14 @@ go test ./...
 ```
 
 #### GoLand/IntelliJ
+
 - Go Modules support: Enable
 - GOROOT: System Go installation
 - Run gofmt on save: Enable
 
 ## Project Structure
 
-```
+```text
 gorev/
 ├── gorev-mcpserver/             # MCP server project
 │   ├── cmd/
@@ -359,22 +363,26 @@ npm run watch
 
 1. **Open Issue**: First open an issue explaining what you want to do
 2. **Fork & Branch**: Fork the project and create a feature branch
+
    ```bash
    git checkout -b feature/new-feature
    ```
+
 3. **Write Code**: Develop according to code standards
 4. **Write Tests**: Target 80%+ coverage
 5. **Commit**: Use meaningful commit messages
+
    ```bash
    git commit -m "feat: add new feature"
    git commit -m "fix: resolve bug"
    git commit -m "docs: update documentation"
    ```
+
 6. **Push & PR**: Push branch and open PR
 
 ### Commit Message Format
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
@@ -383,6 +391,7 @@ npm run watch
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation
@@ -444,8 +453,4 @@ func TestXXX(t *testing.T) {
 
 ---
 
-<div align="center">
-
 *💻 This developer guide was created in collaboration with Claude (Anthropic) - AI & Human: The perfect documentation team!*
-
-</div>

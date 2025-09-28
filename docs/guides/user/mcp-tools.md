@@ -9,6 +9,7 @@ Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 ## 📋 Araç Listesi
 
 ### Görev Yönetimi
+
 1. [gorev_olustur](#gorev_olustur) - ⚠️ **DEPRECATED (v0.10.0)** - Template kullanımı zorunlu
 2. [gorev_listele](#gorev_listele) - Görevleri listeleme
 3. [gorev_detay](#gorev_detay) - Görev detaylarını görüntüleme (markdown)
@@ -18,15 +19,18 @@ Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 7. [gorev_bagimlilik_ekle](#gorev_bagimlilik_ekle) - Görevler arası bağımlılık oluşturma
 
 ### Subtask Yönetimi (v0.8.0+)
+
 8. [gorev_altgorev_olustur](#gorev_altgorev_olustur) - Alt görev oluşturma
 9. [gorev_ust_degistir](#gorev_ust_degistir) - Görevin üst görevini değiştirme
 10. [gorev_hiyerarsi_goster](#gorev_hiyerarsi_goster) - Görev hiyerarşisini gösterme
 
 ### Görev Şablonları
+
 11. [template_listele](#template_listele) - Görev şablonlarını listeleme
 12. [templateden_gorev_olustur](#templateden_gorev_olustur) - Şablondan görev oluşturma
 
 ### Proje Yönetimi
+
 13. [proje_olustur](#proje_olustur) - Yeni proje oluşturma
 14. [proje_listele](#proje_listele) - Tüm projeleri listeleme
 15. [proje_gorevleri](#proje_gorevleri) - Bir projenin görevlerini listeleme
@@ -35,9 +39,11 @@ Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 18. [aktif_proje_kaldir](#aktif_proje_kaldir) - Aktif proje ayarını kaldırma
 
 ### Raporlama
+
 19. [ozet_goster](#ozet_goster) - Sistem özeti görüntüleme
 
 ### AI Context Management (v0.9.0+)
+
 20. [gorev_set_active](#ai-araçları) - Aktif görevi ayarlama ve otomatik durum yönetimi
 21. [gorev_get_active](#ai-araçları) - Aktif görevi görüntüleme
 22. [gorev_recent](#ai-araçları) - Son görüntülenen görevleri listeleme
@@ -54,9 +60,11 @@ Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 ⚠️ **DEPRECATED (v0.10.0)**: Bu araç artık kullanılamaz! Template kullanımı zorunludur.
 
 ### Migration
+
 `gorev_olustur` yerine artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanılmalıdır.
 
 **Eski Kullanım:**
+
 ```json
 {
   "name": "gorev_olustur",
@@ -69,6 +77,7 @@ Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 ```
 
 **Yeni Kullanım:**
+
 ```json
 {
   "name": "templateden_gorev_olustur", 
@@ -86,18 +95,21 @@ Gorev'in sağladığı 48 MCP tool'unun detaylı açıklaması.
 ```
 
 ### Error Message
+
 Bu araç çağrıldığında aşağıdaki hata mesajı döner:
 
 > ❌ gorev_olustur artık kullanılmıyor!
-> 
+>
 > Template kullanımı zorunludur. Önce kullanılabilir template'leri görmek için:
 > template_listele
-> 
+>
 > Sonra template kullanarak görev oluşturmak için:
 > templateden_gorev_olustur template_id='...' degerler={...}
 
 ### ✅ Çözüm
+
 Artık [templateden_gorev_olustur](#templateden_gorev_olustur) kullanın. Bu daha iyi çünkü:
+
 - **Tutarlılık**: Her görev belirli standartlara uygun
 - **Kalite**: Zorunlu alanlar eksik bilgi girişini engeller  
 - **Otomasyon**: Template tipine göre otomatik workflow
@@ -135,6 +147,7 @@ Görevleri filtreleyerek listeler.
 ### Örnek Kullanım
 
 **Tüm görevler:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -143,6 +156,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Duruma göre filtreleme:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -153,6 +167,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Tüm projelerdeki görevler:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -163,6 +178,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Acil görevler (7 gün içinde son tarih):**
+
 ```json
 {
   "name": "gorev_listele",
@@ -174,6 +190,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Etiketle filtreleme:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -184,6 +201,7 @@ Görevleri filtreleyerek listeler.
 ```
 
 **Pagination kullanımı:**
+
 ```json
 {
   "name": "gorev_listele",
@@ -194,7 +212,8 @@ Görevleri filtreleyerek listeler.
 }
 ```
 
-**Not:** 
+**Not:**
+
 - `tum_projeler` parametresi `false` veya verilmezse ve aktif proje varsa, sadece aktif projenin görevleri listelenir.
 - Pagination özelliği v0.8.1+ sürümünde eklenmiştir. Büyük görev listeleri için token limit hatalarını önler.
 
@@ -317,6 +336,7 @@ Bir görevin başlık, açıklama, öncelik veya proje bilgilerini düzenler.
 ### Örnek Kullanım
 
 **Başlık ve açıklama güncelleme:**
+
 ```json
 {
   "name": "gorev_duzenle",
@@ -329,6 +349,7 @@ Bir görevin başlık, açıklama, öncelik veya proje bilgilerini düzenler.
 ```
 
 **Öncelik değiştirme:**
+
 ```json
 {
   "name": "gorev_duzenle",
@@ -404,6 +425,7 @@ Yeni bir proje oluşturur. Projeler görevleri gruplamak için kullanılır.
 ### Örnek Kullanım
 
 **Basit proje:**
+
 ```json
 {
   "name": "proje_olustur",
@@ -414,6 +436,7 @@ Yeni bir proje oluşturur. Projeler görevleri gruplamak için kullanılır.
 ```
 
 **Detaylı proje:**
+
 ```json
 {
   "name": "proje_olustur",
@@ -623,6 +646,7 @@ Bu araç parametre almaz.
 ```
 
 Aktif proje yoksa:
+
 ```
 Henüz aktif proje ayarlanmamış.
 ```
@@ -803,17 +827,21 @@ Yeni araç önerileri için [GitHub Issues](https://github.com/msenol/gorev/issu
 ## 💡 Kullanım İpuçları
 
 ### 1. ID Yönetimi
+
 - Görev ID'leri UUID formatındadır
 - Claude genellikle son oluşturulan görevin ID'sini hatırlar
 - ID yerine görev başlığı ile referans verebilirsiniz
 
 ### 2. Durum Geçişleri
+
 Önerilen durum geçiş sırası:
+
 ```
 beklemede → devam_ediyor → tamamlandi
 ```
 
 ### 3. Öncelik Seviyeleri
+
 - **yuksek**: Acil ve kritik işler
 - **orta**: Normal iş akışı
 - **dusuk**: İleride yapılabilecek işler

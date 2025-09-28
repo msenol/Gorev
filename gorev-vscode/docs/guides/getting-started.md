@@ -21,6 +21,7 @@ Bu rehber, Gorev VS Code Extension'ı kullanmaya başlamanız için gereken tüm
 ### Extension Kurulum Seçenekleri
 
 #### 1. Marketplace'den (Yakında)
+
 ```
 1. VS Code'u açın
 2. Extensions paneline gidin (Ctrl+Shift+X)
@@ -29,6 +30,7 @@ Bu rehber, Gorev VS Code Extension'ı kullanmaya başlamanız için gereken tüm
 ```
 
 #### 2. VSIX Dosyasından
+
 ```bash
 # VSIX dosyasını indirin
 curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-vscode-0.1.0.vsix -o gorev.vsix
@@ -38,6 +40,7 @@ code --install-extension gorev.vsix
 ```
 
 #### 3. Kaynak Koddan
+
 ```bash
 # Repository'yi klonlayın
 git clone https://github.com/msenol/gorev.git
@@ -63,6 +66,7 @@ Extension'ın MCP server'a bağlanabilmesi için server binary yolunu belirtmeni
 **Gorev ayarlarını bulun**: Arama kutusuna "gorev" yazın
 
 **Server Path'i ayarlayın**:
+
 - Windows: `C:\Program Files\gorev\gorev.exe`
 - macOS/Linux: `/usr/local/bin/gorev`
 
@@ -94,6 +98,7 @@ Alternatif olarak `settings.json` dosyasını düzenleyin:
 ### Görev Oluşturma
 
 #### Yöntem 1: TreeView Üzerinden
+
 1. Gorev panelinde "+" ikonuna tıklayın
 2. Form alanlarını doldurun:
    - Başlık (zorunlu)
@@ -103,11 +108,13 @@ Alternatif olarak `settings.json` dosyasını düzenleyin:
 3. "Create" butonuna tıklayın
 
 #### Yöntem 2: Komut Paleti
+
 1. `Ctrl+Shift+P` ile Command Palette'i açın
 2. "Gorev: Create Task" yazın ve Enter
 3. Form alanlarını doldurun
 
 #### Yöntem 3: Hızlı Oluşturma
+
 1. `Ctrl+Shift+G` kısayolunu kullanın
 2. Sadece başlık girin
 3. Görev varsayılan değerlerle oluşturulur
@@ -115,6 +122,7 @@ Alternatif olarak `settings.json` dosyasını düzenleyin:
 ### Görev Yönetimi
 
 #### Durum Güncelleme
+
 1. Görev üzerine sağ tıklayın
 2. "Update Status" seçin
 3. Yeni durumu seçin:
@@ -123,6 +131,7 @@ Alternatif olarak `settings.json` dosyasını düzenleyin:
    - Tamamlandı
 
 #### Görev Detayları
+
 - Görev üzerine tıklayarak detayları görüntüleyin
 - Detay görünümünde:
   - Tam açıklama
@@ -131,6 +140,7 @@ Alternatif olarak `settings.json` dosyasını düzenleyin:
   - Bağımlılıklar
 
 #### Görev Silme
+
 1. Görev üzerine sağ tıklayın
 2. "Delete Task" seçin
 3. Onay dialogunda "Yes" tıklayın
@@ -138,11 +148,13 @@ Alternatif olarak `settings.json` dosyasını düzenleyin:
 ### Proje Yönetimi
 
 #### Yeni Proje Oluşturma
+
 1. Projects panelinde "+" ikonuna tıklayın
 2. Proje adı ve açıklama girin
 3. "Create" tıklayın
 
 #### Aktif Proje Belirleme
+
 1. Proje üzerine sağ tıklayın
 2. "Set as Active" seçin
 3. Yeni görevler otomatik olarak bu projeye atanır
@@ -160,12 +172,15 @@ Alternatif olarak `settings.json` dosyasını düzenleyin:
 ### Filtreleme ve Sıralama
 
 #### Durum Bazlı Filtreleme
+
 TreeView otomatik olarak görevleri duruma göre gruplar:
+
 - 📋 Beklemede
 - 🔄 Devam Ediyor
 - ✅ Tamamlandı
 
 #### Öncelik Renklendirmesi
+
 - 🔴 Yüksek öncelik (kırmızı)
 - 🟡 Orta öncelik (sarı)
 - 🟢 Düşük öncelik (yeşil)
@@ -181,6 +196,7 @@ TreeView otomatik olarak görevleri duruma göre gruplar:
 ### Status Bar Özellikleri
 
 Status bar'a tıklayarak:
+
 - Toplam görev sayısı
 - Tamamlanan görev sayısı
 - Duruma göre dağılım
@@ -203,6 +219,7 @@ Status bar'a tıklayarak:
 **Problem**: Extension server'a bağlanamıyor
 
 **Çözümler**:
+
 1. Server'ın çalıştığını kontrol edin: `gorev serve`
 2. Server path'inin doğru olduğunu kontrol edin
 3. Windows'ta tam path kullanın: `C:\\Program Files\\gorev\\gorev.exe`
@@ -213,6 +230,7 @@ Status bar'a tıklayarak:
 **Problem**: Görevler listesi boş
 
 **Çözümler**:
+
 1. Refresh butonuna tıklayın
 2. Output panelinde hataları kontrol edin
 3. Server'ın doğru veritabanına bağlandığını kontrol edin
@@ -222,6 +240,7 @@ Status bar'a tıklayarak:
 **Problem**: Extension yavaş çalışıyor
 
 **Çözümler**:
+
 1. `gorev.refreshInterval` değerini artırın
 2. Debug mode'u kapatın: `"gorev.debug": false`
 3. Çok sayıda görev varsa sayfalama özelliğini bekleyin
@@ -231,6 +250,7 @@ Status bar'a tıklayarak:
 Detaylı hata ayıklama için:
 
 1. Settings'de debug'ı açın:
+
 ```json
 {
   "gorev.debug": true
