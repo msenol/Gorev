@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { CommandContext } from '../commands/index';
 import { Logger } from '../utils/logger';
 
@@ -11,10 +11,10 @@ import { Logger } from '../utils/logger';
 export class ImportWizard {
   private panel: vscode.WebviewPanel | undefined;
   private context: vscode.ExtensionContext;
-  private mcpClient: MCPClient;
+  private mcpClient: ClientInterface;
   private providers: CommandContext;
 
-  constructor(context: vscode.ExtensionContext, mcpClient: MCPClient, providers: CommandContext) {
+  constructor(context: vscode.ExtensionContext, mcpClient: ClientInterface, providers: CommandContext) {
     this.context = context;
     this.mcpClient = mcpClient;
     this.providers = providers;

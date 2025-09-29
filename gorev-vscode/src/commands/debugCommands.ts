@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { CommandContext } from './index';
 import { TestDataSeeder } from '../debug/testDataSeeder';
 import { Logger } from '../utils/logger';
 
 export function registerDebugCommands(
     context: vscode.ExtensionContext,
-    mcpClient: MCPClient,
+    mcpClient: ClientInterface,
     providers: CommandContext
 ): void {
     const seeder = new TestDataSeeder(mcpClient);

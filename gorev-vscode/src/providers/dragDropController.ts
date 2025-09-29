@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { 
-    DragDataType, 
-    TaskDragData, 
+import {
+    DragDataType,
+    TaskDragData,
     TasksDragData,
     DropTargetType,
     DropTarget,
@@ -12,7 +12,7 @@ import {
 } from '../utils/dragDropTypes';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { GroupingStrategy } from '../models/treeModels';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { Logger } from '../utils/logger';
 
 /**
@@ -23,10 +23,10 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
     dragMimeTypes = [DragDataType.Task, DragDataType.Tasks];
 
     private config: DragDropConfig;
-    private mcpClient: MCPClient;
+    private mcpClient: ClientInterface;
     private currentGrouping: GroupingStrategy;
 
-    constructor(mcpClient: MCPClient) {
+    constructor(mcpClient: ClientInterface) {
         this.mcpClient = mcpClient;
         this.config = this.loadConfig();
         this.currentGrouping = GroupingStrategy.ByStatus;

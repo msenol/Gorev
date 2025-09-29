@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { Logger } from '../utils/logger';
@@ -13,7 +13,7 @@ import { ImportWizard } from '../ui/importWizard';
  */
 export function registerDataCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  mcpClient: ClientInterface,
   providers: CommandContext
 ): void {
   Logger.info('Registering data export/import commands');
@@ -101,7 +101,7 @@ export function registerDataCommands(
  * Export current filtered view with context-appropriate settings
  */
 async function exportCurrentView(
-  mcpClient: MCPClient,
+  mcpClient: ClientInterface,
   providers: CommandContext,
   element?: any
 ): Promise<void> {
@@ -180,7 +180,7 @@ async function exportCurrentView(
 /**
  * Quick export with default settings to Downloads folder
  */
-async function quickExport(mcpClient: MCPClient): Promise<void> {
+async function quickExport(mcpClient: ClientInterface): Promise<void> {
   Logger.info('Performing quick export');
 
   // Generate default filename with timestamp
@@ -271,7 +271,7 @@ export function validateExportOptions(options: any): { isValid: boolean; errors:
 /**
  * Utility function to estimate export size
  */
-export async function estimateExportSize(mcpClient: MCPClient, options: any): Promise<string> {
+export async function estimateExportSize(mcpClient: ClientInterface, options: any): Promise<string> {
   try {
     // Get summary to estimate size
     const summaryResult = await mcpClient.callTool('ozet_goster');

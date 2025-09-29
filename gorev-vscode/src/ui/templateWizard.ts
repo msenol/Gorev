@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { GorevTemplate, TemplateAlan } from '../models/template';
 import { MarkdownParser } from '../utils/markdownParser';
 import { Logger } from '../utils/logger';
@@ -16,7 +16,7 @@ export class TemplateWizard {
     private readonly disposables: vscode.Disposable[] = [];
 
     constructor(
-        private readonly mcpClient: MCPClient,
+        private readonly mcpClient: ClientInterface,
         private readonly extensionUri: vscode.Uri
     ) {
         this.panel = vscode.window.createWebviewPanel(
@@ -80,7 +80,7 @@ export class TemplateWizard {
         this.loadTemplates();
     }
 
-    public static async show(mcpClient: MCPClient, extensionUri: vscode.Uri, templateId?: string): Promise<void> {
+    public static async show(mcpClient: ClientInterface, extensionUri: vscode.Uri, templateId?: string): Promise<void> {
         // If panel already exists, reveal it
         if (TemplateWizard.currentPanel) {
             TemplateWizard.currentPanel.panel.reveal(vscode.ViewColumn.One);

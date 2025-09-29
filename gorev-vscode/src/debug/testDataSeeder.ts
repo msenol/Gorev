@@ -1,4 +1,4 @@
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { t } from '../utils/l10n';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { Logger } from '../utils/logger';
@@ -17,7 +17,7 @@ export class TestDataSeeder {
         ARASTIRMA_GOREVI: '13f04fe2-b5b6-4fd6-8684-5eca5dc2770d'
     };
 
-    constructor(private mcpClient: MCPClient) {}
+    constructor(private mcpClient: ClientInterface) {}
 
     /**
      * Test verilerini oluştur
@@ -699,7 +699,12 @@ export class TestDataSeeder {
 
             // Parse task IDs from response
             const taskIdMatches = tasksResult.content[0].text.matchAll(/ID: ([a-f0-9-]+)/g);
-            const taskIds = Array.from(taskIdMatches).map(match => match[1]);
+            const taskIds: string[] = [];
+            for (const match of taskIdMatches) {
+                if (match[1]) {
+                    taskIds.push(match[1]);
+                }
+            }
 
             for (const taskId of taskIds) {
                 try {

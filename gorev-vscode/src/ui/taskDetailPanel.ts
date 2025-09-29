@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { Gorev, GorevDurum, GorevOncelik, GorevHiyerarsi } from '../models/gorev';
 import { Logger } from '../utils/logger';
 import { MarkdownParser } from '../utils/markdownParser';
@@ -15,10 +15,10 @@ export class TaskDetailPanel {
     private task: Gorev;
     private hierarchyInfo?: GorevHiyerarsi;
     private disposables: vscode.Disposable[] = [];
-    
+
     private constructor(
         panel: vscode.WebviewPanel,
-        private mcpClient: MCPClient,
+        private mcpClient: ClientInterface,
         task: Gorev,
         private extensionUri: vscode.Uri
     ) {
@@ -51,7 +51,7 @@ export class TaskDetailPanel {
     }
     
     public static async createOrShow(
-        mcpClient: MCPClient,
+        mcpClient: ClientInterface,
         task: Gorev,
         extensionUri: vscode.Uri
     ): Promise<void> {

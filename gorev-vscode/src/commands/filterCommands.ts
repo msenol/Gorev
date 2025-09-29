@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { CommandContext } from './index';
 import { Logger } from '../utils/logger';
 
 export function registerFilterCommands(
     context: vscode.ExtensionContext,
-    mcpClient: MCPClient,
+    mcpClient: ClientInterface,
     providers: CommandContext
 ): void {
     const { filterToolbar } = providers;

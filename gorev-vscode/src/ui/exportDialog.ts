@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { Logger } from '../utils/logger';
 import { validateExportOptions, estimateExportSize } from '../commands/dataCommands';
 
@@ -11,9 +11,9 @@ import { validateExportOptions, estimateExportSize } from '../commands/dataComma
 export class ExportDialog {
   private panel: vscode.WebviewPanel | undefined;
   private context: vscode.ExtensionContext;
-  private mcpClient: MCPClient;
+  private mcpClient: ClientInterface;
 
-  constructor(context: vscode.ExtensionContext, mcpClient: MCPClient) {
+  constructor(context: vscode.ExtensionContext, mcpClient: ClientInterface) {
     this.context = context;
     this.mcpClient = mcpClient;
   }

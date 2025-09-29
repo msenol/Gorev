@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { GorevDurum, GorevOncelik } from '../models/common';
@@ -9,7 +9,7 @@ import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvide
 
 export function registerEnhancedGorevCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  mcpClient: ClientInterface,
   providers: CommandContext
 ): void {
   const treeProvider = providers.gorevTreeProvider as EnhancedGorevTreeProvider;

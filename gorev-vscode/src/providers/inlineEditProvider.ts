@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { Logger } from '../utils/logger';
 import { t } from '../utils/l10n';
@@ -11,7 +11,7 @@ export class InlineEditProvider {
     private editingItem: any | null = null;
     private originalLabel: string | null = null;
 
-    constructor(private mcpClient: MCPClient) {}
+    constructor(private mcpClient: ClientInterface) {}
 
     /**
      * Inline düzenlemeyi başlatır
