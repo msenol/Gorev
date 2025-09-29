@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -108,6 +109,19 @@ func (s *APIServer) setupRoutes() {
 	// Language routes
 	api.Get("/language", s.getLanguage)
 	api.Post("/language", s.setLanguage)
+
+	// Subtask routes
+	api.Post("/tasks/:id/subtasks", s.createSubtask)
+	api.Put("/tasks/:id/parent", s.changeParent)
+	api.Get("/tasks/:id/hierarchy", s.getHierarchy)
+
+	// Dependency routes
+	api.Post("/tasks/:id/dependencies", s.addDependency)
+	api.Delete("/tasks/:id/dependencies/:dep_id", s.removeDependency)
+
+	// Active project routes
+	api.Get("/active-project", s.getActiveProject)
+	api.Delete("/active-project", s.removeActiveProject)
 
 	// Note: Static web UI is served by ServeStaticFiles() called from main.go after server creation
 }
@@ -461,5 +475,187 @@ func (s *APIServer) setLanguage(c *fiber.Ctx) error {
 		"success":  true,
 		"language": req.Language,
 		"message":  fmt.Sprintf("Language changed to %s", req.Language),
+	})
+}
+
+// createSubtask creates a subtask under a parent task
+func (s *APIServer) createSubtask(c *fiber.Ctx) error {
+	parentID := c.Params("id")
+	if parentID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Parent task ID is required")
+	}
+
+	var req struct {
+		Baslik    string `json:"baslik"`
+		Aciklama  string `json:"aciklama"`
+		Oncelik   string `json:"oncelik"`
+		SonTarih  string `json:"son_tarih"`
+		Etiketler string `json:"etiketler"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.Baslik == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Baslik is required")
+	}
+
+	// Parse etiketler string to []string
+	var etiketler []string
+	if req.Etiketler != "" {
+		// Simple split by comma
+		for _, e := range strings.Split(req.Etiketler, ",") {
+			etiketler = append(etiketler, strings.TrimSpace(e))
+		}
+	}
+
+	// Create subtask using business logic
+	gorev, err := s.isYonetici.AltGorevOlustur(parentID, req.Baslik, req.Aciklama, req.Oncelik, req.SonTarih, etiketler)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create subtask under parent %s: %v", parentID, err))
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"data":    gorev,
+		"message": "Subtask created successfully",
+	})
+}
+
+// changeParent changes the parent of a task
+func (s *APIServer) changeParent(c *fiber.Ctx) error {
+	taskID := c.Params("id")
+	if taskID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
+	}
+
+	var req struct {
+		NewParentID string `json:"new_parent_id"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	// Change parent using business logic
+	if err := s.isYonetici.GorevUstDegistir(taskID, req.NewParentID); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to change parent for task %s: %v", taskID, err))
+	}
+
+	// Get updated task
+	gorev, err := s.isYonetici.VeriYonetici().GorevGetir(taskID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get updated task with ID %s: %v", taskID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    gorev,
+		"message": "Parent changed successfully",
+	})
+}
+
+// getHierarchy retrieves the full hierarchy of a task
+func (s *APIServer) getHierarchy(c *fiber.Ctx) error {
+	taskID := c.Params("id")
+	if taskID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
+	}
+
+	// Get hierarchy using business logic
+	hierarchy, err := s.isYonetici.GorevHiyerarsiGetir(taskID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get hierarchy for task %s: %v", taskID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    hierarchy,
+	})
+}
+
+// addDependency adds a dependency between tasks
+func (s *APIServer) addDependency(c *fiber.Ctx) error {
+	hedefID := c.Params("id")
+	if hedefID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Target task ID is required")
+	}
+
+	var req struct {
+		KaynakID     string `json:"kaynak_id"`
+		BaglantiTipi string `json:"baglanti_tipi"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.KaynakID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "kaynak_id is required")
+	}
+	if req.BaglantiTipi == "" {
+		req.BaglantiTipi = "onceki" // default
+	}
+
+	// Add dependency using business logic
+	if _, err := s.isYonetici.GorevBagimlilikEkle(req.KaynakID, hedefID, req.BaglantiTipi); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add dependency from %s to %s: %v", req.KaynakID, hedefID, err))
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "Dependency added successfully",
+	})
+}
+
+// removeDependency removes a dependency between tasks
+func (s *APIServer) removeDependency(c *fiber.Ctx) error {
+	hedefID := c.Params("id")
+	kaynakID := c.Params("dep_id")
+
+	if hedefID == "" || kaynakID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Both task IDs are required")
+	}
+
+	// Remove dependency - use DELETE on database
+	// Note: There's no direct method, we'll need to add one to VeriYonetici or use SQL
+	// For now, return not implemented
+	return fiber.NewError(fiber.StatusNotImplemented, "Dependency removal not yet implemented")
+}
+
+// getActiveProject retrieves the currently active project
+func (s *APIServer) getActiveProject(c *fiber.Ctx) error {
+	aktifProjeID, err := s.isYonetici.VeriYonetici().AktifProjeGetir()
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get active project: %v", err))
+	}
+
+	if aktifProjeID == "" {
+		return c.JSON(fiber.Map{
+			"success": true,
+			"data":    nil,
+			"message": "No active project set",
+		})
+	}
+
+	// Get full project details
+	proje, err := s.isYonetici.VeriYonetici().ProjeGetir(aktifProjeID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get active project details: %v", err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    proje,
+	})
+}
+
+// removeActiveProject removes the active project setting
+func (s *APIServer) removeActiveProject(c *fiber.Ctx) error {
+	if err := s.isYonetici.VeriYonetici().AktifProjeKaldir(); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to remove active project: %v", err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Active project removed successfully",
 	})
 }
