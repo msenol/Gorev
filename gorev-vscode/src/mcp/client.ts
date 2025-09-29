@@ -1,6 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Logger } from '../utils/logger';
+import { ClientInterface } from '../interfaces/client';
 import {
   MCPRequest,
   MCPResponse,
@@ -12,7 +13,7 @@ import {
 } from './types';
 import * as vscode from 'vscode';
 
-export class MCPClient extends EventEmitter {
+export class MCPClient extends EventEmitter implements ClientInterface {
   private process: ChildProcess | null = null;
   private requestId = 0;
   private pendingRequests = new Map<number, {

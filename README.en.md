@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 22, 2025 | **Version:** v0.15.24
+**Last Updated:** September 29, 2025 | **Version:** v0.16.0-dev (unreleased)
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -24,12 +24,16 @@
 
 Gorev is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to all MCP-compatible AI editors (Claude Desktop, VS Code, Windsurf, Cursor, Zed, etc.). It combines project management, task tracking, and organization needs with the power of AI assistants to boost your productivity.
 
-### 🏗️ Two-Module Architecture
+### 🏗️ Three-Module Architecture
 
 1. **gorev-mcpserver** - MCP server written in Go (core component)
+   - Embedded Web UI 🌐 - React interface embedded in binary (NEW! v0.16.0)
+   - REST API server (Fiber framework)
+   - MCP protocol support
 2. **gorev-vscode** - VS Code extension (optional visual interface)
+3. **gorev-web** - React + TypeScript source code (development)
 
-Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The VS Code extension provides a rich visual experience.
+Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The Web UI is automatically available at http://localhost:5082 when you run `npx gorev serve`. The VS Code extension provides a rich IDE-integrated experience.
 
 ## ✨ Features
 
@@ -79,6 +83,23 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **Context Menus** - Right-click operations
 - **Automatic Language Detection** - UI language based on VS Code language setting
 - **[Download from Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** 🚀
+
+### 🌐 Web UI Features (NEW! v0.16.0)
+
+- **Modern Browser Interface** - No IDE required, works in any browser
+- **Task Cards** - Rich task visualization with metadata
+- **Subtask Hierarchy** - Expandable/collapsible nested tasks
+- **Dependency Badges** - Visual indicators for task dependencies
+- **Project Organization** - Sidebar navigation with task counts
+- **Template-Based Creation** - Wizard for creating structured tasks
+- **Real-time Updates** - React Query for automatic synchronization
+- **Responsive Design** - Works on desktop and mobile devices
+- **🌍 Language Switcher** - Toggle between Turkish/English, synchronized with MCP server
+- **Quick Actions** - Edit, delete, and status updates
+- **REST API Backend** - Fiber-based high-performance API server
+- **🚀 No Installation Required**: Automatically active with `npx gorev serve`!
+- **Embedded UI**: Bundled in Go binary, no separate setup needed
+- **Access**: http://localhost:5082 (default port)
 
 ## 📦 Installation
 

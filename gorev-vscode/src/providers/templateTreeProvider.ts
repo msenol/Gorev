@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { GorevTemplate, TemplateKategori } from '../models/template';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
@@ -12,7 +12,7 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   
   private templates: GorevTemplate[] = [];
 
-  constructor(private mcpClient: MCPClient) {}
+  constructor(private mcpClient: ClientInterface) {}
 
   getTreeItem(element: TemplateTreeItem | TemplateCategoryItem): vscode.TreeItem {
     return element;

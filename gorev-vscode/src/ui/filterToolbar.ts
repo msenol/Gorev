@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { TaskFilter, SortingCriteria } from '../models/treeModels';
 import { Logger } from '../utils/logger';
@@ -15,7 +15,7 @@ export class FilterToolbar {
     private savedProfiles: Map<string, TaskFilter> = new Map();
 
     constructor(
-        private mcpClient: MCPClient,
+        private mcpClient: ClientInterface,
         private onFilterChange: (filter: TaskFilter) => void
     ) {
         this.loadSavedProfiles();

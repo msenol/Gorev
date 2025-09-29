@@ -78,7 +78,7 @@ Bu dokümanda Gorev API'sindeki önemli değişiklikler ve sürüm geçişleri a
 ### Değişiklikler
 
 - MCP SDK entegrasyonu tamamlandı (`mark3labs/mcp-go` v0.6.0)
-- Go 1.22 minimum gereksinimi belirlendi
+- Go 1.23+ minimum gereksinimi belirlendi
 - Modül yolu `github.com/msenol/gorev` olarak güncellendi
 
 ## [0.2.0] - 2025-06-24

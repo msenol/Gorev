@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from '../providers/projeTreeProvider';
 import { TemplateTreeProvider } from '../providers/templateTreeProvider';
@@ -26,7 +26,7 @@ export interface CommandContext {
 
 export function registerCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  mcpClient: ClientInterface,
   providers: CommandContext
 ): void {
   // Register all command groups
@@ -86,40 +86,19 @@ export function registerCommands(
   );
 }
 
-async function connectToServer(mcpClient: MCPClient, providers: CommandContext): Promise<void> {
-  const config = vscode.workspace.getConfiguration('gorev');
-  const serverMode = config.get<string>('serverMode', 'npx');
-  let serverPath = config.get<string>('serverPath');
-
-  // Validate configuration based on server mode
-  if (serverMode === 'binary') {
-    if (!serverPath) {
-      throw new Error('Gorev server path not configured for binary mode. Please set gorev.serverPath in settings.');
-    }
-
-    // Convert WSL path to Windows path if needed
-    if (process.platform === 'win32' && serverPath.startsWith('/mnt/')) {
-      // Convert /mnt/f/... to F:\...
-      const drive = serverPath.charAt(5).toUpperCase();
-      serverPath = drive + ':\\' + serverPath.substring(7).replace(/\//g, '\\');
-      Logger.debug(`Converted WSL path to Windows path: ${serverPath}`);
-    }
-  } else {
-    // NPX mode - no server path validation needed
-    Logger.info('Using NPX mode - no server path required');
-  }
-
+async function connectToServer(client: ClientInterface, providers: CommandContext): Promise<void> {
   providers.statusBarManager.setConnecting();
-  
+
   try {
-    await mcpClient.connect(serverPath);
+    // Use the unified client's connect method which handles auto-detection
+    await client.connect();
     providers.statusBarManager.setConnected();
-    
-    // Refresh all views after connection - sequentially to avoid overwhelming the MCP server
+
+    // Refresh all views after connection - sequentially to avoid overwhelming the server
     await providers.gorevTreeProvider.refresh();
     await providers.projeTreeProvider.refresh();
     await providers.templateTreeProvider.refresh();
-    
+
     vscode.window.showInformationMessage('Connected to Gorev server');
   } catch (error) {
     providers.statusBarManager.setDisconnected();

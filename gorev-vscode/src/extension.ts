@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { MCPClient } from './mcp/client';
+import { UnifiedClient } from './unified/client';
 import { EnhancedGorevTreeProvider } from './providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from './providers/projeTreeProvider';
 import { TemplateTreeProvider } from './providers/templateTreeProvider';
@@ -15,6 +16,7 @@ import { measureAsync } from './utils/performance';
 import { debounceConfig } from './utils/debounce';
 
 let mcpClient: MCPClient;
+let unifiedClient: UnifiedClient;
 let statusBarManager: StatusBarManager;
 let filterToolbar: FilterToolbar;
 let gorevTreeProvider: EnhancedGorevTreeProvider;
@@ -39,23 +41,27 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   // Initialize configuration
   Config.initialize(context);
 
-  // Create MCP client
+  // Create clients
   mcpClient = new MCPClient();
+
+  // Get client mode from configuration (default to 'auto' for automatic detection)
+  const clientMode = Config.get<string>('clientMode') || 'auto';
+  unifiedClient = new UnifiedClient({ mode: clientMode as 'api' | 'mcp' | 'auto' });
 
   // Initialize RefreshManager first
   refreshManager = RefreshManager.getInstance();
 
-  // Initialize UI components
+  // Initialize UI components - use unified client for new components
   statusBarManager = new StatusBarManager();
-  gorevTreeProvider = new EnhancedGorevTreeProvider(mcpClient);
-  projeTreeProvider = new ProjeTreeProvider(mcpClient);
-  templateTreeProvider = new TemplateTreeProvider(mcpClient);
+  gorevTreeProvider = new EnhancedGorevTreeProvider(unifiedClient);
+  projeTreeProvider = new ProjeTreeProvider(unifiedClient);
+  templateTreeProvider = new TemplateTreeProvider(unifiedClient);
 
   // Note: Other providers will be integrated with RefreshManager in future iterations
   // For now, only EnhancedGorevTreeProvider implements the RefreshProvider interface
-  
+
   // Initialize filter toolbar
-  filterToolbar = new FilterToolbar(mcpClient, (filter) => {
+  filterToolbar = new FilterToolbar(unifiedClient, (filter) => {
     // If the filter object is empty, clear all filters
     if (Object.keys(filter).length === 0) {
       gorevTreeProvider.clearFilters();
@@ -84,13 +90,28 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
 
   context.subscriptions.push(tasksView, projectsView, templatesView);
 
-  // Listen for database mode changes
+  // Listen for unified client events
+  unifiedClient.on('connected', (data: any) => {
+    Logger.info(`[Extension] Connected via ${data.mode} mode`);
+    statusBarManager.setConnectionStatus(true, data.mode);
+  });
+
+  unifiedClient.on('disconnected', (data: any) => {
+    Logger.info(`[Extension] Disconnected from ${data.mode} mode`);
+    statusBarManager.setConnectionStatus(false, data.mode);
+  });
+
+  unifiedClient.on('error', (data: any) => {
+    Logger.error(`[Extension] ${data.mode} error:`, data.error);
+  });
+
+  // Listen for database mode changes (MCP only)
   mcpClient.on('databaseModeChanged', (data: any) => {
     statusBarManager.setDatabaseMode(data.mode, data.path);
   });
 
-  // Register commands
-  registerCommands(context, mcpClient, {
+  // Register commands with unified client
+  registerCommands(context, unifiedClient, {
     gorevTreeProvider,
     projeTreeProvider,
     templateTreeProvider,
@@ -101,7 +122,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   // Register debug commands if in development mode
   if (isDevelopment) {
     const { registerDebugCommands } = await import('./commands/debugCommands');
-    registerDebugCommands(context, mcpClient, {
+    registerDebugCommands(context, unifiedClient, {
       gorevTreeProvider,
       projeTreeProvider,
       templateTreeProvider,
@@ -119,9 +140,9 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
       setTimeout(async () => {
         try {
           // Görev sayısını kontrol et
-          const result = await mcpClient.callTool('gorev_listele', { tum_projeler: true });
+          const result = await unifiedClient.callTool('gorev_listele', { tum_projeler: true });
           const hasNoTasks = result.content[0].text.includes('Henüz görev bulunmuyor');
-          
+
           if (hasNoTasks) {
             const { t } = await import('./utils/l10n');
             const answer = await vscode.window.showInformationMessage(
@@ -147,7 +168,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     Logger.info(`[Extension] Setting up refresh interval: ${refreshInterval} seconds`);
 
     const intervalId = setInterval(async () => {
-      if (mcpClient.isConnected()) {
+      if (unifiedClient.isConnected()) {
         try {
           // Use RefreshManager for coordinated refresh
           await refreshManager.requestRefresh(
@@ -212,6 +233,10 @@ export async function deactivate() {
   // Dispose RefreshManager
   if (refreshManager) {
     refreshManager.dispose();
+  }
+
+  if (unifiedClient) {
+    unifiedClient.disconnect();
   }
 
   if (mcpClient) {

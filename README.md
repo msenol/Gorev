@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 22, 2025 | **Version:** v0.15.24
+**Last Updated:** September 29, 2025 | **Version:** v0.16.0-dev (unreleased)
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -34,12 +34,16 @@
 
 Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm AI editörler (Claude Desktop, VS Code, Windsurf, Cursor, Zed vb.) ile doğal dilde iletişim kurabilen, Go dilinde yazılmış güçlü bir görev yönetim sunucusudur. Proje yönetimi, görev takibi ve organizasyon ihtiyaçlarınızı AI asistanlarının yetenekleriyle birleştirerek verimliliğinizi artırır.
 
-### 🏗️ İki Modüllü Yapı
+### 🏗️ Üç Modüllü Yapı
 
 1. **gorev-mcpserver** - Go dilinde yazılmış MCP server (ana bileşen)
+   - Embedded Web UI 🌐 - React arayüzü binary'ye gömülü (YENİ! v0.16.0)
+   - REST API server (Fiber framework)
+   - MCP protokol desteği
 2. **gorev-vscode** - VS Code extension'ı (opsiyonel görsel arayüz)
+3. **gorev-web** - React + TypeScript kaynak kodu (development)
 
-MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. VS Code extension'ı ise zengin görsel deneyim sunar.
+MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. Web arayüzü `npx gorev serve` komutuyla otomatik olarak http://localhost:5082 adresinde hazır olur. VS Code extension'ı ise IDE içinde zengin görsel deneyim sunar.
 
 ## ✨ Özellikler
 
@@ -82,6 +86,22 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **🌐 MCP Registry** - Otomatik keşfedilebilirlik ve kolay kurulum (v0.15.24+)
 - **🌍 Uluslararası Destek** - Türkçe ve İngilizce tam dil desteği (v0.11.0+)
 - **⚡ Thread Safety** - 100% race condition free operation (v0.14.0)
+
+### 🌐 Web UI Özellikleri (YENİ! v0.16.0)
+
+- **Modern React Arayüzü** - TypeScript + Vite ile hızlı ve responsive
+- **Proje Bazlı Görünüm** - Proje kartları ve gerçek zamanlı istatistikler
+- **Görev Yönetimi** - CRUD işlemleri template sistemi ile
+- **Alt Görev Görünümü** - Hiyerarşik görev listesi (collapse/expand)
+- **Bağımlılık Göstergesi** - Visual dependency indicators (🔗 count + ⚠️ incomplete)
+- **Durum Yönetimi** - Inline dropdown'larla hızlı güncelleme
+- **Gelişmiş Filtreleme** - Durum, öncelik, proje bazlı filtreleme
+- **🌍 Dil Değiştirici** - Türkçe/İngilizce arasında geçiş, MCP sunucusu ile senkronize
+- **Responsive Tasarım** - Tailwind CSS ile mobil uyumlu
+- **Gerçek Zamanlı Sync** - React Query ile otomatik veri güncelleme
+- **🚀 Kurulum Gerektirmez**: `npx gorev serve` komutuyla otomatik aktif!
+- **Embedded UI**: Go binary'sine gömülü, ayrı kurulum yok
+- **Erişim**: http://localhost:5082 (varsayılan port)
 
 ### 🎨 VS Code Extension Özellikleri (Opsiyonel)
 

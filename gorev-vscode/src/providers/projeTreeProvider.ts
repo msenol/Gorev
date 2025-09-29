@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { Proje } from '../models/proje';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
@@ -13,7 +13,7 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
   private projects: Proje[] = [];
   private activeProjectId: string | null = null;
 
-  constructor(private mcpClient: MCPClient) {}
+  constructor(private mcpClient: ClientInterface) {}
 
   getTreeItem(element: ProjeTreeItem): vscode.TreeItem {
     return element;

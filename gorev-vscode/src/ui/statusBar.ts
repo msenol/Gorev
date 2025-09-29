@@ -59,6 +59,18 @@ export class StatusBarManager implements vscode.Disposable {
     this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
   }
 
+  setConnectionStatus(connected: boolean, mode?: string): void {
+    if (connected) {
+      this.setConnected();
+      if (mode) {
+        // Update tooltip to show connection mode
+        this.statusBarItem.tooltip = `${t('statusBar.connectedTooltip')} (${mode.toUpperCase()})`;
+      }
+    } else {
+      this.setDisconnected();
+    }
+  }
+
   update(taskCount?: number, activeProject?: string): void {
     if (taskCount !== undefined) {
       const projectText = activeProject ? t('statusBar.inProject', activeProject) : '';

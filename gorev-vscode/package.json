@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.15.24",
+  "version": "0.16.0",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -128,6 +128,21 @@
           "type": "boolean",
           "default": true,
           "description": "%config.autoConnect%"
+        },
+        "gorev.clientMode": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "api",
+            "mcp"
+          ],
+          "enumDescriptions": [
+            "Automatically detect the best connection mode (API preferred)",
+            "Use REST API connection only",
+            "Use MCP (Model Context Protocol) connection only"
+          ],
+          "description": "Choose connection mode: auto (detect), api (REST API), or mcp (Model Context Protocol)"
         },
         "gorev.showStatusBar": {
           "type": "boolean",
@@ -1114,7 +1129,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@types/axios": "^0.9.36",
     "@vscode/l10n": "^0.0.18",
+    "axios": "^1.12.2",
     "vscode-languageclient": "^9.0.1"
   }
 }

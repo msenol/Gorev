@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import {
     EnhancedTreeItem,
@@ -58,7 +58,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     // Configuration change debouncing
     private debouncedConfigChange: ReturnType<typeof debounceConfig>;
 
-    constructor(private mcpClient: MCPClient) {
+    constructor(private mcpClient: ClientInterface) {
         // Varsayılan konfigürasyon
         this.config = {
             grouping: GroupingStrategy.ByStatus,
