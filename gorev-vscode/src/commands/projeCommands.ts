@@ -1,28 +1,47 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
+import { ApiClient, ApiError } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { ProjeTreeItem } from '../providers/projeTreeProvider';
-import { MarkdownParser } from '../utils/markdownParser';
 import { Proje } from '../models/proje';
+import { Logger } from '../utils/logger';
 
-async function getProjectList(mcpClient: MCPClient): Promise<Proje[]> {
+async function getProjectList(apiClient: ApiClient): Promise<Proje[]> {
   try {
-    const result = await mcpClient.callTool('proje_listele');
-    return MarkdownParser.parseProjeListesi(result.content[0].text);
+    const response = await apiClient.getProjects();
+    if (!response.success || !response.data) {
+      return [];
+    }
+
+    // Convert API Project[] to internal Proje[] model
+    return response.data.map(project => ({
+      id: project.id,
+      isim: project.isim,
+      tanim: project.tanim || '',
+      gorev_sayisi: project.gorev_sayisi,
+      olusturma_tarih: project.olusturma_tarihi,
+      guncelleme_tarih: project.olusturma_tarihi,
+    }));
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(t('project.getListFailed', errorMessage));
+    if (error instanceof ApiError) {
+      Logger.error(`[getProjectList] API Error ${error.statusCode}:`, error.apiError);
+    } else {
+      Logger.error('[getProjectList] Failed to get projects:', error);
+    }
     return [];
   }
 }
 
 export function registerProjeCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  mcpClient: ClientInterface,
   providers: CommandContext
 ): void {
+  // Initialize API client
+  const apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
+
   // Create Project
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CREATE_PROJECT, async () => {
@@ -45,7 +64,8 @@ export function registerProjeCommands(
           placeHolder: t('project.descriptionPlaceholder'),
         });
 
-        await mcpClient.callTool('proje_olustur', {
+        // Use REST API to create project
+        await apiClient.createProject({
           isim,
           tanim: tanim || '',
         });
@@ -53,8 +73,12 @@ export function registerProjeCommands(
         vscode.window.showInformationMessage(t('project.createdSuccess'));
         await providers.projeTreeProvider.refresh();
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(t('project.createFailed', errorMessage));
+        if (error instanceof ApiError) {
+          Logger.error(`[CreateProject] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('project.createFailed', error.apiError));
+        } else {
+          vscode.window.showErrorMessage(t('project.createFailed', String(error)));
+        }
       }
     })
   );
@@ -65,7 +89,7 @@ export function registerProjeCommands(
       try {
         // If no item provided (e.g., command palette), show project picker
         if (!item) {
-          const projects = await getProjectList(mcpClient);
+          const projects = await getProjectList(apiClient);
           if (projects.length === 0) {
             vscode.window.showWarningMessage(t('project.noProjectsFound'));
             return;
@@ -84,9 +108,8 @@ export function registerProjeCommands(
 
           if (!selected) return;
 
-          await mcpClient.callTool('proje_aktif_yap', {
-            proje_id: selected.project.id,
-          });
+          // Use REST API to activate project
+          await apiClient.activateProject(selected.project.id);
           vscode.window.showInformationMessage(t('project.nowActive', selected.project.isim));
         } else {
           // Item provided from tree view
@@ -99,13 +122,13 @@ export function registerProjeCommands(
             );
 
             if (deactivate === t('project.deactivateOption')) {
-              await mcpClient.callTool('aktif_proje_kaldir');
+              // Use REST API to remove active project
+              await apiClient.removeActiveProject();
               vscode.window.showInformationMessage(t('project.deactivated'));
             }
           } else {
-            await mcpClient.callTool('proje_aktif_yap', {
-              proje_id: item.project.id,
-            });
+            // Use REST API to activate project
+            await apiClient.activateProject(item.project.id);
             vscode.window.showInformationMessage(t('project.nowActive', item.project.isim));
           }
         }
@@ -114,8 +137,12 @@ export function registerProjeCommands(
         await providers.gorevTreeProvider.refresh();
         providers.statusBarManager.update();
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(t('project.updateActiveFailed', errorMessage));
+        if (error instanceof ApiError) {
+          Logger.error(`[SetActiveProject] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('project.updateActiveFailed', error.apiError));
+        } else {
+          vscode.window.showErrorMessage(t('project.updateActiveFailed', String(error)));
+        }
       }
     })
   );

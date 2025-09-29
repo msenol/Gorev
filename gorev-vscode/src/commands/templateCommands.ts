@@ -1,19 +1,21 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ClientInterface } from '../interfaces/client';
+import { ApiClient, ApiError } from '../api/client';
 import { CommandContext } from './index';
 import { TemplateTreeItem } from '../providers/templateTreeProvider';
 import { TemplateWizard } from '../ui/templateWizard';
 import { GorevTemplate } from '../models/template';
 import { Logger } from '../utils/logger';
 import { COMMANDS } from '../utils/constants';
-import { MarkdownParser } from '../utils/markdownParser';
 
 export function registerTemplateCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  mcpClient: ClientInterface,
   providers: CommandContext
 ): void {
+  // Initialize API client
+  const apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
   // Open template wizard
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.OPEN_TEMPLATE_WIZARD, async (templateId?: string) => {
@@ -49,21 +51,39 @@ export function registerTemplateCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.QUICK_CREATE_FROM_TEMPLATE, async () => {
       try {
-        // Load all templates
-        const result = await mcpClient.callTool('template_listele');
-        const templates = MarkdownParser.parseTemplateListesi(result.content[0].text);
+        // Use REST API to load templates
+        const response = await apiClient.getTemplates();
 
-        if (templates.length === 0) {
+        if (!response.success || !response.data || response.data.length === 0) {
           vscode.window.showInformationMessage(t('template.noTemplatesDefined'));
           return;
         }
 
+        // Convert API templates to internal model
+        const templates: GorevTemplate[] = response.data.map(template => ({
+          id: template.id,
+          isim: template.isim,
+          tanim: template.tanim,
+          varsayilan_baslik: '',
+          aciklama_template: template.tanim,
+          alanlar: template.alanlar.map(field => ({
+            isim: field.isim,
+            tur: mapFieldType(field.tip),
+            zorunlu: field.zorunlu,
+            varsayilan: field.varsayilan,
+            secenekler: field.secenekler,
+          })),
+          ornek_degerler: {},
+          kategori: template.kategori as any,
+          aktif: template.aktif,
+        }));
+
         // Show quick pick
-        const items = templates.map((t: GorevTemplate) => ({
-          label: t.isim,
-          description: t.kategori,
-          detail: t.tanim,
-          template: t
+        const items = templates.map((template: GorevTemplate) => ({
+          label: template.isim,
+          description: template.kategori,
+          detail: template.tanim,
+          template: template
         }));
 
         const selected = await vscode.window.showQuickPick(items, {
@@ -76,8 +96,13 @@ export function registerTemplateCommands(
           await TemplateWizard.show(mcpClient, context.extensionUri, selected.template.id);
         }
       } catch (error) {
-        Logger.error('Failed to show template quick pick:', error);
-        vscode.window.showErrorMessage(t('template.listLoadFailed'));
+        if (error instanceof ApiError) {
+          Logger.error(`[QuickCreateFromTemplate] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('template.listLoadFailed') + `: ${error.apiError}`);
+        } else {
+          Logger.error('Failed to show template quick pick:', error);
+          vscode.window.showErrorMessage(t('template.listLoadFailed'));
+        }
       }
     })
   );
@@ -175,6 +200,24 @@ export function registerTemplateCommands(
       }
     })
   );
+}
+
+/**
+ * Map API field type to internal field type
+ */
+function mapFieldType(apiType: string): 'metin' | 'sayi' | 'tarih' | 'secim' {
+  switch (apiType) {
+    case 'text':
+      return 'metin';
+    case 'number':
+      return 'sayi';
+    case 'date':
+      return 'tarih';
+    case 'select':
+      return 'secim';
+    default:
+      return 'metin';
+  }
 }
 
 function getTemplateDetailsHtml(template: GorevTemplate): string {

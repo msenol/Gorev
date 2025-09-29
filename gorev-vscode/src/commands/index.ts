@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ClientInterface } from '../interfaces/client';
+import { ApiClient, ApiError } from '../api/client';
 import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from '../providers/projeTreeProvider';
 import { TemplateTreeProvider } from '../providers/templateTreeProvider';
@@ -42,6 +43,9 @@ export function registerCommands(
     registerFilterCommands(context, mcpClient, providers);
   }
 
+  // Initialize API client for general commands
+  const apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
+
   // Register general commands
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.SHOW_SUMMARY, async () => {
@@ -50,17 +54,31 @@ export function registerCommands(
           vscode.window.showWarningMessage('Not connected to Gorev server');
           return;
         }
-        const result = await mcpClient.callTool('ozet_goster');
+
+        // Use REST API to get summary
+        const response = await apiClient.getSummary();
+
+        if (!response.success || !response.data) {
+          vscode.window.showErrorMessage('Failed to get summary from server');
+          return;
+        }
+
         const summaryPanel = vscode.window.createWebviewPanel(
           'gorevSummary',
           'Gorev Summary',
           vscode.ViewColumn.One,
           {}
         );
-        
-        summaryPanel.webview.html = getSummaryHtml(result.content[0].text);
+
+        // Format summary data as HTML
+        summaryPanel.webview.html = getSummaryHtml(formatSummaryData(response.data));
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to show summary: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[ShowSummary] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(`Failed to show summary: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(`Failed to show summary: ${error}`);
+        }
       }
     })
   );
@@ -104,6 +122,36 @@ async function connectToServer(client: ClientInterface, providers: CommandContex
     providers.statusBarManager.setDisconnected();
     throw error;
   }
+}
+
+/**
+ * Format summary data from API response to markdown-like text
+ */
+function formatSummaryData(data: any): string {
+  let text = `# Özet Rapor\n\n`;
+
+  if (data.toplam_proje !== undefined) {
+    text += `**Toplam Proje:** ${data.toplam_proje}\n`;
+  }
+  if (data.toplam_gorev !== undefined) {
+    text += `**Toplam Görev:** ${data.toplam_gorev}\n\n`;
+  }
+
+  if (data.durum_dagilimi) {
+    text += `### Durum Dağılımı\n`;
+    text += `- Beklemede: ${data.durum_dagilimi.beklemede || 0}\n`;
+    text += `- Devam Ediyor: ${data.durum_dagilimi.devam_ediyor || 0}\n`;
+    text += `- Tamamlandı: ${data.durum_dagilimi.tamamlandi || 0}\n\n`;
+  }
+
+  if (data.oncelik_dagilimi) {
+    text += `### Öncelik Dağılımı\n`;
+    text += `- Yüksek: ${data.oncelik_dagilimi.yuksek || 0}\n`;
+    text += `- Orta: ${data.oncelik_dagilimi.orta || 0}\n`;
+    text += `- Düşük: ${data.oncelik_dagilimi.dusuk || 0}\n`;
+  }
+
+  return text;
 }
 
 function getSummaryHtml(content: string): string {
