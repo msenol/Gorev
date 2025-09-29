@@ -446,6 +446,177 @@ Get system-wide summary statistics.
 
 ---
 
+### Subtask Management
+
+#### POST `/api/v1/tasks/:id/subtasks`
+
+Create a subtask under a parent task.
+
+**Path Parameters:**
+- `id` (string, required): Parent task UUID
+
+**Request Body:**
+```json
+{
+  "baslik": "Implement API endpoint",
+  "aciklama": "Create REST endpoint for subtask creation",
+  "oncelik": "yuksek",
+  "son_tarih": "2025-10-15",
+  "etiketler": "api,backend"
+}
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "subtask-uuid",
+    "baslik": "Implement API endpoint",
+    "durum": "beklemede",
+    "parent_id": "parent-task-uuid"
+  },
+  "message": "Subtask created successfully"
+}
+```
+
+#### PUT `/api/v1/tasks/:id/parent`
+
+Change the parent of a task.
+
+**Path Parameters:**
+- `id` (string, required): Task UUID to move
+
+**Request Body:**
+```json
+{
+  "new_parent_id": "new-parent-uuid"
+}
+```
+
+**Note:** Leave `new_parent_id` empty string to move task to root level.
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "task-uuid",
+    "parent_id": "new-parent-uuid"
+  },
+  "message": "Parent changed successfully"
+}
+```
+
+#### GET `/api/v1/tasks/:id/hierarchy`
+
+Get the full hierarchy of a task (parent chain and all subtasks).
+
+**Path Parameters:**
+- `id` (string, required): Task UUID
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "gorev": {
+      "id": "task-uuid",
+      "baslik": "Main Task"
+    },
+    "alt_gorevler": [
+      {
+        "id": "subtask-1",
+        "baslik": "Subtask 1",
+        "alt_gorevler": []
+      }
+    ],
+    "toplam_alt_gorev": 5,
+    "tamamlanan_alt_gorev": 2
+  }
+}
+```
+
+---
+
+### Dependency Management
+
+#### POST `/api/v1/tasks/:id/dependencies`
+
+Add a dependency between tasks (task `:id` depends on `kaynak_id`).
+
+**Path Parameters:**
+- `id` (string, required): Target task UUID (dependent task)
+
+**Request Body:**
+```json
+{
+  "kaynak_id": "prerequisite-task-uuid",
+  "baglanti_tipi": "onceki"
+}
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "Dependency added successfully"
+}
+```
+
+#### DELETE `/api/v1/tasks/:id/dependencies/:dep_id`
+
+Remove a dependency between tasks.
+
+**Path Parameters:**
+- `id` (string, required): Target task UUID
+- `dep_id` (string, required): Source task UUID (dependency to remove)
+
+**Status:** Not yet implemented (returns 501)
+
+---
+
+### Active Project Management
+
+#### GET `/api/v1/active-project`
+
+Get the currently active project.
+
+**Example Response (with active project):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "project-uuid",
+    "isim": "E-commerce Site",
+    "tanim": "Online shopping platform"
+  }
+}
+```
+
+**Example Response (no active project):**
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "No active project set"
+}
+```
+
+#### DELETE `/api/v1/active-project`
+
+Remove the active project setting.
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "Active project removed successfully"
+}
+```
+
+---
+
 ### Language Management
 
 #### GET `/api/v1/language`
