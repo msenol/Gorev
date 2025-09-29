@@ -1,11 +1,53 @@
 const vscode = require('vscode');
 const sinon = require('sinon');
 const { mockMCPResponses } = require('../fixtures/mockData');
+const MockAdapter = require('axios-mock-adapter');
 
 class TestHelper {
   constructor() {
     this.sandbox = sinon.createSandbox();
     this.stubs = {};
+  }
+
+  /**
+   * Create a mock API client with axios mock adapter
+   */
+  createMockAPIClient() {
+    const clientModule = require('../../out/api/client');
+    const ApiClient = clientModule.ApiClient;
+
+    const client = new ApiClient('http://localhost:5082');
+    const mockAxios = new MockAdapter(client.axiosInstance);
+
+    return { client, mockAxios };
+  }
+
+  /**
+   * Setup mock API client with default responses
+   */
+  setupMockAPIClient(mockAxios) {
+    // Setup default successful responses
+    mockAxios.onGet('/health').reply(200, { status: 'ok' });
+
+    mockAxios.onGet('/tasks').reply(200, {
+      success: true,
+      data: [],
+      total: 0
+    });
+
+    mockAxios.onGet('/projects').reply(200, {
+      success: true,
+      data: [],
+      total: 0
+    });
+
+    mockAxios.onGet('/templates').reply(200, {
+      success: true,
+      data: [],
+      total: 0
+    });
+
+    return mockAxios;
   }
 
   /**
