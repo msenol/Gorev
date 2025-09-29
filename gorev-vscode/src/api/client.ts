@@ -62,6 +62,60 @@ export interface TaskFilter {
   oncelik?: string;
   proje_id?: string;
   etiket?: string;
+  limit?: number;
+  offset?: number;
+  sirala?: string;
+  filtre?: string;
+  tum_projeler?: boolean;
+}
+
+export interface SubtaskData {
+  baslik: string;
+  aciklama?: string;
+  oncelik?: string;
+  son_tarih?: string;
+  etiketler?: string;
+}
+
+export interface TaskHierarchy {
+  gorev: Task;
+  alt_gorevler: Task[];
+  toplam_alt_gorev: number;
+  tamamlanan_alt_gorev: number;
+}
+
+export interface DependencyRequest {
+  kaynak_id: string;
+  baglanti_tipi?: string;
+}
+
+// Custom error class for API errors
+export class ApiError extends Error {
+  constructor(
+    public statusCode: number,
+    public apiError: string,
+    public endpoint: string
+  ) {
+    super(`API Error ${statusCode} at ${endpoint}: ${apiError}`);
+    this.name = 'ApiError';
+
+    // Maintain proper stack trace for where our error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApiError);
+    }
+  }
+
+  isNotFound(): boolean {
+    return this.statusCode === 404;
+  }
+
+  isBadRequest(): boolean {
+    return this.statusCode === 400;
+  }
+
+  isServerError(): boolean {
+    return this.statusCode >= 500;
+  }
 }
 
 export class ApiClient extends EventEmitter {
@@ -104,7 +158,20 @@ export class ApiClient extends EventEmitter {
         return response;
       },
       (error: any) => {
-        Logger.error('[ApiClient] Response Error:', error.response?.data || error.message);
+        // Convert axios error to ApiError
+        if (error.response) {
+          const statusCode = error.response.status;
+          const endpoint = error.config?.url || 'unknown';
+          const errorMessage = error.response.data?.error || error.response.data?.message || error.message;
+
+          Logger.error(`[ApiClient] API Error ${statusCode} at ${endpoint}:`, errorMessage);
+
+          const apiError = new ApiError(statusCode, errorMessage, endpoint);
+          return Promise.reject(apiError);
+        }
+
+        // Network error or other error
+        Logger.error('[ApiClient] Response Error:', error.message);
         return Promise.reject(error);
       }
     );
@@ -155,6 +222,11 @@ export class ApiClient extends EventEmitter {
     if (filters?.oncelik) params.append('oncelik', filters.oncelik);
     if (filters?.proje_id) params.append('proje_id', filters.proje_id);
     if (filters?.etiket) params.append('etiket', filters.etiket);
+    if (filters?.limit !== undefined) params.append('limit', filters.limit.toString());
+    if (filters?.offset !== undefined) params.append('offset', filters.offset.toString());
+    if (filters?.sirala) params.append('sirala', filters.sirala);
+    if (filters?.filtre) params.append('filtre', filters.filtre);
+    if (filters?.tum_projeler) params.append('tum_projeler', 'true');
 
     const response = await this.axiosInstance.get(`/tasks?${params.toString()}`);
     return response.data;
@@ -221,6 +293,57 @@ export class ApiClient extends EventEmitter {
   // Summary API
   async getSummary(): Promise<any> {
     const response = await this.axiosInstance.get('/summary');
+    return response.data;
+  }
+
+  // Subtask API
+  async createSubtask(parentId: string, data: SubtaskData): Promise<ApiResponse<Task>> {
+    const response = await this.axiosInstance.post(`/tasks/${parentId}/subtasks`, data);
+    return response.data;
+  }
+
+  async changeParent(taskId: string, newParentId: string): Promise<ApiResponse<Task>> {
+    const response = await this.axiosInstance.put(`/tasks/${taskId}/parent`, {
+      new_parent_id: newParentId
+    });
+    return response.data;
+  }
+
+  async getHierarchy(taskId: string): Promise<ApiResponse<TaskHierarchy>> {
+    const response = await this.axiosInstance.get(`/tasks/${taskId}/hierarchy`);
+    return response.data;
+  }
+
+  // Dependency API
+  async addDependency(targetId: string, dependency: DependencyRequest): Promise<ApiResponse<void>> {
+    const response = await this.axiosInstance.post(`/tasks/${targetId}/dependencies`, dependency);
+    return response.data;
+  }
+
+  async removeDependency(targetId: string, sourceId: string): Promise<ApiResponse<void>> {
+    const response = await this.axiosInstance.delete(`/tasks/${targetId}/dependencies/${sourceId}`);
+    return response.data;
+  }
+
+  // Active Project API
+  async getActiveProject(): Promise<ApiResponse<Project | null>> {
+    const response = await this.axiosInstance.get('/active-project');
+    return response.data;
+  }
+
+  async removeActiveProject(): Promise<ApiResponse<void>> {
+    const response = await this.axiosInstance.delete('/active-project');
+    return response.data;
+  }
+
+  // Language API
+  async getLanguage(): Promise<{ success: boolean; language: string }> {
+    const response = await this.axiosInstance.get('/language');
+    return response.data;
+  }
+
+  async setLanguage(language: 'tr' | 'en'): Promise<{ success: boolean; language: string; message: string }> {
+    const response = await this.axiosInstance.post('/language', { language });
     return response.data;
   }
 
