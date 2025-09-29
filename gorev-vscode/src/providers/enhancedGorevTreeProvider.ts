@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import { ClientInterface } from '../interfaces/client';
+import { ApiClient, ApiError, Task, Project } from '../api/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import {
     EnhancedTreeItem,
@@ -21,7 +22,6 @@ import { DragDropController } from './dragDropController';
 import { TaskDecorationProvider } from './decorationProvider';
 import { ICONS, COLORS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
-import { MarkdownParser } from '../utils/markdownParser';
 import { RefreshManager, RefreshTarget, RefreshProvider, RefreshReason, RefreshPriority } from '../managers/refreshManager';
 import { performanceMonitor, measureAsync } from '../utils/performance';
 import { debounceConfig } from '../utils/debounce';
@@ -58,7 +58,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     // Configuration change debouncing
     private debouncedConfigChange: ReturnType<typeof debounceConfig>;
 
+    // API Client for REST API calls
+    private apiClient: ApiClient;
+
     constructor(private mcpClient: ClientInterface) {
+        // Initialize API client
+        this.apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
         // Varsayılan konfigürasyon
         this.config = {
             grouping: GroupingStrategy.ByStatus,
@@ -338,139 +343,80 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     }
 
     /**
-     * Görevleri yükler
+     * Görevleri yükler - Now using REST API
      */
     private async loadTasks(): Promise<void> {
         try {
-            // Önce projeleri yükle
-            // Loading projects
-            const projectsResult = await this.mcpClient.callTool('proje_listele', {});
-            if (projectsResult && projectsResult.content && projectsResult.content[0]) {
-                const projectsText = projectsResult.content[0].text;
-                const projeler = MarkdownParser.parseProjeListesi(projectsText);
+            // Load projects first using API
+            const projectsResponse = await this.apiClient.getProjects();
+            if (projectsResponse.success && projectsResponse.data) {
                 this.projects.clear();
-                for (const proje of projeler) {
-                    if (proje.id) {
-                        this.projects.set(proje.id, proje);
-                    }
+                for (const project of projectsResponse.data) {
+                    this.projects.set(project.id, project);
                 }
-                Logger.debug(`[EnhancedGorevTreeProvider] Loaded ${this.projects.size} projects`);
+                Logger.debug(`[EnhancedGorevTreeProvider] Loaded ${this.projects.size} projects via API`);
             }
-            
-            // Get page size from configuration (default should match package.json)
+
+            // Get page size from configuration
             const pageSize = vscode.workspace.getConfiguration('gorev').get<number>('pagination.pageSize', 100);
-            
-            // Check if we should show all projects or just active project
-            // Default to true to show all projects
+
+            // Check if we should show all projects
             const showAllProjects = this.config.filters?.showAllProjects !== false;
-            
-            // First get the active project to assign project_id to tasks
+
+            // Get active project if needed
             let activeProjectId = '';
             if (!showAllProjects) {
                 try {
-                    const activeProjectResult = await this.mcpClient.callTool('aktif_proje_goster', {});
-                    if (activeProjectResult && activeProjectResult.content && activeProjectResult.content[0]) {
-                        const activeProjectText = activeProjectResult.content[0].text;
-                        const idMatch = activeProjectText.match(/ID:\s*([a-f0-9-]+)/);
-                        if (idMatch) {
-                            activeProjectId = idMatch[1];
-                            // Active project loaded
-                        }
+                    const activeResponse = await this.apiClient.getActiveProject();
+                    if (activeResponse.success && activeResponse.data) {
+                        activeProjectId = activeResponse.data.id;
+                        Logger.debug(`[EnhancedGorevTreeProvider] Active project: ${activeProjectId}`);
                     }
                 } catch (err) {
-                    Logger.warn('[EnhancedGorevTreeProvider] Failed to get active project:', err);
+                    if (err instanceof ApiError && !err.isNotFound()) {
+                        Logger.warn('[EnhancedGorevTreeProvider] Failed to get active project:', err);
+                    }
                 }
             }
-            
-            // Initialize tasks array
+
+            // Fetch all tasks with pagination using API
             this.tasks = [];
             let offset = 0;
             let hasMoreTasks = true;
-            let totalTaskCount = 0;
-            let previousOffset = -1;
-            let sameOffsetCount = 0;
-            const maxIterations = 50; // Safety limit for iterations
+            const maxIterations = 50;
             let iterationCount = 0;
 
-            // Fetch all tasks with pagination
-            while (hasMoreTasks) {
-                // Safety check for infinite loop prevention
+            while (hasMoreTasks && iterationCount < maxIterations) {
                 iterationCount++;
-                if (iterationCount > maxIterations) {
-                    Logger.error(`[EnhancedGorevTreeProvider] Maximum iterations (${maxIterations}) reached, breaking loop to prevent infinite pagination`);
-                    break;
-                }
 
-                // Check if we're stuck at the same offset
-                if (offset === previousOffset) {
-                    sameOffsetCount++;
-                    if (sameOffsetCount >= 3) {
-                        Logger.error(`[EnhancedGorevTreeProvider] Detected infinite loop at offset ${offset}, breaking pagination`);
-                        break;
-                    }
-                } else {
-                    sameOffsetCount = 0;
-                }
-                previousOffset = offset;
-                // Fetching tasks
-                
-                const result = await this.mcpClient.callTool('gorev_listele', {
+                const tasksResponse = await this.apiClient.getTasks({
                     tum_projeler: showAllProjects,
                     limit: pageSize,
                     offset: offset
                 });
-                
-                if (!result || !result.content || !result.content[0]) {
-                    Logger.warn('[EnhancedGorevTreeProvider] No content in response');
+
+                if (!tasksResponse.success || !tasksResponse.data) {
+                    Logger.warn('[EnhancedGorevTreeProvider] No data in API response');
                     break;
                 }
-                
-                const responseText = result.content[0].text;
 
-                // Check for pagination info: "Görevler (1-100 / 147)"
-                const paginationMatch = responseText.match(/Görevler \((\d+)-(\d+) \/ (\d+)\)/);
-                if (paginationMatch) {
-                    const [_, start, end, total] = paginationMatch;
-                    const endNumber = parseInt(end);
-                    const startNumber = parseInt(start);
-                    totalTaskCount = parseInt(total);
+                const apiTasks = tasksResponse.data;
+                Logger.info(`[EnhancedGorevTreeProvider] Fetched ${apiTasks.length} tasks (offset: ${offset}, total: ${tasksResponse.total || 'unknown'})`);
 
-                    Logger.info(`[EnhancedGorevTreeProvider] Pagination: ${start}-${end} / ${total}`);
+                if (apiTasks.length === 0) {
+                    hasMoreTasks = false;
+                    break;
+                }
 
-                    // Check for invalid pagination response (110-109 case)
-                    if (startNumber > endNumber) {
-                        Logger.error(`[EnhancedGorevTreeProvider] Invalid pagination response: start(${start}) > end(${end}), breaking loop`);
-                        hasMoreTasks = false;
-                        break;
-                    }
+                // Convert API Task to Gorev model
+                const gorevTasks = apiTasks.map(task => this.convertTaskToGorev(task));
+                this.tasks.push(...gorevTasks);
 
-                    // Parse the markdown content to extract tasks
-                    const pageTasks = MarkdownParser.parseGorevListesi(responseText);
-                    Logger.info('[EnhancedGorevTreeProvider] Parsed tasks from page:', pageTasks.length);
+                // Check pagination
+                const total = tasksResponse.total || apiTasks.length;
+                offset += apiTasks.length;
 
-                    // If no tasks parsed and we're not at the beginning, stop
-                    if (pageTasks.length === 0 && offset > 0) {
-                        Logger.info('[EnhancedGorevTreeProvider] No tasks parsed from page, assuming end of data');
-                        hasMoreTasks = false;
-                        break;
-                    }
-
-                    // Add to our task list
-                    this.tasks.push(...pageTasks);
-
-                    // Update offset for next page based on server response, not pageSize
-                    // This handles server-side response limits correctly
-                    offset = endNumber;
-
-                    // Check if we need to fetch more
-                    if (offset >= totalTaskCount) {
-                        hasMoreTasks = false;
-                    }
-                } else {
-                    // No pagination info, parse and assume this is the last page
-                    const pageTasks = MarkdownParser.parseGorevListesi(responseText);
-                    Logger.info('[EnhancedGorevTreeProvider] Parsed tasks from page:', pageTasks.length);
-                    this.tasks.push(...pageTasks);
+                if (offset >= total || apiTasks.length < pageSize) {
                     hasMoreTasks = false;
                 }
                 
@@ -481,17 +427,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                     break;
                 }
             }
-            
+
             Logger.info(`[EnhancedGorevTreeProvider] Task loading summary:`);
             Logger.info(`  - Total tasks fetched: ${this.tasks.length}`);
-            Logger.info(`  - Expected total: ${totalTaskCount}`);
             Logger.info(`  - Page size used: ${pageSize}`);
             Logger.info(`  - Show all projects: ${showAllProjects}`);
             Logger.info(`  - Active project ID: ${activeProjectId || 'N/A'}`);
-
-            if (this.tasks.length !== totalTaskCount && totalTaskCount > 0) {
-                Logger.warn(`[EnhancedGorevTreeProvider] TASK COUNT MISMATCH: Expected ${totalTaskCount}, got ${this.tasks.length}`);
-            }
             
             // If tasks don't have project_id and we're showing active project tasks only, assign it
             if (!showAllProjects && activeProjectId && this.tasks.length > 0) {
@@ -926,6 +867,24 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         await this.dragDropController.handleDrop(target, dataTransfer, token);
         // Drop sonrası TreeView'ı yenile
         await this.refresh();
+    }
+
+    /**
+     * Convert API Task to internal Gorev model
+     */
+    private convertTaskToGorev(task: Task): Gorev {
+        return {
+            id: task.id,
+            baslik: task.baslik,
+            aciklama: task.aciklama,
+            durum: task.durum as GorevDurum,
+            oncelik: task.oncelik as GorevOncelik,
+            proje_id: task.proje_id || '',
+            son_tarih: task.son_tarih,
+            etiketler: task.etiketler,
+            olusturma_tarih: task.olusturma_tarihi,
+            guncelleme_tarih: task.guncelleme_tarihi,
+        };
     }
 }
 

@@ -1,19 +1,25 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import { ClientInterface } from '../interfaces/client';
+import { ApiClient, ApiError, Project } from '../api/client';
 import { Proje } from '../models/proje';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
-import { MarkdownParser } from '../utils/markdownParser';
 
 export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<ProjeTreeItem | undefined | null | void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
-  
+
   private projects: Proje[] = [];
   private activeProjectId: string | null = null;
 
-  constructor(private mcpClient: ClientInterface) {}
+  // API Client for REST API calls
+  private apiClient: ApiClient;
+
+  constructor(private mcpClient: ClientInterface) {
+    // Initialize API client
+    this.apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
+  }
 
   getTreeItem(element: ProjeTreeItem): vscode.TreeItem {
     return element;
@@ -56,48 +62,68 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
 
   private async loadProjects(): Promise<void> {
     try {
-      const result = await this.mcpClient.callTool('proje_listele');
-      
-      // Debug: Log raw response
-      console.log('[ProjeTreeProvider] Raw MCP response:', result);
-      console.log('[ProjeTreeProvider] Content text:', result.content[0].text);
-      
-      // Parse the markdown content to extract projects
-      this.projects = MarkdownParser.parseProjeListesi(result.content[0].text);
-      
-      // Debug: Log parsed projects
-      console.log('[ProjeTreeProvider] Parsed projects count:', this.projects.length);
-      console.log('[ProjeTreeProvider] Parsed projects:', this.projects);
+      // Use REST API to get projects
+      const response = await this.apiClient.getProjects();
+
+      if (!response.success || !response.data) {
+        Logger.warn('[ProjeTreeProvider] No projects returned from API');
+        this.projects = [];
+        return;
+      }
+
+      // Convert API Project[] to internal Proje[] model
+      this.projects = response.data.map(project => this.convertProjectToProje(project));
+
+      Logger.info(`[ProjeTreeProvider] Loaded ${this.projects.length} projects`);
     } catch (error) {
-      Logger.error('Failed to load projects:', error);
+      if (error instanceof ApiError) {
+        Logger.error(`[ProjeTreeProvider] API Error ${error.statusCode}:`, error.apiError);
+      } else {
+        Logger.error('[ProjeTreeProvider] Failed to load projects:', error);
+      }
       throw error;
     }
   }
 
   private async loadActiveProject(): Promise<void> {
     try {
-      const result = await this.mcpClient.callTool('aktif_proje_goster');
-      const content = result.content[0].text;
-      
-      // Check if no active project
-      if (content.includes(t('projectTree.noActiveProject'))) {
+      // Use REST API to get active project
+      const response = await this.apiClient.getActiveProject();
+
+      if (!response.success || !response.data) {
+        // No active project
         this.activeProjectId = null;
         return;
       }
-      
-      // Parse the active project ID from the markdown
-      const lines = content.split('\n');
-      for (const line of lines) {
-        const match = line.match(/\*\*ID:\*\*\s*(.+)/);
-        if (match) {
-          this.activeProjectId = match[1].trim();
-          break;
-        }
-      }
+
+      // Extract project ID from response
+      this.activeProjectId = response.data.id;
+      Logger.info(`[ProjeTreeProvider] Active project: ${this.activeProjectId}`);
     } catch (error) {
-      // No active project is ok
-      this.activeProjectId = null;
+      if (error instanceof ApiError && error.isNotFound()) {
+        // 404 means no active project - this is ok
+        this.activeProjectId = null;
+      } else {
+        Logger.warn('[ProjeTreeProvider] Failed to load active project:', error);
+        this.activeProjectId = null;
+      }
     }
+  }
+
+  /**
+   * Convert API Project to internal Proje model
+   */
+  private convertProjectToProje(project: Project): Proje {
+    return {
+      id: project.id,
+      isim: project.isim,
+      tanim: project.tanim || '',
+      gorev_sayisi: project.gorev_sayisi,
+      olusturma_tarih: project.olusturma_tarihi,
+      guncelleme_tarih: project.olusturma_tarihi, // API doesn't return update date for projects
+      // Task statistics not available from API Project type yet
+      // These would need to be fetched separately or added to API response
+    };
   }
 
 }
