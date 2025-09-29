@@ -420,7 +420,7 @@ func TestCommonValidators(t *testing.T) {
 	t.Run("ValidatePagination - limit enforcement", func(t *testing.T) {
 		params := map[string]interface{}{
 			"limit":  500.0, // Should be capped at MaxTaskLimit
-			"offset": -5.0, // Should be reset to 0
+			"offset": -5.0,  // Should be reset to 0
 		}
 
 		limit, offset := validators.ValidatePagination(params)
@@ -532,10 +532,10 @@ func TestToolHelpers(t *testing.T) {
 	t.Run("ToolHelpers integration", func(t *testing.T) {
 		// Test that all helper components work together
 		params := map[string]interface{}{
-			"id":       "test-task-id",
-			"durum":    "devam_ediyor",
-			"oncelik":  "yuksek",
-			"limit":    25.0,
+			"id":           "test-task-id",
+			"durum":        "devam_ediyor",
+			"oncelik":      "yuksek",
+			"limit":        25.0,
 			"tum_projeler": true,
 		}
 

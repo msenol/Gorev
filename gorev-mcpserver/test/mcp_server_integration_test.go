@@ -384,7 +384,7 @@ func TestMCPServerInitializationSequence(t *testing.T) {
 			InitializeI18n:  true,
 		}
 
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+		isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
 		defer cleanup()
 
 		// Verify database is accessible

@@ -397,7 +397,6 @@ func TestCreateIDECommand(t *testing.T) {
 	})
 }
 
-
 func TestCheckAndPromptIDEExtensions(t *testing.T) {
 	t.Run("check IDE extensions", func(t *testing.T) {
 		// Set up environment for IDE commands

@@ -1,0 +1,465 @@
+package api
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
+)
+
+// APIServer represents the HTTP API server
+type APIServer struct {
+	app        *fiber.App
+	port       string
+	isYonetici *gorev.IsYonetici
+}
+
+// NewAPIServer creates a new API server instance
+func NewAPIServer(port string, isYonetici *gorev.IsYonetici) *APIServer {
+	if port == "" {
+		port = "8080"
+	}
+
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			if e, ok := err.(*fiber.Error); ok {
+				code = e.Code
+			}
+			return c.Status(code).JSON(fiber.Map{
+				"error":   true,
+				"message": err.Error(),
+			})
+		},
+		DisableStartupMessage: false,
+	})
+
+	// Middleware
+	app.Use(recover.New())
+	app.Use(logger.New(logger.Config{
+		Format: "[${time}] ${status} - ${method} ${path} - ${latency}\n",
+	}))
+
+	// CORS for localhost development only
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:5000,http://localhost:5001,http://localhost:5002,http://localhost:5003", // Restrict to localhost only
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Origin,Content-Type,Accept",
+		AllowCredentials: false,
+	}))
+
+	server := &APIServer{
+		app:        app,
+		port:       port,
+		isYonetici: isYonetici,
+	}
+
+	// Setup routes
+	server.setupRoutes()
+
+	return server
+}
+
+// App returns the underlying Fiber app instance
+func (s *APIServer) App() *fiber.App {
+	return s.app
+}
+
+// setupRoutes configures all API routes
+func (s *APIServer) setupRoutes() {
+	api := s.app.Group("/api/v1")
+
+	// Health check
+	api.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status": "ok",
+			"time":   time.Now().Unix(),
+		})
+	})
+
+	// Task routes
+	api.Get("/tasks", s.getTasks)
+	api.Post("/tasks", s.createTask)
+	api.Get("/tasks/:id", s.getTask)
+	api.Put("/tasks/:id", s.updateTask)
+	api.Delete("/tasks/:id", s.deleteTask)
+	api.Post("/tasks/from-template", s.createTaskFromTemplate)
+
+	// Project routes
+	api.Get("/projects", s.getProjects)
+	api.Post("/projects", s.createProject)
+	api.Get("/projects/:id", s.getProject)
+	api.Get("/projects/:id/tasks", s.getProjectTasks)
+	api.Put("/projects/:id/activate", s.activateProject)
+
+	// Template routes
+	api.Get("/templates", s.getTemplates)
+
+	// Summary routes
+	api.Get("/summary", s.getSummary)
+
+	// Language routes
+	api.Get("/language", s.getLanguage)
+	api.Post("/language", s.setLanguage)
+
+	// Note: Static web UI is served by ServeStaticFiles() called from main.go after server creation
+}
+
+// Start starts the API server
+func (s *APIServer) Start() error {
+	log.Printf("🚀 API Server starting on port %s", s.port)
+	log.Printf("📱 Web UI: http://localhost:%s", s.port)
+	log.Printf("🔧 API: http://localhost:%s/api/v1", s.port)
+
+	return s.app.Listen(":" + s.port)
+}
+
+// StartAsync starts the API server in a goroutine
+func (s *APIServer) StartAsync() {
+	go func() {
+		if err := s.Start(); err != nil {
+			log.Printf("❌ API Server error: %v", err)
+		}
+	}()
+}
+
+// Shutdown gracefully stops the API server
+func (s *APIServer) Shutdown(ctx context.Context) error {
+	log.Println("🔽 Shutting down API server...")
+	return s.app.ShutdownWithContext(ctx)
+}
+
+// Handler methods
+
+// getTasks retrieves all tasks with optional filtering
+func (s *APIServer) getTasks(c *fiber.Ctx) error {
+	// Create filters map based on query parameters
+	filters := make(map[string]interface{})
+
+	// Handle standard query parameters
+	if durum := c.Query("durum"); durum != "" {
+		filters["durum"] = durum
+	}
+	if tumProjeler := c.QueryBool("tum_projeler"); tumProjeler {
+		filters["tum_projeler"] = true
+	}
+	if sirala := c.Query("sirala"); sirala != "" {
+		filters["sirala"] = sirala
+	}
+	if filtre := c.Query("filtre"); filtre != "" {
+		filters["filtre"] = filtre
+	}
+	if etiket := c.Query("etiket"); etiket != "" {
+		filters["etiket"] = etiket
+	}
+	if limit := c.QueryInt("limit", 50); limit > 0 {
+		filters["limit"] = limit
+	}
+	if offset := c.QueryInt("offset", 0); offset >= 0 {
+		filters["offset"] = offset
+	}
+
+	// Call business logic
+	gorevler, err := s.isYonetici.GorevListele(filters)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list tasks with filters %v: %v", filters, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    gorevler,
+		"total":   len(gorevler),
+	})
+}
+
+// getTask retrieves a specific task by ID
+func (s *APIServer) getTask(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
+	}
+
+	// Get task details using MCP handler logic
+	gorev, err := s.isYonetici.VeriYonetici().GorevGetir(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get task with ID %s: %v", id, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    gorev,
+	})
+}
+
+// createTask creates a new task using template (since direct creation is deprecated)
+func (s *APIServer) createTask(c *fiber.Ctx) error {
+	return fiber.NewError(fiber.StatusNotImplemented, "Direct task creation is deprecated. Use /tasks/from-template endpoint with a template.")
+}
+
+// updateTask updates an existing task
+func (s *APIServer) updateTask(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
+	}
+
+	var req map[string]interface{}
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	// Handle status update - use GorevGuncelle with params map
+	if durum, ok := req["durum"].(string); ok {
+		params := map[string]interface{}{"durum": durum}
+		if err := s.isYonetici.VeriYonetici().GorevGuncelle(id, params); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update task %s with status %s: %v", id, durum, err))
+		}
+	}
+
+	// Get updated task
+	gorev, err := s.isYonetici.VeriYonetici().GorevGetir(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get updated task with ID %s: %v", id, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    gorev,
+		"message": "Task updated successfully",
+	})
+}
+
+// deleteTask deletes a task
+func (s *APIServer) deleteTask(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
+	}
+
+	if err := s.isYonetici.VeriYonetici().GorevSil(id); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete task with ID %s: %v", id, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Task deleted successfully",
+	})
+}
+
+// createTaskFromTemplate creates a task from a template
+func (s *APIServer) createTaskFromTemplate(c *fiber.Ctx) error {
+	var req struct {
+		TemplateID string            `json:"template_id"`
+		Degerler   map[string]string `json:"degerler"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.TemplateID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Template ID is required")
+	}
+
+	// Create task from template using business logic
+	gorev, err := s.isYonetici.TemplatedenGorevOlustur(req.TemplateID, req.Degerler)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create task from template %s: %v", req.TemplateID, err))
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"data":    gorev,
+		"message": "Task created from template successfully",
+	})
+}
+
+// getProjects retrieves all projects
+func (s *APIServer) getProjects(c *fiber.Ctx) error {
+	projeler, err := s.isYonetici.ProjeListele()
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list projects: %v", err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    projeler,
+		"total":   len(projeler),
+	})
+}
+
+// getProject retrieves a specific project by ID
+func (s *APIServer) getProject(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Project ID is required")
+	}
+
+	proje, err := s.isYonetici.VeriYonetici().ProjeGetir(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get project with ID %s: %v", id, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    proje,
+	})
+}
+
+// createProject creates a new project
+func (s *APIServer) createProject(c *fiber.Ctx) error {
+	var req struct {
+		Isim  string `json:"isim"`
+		Tanim string `json:"tanim"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.Isim == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Isim is required")
+	}
+
+	// Create project using business logic
+	proje, err := s.isYonetici.ProjeOlustur(req.Isim, req.Tanim)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create project '%s': %v", req.Isim, err))
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"data":    proje,
+		"message": "Project created successfully",
+	})
+}
+
+// getProjectTasks retrieves all tasks for a specific project
+func (s *APIServer) getProjectTasks(c *fiber.Ctx) error {
+	projeID := c.Params("id")
+	if projeID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Project ID is required")
+	}
+
+	filters := map[string]interface{}{
+		"proje_id": projeID,
+		"limit":    c.QueryInt("limit", 50),
+		"offset":   c.QueryInt("offset", 0),
+	}
+
+	gorevler, err := s.isYonetici.GorevListele(filters)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list tasks for project %s: %v", projeID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    gorevler,
+		"total":   len(gorevler),
+	})
+}
+
+// activateProject activates a project
+func (s *APIServer) activateProject(c *fiber.Ctx) error {
+	projeID := c.Params("id")
+	if projeID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Project ID is required")
+	}
+
+	if err := s.isYonetici.VeriYonetici().AktifProjeAyarla(projeID); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to activate project with ID %s: %v", projeID, err))
+	}
+
+	// Return updated project
+	proje, err := s.isYonetici.VeriYonetici().ProjeGetir(projeID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get activated project with ID %s: %v", projeID, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    proje,
+		"message": "Project activated successfully",
+	})
+}
+
+// getTemplates retrieves all templates with optional category filtering
+func (s *APIServer) getTemplates(c *fiber.Ctx) error {
+	kategori := c.Query("kategori")
+
+	templateler, err := s.isYonetici.VeriYonetici().TemplateListele(kategori)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list templates with category '%s': %v", kategori, err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    templateler,
+		"total":   len(templateler),
+	})
+}
+
+// getSummary retrieves system-wide summary statistics
+func (s *APIServer) getSummary(c *fiber.Ctx) error {
+	// This would need a summary method in business logic
+	// For now, return basic info
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data": fiber.Map{
+			"message": "Summary endpoint - to be implemented",
+		},
+	})
+}
+
+// getLanguage retrieves the current language setting
+func (s *APIServer) getLanguage(c *fiber.Ctx) error {
+	currentLang := i18n.GetCurrentLanguage()
+	return c.JSON(fiber.Map{
+		"success":  true,
+		"language": currentLang,
+	})
+}
+
+// setLanguage changes the current language setting
+func (s *APIServer) setLanguage(c *fiber.Ctx) error {
+	type LanguageRequest struct {
+		Language string `json:"language"`
+	}
+
+	var req LanguageRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Invalid request body",
+		})
+	}
+
+	// Validate language code
+	if req.Language != "tr" && req.Language != "en" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Language must be 'tr' or 'en'",
+		})
+	}
+
+	// Set the language
+	if err := i18n.SetLanguage(req.Language); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   fmt.Sprintf("Failed to set language: %v", err),
+		})
+	}
+
+	log.Printf("🌍 Language changed to: %s", req.Language)
+
+	return c.JSON(fiber.Map{
+		"success":  true,
+		"language": req.Language,
+		"message":  fmt.Sprintf("Language changed to %s", req.Language),
+	})
+}

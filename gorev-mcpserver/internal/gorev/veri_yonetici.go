@@ -716,8 +716,12 @@ func (vy *VeriYonetici) ProjeGetir(id string) (*Proje, error) {
 }
 
 func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
-	sorgu := `SELECT id, isim, tanim, olusturma_tarih, guncelleme_tarih
-	          FROM projeler ORDER BY olusturma_tarih DESC`
+	sorgu := `SELECT p.id, p.isim, p.tanim, p.olusturma_tarih, p.guncelleme_tarih,
+	          COUNT(g.id) as gorev_sayisi
+	          FROM projeler p
+	          LEFT JOIN gorevler g ON p.id = g.proje_id
+	          GROUP BY p.id, p.isim, p.tanim, p.olusturma_tarih, p.guncelleme_tarih
+	          ORDER BY p.olusturma_tarih DESC`
 
 	rows, err := vy.db.Query(sorgu)
 	if err != nil {
@@ -736,6 +740,7 @@ func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
 			&proje.Tanim,
 			&proje.OlusturmaTarih,
 			&proje.GuncellemeTarih,
+			&proje.GorevSayisi,
 		)
 		if err != nil {
 			return nil, err

@@ -12,7 +12,7 @@ func TestTCommon(t *testing.T) {
 	// Initialize i18n first
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		key      string
@@ -26,9 +26,9 @@ func TestTCommon(t *testing.T) {
 			expected: "common.test", // Will return key itself if not found
 		},
 		{
-			name: "Common key with data",
-			key:  "test",
-			data: map[string]interface{}{"Name": "example"},
+			name:     "Common key with data",
+			key:      "test",
+			data:     map[string]interface{}{"Name": "example"},
 			expected: "common.test",
 		},
 		{
@@ -50,7 +50,7 @@ func TestTCommon(t *testing.T) {
 func TestTParam(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name      string
 		paramName string
@@ -84,7 +84,7 @@ func TestTParam(t *testing.T) {
 func TestTValidation(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name           string
 		validationType string
@@ -126,7 +126,7 @@ func TestTValidation(t *testing.T) {
 func TestBuildFieldDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		prefix   string
@@ -161,7 +161,7 @@ func TestBuildFieldDescription(t *testing.T) {
 func TestBuildIDDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		entity   string
@@ -193,7 +193,7 @@ func TestBuildIDDescription(t *testing.T) {
 func TestBuildPaginationDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name           string
 		paginationType string
@@ -231,7 +231,7 @@ func TestBuildPaginationDescription(t *testing.T) {
 func TestBuildPrefixedDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		prefix   string
@@ -269,7 +269,7 @@ func TestBuildPrefixedDescription(t *testing.T) {
 func TestGetCommonSuffix(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name       string
 		suffixType string

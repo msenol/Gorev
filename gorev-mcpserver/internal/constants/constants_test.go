@@ -78,13 +78,13 @@ func TestIsValidDependencyType(t *testing.T) {
 
 func TestGetValidTaskStatuses(t *testing.T) {
 	statuses := GetValidTaskStatuses()
-	
+
 	// Check that it contains expected statuses
 	expectedStatuses := []string{TaskStatusPending, TaskStatusInProgress, TaskStatusCompleted, TaskStatusCancelled}
 	if len(statuses) != len(expectedStatuses) {
 		t.Errorf("GetValidTaskStatuses() returned %d statuses, expected %d", len(statuses), len(expectedStatuses))
 	}
-	
+
 	// Check each expected status is present
 	for _, expected := range expectedStatuses {
 		found := false
@@ -102,13 +102,13 @@ func TestGetValidTaskStatuses(t *testing.T) {
 
 func TestGetValidPriorities(t *testing.T) {
 	priorities := GetValidPriorities()
-	
+
 	// Check that it contains expected priorities
 	expectedPriorities := []string{PriorityHigh, PriorityMedium, PriorityLow}
 	if len(priorities) != len(expectedPriorities) {
 		t.Errorf("GetValidPriorities() returned %d priorities, expected %d", len(priorities), len(expectedPriorities))
 	}
-	
+
 	// Check each expected priority is present
 	for _, expected := range expectedPriorities {
 		found := false
@@ -126,13 +126,13 @@ func TestGetValidPriorities(t *testing.T) {
 
 func TestGetValidDependencyTypes(t *testing.T) {
 	depTypes := GetValidDependencyTypes()
-	
+
 	// Check that it contains expected dependency types
 	expectedTypes := []string{DependencyTypeBlocker, DependencyTypeDependsOn}
 	if len(depTypes) != len(expectedTypes) {
 		t.Errorf("GetValidDependencyTypes() returned %d types, expected %d", len(depTypes), len(expectedTypes))
 	}
-	
+
 	// Check each expected type is present
 	for _, expected := range expectedTypes {
 		found := false

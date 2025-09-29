@@ -36,6 +36,7 @@ type Proje struct {
 	Tanim           string    `json:"tanim"`
 	OlusturmaTarih  time.Time `json:"olusturma_tarih"`
 	GuncellemeTarih time.Time `json:"guncelleme_tarih"`
+	GorevSayisi     int       `json:"gorev_sayisi"`
 }
 
 // Ozet sistem durumu özeti

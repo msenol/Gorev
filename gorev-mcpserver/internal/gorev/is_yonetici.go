@@ -114,6 +114,14 @@ func (iy *IsYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, er
 		if count, exists := buGoreveBagimliSayilari[gorev.ID]; exists {
 			gorev.BuGoreveBagimliSayisi = count
 		}
+
+		// Alt görevleri getir (parent_id null olan görevler için)
+		if gorev.ParentID == "" {
+			altGorevler, err := iy.veriYonetici.AltGorevleriGetir(gorev.ID)
+			if err == nil && len(altGorevler) > 0 {
+				gorev.AltGorevler = altGorevler
+			}
+		}
 	}
 
 	return gorevler, nil
