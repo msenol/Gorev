@@ -13,6 +13,29 @@ import {
 } from './types';
 import * as vscode from 'vscode';
 
+/**
+ * @deprecated Since v0.16.0. Use ApiClient from '../api/client' instead.
+ *
+ * This MCP client uses stdio communication and markdown parsing, which is fragile
+ * and difficult to maintain. The new ApiClient provides:
+ * - Type-safe JSON responses
+ * - Better error handling with ApiError class
+ * - No markdown parsing required
+ * - Consistent with web UI architecture
+ *
+ * This class will be removed in v0.18.0.
+ *
+ * Migration example:
+ * ```typescript
+ * // Old (deprecated)
+ * const result = await mcpClient.callTool('gorev_listele', {});
+ * const tasks = MarkdownParser.parseGorevListesi(result.content[0].text);
+ *
+ * // New (recommended)
+ * const response = await apiClient.getTasks({});
+ * const tasks = response.data; // Already typed
+ * ```
+ */
 export class MCPClient extends EventEmitter implements ClientInterface {
   private process: ChildProcess | null = null;
   private requestId = 0;

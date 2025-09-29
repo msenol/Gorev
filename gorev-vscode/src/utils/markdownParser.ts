@@ -5,7 +5,27 @@ import { TemplateKategori } from '../models/common';
 import { Logger } from '../utils/logger';
 
 /**
- * MCP response'larını parse eden utility sınıfı
+ * @deprecated Since v0.16.0. Use REST API responses directly instead of parsing markdown.
+ *
+ * This class parses markdown-formatted MCP responses, which is fragile and error-prone.
+ * The new ApiClient returns typed JSON responses that don't require parsing.
+ *
+ * This class will be removed in v0.18.0 after all UI components are migrated to REST API.
+ *
+ * Current usage:
+ * - templateWizard.ts (needs migration)
+ * - taskDetailPanel.ts (needs migration)
+ *
+ * Migration example:
+ * ```typescript
+ * // Old (deprecated)
+ * const result = await mcpClient.callTool('gorev_listele', {});
+ * const tasks = MarkdownParser.parseGorevListesi(result.content[0].text);
+ *
+ * // New (recommended)
+ * const response = await apiClient.getTasks({});
+ * const tasks = response.data; // Already typed, no parsing needed
+ * ```
  */
 export class MarkdownParser {
     
