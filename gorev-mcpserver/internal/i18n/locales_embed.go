@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,50 +10,8 @@ import (
 	"golang.org/x/text/language"
 )
 
-// Embedded locale data as strings to avoid path issues
-var embeddedTRData = `{
-  "lang": {
-    "code": "tr"
-  },
-  "messages": {
-    "noProjectTasks": "*Bu projeye ait görev bulunmuyor.*",
-    "noProjects": "Henüz proje bulunmuyor.",
-    "noTasks": "Görev bulunmuyor",
-    "noActiveProject": "Henüz aktif proje ayarlanmamış",
-    "noTemplates": "Henüz template bulunmuyor",
-    "noTasksInProject": "{{.Project}} projesinde görev bulunmuyor",
-    "taskListCount": "Toplam {{.Count}} görev",
-    "projectHeader": "=== {{.Name}} ===",
-    "sizeWarning": "⚠️ {{.Count}} görev daha var (sayfalama ile sınırlandı)"
-  },
-  "error": {
-    "activeProjectRetrieve": "aktif proje getirilemedi: {{.Error}}",
-    "noArguments": "Parametre belirtilmedi",
-    "parameterRequired": "{{.Param}} parametresi zorunludur"
-  }
-}`
-
-var embeddedENData = `{
-  "lang": {
-    "code": "en"
-  },
-  "messages": {
-    "noProjectTasks": "*No tasks found for this project.*",
-    "noProjects": "No projects found yet.",
-    "noTasks": "No tasks found",
-    "noActiveProject": "No active project set yet",
-    "noTemplates": "No templates found yet",
-    "noTasksInProject": "No tasks in {{.Project}} project",
-    "taskListCount": "Total {{.Count}} tasks",
-    "projectHeader": "=== {{.Name}} ===",
-    "sizeWarning": "⚠️ {{.Count}} more tasks available (limited by pagination)"
-  },
-  "error": {
-    "activeProjectRetrieve": "Failed to retrieve active project: {{.Error}}",
-    "noArguments": "No arguments provided",
-    "parameterRequired": "Parameter {{.Param}} is required"
-  }
-}`
+//go:embed locales/*.json
+var embeddedLocales embed.FS
 
 // initializeWithEmbedded initializes i18n with embedded locales as fallback
 func initializeWithEmbedded(lang string) error {
@@ -78,14 +37,20 @@ func initializeWithEmbedded(lang string) error {
 
 	// If filesystem loading failed, use embedded data
 	if !loadSuccess {
-		// Load Turkish translations from embedded data
-		if _, err := bundle.ParseMessageFileBytes([]byte(embeddedTRData), "tr.json"); err == nil {
-			loadSuccess = true
+		// Load Turkish translations from embedded FS
+		trData, err := embeddedLocales.ReadFile("locales/tr.json")
+		if err == nil {
+			if _, err := bundle.ParseMessageFileBytes(trData, "tr.json"); err == nil {
+				loadSuccess = true
+			}
 		}
 
-		// Load English translations from embedded data
-		if _, err := bundle.ParseMessageFileBytes([]byte(embeddedENData), "en.json"); err == nil {
-			loadSuccess = true
+		// Load English translations from embedded FS
+		enData, err := embeddedLocales.ReadFile("locales/en.json")
+		if err == nil {
+			if _, err := bundle.ParseMessageFileBytes(enData, "en.json"); err == nil {
+				loadSuccess = true
+			}
 		}
 	}
 
