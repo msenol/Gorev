@@ -1,8 +1,24 @@
 # 📚 Gorev Documentation Index
 
-**Version**: v0.15.24
-**Last Updated**: September 22, 2025  
-**Status**: Production Ready  
+**Version**: v0.16.0
+**Last Updated**: October 4, 2025
+**Status**: Production Ready
+
+---
+
+## 🆕 Recent Updates (v0.16.0 - October 4, 2025)
+
+### Bug Fixes Documentation
+- **[Bug Fixes Summary](releases/v0.16.0_bug_fixes_summary.md)** - Critical bug fixes and improvements
+  - Batch Update Handler fix (CRITICAL)
+  - File Watching Persistence (HIGH)
+  - Filter Profile Display (MEDIUM)
+- **[Testing Guide](guides/user/bug_fixes_testing_guide_v0.16.0.md)** - Step-by-step bug fix testing
+- **[Documentation Update Report](development/documentation_update_v0.16.0.md)** - Complete documentation changes
+
+### Release Information
+- **[Release Notes v0.16.0](releases/RELEASE_NOTES_v0.16.0.md)** - Full release documentation
+- **[Changelog](../CHANGELOG.md)** - Complete version history
 
 ---
 

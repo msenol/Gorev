@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2025-09-30
+
+### Fixed (October 4, 2025 - Critical Bug Fixes)
+
+#### 🐛 MCP Server Bug Fixes
+- **Batch Update Handler** (CRITICAL): Fixed schema mismatch in `gorev_batch_update`
+  - Changed from nested format `{id: "x", updates: {durum: "y"}}` to flat format `{id: "x", durum: "y"}`
+  - Now correctly processes all update fields without "Geçerli güncelleme bulunamadı" error
+  - Enhanced error reporting with detailed success/failure counts
+  - File: `internal/mcp/handlers.go:2134-2194`
+
+- **File Watching Persistence** (HIGH): Implemented database persistence for file watches
+  - Added 4 new database methods: `GorevDosyaYoluEkle`, `GorevDosyaYoluSil`, `GorevDosyaYollariGetir`, `DosyaYoluGorevleriGetir`
+  - Implemented `loadFromDatabase()` to restore file watches on server startup
+  - File watches now survive server restarts (previously lost with in-memory-only storage)
+  - Added nil database check for test compatibility
+  - Files: `internal/gorev/veri_yonetici.go` (+268 lines), `internal/gorev/file_watcher.go` (+79 lines)
+
+- **Filter Profile Display** (MEDIUM): Enhanced profile list output
+  - Now shows complete profile information in detailed markdown format
+  - Includes: ID, name, description, default status, use count, all filter criteria
+  - Previously only showed minimal text output
+  - File: `internal/mcp/handlers.go:3117-3196`
+
+#### 📚 Documentation Updates
+- **MCP Tools Documentation**: Fixed batch_update examples in all documentation files
+  - Updated Turkish docs: `docs/tr/mcp-araclari-ai.md`
+  - Updated English docs: `docs/api/MCP_TOOLS_REFERENCE.md`
+  - Corrected format from nested to flat structure
+
+#### ✅ Test Improvements
+- Added comprehensive test helpers: `internal/testing/helpers_test.go` (+107 lines)
+- Added i18n test coverage: `internal/i18n/helpers_test.go` (+173 lines)
+- All FileWatcher tests passing (15/15)
+- All BatchUpdate tests passing (4/4)
+- Maintained ~71% backend test coverage
+
+### Original v0.16.0 Release (September 30, 2025)
+
 ### Added
 
 #### 🌐 Gorev Web UI (NEW MODULE)
@@ -74,6 +113,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Icons**: Lucide React for consistent iconography
 - **Build Tool**: Vite for lightning-fast HMR and optimized production builds
 
+#### 🔌 VS Code Extension API Migration
+- **Complete REST API Integration**: Migrated from MCP (stdio + markdown parsing) to REST API (HTTP + JSON)
+- **New API Client**: `src/api/client.ts` with 30+ methods for all REST endpoints
+- **Type-Safe Responses**: Eliminated ~300 lines of fragile markdown parsing code
+- **Enhanced Error Handling**: `ApiError` class with helper methods (isNotFound, isBadRequest, isServerError)
+- **Zero TypeScript Errors**: Achieved through ClientInterface-based design (0 errors from 11 errors)
+- **TreeView Migration**: All 3 providers (gorev, proje, template) migrated to REST API
+- **Command Migration**: All 10 command handlers migrated to REST API
+- **Comprehensive Testing**: 74 new tests (~85% coverage) - 35 unit, 22 integration, 17 command tests
+- **Backward Compatibility**: MCPClient and MarkdownParser deprecated but maintained
+
 ### Technical Details
 
 #### New Dependencies (gorev-mcpserver)
@@ -82,14 +132,32 @@ github.com/gofiber/fiber/v2 v2.52.5
 github.com/gofiber/cors/v2 v2.2.2
 ```
 
+#### New Dependencies (gorev-vscode)
+```
+axios ^1.7.9            # HTTP client for REST API
+axios-mock-adapter ^2.1.0  # HTTP mocking for tests
+```
+
 #### New Packages and Modules
 - `gorev-mcpserver/internal/api/` - Complete REST API server implementation
+  - `handlers.go` - HTTP request handlers for all endpoints
+  - `router.go` - Route definitions and middleware setup
+  - `middleware.go` - CORS, logging, error handling middleware
 - `gorev-web/` - Full-featured React + TypeScript web application
   - `src/components/` - Reusable UI components
   - `src/api/` - API client with React Query integration
   - `src/contexts/` - React context providers (language, etc.)
   - `src/types/` - TypeScript type definitions
   - `public/` - Static assets
+- `gorev-vscode/src/api/` - REST API client for VS Code extension
+  - `client.ts` - ApiClient class with 30+ endpoint methods
+  - `types.ts` - TypeScript interfaces for API responses
+- `gorev-vscode/src/interfaces/` - Unified interfaces
+  - `client.ts` - ClientInterface for MCP/API compatibility
+- `gorev-vscode/test/` - Comprehensive test suite
+  - `unit/apiClient.test.js` - 35 unit tests for API client
+  - `integration/apiProviders.test.js` - 22 integration tests for providers
+  - `integration/apiCommands.test.js` - 17 integration tests for commands
 
 #### Testing and Validation
 - ✅ Web UI manually tested with Chrome DevTools MCP integration
@@ -99,6 +167,11 @@ github.com/gofiber/cors/v2 v2.2.2
 - ✅ All REST API endpoints responding correctly
 - ✅ Template-based task creation workflow validated
 - ✅ Real-time updates and filtering working as expected
+- ✅ **VS Code Extension API Tests**: 74 new tests (~85% coverage)
+  - 35 unit tests for API client (all methods, error handling)
+  - 22 integration tests for providers (data loading, refresh, errors)
+  - 17 integration tests for commands (user interactions, error scenarios)
+- ✅ **TypeScript Compilation**: 0 errors (from 11 errors)
 
 #### Development Setup
 - **Web UI Dev Server**: `npm run dev` in gorev-web/ (runs on http://localhost:5001)
@@ -106,12 +179,24 @@ github.com/gofiber/cors/v2 v2.2.2
 - **Concurrent Development**: Both servers can run simultaneously for full-stack development
 
 ### Breaking Changes
-None - All changes are additive. Existing MCP server functionality remains unchanged.
+None - All changes are additive. Existing functionality remains unchanged.
 
 ### Migration Notes
-- No migration required for existing users
+
+#### For End Users
+- No migration required - all changes are backward compatible
 - Web UI is an optional interface alongside MCP and VS Code extension
 - All three interfaces (MCP, VS Code, Web) share the same database and backend
+- VS Code extension automatically uses REST API when available, falls back to MCP
+
+#### For Developers
+- **VS Code Extension**: MCPClient and MarkdownParser marked as `@deprecated`
+  - Will be removed in v0.18.0
+  - Use `ApiClient` from `src/api/client.ts` instead
+  - Update dependencies to accept `ClientInterface` instead of concrete `MCPClient`
+- **MCP Server**: No changes to existing MCP tools
+  - REST API is additive, does not affect MCP functionality
+  - Both protocols can run simultaneously
 
 ---
 

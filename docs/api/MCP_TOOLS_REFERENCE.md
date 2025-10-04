@@ -169,7 +169,7 @@ The Gorev MCP server now includes comprehensive IDE extension management capabil
 
 - **Purpose**: Batch update multiple tasks
 - **Parameters**: updates
-- **Format**: updates = array of {id: string, updates: {durum?: string, ...}}
+- **Format**: updates = array of {id: string, durum?: string, oncelik?: string, baslik?: string, ...}
 - **Use Case**: Efficient bulk operations for AI workflows
 
 ### 25. gorev_nlp_query

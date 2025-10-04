@@ -135,15 +135,12 @@ Birden fazla görevi tek seferde günceller.
   "updates": [
     {
       "id": "task-id-1",
-      "updates": {
-        "durum": "tamamlandi"
-      }
+      "durum": "tamamlandi"
     },
     {
       "id": "task-id-2",
-      "updates": {
-        "durum": "devam_ediyor"
-      }
+      "durum": "devam_ediyor",
+      "oncelik": "yuksek"
     }
   ]
 }
