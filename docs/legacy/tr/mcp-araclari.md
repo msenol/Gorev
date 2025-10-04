@@ -765,10 +765,50 @@ Seçilen şablonu kullanarak özelleştirilmiş bir görev oluşturur.
 
 | Parametre | Tip | Zorunlu | Açıklama |
 |-----------|-----|---------|----------|
-| `template_id` | string | ✅ | Kullanılacak template'in ID'si |
+| `template_id` | string | ✅* | Kullanılacak template'in ID'si |
+| `template_alias` | string | ✅* | Template kısa adı (alias) - ID yerine kullanılabilir |
 | `degerler` | object | ✅ | Template alanları için değerler (key-value çiftleri) |
 
+**\*Not**: `template_id` VEYA `template_alias` kullanılabilir (ikisinden biri zorunlu).
+
+### Template Alias Kullanımı (Önerilen)
+
+Template ID yerine kısa alias kullanabilirsiniz:
+
+| Alias | Template | Açıklama |
+|-------|----------|----------|
+| `bug` | Bug Raporu | Yazılım hatası bildirimi |
+| `feature` | Özellik Geliştirme | Yeni özellik geliştirme |
+| `research` | Araştırma | Araştırma ve inceleme |
+| `refactor` | Refactoring | Kod iyileştirme |
+| `test` | Test Yazma | Test geliştirme |
+| `doc` | Dokümantasyon | Dokümantasyon yazma |
+
 ### Örnek Kullanım
+
+**Alias ile (Önerilen)**:
+
+```json
+{
+  "name": "templateden_gorev_olustur",
+  "arguments": {
+    "template_alias": "bug",
+    "degerler": {
+      "baslik": "Login butonu çalışmıyor",
+      "aciklama": "Kullanıcı giriş sayfasında login butonu tıklamaya yanıt vermiyor",
+      "modul": "auth",
+      "ortam": "production",
+      "adimlar": "1. Login sayfasına git\n2. Email ve şifre gir\n3. Login butonuna tıkla",
+      "beklenen": "Kullanıcı ana sayfaya yönlendirilmeli",
+      "mevcut": "Hiçbir şey olmuyor, buton tepki vermiyor",
+      "oncelik": "yuksek",
+      "etiketler": "bug,acil,auth"
+    }
+  }
+}
+```
+
+**Template ID ile**:
 
 ```json
 {

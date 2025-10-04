@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "env": {
+        "GOREV_LANG": "en"
+      }
+    }
+  }
+}

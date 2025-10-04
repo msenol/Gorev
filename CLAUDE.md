@@ -2,18 +2,20 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 29 September 2025 | **Version:** v0.16.0
+**Last Updated:** October 5, 2025 | **Version:** v0.16.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
 ## 🚀 Recent Major Update
 
-**v0.16.0 - Embedded Web UI (29 Sep 2025)**
+**v0.16.0 - Embedded Web UI (October 4, 2025)**
 
 - **Embedded Web UI**: Modern React + TypeScript interface built into Go binary
-- **Zero Configuration**: Automatically available at http://localhost:5082 with `npx gorev serve`
-- **Enhanced Data Models**: Subtask and dependency visualization support
-- **REST API Server**: Comprehensive Fiber-based API for web UI integration
+- **Zero Configuration**: Automatically available at http://localhost:5082 with `npx @mehmetsenol/gorev-mcp-server serve`
+- **Multi-Workspace Support**: SHA256-based workspace IDs, auto-detection, workspace switcher in Web UI
+- **REST API Migration**: VS Code extension migrated from MCP to REST API (23 endpoints, type-safe, faster)
+- **Template Aliases**: Use `bug`, `feature`, `research` instead of UUIDs for template creation
+- **NPM Package**: Official package `@mehmetsenol/gorev-mcp-server`
 - **Language Synchronization**: Web UI language switcher syncs with MCP server (TR/EN)
 - **Backward Compatible**: All existing MCP and VS Code features maintained
 - **Production Ready**: Vite-built React app served via Go embed.FS
@@ -204,12 +206,30 @@ gorev serve --lang=tr    # Turkish interface
 
 ## 📚 Essential References
 
-- **MCP Tools Reference**: @docs/tr/mcp-araclari.md (Turkish documentation)
-- **Development History**: @docs/development/TASKS.md
-- **VS Code Data Export/Import**: @docs/guides/user/vscode-data-export-import.md
-- **Architecture Details**: Project structure above + clean architecture pattern
-- **Database Migrations**: @internal/veri/migrations/
-- **Testing Guide**: DRY patterns, table-driven tests
+### Getting Started Guides
+- **Quick Start**: @docs/guides/getting-started/quick-start.md - Get up and running in 10 minutes
+- **Installation**: @docs/guides/getting-started/installation.md - Platform-specific installation instructions
+- **Troubleshooting**: @docs/guides/getting-started/troubleshooting.md - Common issues and solutions
+- **Migration Guide**: @docs/migration/v0.15-to-v0.16.md - Upgrade from v0.15.x to v0.16.0
+
+### Feature Documentation
+- **Web UI Guide**: @docs/guides/features/web-ui.md - Embedded React interface documentation
+- **Multi-Workspace**: @docs/guides/features/multi-workspace.md - Managing multiple isolated workspaces
+- **Template System**: @docs/guides/features/template-system.md - Task templates and aliases
+- **AI Context Management**: @docs/guides/features/ai-context-management.md - AI assistant integration
+
+### Reference Documentation
+- **MCP Tools Reference**: @docs/legacy/tr/mcp-araclari.md - Complete reference for 41 MCP tools (Turkish)
+- **MCP Configuration**: @docs/guides/mcp-config-examples.md - IDE setup guides (Claude, VS Code, Cursor, Windsurf)
+- **VS Code Extension**: @docs/guides/user/vscode-extension.md - Extension features and usage
+- **VS Code Export/Import**: @docs/guides/user/vscode-data-export-import.md - Data migration guide
+
+### Development Resources
+- **Architecture**: Project structure above + @docs/architecture/architecture-v2.md
+- **Development History**: @docs/development/TASKS.md - Complete project history
+- **Contributing Guide**: @docs/development/contributing.md - How to contribute
+- **Database Migrations**: @internal/veri/migrations/ - SQLite schema evolution
+- **Testing Guide**: @internal/testing/helpers.go - DRY patterns, table-driven tests
 - **Version Management**: Build-time injection via Makefile LDFLAGS
 
 ## 🚨 Rule 15: Comprehensive Problem-Solving & Zero Technical Debt

@@ -4,165 +4,249 @@
 
 **Last Updated:** October 4, 2025 | **Version:** v0.16.0
 
-[🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
+[🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-> ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
+> 🎉 **NEW in v0.16.0**: Embedded Web UI, Multi-Workspace Support, REST API, Template Aliases! [See What's New](#-whats-new-in-v0160)
 
 ![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Test Coverage](https://img.shields.io/badge/Coverage-71%25-yellow?style=flat-square)
+![Test Coverage](https://img.shields.io/badge/Coverage-75%25-yellow?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20|%20macOS%20|%20Windows-blue?style=flat-square)
 
 **Modern task management system with Turkish support, designed for MCP-compatible AI assistants (Claude, VS Code, Windsurf, Cursor)**
 
-[Özellikler](#-özellikler) • [Kurulum](#-kurulum) • [Kullanım](#-kullanım) • [Dokümantasyon](#-dokümantasyon) • [Katkıda Bulunma](#-katkıda-bulunma)
+[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 </div>
 
-## 🌍 English Summary
+## 🎯 What is Gorev
 
-**Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation.
+Gorev is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to all MCP-compatible AI editors (Claude Desktop, VS Code, Windsurf, Cursor, Zed, etc.). It combines project management, task tracking, and organization needs with the power of AI assistants to boost your productivity.
 
-**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, advanced search & filtering with FTS5, 41 MCP tools, and optional VS Code extension with rich visual interface.
+### 🏗️ Three-Module Architecture
 
-**Quick Start**: [Installation Guide](README.en.md#-installation) | [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
-
----
-
-## 🎯 Gorev Nedir
-
-Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm AI editörler (Claude Desktop, VS Code, Windsurf, Cursor, Zed vb.) ile doğal dilde iletişim kurabilen, Go dilinde yazılmış güçlü bir görev yönetim sunucusudur. Proje yönetimi, görev takibi ve organizasyon ihtiyaçlarınızı AI asistanlarının yetenekleriyle birleştirerek verimliliğinizi artırır.
-
-### 🏗️ Üç Modüllü Yapı
-
-1. **gorev-mcpserver** - Go dilinde yazılmış MCP server (ana bileşen)
-   - Embedded Web UI 🌐 - React arayüzü binary'ye gömülü (YENİ! v0.16.0)
+1. **gorev-mcpserver** - MCP server written in Go (core component)
+   - Embedded Web UI 🌐 - React interface embedded in binary (NEW! v0.16.0)
    - REST API server (Fiber framework)
-   - MCP protokol desteği
-2. **gorev-vscode** - VS Code extension'ı (opsiyonel görsel arayüz)
-3. **gorev-web** - React + TypeScript kaynak kodu (development)
+   - MCP protocol support
+2. **gorev-vscode** - VS Code extension (optional visual interface)
+3. **gorev-web** - React + TypeScript source code (development)
 
-MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. Web arayüzü `npx gorev serve` komutuyla otomatik olarak http://localhost:5082 adresinde hazır olur. VS Code extension'ı ise IDE içinde zengin görsel deneyim sunar.
+Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The Web UI is automatically available at http://localhost:5082 when you run `npx gorev-mcp serve`. The VS Code extension provides a rich IDE-integrated experience.
 
-## ✨ Özellikler
+## 🎉 What's New in v0.16.0
 
-### 📝 Görev Yönetimi
+### 🌐 Embedded Web UI
+- **Zero-Configuration**: Modern React interface built into Go binary
+- **Instant Access**: Automatically available at http://localhost:5082
+- **Full Features**: Tasks, projects, templates, subtasks, and dependencies
+- **Language Sync**: Turkish/English switcher synchronized with MCP server
+- **No Separate Installation**: Just run `npx gorev-mcp serve` and you're ready!
 
-- **Akıllı görev oluşturma** - Doğal dil komutlarıyla
-- **Markdown desteği** - Zengin açıklama formatı
-- **Durum yönetimi** - Beklemede → Devam ediyor → Tamamlandı
-- **Öncelik seviyeleri** - Düşük, Orta, Yüksek
-- **Esnek düzenleme** - Tüm görev özelliklerini güncelleme
+### 🗂️ Multi-Workspace Support
+- **Isolated Workspaces**: Each project folder gets its own task database
+- **Workspace Switcher**: Seamlessly switch between workspaces in Web UI
+- **Auto-Detection**: Automatically detects `.gorev/` directory in current folder
+- **SHA256 IDs**: Secure workspace identification
+- **VS Code Integration**: Extension auto-registers workspace on activation
 
-### 📁 Proje Organizasyonu
+### 🔌 REST API Migration
+- **23 Endpoints**: Complete Fiber-based REST API
+- **VS Code Extension**: Migrated from MCP to REST API for better performance
+- **Type-Safe**: 100% TypeScript with zero parsing errors
+- **Faster**: Direct HTTP calls vs. stdio + markdown parsing
+- **Backward Compatible**: MCP protocol still fully supported
 
-- **Hiyerarşik yapı** - Projeler altında görev gruplandırma
-- **Aktif proje sistemi** - Varsayılan proje ile hızlı işlem
-- **Proje bazlı raporlama** - Detaylı istatistikler
-- **Çoklu proje desteği** - Sınırsız proje oluşturma
+### 🏷️ Template Aliases
+- **Quick Commands**: Use `bug`, `feature`, `research` instead of template IDs
+- **Consistency**: Same aliases across all workspaces
+- **No More UUID Hunting**: Human-readable template identifiers
+- **Documentation**: Full guide at [MCP Config Examples](docs/guides/mcp-config-examples.md)
 
-### 🔗 Gelişmiş Özellikler
+### 📦 NPM Package
+- **New Package Name**: `gorev-mcp` (simpler, cleaner)
+- **Global Install**: `npm install -g gorev-mcp`
+- **NPX Ready**: `npx gorev-mcp serve` for instant use
+- **Cross-Platform**: Works on Windows, macOS, and Linux
 
-- **📅 Son tarih takibi** - Deadline yönetimi ve acil görev filtreleme
-- **🏷️ Etiketleme sistemi** - Çoklu etiket ile kategorilendirme
-- **🔄 Görev bağımlılıkları** - İlişkili görevler arası otomasyon
-- **📋 Hazır şablonlar** - Bug raporu, feature request ve daha fazlası
-- **🔍 Gelişmiş filtreleme** - Durum, etiket, tarih bazlı sorgulama
-- **🌳 Alt görev hiyerarşisi** - Sınırsız derinlikte görev ağacı yapısı
-- **📊 İlerleme takibi** - Ana görevde alt görev tamamlanma yüzdesi
-- **📁 File System Watcher** - Dosya değişikliklerini izleme ve otomatik görev durum geçişleri
-- **🔔 Otomatik Durum Güncelleme** - Dosya değişikliklerinde "beklemede" → "devam_ediyor" otomasyonu
-- **⚙️ Konfigürasyon Yönetimi** - Ignore patterns ve izleme kuralları özelleştirmesi
+## ✨ Features
 
-### 🤖 AI Entegrasyonu
+### 📝 Task Management
 
-- **🔍 Gelişmiş Arama & Filtreleme** - FTS5 full-text search ve akıllı filtreleme (v0.15.0)
-- **🧠 Gelişmiş NLP İşleme** - Akıllı doğal dil anlama ve yorumlama (v0.14.0)
-- **Doğal dil işleme** - AI asistanlarla konuşarak görev yönetimi
-- **Çoklu editör desteği** - Claude, VS Code, Windsurf, Cursor, Zed
-- **Bağlamsal anlama** - Akıllı komut yorumlama ve parametre çıkarımı
-- **MCP standardı** - Tüm MCP uyumlu araçlarla uyumluluk
-- **🌐 MCP Registry** - Otomatik keşfedilebilirlik ve kolay kurulum (v0.15.24+)
-- **🌍 Uluslararası Destek** - Türkçe ve İngilizce tam dil desteği (v0.11.0+)
-- **⚡ Thread Safety** - 100% race condition free operation (v0.14.0)
+- **Smart task creation** - Using natural language commands
+- **Markdown support** - Rich description formatting
+- **Status management** - Pending → In Progress → Completed
+- **Priority levels** - Low, Medium, High
+- **Flexible editing** - Update all task properties
 
-### 🌐 Web UI Özellikleri (YENİ! v0.16.0)
+### 📁 Project Organization
 
-- **Modern React Arayüzü** - TypeScript + Vite ile hızlı ve responsive
-- **Proje Bazlı Görünüm** - Proje kartları ve gerçek zamanlı istatistikler
-- **Görev Yönetimi** - CRUD işlemleri template sistemi ile
-- **Alt Görev Görünümü** - Hiyerarşik görev listesi (collapse/expand)
-- **Bağımlılık Göstergesi** - Visual dependency indicators (🔗 count + ⚠️ incomplete)
-- **Durum Yönetimi** - Inline dropdown'larla hızlı güncelleme
-- **Gelişmiş Filtreleme** - Durum, öncelik, proje bazlı filtreleme
-- **🌍 Dil Değiştirici** - Türkçe/İngilizce arasında geçiş, MCP sunucusu ile senkronize
-- **Responsive Tasarım** - Tailwind CSS ile mobil uyumlu
-- **Gerçek Zamanlı Sync** - React Query ile otomatik veri güncelleme
-- **🚀 Kurulum Gerektirmez**: `npx gorev serve` komutuyla otomatik aktif!
-- **Embedded UI**: Go binary'sine gömülü, ayrı kurulum yok
-- **Erişim**: http://localhost:5082 (varsayılan port)
+- **Hierarchical structure** - Task grouping under projects
+- **Active project system** - Quick operations with default project
+- **Project-based reporting** - Detailed statistics
+- **Multi-project support** - Unlimited project creation
 
-### 🎨 VS Code Extension Özellikleri (Opsiyonel)
+### 🔗 Advanced Features
 
-- **İki Dil Desteği** - Türkçe ve İngilizce arayüz (v0.5.0+) 🌍
-- **TreeView Panelleri** - Görev, proje ve şablon listeleri
-- **Görsel Arayüz** - Tıkla ve kullan deneyimi
-- **Status Bar** - Anlık durum bilgisi
-- **Komut Paleti** - Hızlı erişim (Ctrl+Shift+G)
-- **Renk Kodlaması** - Öncelik bazlı görsel ayırt etme
-- **Context Menüler** - Sağ tık işlemleri
-- **Otomatik Dil Algılama** - VS Code diline göre otomatik arayüz dili
-- **[Marketplace'den İndir](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** 🚀
-- **[Diğer IDE'lere Kurulum](docs/tr/vscode-extension-kurulum.md)** (Cursor, Windsurf, VSCodium vb.)
+- **📅 Due date tracking** - Deadline management and urgent task filtering
+- **🏷️ Tagging system** - Multi-tag categorization
+- **🔄 Task dependencies** - Inter-task automation
+- **📋 Ready-made templates** - Bug reports, feature requests, and more
+- **🔍 Advanced filtering** - Status, tag, date-based queries
+- **🌳 Subtask hierarchy** - Unlimited depth task tree structure
+- **📊 Progress tracking** - Subtask completion percentage in parent tasks
+- **📁 File System Watcher** - Monitor file changes and automatic task status transitions
+- **🔔 Automatic Status Updates** - "pending" → "in_progress" automation on file changes
+- **⚙️ Configuration Management** - Customizable ignore patterns and watch rules
 
-## 📦 Kurulum
+### 🤖 AI Integration
 
-### 🚀 NPX ile Kolay Kurulum (En Kolay!)
+- **Natural language processing** - Task management by talking to AI assistants
+- **Multi-editor support** - Claude, VS Code, Windsurf, Cursor, Zed
+- **Contextual understanding** - Smart command interpretation
+- **MCP standard** - Compatible with all MCP-compatible tools
 
-> ⚠️ **Windows Kullanıcıları**: NPX kullanımı için Node.js kurulumu gereklidir. [Node.js indirin](https://nodejs.org/) ve yükledikten sonra sistemi yeniden başlatın.
+### 🎨 VS Code Extension Features (Optional)
 
-MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
+- **Bilingual Support** - Turkish and English interface (v0.5.0+) 🌍
+- **TreeView Panels** - Task, project, and template lists
+- **Visual Interface** - Click-and-use experience
+- **Status Bar** - Real-time status information
+- **Command Palette** - Quick access (Ctrl+Shift+G)
+- **Color Coding** - Priority-based visual distinction
+- **Context Menus** - Right-click operations
+- **Automatic Language Detection** - UI language based on VS Code language setting
+- **[Download from Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** 🚀
+
+### 🌐 Web UI Features (NEW! v0.16.0)
+
+- **Modern Browser Interface** - No IDE required, works in any browser
+- **Task Cards** - Rich task visualization with metadata
+- **Subtask Hierarchy** - Expandable/collapsible nested tasks
+- **Dependency Badges** - Visual indicators for task dependencies
+- **Project Organization** - Sidebar navigation with task counts
+- **Template-Based Creation** - Wizard for creating structured tasks
+- **Real-time Updates** - React Query for automatic synchronization
+- **Responsive Design** - Works on desktop and mobile devices
+- **🌍 Language Switcher** - Toggle between Turkish/English, synchronized with MCP server
+- **Quick Actions** - Edit, delete, and status updates
+- **REST API Backend** - Fiber-based high-performance API server
+- **🚀 No Installation Required**: Automatically active with `npx gorev serve`!
+- **Embedded UI**: Bundled in Go binary, no separate setup needed
+- **Access**: http://localhost:5082 (default port)
+
+## 📦 Installation
+
+### 🚀 NPM Quick Setup (Recommended!)
+
+> ⚠️ **Windows Users**: NPM requires Node.js installation. [Download Node.js](https://nodejs.org/) and restart your system after installation.
+
+#### Global Installation
+
+```bash
+npm install -g @mehmetsenol/gorev-mcp-server
+```
+
+Or use directly with NPX (no installation required):
+
+```bash
+npx @mehmetsenol/gorev-mcp-server serve
+```
+
+#### MCP Client Configuration
+
+**For Claude Desktop:**
 
 ```json
+// Windows: %APPDATA%/Claude/claude_desktop_config.json
+// macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+// Linux: ~/.config/Claude/claude_desktop_config.json
 {
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
+      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
       "env": {
-        "GOREV_LANG": "tr"
+        "GOREV_LANG": "en"
       }
     }
   }
 }
 ```
 
-**Claude Desktop için:**
+**For Kilo Code (VS Code Extension):**
 
 ```json
-// ~/.config/Claude/claude_desktop_config.json (Linux)
-// ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
-// %APPDATA%/Claude/claude_desktop_config.json (Windows)
+// .kilocode/mcp.json (workspace root)
 {
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
+      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
       "env": {
-        "GOREV_LANG": "tr"
+        "GOREV_LANG": "en"
       }
     }
   }
 }
 ```
 
-**VS Code için:**
+**For Cursor:**
 
 ```json
-// .vscode/mcp.json
+// .cursor/mcp.json (workspace root)
 {
-  "servers": {
+  "mcpServers": {
+    "gorev": {
+      "command": "npx",
+      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "env": {
+        "GOREV_LANG": "en"
+      }
+    }
+  }
+}
+```
+
+> 📚 **More Examples**: [MCP Configuration Guide](docs/guides/mcp-config-examples.md)
+
+#### 🔧 Windows NPX Troubleshooting
+
+If you get `ENOENT: spawn npx` error:
+
+1. **Check if Node.js is installed:**
+
+   ```cmd
+   node --version
+   npm --version
+   npx --version
+   ```
+
+2. **Install Node.js:**
+   - Download LTS version from [Node.js website](https://nodejs.org/)
+   - Check "Add to PATH" option during installation
+   - Restart your computer after installation
+
+3. **Install NPX separately (if needed):**
+
+   ```cmd
+   npm install -g npx
+   ```
+
+4. **Check PATH:**
+
+   ```cmd
+   echo %PATH%
+   ```
+
+   Should include Node.js paths (`C:\Program Files\nodejs\`).
+
+**For Cursor:**
+
+```json
+{
+  "mcpServers": {
     "gorev": {
       "command": "npx",
       "args": ["@mehmetsenol/gorev-mcp-server@latest"]
@@ -171,38 +255,7 @@ MCP client'larında kullanmak için sadece `mcp.json` dosyasına ekleme yapın:
 }
 ```
 
-#### 🔧 Windows NPX Kurulum Sorunu Giderme
-
-Eğer `ENOENT: spawn npx` hatası alıyorsanız:
-
-1. **Node.js kurulu mu kontrol edin:**
-
-   ```cmd
-   node --version
-   npm --version
-   npx --version
-   ```
-
-2. **Node.js kurulumunu yapın:**
-   - [Node.js websitesinden](https://nodejs.org/) LTS sürümü indirin
-   - Installer'ı çalıştırırken "Add to PATH" seçeneğini işaretleyin
-   - Kurulum sonrası bilgisayarı yeniden başlatın
-
-3. **NPX ayrı kurulumu (gerekirse):**
-
-   ```cmd
-   npm install -g npx
-   ```
-
-4. **PATH kontrolü:**
-
-   ```cmd
-   echo %PATH%
-   ```
-
-   Node.js paths (`C:\Program Files\nodejs\`) görünmeli.
-
-### 🔧 Geleneksel Kurulum (Otomatik)
+### 🔧 Traditional Installation (Automatic)
 
 ```bash
 # Linux/macOS
@@ -212,412 +265,206 @@ curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | VERSION=v0.11.0 bash
 ```
 
-> **Not**: Kurulum sonrası eğer "unable to open database file" hatası alırsanız, GOREV_ROOT environment variable'ını ayarlayın:
->
-> ```bash
-> export GOREV_ROOT=/path/to/gorev-mcpserver  # Projenin bulunduğu dizin
-> echo 'export GOREV_ROOT=/path/to/gorev-mcpserver' >> ~/.bashrc  # Kalıcı yapmak için
-> ```
-
-### Manuel Kurulum
-
-<details>
-<summary><b>🪟 Windows</b></summary>
-
-**Otomatik Kurulum (PowerShell):**
+### 🪟 Windows
 
 ```powershell
-# PowerShell'de çalıştırın (Admin yetkisi gerekmez)
+# PowerShell (no admin rights required)
 irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 
-# Veya belirli versiyon için:
-$env:VERSION="v0.15.4"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
+# Or for specific version:
+$env:VERSION="v0.11.0"; irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
 
-**Manuel Kurulum:**
+### 💻 VS Code Extension (Optional)
 
-```powershell
-# PowerShell (Admin olarak çalıştırın)
-New-Item -ItemType Directory -Force -Path "C:\Program Files\gorev"
-Invoke-WebRequest -Uri "https://github.com/msenol/gorev/releases/latest/download/gorev-windows-amd64.exe" -OutFile "C:\Program Files\gorev\gorev.exe"
-[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\gorev", [EnvironmentVariableTarget]::Machine)
+**Option 1: Gorev VS Code Extension (Recommended)**
 
-# GOREV_ROOT ayarla
-[Environment]::SetEnvironmentVariable("GOREV_ROOT", "$env:APPDATA\gorev", [EnvironmentVariableTarget]::User)
-
-# Test
-gorev version
-```
-
-</details>
-
-<details>
-<summary><b>🍎 macOS</b></summary>
+Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
 ```bash
-# Binary indirme (Homebrew desteği yakında)
-curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-darwin-amd64 -o gorev
-chmod +x gorev
-sudo mv gorev /usr/local/bin/
+code --install-extension mehmetsenol.gorev-vscode
 ```
 
-</details>
+## 🎮 Usage
 
-<details>
-<summary><b>🐧 Linux</b></summary>
+### AI Assistant Example Commands
+
+```
+"Create a new task: Write API documentation"
+"List urgent tasks"
+"Show tasks tagged with bug"
+"Set Mobile App v2 project as active"
+"Create new project for sprint planning"
+"Mark task #5 as completed"
+"Create new task from feature request template"
+"Start watching project files"
+"Enable automatic status transitions on file changes"
+"Show watch list"
+"Add git ignore rules to file watcher"
+```
+
+> 💡 **Tip**: These commands work with Claude, VS Code Copilot, Windsurf AI, Cursor, and other MCP-compatible AI assistants.
+
+### CLI Commands
 
 ```bash
-# Binary indirme
-curl -L https://github.com/msenol/gorev/releases/latest/download/gorev-linux-amd64 -o gorev
-chmod +x gorev
-sudo mv gorev /usr/local/bin/
+# Start server
+gorev serve                  # Normal mode
+gorev serve --debug         # Debug mode
+gorev serve --port 8080     # Different port
 
-# Test
-gorev version
+# Task operations
+gorev task list             # List tasks
+gorev task create           # Create new task
+gorev task show <id>        # Task details
+
+# Project operations
+gorev project list          # List projects
+gorev project create        # Create new project
+
+# Other
+gorev version              # Version info
+gorev help                 # Help
 ```
 
-</details>
+## 📚 Documentation
 
-<details>
-<summary><b>🐳 Docker</b></summary>
+For detailed documentation, see the [docs/](docs/) folder:
 
-```bash
-# Docker image yakında gelecek
-# docker pull ghcr.io/msenol/gorev:latest
-# docker run -v ~/.gorev:/data ghcr.io/msenol/gorev serve
-```
+### Getting Started
 
-</details>
-
-### MCP Editör Entegrasyonu
-
-<details>
-<summary><b>🤖 Claude Desktop</b></summary>
-
-Konfigürasyon dosyası konumları:
-
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "gorev": {
-      "command": "/path/to/gorev-mcpserver/gorev",
-      "args": ["serve"],
-      "env": {
-        "GOREV_DATA_DIR": "~/.gorev",
-        "GOREV_LANG": "tr"
-      }
-    }
-  }
-}
-```
-
-> **🌍 Dil Desteği**: `GOREV_LANG` environment variable ile dil seçimi:
->
-> - `tr` (varsayılan) - Türkçe
-> - `en` - English
->
-> Alternatif olarak `--lang` parametresi: `gorev serve --lang=en`
-
-</details>
-
-<details>
-<summary><b>💻 VS Code</b></summary>
-
-#### Seçenek 1: Gorev VS Code Extension (Tavsiye Edilen)
-
-1. **Extension'ı Yükleyin**:
-   - **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** üzerinden
-   - Veya komut satırından:
-
-   ```bash
-   code --install-extension mehmetsenol.gorev-vscode
-   ```
-
-   - Veya VS Code içinde: Extensions → "gorev" ara → Install
-
-2. **Extension Ayarları** (`settings.json`):
-
-   ```json
-   {
-     "gorev.serverPath": "/path/to/gorev-mcpserver/gorev",
-     "gorev.autoConnect": true,
-     "gorev.showStatusBar": true
-   }
-   ```
-
-3. **Kullanım**:
-   - Activity Bar'da Gorev ikonuna tıklayın
-   - `Ctrl+Shift+G` ile hızlı görev oluşturun
-   - TreeView'lardan görev/proje yönetin
-
-#### Seçenek 2: MCP Extension ile
-
-MCP extension kurduktan sonra `settings.json`:
-
-```json
-{
-  "mcp.servers": {
-    "gorev": {
-      "command": "/path/to/gorev-mcpserver/gorev",
-      "args": ["serve"]
-    }
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>🌊 Windsurf</b></summary>
-
-Windsurf ayarlarında MCP sunucusu ekleyin:
-
-```json
-{
-  "mcp.servers": [
-    {
-      "name": "gorev",
-      "command": "gorev",
-      "args": ["serve"]
-    }
-  ]
-}
-```
-
-</details>
-
-<details>
-<summary><b>⚡ Cursor</b></summary>
-
-Cursor'da MCP entegrasyonu için:
-
-```json
-{
-  "mcp.gorev": {
-    "command": "gorev serve",
-    "env": {
-      "GOREV_DATA_DIR": "~/.gorev"
-    }
-  }
-}
-```
-
-</details>
-
-## 🎮 Kullanım
-
-### AI Asistan ile Örnek Komutlar (v0.14.0 Enhanced NLP)
-
-```
-"Yeni bir görev oluştur: API dokümantasyonu yazılacak yarın deadline ile"
-"Bu hafta için yüksek öncelikli görevleri göster"
-"Bug etiketli açık görevleri listele"
-"Mobil App v2 projesini aktif yap"
-"Sprint planlaması için yeni proje oluştur"
-"Görev #5'i tamamlandı olarak işaretle"
-"Son oluşturduğum görev nasıl gidiyor?"
-"Frontend kategorisindeki görevleri göster"
-"Bugün deadline olan acil görevler var mı?"
-"Feature request şablonundan yeni görev oluştur"
-"Proje dosyalarını izlemeye başla"
-"Dosya değişikliklerinde otomatik durum geçişi yap"
-"Watch listesini göster"
-```
-
-> 💡 **İpucu**: Bu komutlar Claude, VS Code Copilot, Windsurf AI, Cursor ve diğer MCP uyumlu AI asistanlarla kullanılabilir.
-
-### CLI Komutları
-
-```bash
-# Server başlatma
-gorev serve                  # Normal mod
-gorev serve --debug         # Debug modunda
-gorev serve --port 8080     # Farklı port
-
-# Görev işlemleri
-gorev task list             # Görevleri listele
-gorev task create           # Yeni görev oluştur
-gorev task show <id>        # Görev detayı
-
-# Proje işlemleri
-gorev project list          # Projeleri listele
-gorev project create        # Yeni proje oluştur
-
-# Diğer
-gorev version              # Versiyon bilgisi
-gorev help                 # Yardım
-```
-
-## 📚 Dokümantasyon
-
-Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
-
+- 🚀 [Quick Start Guide](docs/guides/getting-started/quick-start.md) - Get up and running in 10 minutes
 - 📦 [Installation Guide](docs/guides/getting-started/installation.md) - Platform-specific installation instructions
+- 🆘 [Troubleshooting Guide](docs/guides/getting-started/troubleshooting.md) - Common issues and solutions
+- 🔄 [Migration Guide (v0.15→v0.16)](docs/migration/v0.15-to-v0.16.md) - Upgrade from v0.15
+
+### Features
+
+- 🌐 [Web UI Guide](docs/guides/features/web-ui.md) - Embedded React interface documentation
+- 🗂️ [Multi-Workspace Support](docs/guides/features/multi-workspace.md) - Managing multiple projects
+- 📋 [Template System](docs/guides/features/template-system.md) - Structured task creation
+- 🤖 [AI Context Management](docs/guides/features/ai-context-management.md) - AI assistant integration
+
+### Reference
+
+- 🛠️ [MCP Tools Reference](docs/legacy/tr/mcp-araclari.md) - Complete reference for 41 MCP tools
+- 🔧 [MCP Configuration Examples](docs/guides/mcp-config-examples.md) - IDE setup guides
 - 📖 [Usage Guide](docs/guides/user/usage.md) - Detailed usage examples
-- 🛠 [MCP Tools](docs/guides/user/mcp-tools.md) - Complete reference for 41 MCP tools
-- 🤖 [AI MCP Tools](docs/tr/mcp-araclari-ai.md) - AI context management tools (v0.9.0)
-- 🏗 [System Architecture](docs/architecture/architecture-v2.md) - Technical details
-- 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
-- 💻 [Contributing Guide](CONTRIBUTING.md) - How to contribute
-- 🔧 [Go Setup Guide](docs/development/go-setup-guide.md) - Go development environment setup
 - 🎨 [VS Code Extension](docs/guides/user/vscode-extension.md) - Extension documentation
-- 🚀 **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)** - Extension'ı indir
+
+### Development
+
+- 🏗️ [System Architecture](docs/architecture/architecture-v2.md) - Technical details
+- 💻 [Contributing Guide](docs/development/contributing.md) - How to contribute
+- 🗺️ [Roadmap](ROADMAP.md) - Development roadmap and future plans
+- 📚 [Development History](docs/development/TASKS.md) - Complete project history
 
 ### AI Assistant Documentation
 
-- 🤖 [CLAUDE.md](CLAUDE.md) - Turkish AI assistant guidance
 - 🌍 [CLAUDE.en.md](CLAUDE.en.md) - English AI assistant guidance
+- 🤖 [CLAUDE.md](CLAUDE.md) - Turkish AI assistant guidance
 - 📋 [MCP Tools Reference](docs/api/MCP_TOOLS_REFERENCE.md) - Detailed MCP tool documentation
 - 📚 [Development History](docs/development/TASKS.md) - Complete project history
 
-## 🏗 Mimari
+## 🏗 Architecture
 
-### Proje Yapısı
+### Project Structure
 
 ```
 gorev/
 ├── gorev-mcpserver/        # MCP Server (Go)
-│   ├── cmd/gorev/         # CLI ve server entry point
+│   ├── cmd/gorev/         # CLI and server entry point
 │   ├── internal/
-│   │   ├── mcp/           # MCP protokol katmanı
+│   │   ├── mcp/           # MCP protocol layer
 │   │   └── gorev/        # Business logic
-│   └── test/              # Integration testler
+│   └── test/              # Integration tests
 ├── gorev-vscode/           # VS Code Extension (TypeScript)
 │   ├── src/
-│   │   ├── commands/      # VS Code komutları
-│   │   ├── providers/     # TreeView sağlayıcıları
+│   │   ├── commands/      # VS Code commands
+│   │   ├── providers/     # TreeView providers
 │   │   └── mcp/           # MCP client
 │   └── package.json       # Extension manifest
-└── docs/                   # Proje dokümantasyonu
+└── docs/                   # Project documentation
 ```
 
-### Bileşen Etkileşimi
+## 🧪 Development
 
-```
-┌───────────────┐     ┌───────────────┐     ┌────────────────┐
-│ Claude/Cursor │     │   VS Code     │     │ VS Code + Gorev│
-│               │     │ + MCP Plugin  │     │   Extension    │
-└──────┬───────┘     └──────┬───────┘     └───────┬────────┘
-       │                      │                      │
-       └──────────────────────┴──────────────────────┘
-                              │ MCP Protocol
-                        ┌─────┴─────┐
-                        │ Gorev MCP  │
-                        │   Server   │
-                        └─────┬─────┘
-                              │
-                        ┌─────┴─────┐
-                        │   SQLite   │
-                        └───────────┘
-```
-
-## 🧪 Geliştirme
-
-### Gereksinimler
+### Requirements
 
 - Go 1.23+
-- Make (opsiyonel)
-- golangci-lint (kod kalitesi için)
+- Make (optional)
+- golangci-lint (for code quality)
 
-### Komutlar
+### Commands
 
 ```bash
-# Bağımlılıkları indir
+# Download dependencies
 make deps
 
-# Test çalıştır (84.6% overall coverage)
+# Run tests (90%+ overall coverage)
 make test
 
-# Coverage raporu
+# Coverage report
 make test-coverage
 
-# Lint kontrolü
+# Lint check
 make lint
 
-# Build (tüm platformlar)
+# Build (all platforms)
 make build-all
 
 # Docker image
 make docker-build
 ```
 
-### Katkıda Bulunma
+## 📊 Project Status
 
-1. Projeyi fork'layın
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit'leyin (`git commit -m 'feat: add amazing feature'`)
-4. Branch'inizi push'layın (`git push origin feature/amazing-feature`)
-5. Pull Request açın
-
-Detaylı bilgi için [Geliştirici Rehberi](docs/development/contributing.md)'ne bakın.
-
-## 📊 Proje Durumu
-
-- **Versiyon**: v0.15.24 🚀
-- **Test Coverage**: %75+ (Comprehensive test coverage with ongoing improvements)
+- **Version**: v0.15.24 🚀
+- **Test Coverage**: 75%+ (Comprehensive test coverage with ongoing improvements)
 - **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0
 - **Database**: SQLite (embedded)
 - **Security**: Production-ready audit compliant
 - **Thread Safety**: 100% race condition free
 
-## 🤝 Topluluk
+## 🤝 Community
 
 - 📦 [GitHub Releases](https://github.com/msenol/gorev/releases)
 - 🐛 [Issue Tracker](https://github.com/msenol/gorev/issues)
 - 💬 [Discussions](https://github.com/msenol/gorev/discussions)
 - 📖 [Wiki](https://github.com/msenol/gorev/wiki)
 
-## ⚠️ BREAKING CHANGE: Template Zorunluluğu
+## 📄 License
 
-### v0.10.0'dan İtibaren Template Kullanımı Zorunludur
+This project is licensed under the [MIT License](LICENSE).
 
-`gorev_olustur` tool artık kullanılamaz. Tüm görevler template kullanılarak oluşturulmalıdır.
+## 🚨 Breaking Change: Template Requirement
 
-#### 🔄 Eski Kullanım (Artık Çalışmaz)
+**Starting from v0.10.0**, the `gorev_olustur` tool has been removed. All task creation must now use the template system for better structure and consistency.
 
-```bash
-gorev_olustur baslik="Bug fix" aciklama="..." oncelik="yuksek"
+### Migration Guide
+
+**Before (v0.9.x and earlier):**
+
+```
+Create a new task: Fix login bug
 ```
 
-#### ✅ Yeni Kullanım (Zorunlu)
+**After (v0.10.0+):**
 
-```bash
-# 1. Önce template listesini görün
-template_listele
-
-# 2. Template kullanarak görev oluşturun
-templateden_gorev_olustur template_id='bug_report_v2' degerler={
-  'baslik': 'Login bug',
-  'aciklama': 'Kullanıcı giriş yapamıyor',
-  'modul': 'auth',
-  'severity': 'high',
-  ...
-}
+```
+Use bug-report template to create: Fix login bug
 ```
 
-#### 🆕 Yeni Template'ler
+Available templates:
 
-- **bug_report_v2** - Gelişmiş bug raporu (severity, steps, environment)
-- **spike_research** - Time-boxed araştırma görevleri
-- **performance_issue** - Performans sorunları (metrics, targets)
-- **security_fix** - Güvenlik düzeltmeleri (CVSS, components)
-- **refactoring** - Kod iyileştirme (code smell, strategy)
+- `bug-report` - Bug reports and fixes
+- `feature` - New features and enhancements  
+- `task` - General tasks and activities
+- `meeting` - Meeting planning and notes
+- `research` - Research and investigation tasks
 
-#### 🎯 Neden Template Zorunlu
-
-- **Tutarlılık**: Her görev belirli standartlara uygun
-- **Kalite**: Zorunlu alanlar eksik bilgi girişini engeller
-- **Otomasyon**: Template tipine göre otomatik workflow
-- **Raporlama**: Görev tipine göre detaylı metrikler
-
-## 📄 Lisans
-
-Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
+For more details, see [MCP Tools Documentation](docs/user-guide/mcp-tools.md#gorev_template_olustur).
 
 ---
 
@@ -627,6 +474,6 @@ Made with ❤️ by [msenol](https://github.com/msenol/gorev/graphs/contributors
 
 📚 *Documentation enhanced by Claude (Anthropic) - Your AI pair programming assistant*
 
-**[⬆ Başa Dön](#-gorev)**
+**[⬆ Back to Top](#-gorev)**
 
 </div>
