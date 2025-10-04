@@ -1,8 +1,9 @@
 {
   "$schema": "https://registry.modelcontextprotocol.io/v0/schema/server.json",
   "name": "io.github.msenol.gorev",
+  "mcpName": "io.github.msenol.gorev",
   "description": "Comprehensive task management system for AI assistants with bilingual support (Turkish/English), unlimited task hierarchy, templates, dependencies, and rich VS Code integration.",
-  "version": "0.15.24",
+  "version": "0.16.0",
   "license": "MIT",
   "author": {
     "name": "Mehmet Senol",
