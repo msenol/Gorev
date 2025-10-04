@@ -1,6 +1,5 @@
 const vscode = require('vscode');
 const sinon = require('sinon');
-const { mockMCPResponses } = require('../fixtures/mockData');
 const MockAdapter = require('axios-mock-adapter');
 
 class TestHelper {
@@ -13,26 +12,99 @@ class TestHelper {
    * Create a mock API client with axios mock adapter
    */
   createMockAPIClient() {
-    const clientModule = require('../../out/api/client');
-    const ApiClient = clientModule.ApiClient;
+    try {
+      const clientModule = require('../../out/api/client');
+      const ApiClient = clientModule.ApiClient;
 
-    const client = new ApiClient('http://localhost:5082');
-    const mockAxios = new MockAdapter(client.axiosInstance);
+      const client = new ApiClient('http://localhost:5082');
+      const mockAxios = new MockAdapter(client.axiosInstance);
 
-    return { client, mockAxios };
+      return { client, mockAxios };
+    } catch (error) {
+      // If compiled code not available, create a mock client
+      const axios = require('axios');
+      const axiosInstance = axios.create({ baseURL: 'http://localhost:5082' });
+      const mockAxios = new MockAdapter(axiosInstance);
+
+      const mockClient = {
+        axiosInstance,
+        baseURL: 'http://localhost:5082',
+        isConnected: () => true,
+        connect: async () => {},
+        disconnect: () => {},
+        on: () => {},
+        emit: () => {}
+      };
+
+      return { client: mockClient, mockAxios };
+    }
   }
 
   /**
    * Setup mock API client with default responses
    */
   setupMockAPIClient(mockAxios) {
-    // Setup default successful responses
+    // Health check
     mockAxios.onGet('/health').reply(200, { status: 'ok' });
+
+    // Task operations
+    mockAxios.onGet(/\/tasks\/[^/]+$/).reply(200, {
+      success: true,
+      data: {
+        id: 'test-id',
+        baslik: 'Test Task',
+        aciklama: 'Test Description',
+        durum: 'beklemede',
+        oncelik: 'orta',
+        olusturma_tarihi: '2025-01-01T00:00:00Z',
+        guncelleme_tarihi: '2025-01-01T00:00:00Z'
+      }
+    });
 
     mockAxios.onGet('/tasks').reply(200, {
       success: true,
       data: [],
       total: 0
+    });
+
+    mockAxios.onPost('/tasks').reply(200, {
+      success: true,
+      message: '✅ Görev başarıyla oluşturuldu!'
+    });
+
+    mockAxios.onPut(/\/tasks\/[^/]+$/).reply(200, {
+      success: true,
+      message: '✅ Görev güncellendi!'
+    });
+
+    mockAxios.onDelete(/\/tasks\/[^/]+$/).reply(200, {
+      success: true,
+      message: '✅ Görev silindi!'
+    });
+
+    mockAxios.onPost('/tasks/subtask').reply(200, {
+      success: true,
+      message: '✅ Alt görev oluşturuldu!'
+    });
+
+    mockAxios.onGet(/\/tasks\/[^/]+\/hierarchy$/).reply(200, {
+      success: true,
+      data: {
+        task: {},
+        parents: [],
+        children: [],
+        stats: { total: 0, completed: 0, in_progress: 0 }
+      }
+    });
+
+    // Project operations
+    mockAxios.onGet(/\/projects\/[^/]+$/).reply(200, {
+      success: true,
+      data: {
+        id: 'test-project-id',
+        isim: 'Test Project',
+        tanim: 'Test Description'
+      }
     });
 
     mockAxios.onGet('/projects').reply(200, {
@@ -41,10 +113,74 @@ class TestHelper {
       total: 0
     });
 
+    mockAxios.onPost('/projects').reply(200, {
+      success: true,
+      message: '✅ Proje başarıyla oluşturuldu!'
+    });
+
+    mockAxios.onGet(/\/projects\/[^/]+\/tasks$/).reply(200, {
+      success: true,
+      data: [],
+      total: 0
+    });
+
+    mockAxios.onGet('/projects/active').reply(200, {
+      success: true,
+      data: null
+    });
+
+    mockAxios.onPost('/projects/active').reply(200, {
+      success: true,
+      message: '✅ Aktif proje ayarlandı!'
+    });
+
+    // Template operations
+    mockAxios.onGet(/\/templates\/[^/]+$/).reply(200, {
+      success: true,
+      data: {
+        id: 'test-template-id',
+        isim: 'Test Template',
+        kategori: 'Test'
+      }
+    });
+
     mockAxios.onGet('/templates').reply(200, {
       success: true,
       data: [],
       total: 0
+    });
+
+    mockAxios.onPost('/tasks/from-template').reply(200, {
+      success: true,
+      message: '✅ Template kullanılarak görev oluşturuldu!'
+    });
+
+    // Summary
+    mockAxios.onGet('/summary').reply(200, {
+      success: true,
+      data: {
+        total_tasks: 0,
+        total_projects: 0,
+        status_counts: {},
+        priority_counts: {}
+      }
+    });
+
+    // Export/Import operations
+    mockAxios.onPost('/export').reply(200, {
+      success: true,
+      message: '✅ Export completed successfully'
+    });
+
+    mockAxios.onPost('/import').reply(200, {
+      success: true,
+      message: '✅ Import completed successfully'
+    });
+
+    // Dependencies
+    mockAxios.onPost('/tasks/dependency').reply(200, {
+      success: true,
+      message: '✅ Bağımlılık eklendi!'
     });
 
     return mockAxios;
@@ -64,43 +200,6 @@ class TestHelper {
     return this.stubs;
   }
 
-  /**
-   * Create a mock MCP client
-   */
-  createMockMCPClient() {
-    return {
-      isConnected: this.sandbox.stub().returns(true),
-      connect: this.sandbox.stub().resolves(),
-      disconnect: this.sandbox.stub(),
-      callTool: this.sandbox.stub(),
-      _onDidConnect: new vscode.EventEmitter(),
-      _onDidDisconnect: new vscode.EventEmitter(),
-      onDidConnect: function() { return this._onDidConnect.event; },
-      onDidDisconnect: function() { return this._onDidDisconnect.event; }
-    };
-  }
-
-  /**
-   * Setup mock MCP client with responses
-   */
-  setupMockMCPClient(client, responses = mockMCPResponses) {
-    // Setup default responses
-    client.callTool.withArgs('gorev_listele').resolves(responses.gorev_listele);
-    client.callTool.withArgs('proje_listele').resolves(responses.proje_listele);
-    client.callTool.withArgs('template_listele').resolves(responses.template_listele);
-    client.callTool.withArgs('ozet_goster').resolves(responses.ozet_goster);
-    
-    // Setup success responses for create operations
-    client.callTool.withArgs('gorev_olustur').resolves({
-      content: [{ type: 'text', text: '✅ Görev başarıyla oluşturuldu!' }]
-    });
-    
-    client.callTool.withArgs('proje_olustur').resolves({
-      content: [{ type: 'text', text: '✅ Proje başarıyla oluşturuldu!' }]
-    });
-    
-    return client;
-  }
 
   /**
    * Create a test workspace

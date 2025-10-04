@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const vscode = require('vscode');
 const TestHelper = require('../utils/testHelper');
 
-suite('InlineEditCommands Test Suite', () => {
+suite('DatabaseCommands Test Suite', () => {
   let helper;
   let sandbox;
   let mockApiClient;
@@ -37,11 +37,11 @@ suite('InlineEditCommands Test Suite', () => {
     helper.cleanup();
   });
 
-  test('should register inline edit commands', () => {
+  test('should register database commands', () => {
     try {
-      const module = require('../../out/commands/inlineEditCommands');
-      if (module && module.registerInlineEditCommands) {
-        module.registerInlineEditCommands(mockContext, mockApiClient, mockProviders);
+      const module = require('../../out/commands/databaseCommands');
+      if (module && module.registerDatabaseCommands) {
+        module.registerDatabaseCommands(mockContext, mockApiClient, mockProviders);
         assert(mockContext.subscriptions.length > 0);
       }
     } catch (error) {
@@ -50,11 +50,7 @@ suite('InlineEditCommands Test Suite', () => {
     }
   });
 
-  test('should handle inline editing', () => {
-    mockAxios.onPut(/\/tasks\/[^/]+$/).reply(200, {
-      success: true
-    });
-
-    assert(true);
+  test('should handle database operations', () => {
+    assert(mockApiClient);
   });
 });

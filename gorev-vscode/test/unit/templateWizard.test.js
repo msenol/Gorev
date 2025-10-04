@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const vscode = require('vscode');
 const TestHelper = require('../utils/testHelper');
 
-suite('GroupingStrategy Test Suite', () => {
+suite('TemplateWizard Test Suite', () => {
   let helper;
   let sandbox;
   let mockApiClient;
@@ -22,7 +22,7 @@ suite('GroupingStrategy Test Suite', () => {
     sandbox.stub(mockApiClient, 'isConnected').returns(true);
 
     try {
-      module = require('../../out/providers/groupingStrategy');
+      module = require('../../out/ui/templateWizard');
     } catch (error) {
       module = null;
     }
@@ -32,11 +32,11 @@ suite('GroupingStrategy Test Suite', () => {
     helper.cleanup();
   });
 
-  test('should load provider module', () => {
-    assert(module !== undefined, 'Provider module should be defined');
+  test('should load UI module', () => {
+    assert(module !== undefined, 'UI module should be defined');
   });
 
-  test('should export provider class', () => {
+  test('should export UI class or functions', () => {
     if (!module) return;
     assert(typeof module === 'object' || typeof module === 'function');
   });
