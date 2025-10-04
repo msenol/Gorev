@@ -1,7 +1,7 @@
 # Gorev API Reference
 
-> **Version**: This documentation is valid for v0.15.24+
-> **Last Updated**: September 21, 2025
+> **Version**: This documentation is valid for v0.16.0+
+> **Last Updated**: October 4, 2025
 
 Complete API reference for Gorev MCP server, data models, and programmatic interfaces.
 
@@ -498,6 +498,444 @@ type Event struct {
 - Horizontal scaling via load balancer
 - Database replication support
 - Stateless server design
+
+## Practical Examples
+
+### Example 1: Creating a Bug Report Task
+
+**Using MCP Tool:**
+
+```json
+{
+  "name": "templateden_gorev_olustur",
+  "arguments": {
+    "template_id": "bug-report-template-id",
+    "degerler": {
+      "baslik": "Login button not responding",
+      "aciklama": "Users report that clicking the login button does nothing",
+      "modul": "authentication",
+      "ortam": "production",
+      "adimlar": "1. Navigate to login page\n2. Enter credentials\n3. Click login button",
+      "beklenen": "User should be redirected to dashboard",
+      "mevcut": "Nothing happens, button doesn't respond",
+      "oncelik": "yuksek",
+      "etiketler": "bug,urgent,auth"
+    }
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "✓ Template kullanılarak görev oluşturuldu: 🐛 [authentication] Login button not responding (ID: abc-123)"
+  }]
+}
+```
+
+### Example 2: Listing High Priority Tasks
+
+**Using MCP Tool:**
+
+```json
+{
+  "name": "gorev_listele",
+  "arguments": {
+    "durum": "devam_ediyor",
+    "sirala": "son_tarih_asc"
+  }
+}
+```
+
+**Using Advanced Search:**
+
+```json
+{
+  "name": "gorev_search_advanced",
+  "arguments": {
+    "filters": {
+      "oncelik": "yuksek",
+      "durum": ["beklemede", "devam_ediyor"]
+    },
+    "sort_by": "due_date",
+    "max_results": 10
+  }
+}
+```
+
+### Example 3: Project Workflow
+
+**Step 1: Create Project**
+
+```json
+{
+  "name": "proje_olustur",
+  "arguments": {
+    "isim": "Mobile App v2.0",
+    "tanim": "React Native cross-platform mobile application with offline support"
+  }
+}
+```
+
+**Step 2: Set as Active Project**
+
+```json
+{
+  "name": "aktif_proje_ayarla",
+  "arguments": {
+    "proje_id": "project-id-from-step-1"
+  }
+}
+```
+
+**Step 3: Create Tasks in Project**
+
+```json
+{
+  "name": "templateden_gorev_olustur",
+  "arguments": {
+    "template_id": "feature-template-id",
+    "degerler": {
+      "baslik": "Implement offline mode",
+      "aciklama": "Add offline data synchronization",
+      "oncelik": "yuksek"
+    }
+  }
+}
+```
+
+### Example 4: Task Hierarchy with Subtasks
+
+**Create Parent Task:**
+
+```json
+{
+  "name": "templateden_gorev_olustur",
+  "arguments": {
+    "template_id": "feature-template-id",
+    "degerler": {
+      "baslik": "User Authentication System",
+      "aciklama": "Complete authentication implementation"
+    }
+  }
+}
+```
+
+**Create Subtasks:**
+
+```json
+{
+  "name": "gorev_altgorev_olustur",
+  "arguments": {
+    "parent_id": "parent-task-id",
+    "baslik": "Implement JWT token generation",
+    "oncelik": "yuksek"
+  }
+}
+```
+
+```json
+{
+  "name": "gorev_altgorev_olustur",
+  "arguments": {
+    "parent_id": "parent-task-id",
+    "baslik": "Add refresh token mechanism",
+    "oncelik": "orta"
+  }
+}
+```
+
+**View Hierarchy:**
+
+```json
+{
+  "name": "gorev_hiyerarsi_goster",
+  "arguments": {
+    "gorev_id": "parent-task-id"
+  }
+}
+```
+
+### Example 5: Export and Backup
+
+**Export All Data:**
+
+```json
+{
+  "name": "gorev_export",
+  "arguments": {
+    "output_path": "/backup/gorev-backup-2025-10-04.json",
+    "format": "json",
+    "include_completed": true,
+    "include_dependencies": true
+  }
+}
+```
+
+**Export Specific Project:**
+
+```json
+{
+  "name": "gorev_export",
+  "arguments": {
+    "output_path": "/backup/mobile-app-project.json",
+    "format": "json",
+    "project_filter": ["mobile-app-project-id"]
+  }
+}
+```
+
+### Example 6: AI Context Management
+
+**Set Active Task for AI Session:**
+
+```json
+{
+  "name": "gorev_set_active",
+  "arguments": {
+    "task_id": "current-working-task-id"
+  }
+}
+```
+
+**Get AI Context Summary:**
+
+```json
+{
+  "name": "gorev_context_summary",
+  "arguments": {}
+}
+```
+
+**Natural Language Query:**
+
+```json
+{
+  "name": "gorev_nlp_query",
+  "arguments": {
+    "query": "show me all high priority bugs due this week"
+  }
+}
+```
+
+### Example 7: Batch Operations
+
+**Update Multiple Tasks:**
+
+```json
+{
+  "name": "gorev_batch_update",
+  "arguments": {
+    "updates": [
+      {
+        "id": "task-1",
+        "durum": "tamamlandi"
+      },
+      {
+        "id": "task-2",
+        "durum": "devam_ediyor",
+        "oncelik": "yuksek"
+      },
+      {
+        "id": "task-3",
+        "son_tarih": "2025-10-15"
+      }
+    ]
+  }
+}
+```
+
+### Example 8: Filter Profiles
+
+**Save Search Profile:**
+
+```json
+{
+  "name": "gorev_filter_profile_save",
+  "arguments": {
+    "name": "High Priority Active",
+    "description": "All high priority tasks in progress",
+    "filters": {
+      "oncelik": "yuksek",
+      "durum": "devam_ediyor"
+    }
+  }
+}
+```
+
+**Load and Use Profile:**
+
+```json
+{
+  "name": "gorev_filter_profile_load",
+  "arguments": {
+    "profile_name": "High Priority Active"
+  }
+}
+```
+
+### Example 9: File Watching
+
+**Add File to Task:**
+
+```json
+{
+  "name": "gorev_file_watch_add",
+  "arguments": {
+    "task_id": "feature-task-id",
+    "file_path": "/src/components/Authentication.tsx"
+  }
+}
+```
+
+**List Watched Files:**
+
+```json
+{
+  "name": "gorev_file_watch_list",
+  "arguments": {
+    "task_id": "feature-task-id"
+  }
+}
+```
+
+### Example 10: REST API Integration
+
+**Using REST API (v0.16.0+):**
+
+```bash
+# Get all tasks
+curl http://localhost:5082/api/tasks
+
+# Get specific task
+curl http://localhost:5082/api/tasks/123
+
+# Create new task
+curl -X POST http://localhost:5082/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "baslik": "New task",
+    "aciklama": "Task description",
+    "oncelik": "yuksek"
+  }'
+
+# Update task
+curl -X PUT http://localhost:5082/api/tasks/123 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "durum": "tamamlandi"
+  }'
+
+# Delete task
+curl -X DELETE http://localhost:5082/api/tasks/123
+```
+
+## Best Practices
+
+### 1. Task Organization
+
+- Use **projects** to group related tasks
+- Set **active project** when working on specific initiatives
+- Use **subtasks** for breaking down complex tasks
+- Apply consistent **tagging** for easy filtering
+
+### 2. Template Usage
+
+- Always use templates for structured task creation (mandatory v0.10.0+)
+- Create custom templates for recurring workflows
+- Use template fields to enforce data consistency
+
+### 3. Performance Optimization
+
+- Use **pagination** (limit/offset) for large task lists
+- Apply **filters** to reduce result sets
+- Save **filter profiles** for frequently used searches
+- Use **batch operations** for multiple updates
+
+### 4. Data Management
+
+- Regular **exports** for backup
+- Use **dry_run** mode before imports
+- Map projects carefully during import
+- Keep **file watches** for automatic status updates
+
+### 5. AI Integration
+
+- Set **active task** for focused AI assistance
+- Use **NLP queries** for natural language searches
+- Leverage **context summary** for session overview
+- Track **recent tasks** for quick access
+
+## Common Patterns
+
+### Pattern 1: Sprint Planning
+
+```javascript
+// 1. Create sprint project
+const sprint = await createProject("Sprint 42", "Oct 2025 Sprint");
+
+// 2. Set as active
+await setActiveProject(sprint.id);
+
+// 3. Import tasks from backlog
+await importTasks("backlog-export.json");
+
+// 4. Create sprint goals
+await createTaskFromTemplate("feature", {
+  baslik: "Implement user dashboard",
+  oncelik: "yuksek"
+});
+```
+
+### Pattern 2: Bug Triage
+
+```javascript
+// 1. Search for new bugs
+const bugs = await searchAdvanced({
+  filters: { etiket: "bug", durum: "beklemede" }
+});
+
+// 2. Batch prioritize
+await batchUpdate(bugs.map(bug => ({
+  id: bug.id,
+  oncelik: calculatePriority(bug)
+})));
+
+// 3. Assign to projects
+for (const bug of bugs) {
+  await updateTask(bug.id, {
+    proje_id: determineProject(bug)
+  });
+}
+```
+
+### Pattern 3: Daily Standup
+
+```javascript
+// 1. Get context summary
+const summary = await getContextSummary();
+
+// 2. List active tasks
+const active = await listTasks({
+  durum: "devam_ediyor",
+  limit: 5
+});
+
+// 3. Check blockers
+const blocked = await searchAdvanced({
+  filters: { etiket: "blocked" }
+});
+```
+
+---
+
+**See Also:**
+- [MCP Tools Reference](MCP_TOOLS_REFERENCE.md) - Complete tool documentation
+- [REST API Reference](rest-api-reference.md) - HTTP API endpoints
+- [Usage Guide](../guides/user/usage.md) - User guide and tutorials
 
 ---
 
