@@ -123,6 +123,11 @@ func (m *MockVeriYoneticiAI) BaglantiEkle(baglanti *Baglanti) error {
 	return args.Error(0)
 }
 
+func (m *MockVeriYoneticiAI) BaglantiSil(kaynakID, hedefID string) error {
+	args := m.Called(kaynakID, hedefID)
+	return args.Error(0)
+}
+
 func (m *MockVeriYoneticiAI) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 	args := m.Called(gorevID)
 	if args.Get(0) == nil {

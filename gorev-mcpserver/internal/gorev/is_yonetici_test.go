@@ -3,6 +3,7 @@ package gorev
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -481,6 +482,10 @@ func (m *MockVeriYonetici) AktifProjeAyarla(projeID string) error {
 	if m.shouldFailAktifProje {
 		return errors.New("mock error")
 	}
+	// Check if project exists (like real implementation)
+	if _, exists := m.projeler[projeID]; !exists {
+		return fmt.Errorf("proje bulunamadı: %s", projeID)
+	}
 	m.aktifProjeID = projeID
 	m.aktifProjeSet = true
 	return nil
@@ -759,6 +764,16 @@ func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
 	}
 	m.baglantilar = append(m.baglantilar, baglanti)
 	return nil
+}
+
+func (m *MockVeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
+	for i, b := range m.baglantilar {
+		if b.KaynakID == kaynakID && b.HedefID == hedefID {
+			m.baglantilar = append(m.baglantilar[:i], m.baglantilar[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("dependency not found")
 }
 
 func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {

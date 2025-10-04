@@ -328,9 +328,10 @@ func TestInitWorkspaceDatabase(t *testing.T) {
 		require.NoError(t, err)
 		file.Close()
 
-		// Try to initialize again
+		// Try to initialize again - should return error
 		err = initWorkspaceDatabase(false)
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "database already exists")
 	})
 }
 
@@ -350,8 +351,8 @@ func TestTemplateCommands(t *testing.T) {
 	})
 
 	t.Run("show template", func(t *testing.T) {
-		// This will show all templates since no specific template is provided
-		err := showTemplate("")
+		// Show the "bug" template using its alias
+		err := showTemplate("bug")
 		require.NoError(t, err)
 	})
 

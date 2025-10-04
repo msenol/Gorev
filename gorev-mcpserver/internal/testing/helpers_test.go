@@ -81,3 +81,110 @@ func TestMultipleTestEnvironmentCreation(t *testing.T) {
 		t.Error("Expected different IsYonetici instances")
 	}
 }
+
+// TestSetupTestDatabase_UseTempFile tests temporary file database creation
+func TestSetupTestDatabase_UseTempFile(t *testing.T) {
+	config := &TestDatabaseConfig{
+		UseTempFile:     true,
+		MigrationsPath:  "file://../../internal/veri/migrations",
+		CreateTemplates: true,
+		InitializeI18n:  false, // Already initialized
+	}
+
+	veriYonetici, cleanup := SetupTestDatabase(t, config)
+	if veriYonetici == nil {
+		t.Fatal("Expected VeriYonetici to be initialized")
+	}
+	if cleanup == nil {
+		t.Fatal("Expected cleanup function")
+	}
+
+	// Cleanup should remove the temporary file
+	cleanup()
+}
+
+// TestSetupTestDatabase_CustomPath tests custom database path
+func TestSetupTestDatabase_CustomPath(t *testing.T) {
+	config := &TestDatabaseConfig{
+		CustomPath:      "/tmp/test_custom.db",
+		MigrationsPath:  "file://../../internal/veri/migrations",
+		CreateTemplates: false,
+		InitializeI18n:  false,
+	}
+
+	veriYonetici, cleanup := SetupTestDatabase(t, config)
+	if veriYonetici == nil {
+		t.Fatal("Expected VeriYonetici to be initialized")
+	}
+	if cleanup == nil {
+		t.Fatal("Expected cleanup function")
+	}
+
+	cleanup()
+}
+
+// TestSetupTestDatabase_NoTemplates tests database creation without templates
+func TestSetupTestDatabase_NoTemplates(t *testing.T) {
+	config := &TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  "file://../../internal/veri/migrations",
+		CreateTemplates: false,
+		InitializeI18n:  false,
+	}
+
+	veriYonetici, cleanup := SetupTestDatabase(t, config)
+	if veriYonetici == nil {
+		t.Fatal("Expected VeriYonetici to be initialized")
+	}
+
+	defer cleanup()
+
+	// Verify database was created successfully (templates may or may not exist
+	// depending on previous test runs in the same session)
+	// The important thing is that CreateTemplates=false doesn't cause an error
+	templates, err := veriYonetici.TemplateListele("")
+	if err != nil {
+		t.Fatalf("Failed to list templates: %v", err)
+	}
+
+	// With CreateTemplates=false, we just verify the database works
+	// We don't assert on template count since VarsayilanTemplateleriOlustur
+	// may have been called by other code paths
+	t.Logf("Found %d templates in database", len(templates))
+}
+
+// TestSetupTestDatabase_WithI18n tests i18n initialization
+func TestSetupTestDatabase_WithI18n(t *testing.T) {
+	config := &TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsPath:  "file://../../internal/veri/migrations",
+		CreateTemplates: false,
+		InitializeI18n:  true,
+	}
+
+	veriYonetici, cleanup := SetupTestDatabase(t, config)
+	if veriYonetici == nil {
+		t.Fatal("Expected VeriYonetici to be initialized")
+	}
+
+	defer cleanup()
+}
+
+// TestSetupTestDatabase_DefaultPath tests default path fallback
+func TestSetupTestDatabase_DefaultPath(t *testing.T) {
+	config := &TestDatabaseConfig{
+		UseMemoryDB:     false,
+		UseTempFile:     false,
+		CustomPath:      "",
+		MigrationsPath:  "file://../../internal/veri/migrations",
+		CreateTemplates: false,
+		InitializeI18n:  false,
+	}
+
+	veriYonetici, cleanup := SetupTestDatabase(t, config)
+	if veriYonetici == nil {
+		t.Fatal("Expected VeriYonetici to be initialized")
+	}
+
+	defer cleanup()
+}

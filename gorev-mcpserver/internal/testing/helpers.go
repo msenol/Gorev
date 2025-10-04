@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"io/fs"
 	"os"
 	"strings"
 	"testing"
@@ -17,7 +18,8 @@ type TestDatabaseConfig struct {
 	UseMemoryDB     bool   // Use :memory: database
 	UseTempFile     bool   // Use temporary file database
 	CustomPath      string // Use custom database path
-	MigrationsPath  string // Path to migration files
+	MigrationsPath  string // Path to migration files (used if MigrationsFS is nil)
+	MigrationsFS    fs.FS  // Embedded migrations filesystem (preferred over MigrationsPath)
 	CreateTemplates bool   // Create default templates
 	InitializeI18n  bool   // Initialize i18n system
 }
@@ -26,7 +28,7 @@ type TestDatabaseConfig struct {
 func DefaultTestDatabaseConfig() *TestDatabaseConfig {
 	return &TestDatabaseConfig{
 		UseMemoryDB:     true,
-		MigrationsPath:  constants.TestMigrationsPathIntegration,
+		MigrationsPath:  constants.TestMigrationsPathMCP, // internal/testing is same level as internal/gorev
 		CreateTemplates: true,
 		InitializeI18n:  true,
 	}
@@ -66,7 +68,15 @@ func SetupTestDatabase(t *testing.T, config *TestDatabaseConfig) (*gorev.VeriYon
 	}
 
 	// Create database manager
-	veriYonetici, err := gorev.YeniVeriYonetici(dbPath, config.MigrationsPath)
+	var veriYonetici *gorev.VeriYonetici
+	var err error
+
+	// Use embedded migrations if available, otherwise use file path
+	if config.MigrationsFS != nil {
+		veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, config.MigrationsFS)
+	} else {
+		veriYonetici, err = gorev.YeniVeriYonetici(dbPath, config.MigrationsPath)
+	}
 	require.NoError(t, err)
 
 	// Create default templates if requested

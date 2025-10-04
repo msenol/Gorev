@@ -12,6 +12,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// getTestConfigWithEmbeddedMigrations returns a test config with embedded migrations
+func getTestConfigWithEmbeddedMigrations(t *testing.T) *testinghelpers.TestDatabaseConfig {
+	migrationsFS, err := getEmbeddedMigrationsFS()
+	require.NoError(t, err, "Failed to get embedded migrations FS")
+
+	return &testinghelpers.TestDatabaseConfig{
+		UseMemoryDB:     true,
+		MigrationsFS:    migrationsFS,
+		CreateTemplates: true,
+		InitializeI18n:  true,
+	}
+}
+
 // Helper function to extract text from MCP result
 func extractText(t *testing.T, result *mcp.CallToolResult) string {
 	require.Len(t, result.Content, 1)
@@ -31,14 +44,8 @@ func extractText(t *testing.T, result *mcp.CallToolResult) string {
 }
 
 func TestGorevOlusturVeListele(t *testing.T) {
-	// Create test environment using standardized helpers
-	config := &testinghelpers.TestDatabaseConfig{
-		UseMemoryDB:     true,
-		MigrationsPath:  constants.TestMigrationsPathIntegration,
-		CreateTemplates: true,
-		InitializeI18n:  true,
-	}
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, config)
+	// Create test environment using embedded migrations
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -110,7 +117,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 
 func TestGorevDurumGuncelle(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -143,7 +150,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 
 func TestProjeOlustur(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -166,7 +173,7 @@ func TestProjeOlustur(t *testing.T) {
 
 func TestOzetGoster(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -202,7 +209,7 @@ func TestOzetGoster(t *testing.T) {
 
 func TestHataYonetimi(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -275,7 +282,7 @@ func TestHataYonetimi(t *testing.T) {
 
 func TestGorevDetay(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -320,7 +327,7 @@ func TestGorevDetay(t *testing.T) {
 
 func TestGorevDuzenle(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -355,7 +362,7 @@ func TestGorevDuzenle(t *testing.T) {
 
 func TestGorevSil(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -440,7 +447,7 @@ func TestProjeListele(t *testing.T) {
 
 func TestProjeGorevleri(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
@@ -492,7 +499,7 @@ func TestProjeGorevleri(t *testing.T) {
 
 func TestGorevBagimlilikEkle(t *testing.T) {
 	// Create test environment using standardized helpers
-	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentBasic(t)
+	isYonetici, cleanup := testinghelpers.SetupTestEnvironmentWithConfig(t, getTestConfigWithEmbeddedMigrations(t))
 	defer cleanup()
 
 	// Handler'ları oluştur
