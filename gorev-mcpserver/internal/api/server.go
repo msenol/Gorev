@@ -20,12 +20,13 @@ type APIServer struct {
 	app        *fiber.App
 	port       string
 	isYonetici *gorev.IsYonetici
+	handlers   interface{} // MCP Handlers for export/import operations
 }
 
 // NewAPIServer creates a new API server instance
 func NewAPIServer(port string, isYonetici *gorev.IsYonetici) *APIServer {
 	if port == "" {
-		port = "8080"
+		port = "5082"
 	}
 
 	app := fiber.New(fiber.Config{
@@ -71,6 +72,11 @@ func NewAPIServer(port string, isYonetici *gorev.IsYonetici) *APIServer {
 // App returns the underlying Fiber app instance
 func (s *APIServer) App() *fiber.App {
 	return s.app
+}
+
+// SetHandlers sets the MCP handlers for export/import operations
+func (s *APIServer) SetHandlers(handlers interface{}) {
+	s.handlers = handlers
 }
 
 // setupRoutes configures all API routes
@@ -122,6 +128,10 @@ func (s *APIServer) setupRoutes() {
 	// Active project routes
 	api.Get("/active-project", s.getActiveProject)
 	api.Delete("/active-project", s.removeActiveProject)
+
+	// Export/Import routes
+	api.Post("/export", s.exportData)
+	api.Post("/import", s.importData)
 
 	// Note: Static web UI is served by ServeStaticFiles() called from main.go after server creation
 }
@@ -615,10 +625,16 @@ func (s *APIServer) removeDependency(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Both task IDs are required")
 	}
 
-	// Remove dependency - use DELETE on database
-	// Note: There's no direct method, we'll need to add one to VeriYonetici or use SQL
-	// For now, return not implemented
-	return fiber.NewError(fiber.StatusNotImplemented, "Dependency removal not yet implemented")
+	// Remove dependency using VeriYonetici
+	err := s.isYonetici.VeriYonetici().BaglantiSil(kaynakID, hedefID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to remove dependency: %v", err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Dependency removed successfully",
+	})
 }
 
 // getActiveProject retrieves the currently active project
