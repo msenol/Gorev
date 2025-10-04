@@ -2149,8 +2149,16 @@ func (h *Handlers) GorevBatchUpdate(params map[string]interface{}) (*mcp.CallToo
 			continue
 		}
 
-		updatesData, ok := updateMap["updates"].(map[string]interface{})
-		if !ok {
+		// Build updates data from all fields except "id"
+		updatesData := make(map[string]interface{})
+		for key, value := range updateMap {
+			if key != "id" {
+				updatesData[key] = value
+			}
+		}
+
+		// Skip if no actual updates provided
+		if len(updatesData) == 0 {
 			continue
 		}
 
@@ -3144,12 +3152,47 @@ func (h *Handlers) GorevFilterProfileList(params map[string]interface{}) (*mcp.C
 		profiles = defaultProfiles
 	}
 
-	responseText := fmt.Sprintf("Filter Profiles (%d found):\n", len(profiles))
-	for _, profile := range profiles {
-		responseText += fmt.Sprintf("- %s: %s\n", profile.Name, profile.Description)
+	// Build detailed response with full profile information
+	var response strings.Builder
+	response.WriteString(fmt.Sprintf("## 📁 Filtre Profilleri (%d adet)\n\n", len(profiles)))
+
+	if len(profiles) == 0 {
+		response.WriteString("ℹ️ Henüz kaydedilmiş filtre profili bulunmuyor.\n")
+	} else {
+		for i, profile := range profiles {
+			response.WriteString(fmt.Sprintf("### %d. %s\n", i+1, profile.Name))
+			response.WriteString(fmt.Sprintf("- **ID:** %s\n", profile.ID))
+			if profile.Description != "" {
+				response.WriteString(fmt.Sprintf("- **Açıklama:** %s\n", profile.Description))
+			}
+			if profile.IsDefault {
+				response.WriteString("- **Varsayılan:** ✅ Evet\n")
+			}
+			if profile.UseCount > 0 {
+				response.WriteString(fmt.Sprintf("- **Kullanım Sayısı:** %d\n", profile.UseCount))
+			}
+
+			// Show filter details
+			if len(profile.Filters.Status) > 0 {
+				response.WriteString(fmt.Sprintf("- **Durum Filtresi:** %v\n", profile.Filters.Status))
+			}
+			if len(profile.Filters.Priority) > 0 {
+				response.WriteString(fmt.Sprintf("- **Öncelik Filtresi:** %v\n", profile.Filters.Priority))
+			}
+			if len(profile.Filters.Tags) > 0 {
+				response.WriteString(fmt.Sprintf("- **Etiket Filtresi:** %v\n", profile.Filters.Tags))
+			}
+			if len(profile.Filters.ProjectIDs) > 0 {
+				response.WriteString(fmt.Sprintf("- **Proje ID'leri:** %v\n", profile.Filters.ProjectIDs))
+			}
+
+			response.WriteString("\n")
+		}
+
+		response.WriteString("💡 **Kullanım:** `gorev_filter_profile_load` komutuyla profil ID veya ismiyle yükleyebilirsiniz.\n")
 	}
 
-	return mcp.NewToolResultText(responseText), nil
+	return mcp.NewToolResultText(response.String()), nil
 }
 
 // GorevFilterProfileDelete deletes a filter profile

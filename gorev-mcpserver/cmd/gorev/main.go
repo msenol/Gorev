@@ -164,7 +164,11 @@ func initWorkspaceDatabase(global bool) error {
 	var dbPath string
 	var dbDir string
 
-	if global {
+	// Check GOREV_DB_PATH environment variable first
+	if envDBPath := os.Getenv("GOREV_DB_PATH"); envDBPath != "" {
+		dbPath = envDBPath
+		dbDir = filepath.Dir(dbPath)
+	} else if global {
 		// Global database in user home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
@@ -276,7 +280,7 @@ func main() {
 		},
 	}
 	serveCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, i18n.T("cli.debug"))
-	serveCmd.PersistentFlags().StringVar(&apiPortFlag, "api-port", "8080", "API server port")
+	serveCmd.PersistentFlags().StringVar(&apiPortFlag, "api-port", "5082", "API server port")
 	serveCmd.PersistentFlags().BoolVar(&noAPIFlag, "no-api", false, "Disable API server (MCP only)")
 
 	versionCmd := &cobra.Command{
