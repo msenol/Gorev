@@ -88,6 +88,12 @@ func NewFileWatcher(veriYonetici VeriYoneticiInterface, config FileWatcherConfig
 		config:       config,
 	}
 
+	// Load existing file watches from database
+	if err := fw.loadFromDatabase(); err != nil {
+		log.Printf("Warning: failed to load file watches from database: %v", err)
+		// Don't fail initialization, continue with empty watches
+	}
+
 	// Start the event processing goroutine
 	go fw.processEvents()
 
@@ -126,6 +132,11 @@ func (fw *FileWatcher) AddTaskPath(taskID string, path string) error {
 		if !strings.Contains(err.Error(), "already watching") {
 			return fmt.Errorf("failed to add path to watcher: %w", err)
 		}
+	}
+
+	// Save to database for persistence
+	if err := fw.veriYonetici.GorevDosyaYoluEkle(taskID, cleanPath); err != nil {
+		return fmt.Errorf("failed to save path to database: %w", err)
 	}
 
 	// Update internal mappings
@@ -198,6 +209,12 @@ func (fw *FileWatcher) RemoveTaskPath(taskID string, path string) error {
 		} else {
 			fw.taskPaths[taskID] = newPaths
 		}
+	}
+
+	// Remove from database
+	if err := fw.veriYonetici.GorevDosyaYoluSil(taskID, cleanPath); err != nil {
+		// Log but don't fail - path might not be in DB
+		log.Printf("Warning: failed to remove path from database: %v", err)
 	}
 
 	log.Printf("Removed path %s for task %s", cleanPath, taskID)
@@ -495,4 +512,66 @@ func (fw *FileWatcher) GetStats() map[string]interface{} {
 		"watched_tasks_count": len(fw.taskPaths),
 		"config":              fw.config,
 	}
+}
+
+// loadFromDatabase loads all file watches from database on initialization
+func (fw *FileWatcher) loadFromDatabase() error {
+	// Get all unique task IDs from database
+	db, err := fw.veriYonetici.GetDB()
+	if err != nil {
+		return fmt.Errorf("failed to get database: %w", err)
+	}
+
+	// If database is nil (e.g., in tests with mocks), skip loading
+	if db == nil {
+		log.Printf("Database is nil, skipping file watch loading (likely in test mode)")
+		return nil
+	}
+
+	// Query all task-path mappings
+	rows, err := db.Query(`
+		SELECT task_id, file_path
+		FROM task_file_paths
+		ORDER BY task_id, created_at ASC
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to query file paths: %w", err)
+	}
+	defer rows.Close()
+
+	loadCount := 0
+	for rows.Next() {
+		var taskID, filePath string
+		if err := rows.Scan(&taskID, &filePath); err != nil {
+			log.Printf("Warning: failed to scan file path row: %v", err)
+			continue
+		}
+
+		// Add to internal mappings (without saving back to DB)
+		cleanPath := filepath.Clean(filePath)
+
+		// Add to filesystem watcher
+		watchPath := cleanPath
+		if !fw.isDirectory(cleanPath) {
+			watchPath = filepath.Dir(cleanPath)
+		}
+
+		if err := fw.watcher.Add(watchPath); err != nil {
+			if !strings.Contains(err.Error(), "already watching") {
+				log.Printf("Warning: failed to add watch for %s: %v", watchPath, err)
+			}
+		}
+
+		// Update internal mappings
+		fw.watchedPaths[cleanPath] = append(fw.watchedPaths[cleanPath], taskID)
+		fw.taskPaths[taskID] = append(fw.taskPaths[taskID], cleanPath)
+		loadCount++
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("row iteration error: %w", err)
+	}
+
+	log.Printf("Loaded %d file watches from database", loadCount)
+	return nil
 }
