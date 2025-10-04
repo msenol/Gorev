@@ -1,14 +1,17 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { COMMANDS } from '../utils/constants';
 import { t } from '../utils/l10n';
+import { WorkspaceContext } from '../models/workspace';
 
 export class StatusBarManager implements vscode.Disposable {
   private statusBarItem: vscode.StatusBarItem;
   private databaseModeItem: vscode.StatusBarItem;
+  private workspaceItem: vscode.StatusBarItem;
   private visible = false;
   private currentDatabaseMode = 'auto';
   private currentDatabasePath = '';
+  private workspaceContext: WorkspaceContext | undefined;
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(
@@ -23,18 +26,27 @@ export class StatusBarManager implements vscode.Disposable {
       99
     );
     this.updateDatabaseModeDisplay();
+
+    // Workspace indicator
+    this.workspaceItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      98
+    );
+    this.updateWorkspaceDisplay();
   }
 
   show(): void {
     this.visible = true;
     this.statusBarItem.show();
     this.databaseModeItem.show();
+    this.workspaceItem.show();
   }
 
   hide(): void {
     this.visible = false;
     this.statusBarItem.hide();
     this.databaseModeItem.hide();
+    this.workspaceItem.hide();
   }
 
   isVisible(): boolean {
@@ -57,6 +69,18 @@ export class StatusBarManager implements vscode.Disposable {
     this.statusBarItem.text = t('statusBar.disconnected');
     this.statusBarItem.tooltip = t('statusBar.disconnectedTooltip');
     this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+  }
+
+  setConnectionStatus(connected: boolean, mode?: string): void {
+    if (connected) {
+      this.setConnected();
+      if (mode) {
+        // Update tooltip to show connection mode
+        this.statusBarItem.tooltip = `${t('statusBar.connectedTooltip')} (${mode.toUpperCase()})`;
+      }
+    } else {
+      this.setDisconnected();
+    }
   }
 
   update(taskCount?: number, activeProject?: string): void {
@@ -114,8 +138,26 @@ export class StatusBarManager implements vscode.Disposable {
     this.databaseModeItem.tooltip = tooltip;
   }
 
+  setWorkspaceContext(context: WorkspaceContext | undefined): void {
+    this.workspaceContext = context;
+    this.updateWorkspaceDisplay();
+  }
+
+  private updateWorkspaceDisplay(): void {
+    if (!this.workspaceContext) {
+      this.workspaceItem.text = '$(folder) No Workspace';
+      this.workspaceItem.tooltip = 'No workspace registered';
+      this.workspaceItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    } else {
+      this.workspaceItem.text = `$(folder) ${this.workspaceContext.workspaceName}`;
+      this.workspaceItem.tooltip = `Workspace: ${this.workspaceContext.workspaceName}\nID: ${this.workspaceContext.workspaceId}\nPath: ${this.workspaceContext.workspacePath}`;
+      this.workspaceItem.backgroundColor = undefined;
+    }
+  }
+
   dispose(): void {
     this.statusBarItem.dispose();
     this.databaseModeItem.dispose();
+    this.workspaceItem.dispose();
   }
 }

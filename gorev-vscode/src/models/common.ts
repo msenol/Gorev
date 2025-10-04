@@ -22,8 +22,8 @@ export enum TemplateKategori {
 }
 
 export interface Timestamp {
-  olusturma_tarih: string;
-  guncelleme_tarih: string;
+  olusturma_tarihi: string;
+  guncelleme_tarihi: string;
 }
 
 export interface MCPError {

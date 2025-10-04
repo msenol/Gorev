@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { TaskFilter, SortingCriteria } from '../models/treeModels';
 import { Logger } from '../utils/logger';
@@ -15,7 +15,7 @@ export class FilterToolbar {
     private savedProfiles: Map<string, TaskFilter> = new Map();
 
     constructor(
-        private mcpClient: MCPClient,
+        private apiClient: ApiClient,
         private onFilterChange: (filter: TaskFilter) => void
     ) {
         this.loadSavedProfiles();
@@ -183,16 +183,16 @@ export class FilterToolbar {
 
         // Proje listesini al ve filtre olarak ekle
         try {
-            const projectResult = await this.mcpClient.callTool('proje_listele', {});
-            const projects = this.parseProjects(projectResult.content[0].text);
-            
-            items.push(...projects.map(project => ({
-                label: `$(folder) ${project.isim}`,
-                description: t('filterToolbar.project'),
-                value: { projeId: project.id },
-                filterType: 'proje' as const,
-                picked: this.activeFilters.projeId === project.id
-            })));
+            const projectResult = await this.apiClient.getProjects();
+            if (projectResult.success && projectResult.data) {
+                items.push(...projectResult.data.map(project => ({
+                    label: `$(folder) ${project.isim}`,
+                    description: t('filterToolbar.project'),
+                    value: { projeId: project.id },
+                    filterType: 'proje' as const,
+                    picked: this.activeFilters.projeId === project.id
+                })));
+            }
         } catch (error) {
             Logger.error('Failed to load projects for filter:', error);
         }
@@ -411,26 +411,6 @@ export class FilterToolbar {
             allProjectsItem.text = showingAllProjects ? t('filterToolbar.allProjects') : t('filterToolbar.activeProject');
             allProjectsItem.backgroundColor = showingAllProjects ? undefined : new vscode.ThemeColor('statusBarItem.warningBackground');
         }
-    }
-
-    /**
-     * Projeleri parse et
-     */
-    private parseProjects(content: string): Array<{ id: string; isim: string }> {
-        const projects: Array<{ id: string; isim: string }> = [];
-        const lines = content.split('\n');
-        
-        for (const line of lines) {
-            const match = line.match(/^## (.+) \(ID: ([^)]+)\)/);
-            if (match) {
-                projects.push({
-                    isim: match[1],
-                    id: match[2]
-                });
-            }
-        }
-        
-        return projects;
     }
 
     /**

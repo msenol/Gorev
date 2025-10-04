@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { Logger } from '../utils/logger';
 import { t } from '../utils/l10n';
@@ -11,7 +11,7 @@ export class InlineEditProvider {
     private editingItem: any | null = null;
     private originalLabel: string | null = null;
 
-    constructor(private mcpClient: MCPClient) {}
+    constructor(private apiClient: ApiClient) {}
 
     /**
      * Inline düzenlemeyi başlatır
@@ -53,8 +53,7 @@ export class InlineEditProvider {
      */
     private async saveEdit(task: Gorev, newTitle: string): Promise<void> {
         try {
-            await this.mcpClient.callTool('gorev_duzenle', {
-                id: task.id,
+            await this.apiClient.updateTask(task.id, {
                 baslik: newTitle
             });
 
@@ -97,13 +96,12 @@ export class InlineEditProvider {
         if (selected && selected.value !== task.durum) {
             try {
                 Logger.info(`[QuickStatusChange] Updating task ${task.id} from ${task.durum} to ${selected.value}`);
-                
-                const result = await this.mcpClient.callTool('gorev_guncelle', {
-                    id: task.id,
+
+                const result = await this.apiClient.updateTask(task.id, {
                     durum: selected.value
                 });
-                
-                Logger.info(`[QuickStatusChange] MCP response:`, JSON.stringify(result));
+
+                Logger.info(`[QuickStatusChange] API response:`, JSON.stringify(result));
 
                 vscode.window.showInformationMessage(t('inlineEdit.taskStatusUpdated'));
                 Logger.info(`[QuickStatusChange] Task ${task.id} status updated to: ${selected.value}`);
@@ -147,8 +145,7 @@ export class InlineEditProvider {
 
         if (selected && selected.value !== task.oncelik) {
             try {
-                await this.mcpClient.callTool('gorev_duzenle', {
-                    id: task.id,
+                await this.apiClient.updateTask(task.id, {
                     oncelik: selected.value
                 });
 
@@ -190,9 +187,8 @@ export class InlineEditProvider {
 
         if (newDate !== undefined && newDate !== currentDate) {
             try {
-                await this.mcpClient.callTool('gorev_duzenle', {
-                    id: task.id,
-                    son_tarih: newDate || null
+                await this.apiClient.updateTask(task.id, {
+                    son_tarih: newDate || undefined
                 });
 
                 vscode.window.showInformationMessage(
@@ -260,8 +256,7 @@ export class InlineEditProvider {
 
         if (newDescription !== undefined && newDescription !== task.aciklama) {
             try {
-                await this.mcpClient.callTool('gorev_duzenle', {
-                    id: task.id,
+                await this.apiClient.updateTask(task.id, {
                     aciklama: newDescription
                 });
 
@@ -279,7 +274,7 @@ export class InlineEditProvider {
      * Etiket düzenleme
      */
     private async editTags(task: Gorev): Promise<void> {
-        const currentTags = task.etiketler?.join(', ') || '';
+        const currentTags = task.etiketler?.map(t => t.isim).join(', ') || '';
         
         const newTags = await vscode.window.showInputBox({
             prompt: t('inlineEdit.editTagsPrompt'),

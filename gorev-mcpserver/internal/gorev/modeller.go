@@ -10,6 +10,7 @@ type Gorev struct {
 	Durum           string     `json:"durum"`
 	Oncelik         string     `json:"oncelik"`
 	ProjeID         string     `json:"proje_id,omitempty"`
+	ProjeName       string     `json:"proje_name,omitempty"` // Project name for Web UI/VS Code
 	ParentID        string     `json:"parent_id,omitempty"`
 	OlusturmaTarih  time.Time  `json:"olusturma_tarih"`
 	GuncellemeTarih time.Time  `json:"guncelleme_tarih"`
@@ -36,6 +37,7 @@ type Proje struct {
 	Tanim           string    `json:"tanim"`
 	OlusturmaTarih  time.Time `json:"olusturma_tarih"`
 	GuncellemeTarih time.Time `json:"guncelleme_tarih"`
+	GorevSayisi     int       `json:"gorev_sayisi"`
 }
 
 // Ozet sistem durumu özeti

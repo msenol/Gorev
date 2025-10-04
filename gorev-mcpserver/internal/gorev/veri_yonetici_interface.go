@@ -20,6 +20,7 @@ type VeriYoneticiInterface interface {
 	AktifProjeGetir() (string, error)
 	AktifProjeKaldir() error
 	BaglantiEkle(baglanti *Baglanti) error
+	BaglantiSil(kaynakID, hedefID string) error
 	BaglantilariGetir(gorevID string) ([]*Baglanti, error)
 	BulkBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error)
 	BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []string) (map[string]int, error)

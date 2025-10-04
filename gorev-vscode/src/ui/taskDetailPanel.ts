@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ApiClient, TaskHierarchy } from '../api/client';
 import { Gorev, GorevDurum, GorevOncelik, GorevHiyerarsi } from '../models/gorev';
 import { Logger } from '../utils/logger';
-import { MarkdownParser } from '../utils/markdownParser';
 import * as path from 'path';
 
 /**
@@ -15,10 +14,10 @@ export class TaskDetailPanel {
     private task: Gorev;
     private hierarchyInfo?: GorevHiyerarsi;
     private disposables: vscode.Disposable[] = [];
-    
+
     private constructor(
         panel: vscode.WebviewPanel,
-        private mcpClient: MCPClient,
+        private apiClient: ApiClient,
         task: Gorev,
         private extensionUri: vscode.Uri
     ) {
@@ -51,7 +50,7 @@ export class TaskDetailPanel {
     }
     
     public static async createOrShow(
-        mcpClient: MCPClient,
+        apiClient: ApiClient,
         task: Gorev,
         extensionUri: vscode.Uri
     ): Promise<void> {
@@ -85,23 +84,23 @@ export class TaskDetailPanel {
             dark: vscode.Uri.joinPath(extensionUri, 'media', 'task-dark.svg')
         };
         
-        TaskDetailPanel.currentPanel = new TaskDetailPanel(panel, mcpClient, task, extensionUri);
+        TaskDetailPanel.currentPanel = new TaskDetailPanel(panel, apiClient, task, extensionUri);
     }
     
     private async update() {
         try {
-            // Get fresh task details from server
-            const result = await this.mcpClient.callTool('gorev_detay', { id: this.task.id });
-            const content = result.content[0].text;
-            
-            // Parse task details from markdown
-            this.parseTaskDetails(content);
-            
+            // Get fresh task details from server using REST API
+            const taskResult = await this.apiClient.getTask(this.task.id);
+            if (taskResult.success && taskResult.data) {
+                this.task = taskResult.data as Gorev;
+            }
+
             // Get hierarchy information if available
             try {
-                const hierarchyResult = await this.mcpClient.callTool('gorev_hiyerarsi_goster', { gorev_id: this.task.id });
-                if (hierarchyResult && hierarchyResult.content && hierarchyResult.content[0]) {
-                    this.parseHierarchyInfo(hierarchyResult.content[0].text);
+                const hierarchyResult = await this.apiClient.getHierarchy(this.task.id);
+                if (hierarchyResult.success && hierarchyResult.data) {
+                    // Store hierarchy data for rendering
+                    this.hierarchyInfo = hierarchyResult.data as any;
                 }
             } catch (err) {
                 Logger.debug('Hierarchy info not available:', err);
@@ -121,7 +120,8 @@ export class TaskDetailPanel {
     private parseTaskDetails(content: string) {
         // Parse additional details from markdown content
         // This includes dependencies, tags, dates, etc.
-        const parsedTask = MarkdownParser.parseGorevDetay(content);
+        // TODO: Remove markdown parsing - task already has full data from API
+        const parsedTask: any = {};
         
         // Update task with parsed details
         if (parsedTask.etiketler) {
@@ -399,11 +399,11 @@ export class TaskDetailPanel {
                 <div class="tags-section card">
                     <h3><i class="codicon codicon-tag"></i> ${t('taskDetail.tags')}</h3>
                     <div class="tags-container">
-                        ${this.task.etiketler && this.task.etiketler.length > 0 ? 
-                            this.task.etiketler.map((tag: string) => `
+                        ${this.task.etiketler && this.task.etiketler.length > 0 ?
+                            this.task.etiketler.map((tag: { id: string; isim: string }) => `
                                 <span class="tag">
-                                    <span class="tag-text">${this.escapeHtml(tag)}</span>
-                                    <button class="tag-remove" data-tag="${this.escapeHtml(tag)}">
+                                    <span class="tag-text">${this.escapeHtml(tag.isim)}</span>
+                                    <button class="tag-remove" data-tag="${this.escapeHtml(tag.isim)}">
                                         <i class="codicon codicon-close"></i>
                                     </button>
                                 </span>
@@ -1120,8 +1120,8 @@ export class TaskDetailPanel {
         const indent = '    '.repeat(level);
         
         subtasks.forEach(subtask => {
-            const statusIcon = this.getSubtaskStatusIcon(subtask.durum);
-            const statusClass = this.getSubtaskStatusClass(subtask.durum);
+            const statusIcon = this.getSubtaskStatusIcon(subtask.durum as GorevDurum);
+            const statusClass = this.getSubtaskStatusClass(subtask.durum as GorevDurum);
             const hasChildren = subtask.alt_gorevler && subtask.alt_gorevler.length > 0;
             
             html += `
@@ -1264,7 +1264,7 @@ export class TaskDetailPanel {
                 <span class="timeline-icon"><i class="codicon codicon-add"></i></span>
                 <div class="timeline-content">
                     <div class="timeline-title">Oluşturuldu</div>
-                    <div class="timeline-time">${this.formatRelativeTime(this.task.olusturma_tarih)}</div>
+                    <div class="timeline-time">${this.formatRelativeTime(this.task.olusturma_tarihi)}</div>
                 </div>
             </div>
         `;
@@ -1276,13 +1276,13 @@ export class TaskDetailPanel {
                     <span class="timeline-icon"><i class="codicon codicon-debug-start"></i></span>
                     <div class="timeline-content">
                         <div class="timeline-title">Başlatıldı</div>
-                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarih)}</div>
+                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarihi)}</div>
                     </div>
                 </div>
             `;
         } else if (this.task.durum === GorevDurum.Tamamlandi) {
             // Başlatılma (varsa)
-            if (this.task.guncelleme_tarih !== this.task.olusturma_tarih) {
+            if (this.task.guncelleme_tarihi !== this.task.olusturma_tarihi) {
                 html += `
                     <div class="timeline-item">
                         <span class="timeline-icon"><i class="codicon codicon-debug-start"></i></span>
@@ -1300,22 +1300,22 @@ export class TaskDetailPanel {
                     <span class="timeline-icon"><i class="codicon codicon-pass-filled"></i></span>
                     <div class="timeline-content">
                         <div class="timeline-title">Tamamlandı</div>
-                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarih)}</div>
+                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarihi)}</div>
                     </div>
                 </div>
             `;
         }
         
         // Son güncelleme (farklıysa)
-        if (this.task.guncelleme_tarih && 
-            this.task.guncelleme_tarih !== this.task.olusturma_tarih &&
+        if (this.task.guncelleme_tarihi && 
+            this.task.guncelleme_tarihi !== this.task.olusturma_tarihi &&
             this.task.durum === GorevDurum.Beklemede) {
             html += `
                 <div class="timeline-item">
                     <span class="timeline-icon"><i class="codicon codicon-edit"></i></span>
                     <div class="timeline-content">
                         <div class="timeline-title">Güncellendi</div>
-                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarih)}</div>
+                        <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarihi)}</div>
                     </div>
                 </div>
             `;
@@ -1423,12 +1423,12 @@ export class TaskDetailPanel {
     
     private async updateTaskField(field: string, value: any) {
         try {
-            const params: any = { id: this.task.id };
-            params[field] = value;
-            
-            await this.mcpClient.callTool('gorev_duzenle', params);
+            const updates: any = {};
+            updates[field] = value;
+
+            await this.apiClient.updateTask(this.task.id, updates);
             (this.task as any)[field] = value;
-            
+
             vscode.window.showInformationMessage('Görev güncellendi');
         } catch (error) {
             throw error;
@@ -1445,13 +1445,12 @@ export class TaskDetailPanel {
         const selected = await vscode.window.showQuickPick(items, {
             placeHolder: 'Yeni durum seçin'
         });
-        
+
         if (selected) {
-            await this.mcpClient.callTool('gorev_guncelle', {
-                id: this.task.id,
-                durum: selected.value
+            await this.apiClient.updateTask(this.task.id, {
+                durum: selected.value as any
             });
-            this.task.durum = selected.value;
+            this.task.durum = selected.value as any;
             this.update();
         }
     }
@@ -1472,14 +1471,11 @@ export class TaskDetailPanel {
         );
         
         if (confirm === 'Evet, Sil') {
-            await this.mcpClient.callTool('gorev_sil', {
-                id: this.task.id,
-                onay: true
-            });
-            
+            await this.apiClient.deleteTask(this.task.id);
+
             this.panel.dispose();
             vscode.window.showInformationMessage('Görev silindi');
-            
+
             // Refresh the tree view
             await vscode.commands.executeCommand('gorev.refreshTasks');
         }
@@ -1487,9 +1483,11 @@ export class TaskDetailPanel {
     
     private async addTag(tag: string) {
         const currentTags = this.task.etiketler || [];
-        currentTags.push(tag);
-        
-        await this.updateTaskField('etiketler', currentTags.join(','));
+        // Generate a simple ID for new tags
+        const newTag = { id: `tag-${Date.now()}`, isim: tag };
+        currentTags.push(newTag);
+
+        await this.updateTaskField('etiketler', currentTags.map(t => t.isim).join(','));
         this.task.etiketler = currentTags;
         this.update();
     }
@@ -1583,18 +1581,11 @@ export class TaskDetailPanel {
     }
     
     private async openTask(taskId: string) {
-        // Get task details and open in new panel
-        const result = await this.mcpClient.callTool('gorev_detay', { id: taskId });
-        // Parse task from result
-        const task: Gorev = {
-            id: taskId,
-            baslik: 'Task', // Will be parsed from result
-            durum: GorevDurum.Beklemede,
-            oncelik: GorevOncelik.Orta,
-            // ... parse other fields
-        } as Gorev;
-        
-        await TaskDetailPanel.createOrShow(this.mcpClient, task, this.extensionUri);
+        // Get task details using REST API and open in new panel
+        const result = await this.apiClient.getTask(taskId);
+        if (result.success && result.data) {
+            await TaskDetailPanel.createOrShow(this.apiClient, result.data as Gorev, this.extensionUri);
+        }
     }
     
     private getStatusClass(): string {

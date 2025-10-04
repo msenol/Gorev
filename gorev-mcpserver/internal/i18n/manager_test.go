@@ -181,7 +181,7 @@ func TestGetCurrentLanguage(t *testing.T) {
 		},
 		{
 			name:     "English language detection",
-			initLang: "en", 
+			initLang: "en",
 			setLang:  "",
 			expected: "en", // English locale data has "lang.code": "en"
 		},
@@ -197,12 +197,12 @@ func TestGetCurrentLanguage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Initialize(tt.initLang)
 			assert.NoError(t, err)
-			
+
 			if tt.setLang != "" {
 				err = SetLanguage(tt.setLang)
 				assert.NoError(t, err)
 			}
-			
+
 			result := GetCurrentLanguage()
 			assert.Equal(t, tt.expected, result)
 		})
@@ -213,15 +213,15 @@ func TestIsInitialized(t *testing.T) {
 	// Reset global manager first (simulate uninitialized state)
 	originalManager := globalManager
 	globalManager = nil
-	
+
 	// Test uninitialized state
 	assert.False(t, IsInitialized())
-	
+
 	// Test initialized state
 	err := Initialize("tr")
 	assert.NoError(t, err)
 	assert.True(t, IsInitialized())
-	
+
 	// Restore original state
 	globalManager = originalManager
 }
@@ -231,7 +231,7 @@ func TestTWithUninitializedManager(t *testing.T) {
 	originalManager := globalManager
 	globalManager = nil
 	defer func() { globalManager = originalManager }()
-	
+
 	// Should return the key itself when manager is not initialized
 	result := T("test.key", map[string]interface{}{"data": "value"})
 	assert.Equal(t, "test.key", result)
@@ -242,7 +242,7 @@ func TestSetLanguageWithUninitializedManager(t *testing.T) {
 	originalManager := globalManager
 	globalManager = nil
 	defer func() { globalManager = originalManager }()
-	
+
 	// Should return error when manager is not initialized
 	err := SetLanguage("en")
 	assert.Error(t, err)
@@ -254,7 +254,7 @@ func TestGetCurrentLanguageWithUninitializedManager(t *testing.T) {
 	originalManager := globalManager
 	globalManager = nil
 	defer func() { globalManager = originalManager }()
-	
+
 	// Should return default "tr" when manager is not initialized
 	result := GetCurrentLanguage()
 	assert.Equal(t, "tr", result)
@@ -272,7 +272,7 @@ func TestInitializeWithEmbeddedFallback(t *testing.T) {
 			lang: "tr",
 		},
 		{
-			name: "Initialize with English embedded", 
+			name: "Initialize with English embedded",
 			lang: "en",
 		},
 		{
@@ -280,13 +280,13 @@ func TestInitializeWithEmbeddedFallback(t *testing.T) {
 			lang: "invalid",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Initialize(tt.lang)
 			assert.NoError(t, err)
 			assert.True(t, IsInitialized())
-			
+
 			// Test that we can translate basic keys
 			result := T("error.noArguments", nil)
 			assert.NotEmpty(t, result)
@@ -303,7 +303,7 @@ func TestEmbeddedLocaleData(t *testing.T) {
 	trResult := T("tools.params.descriptions.gorev_id", nil)
 	assert.NotEmpty(t, trResult)
 	assert.NotEqual(t, "tools.params.descriptions.gorev_id", trResult) // Should be translated
-	assert.Contains(t, trResult, "ID") // Translation contains ID
+	assert.Contains(t, trResult, "ID")                                 // Translation contains ID
 
 	// Switch to English and test
 	err = SetLanguage("en")
@@ -312,13 +312,13 @@ func TestEmbeddedLocaleData(t *testing.T) {
 	enResult := T("tools.params.descriptions.gorev_id", nil)
 	assert.NotEmpty(t, enResult)
 	assert.NotEqual(t, "tools.params.descriptions.gorev_id", enResult) // Should be translated
-	assert.Contains(t, enResult, "ID") // English translation contains ID
+	assert.Contains(t, enResult, "ID")                                 // English translation contains ID
 }
 
 func TestHasKey(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	// Test the HasKey function by checking actual embedded keys
 	tests := []struct {
 		name     string
@@ -346,7 +346,7 @@ func TestHasKey(t *testing.T) {
 			expected: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := HasKey(tt.key)

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { Logger } from '../utils/logger';
 import { validateExportOptions, estimateExportSize } from '../commands/dataCommands';
 
@@ -11,11 +11,11 @@ import { validateExportOptions, estimateExportSize } from '../commands/dataComma
 export class ExportDialog {
   private panel: vscode.WebviewPanel | undefined;
   private context: vscode.ExtensionContext;
-  private mcpClient: MCPClient;
+  private apiClient: ApiClient;
 
-  constructor(context: vscode.ExtensionContext, mcpClient: MCPClient) {
+  constructor(context: vscode.ExtensionContext, apiClient: ApiClient) {
     this.context = context;
-    this.mcpClient = mcpClient;
+    this.apiClient = apiClient;
   }
 
   async show(): Promise<void> {
@@ -131,15 +131,14 @@ export class ExportDialog {
     if (!this.panel) return;
 
     try {
-      const result = await this.mcpClient.callTool('proje_listele');
-      if (result.isError) {
-        throw new Error(result.content[0]?.text || 'Failed to load projects');
+      const result = await this.apiClient.getProjects();
+      if (!result.success || !result.data) {
+        throw new Error('Failed to load projects');
       }
 
-      const projects = this.parseProjectList(result.content[0]?.text || '');
       this.panel.webview.postMessage({
         command: 'setProjects',
-        projects: projects
+        projects: result.data
       });
 
     } catch (error) {
@@ -151,13 +150,9 @@ export class ExportDialog {
     if (!this.panel) return;
 
     try {
-      // Get summary to extract tag information
-      const result = await this.mcpClient.callTool('ozet_goster');
-      if (result.isError) {
-        throw new Error(result.content[0]?.text || 'Failed to load summary');
-      }
-
-      const tags = this.parseTagsFromSummary(result.content[0]?.text || '');
+      // TODO: Replace with REST API getTags() when available
+      // For now, using empty array - tags will be available when REST endpoint is added
+      const tags: string[] = [];
       this.panel.webview.postMessage({
         command: 'setTags',
         tags: tags
@@ -183,7 +178,7 @@ export class ExportDialog {
     if (!this.panel) return;
 
     try {
-      const sizeEstimate = await estimateExportSize(this.mcpClient, options);
+      const sizeEstimate = await estimateExportSize(this.apiClient, options);
       this.panel.webview.postMessage({
         command: 'sizeEstimate',
         size: sizeEstimate
@@ -234,13 +229,13 @@ export class ExportDialog {
       }, async (progress) => {
         progress.report({ increment: 10, message: t('export.preparing') });
 
-        // Call MCP export tool
-        const result = await this.mcpClient.callTool('gorev_export', options);
+        // Call REST API export endpoint
+        const result = await this.apiClient.exportData(options);
 
         progress.report({ increment: 90, message: t('export.completing') });
 
-        if (result.isError) {
-          throw new Error(result.content[0]?.text || 'Export failed');
+        if (!result.success) {
+          throw new Error(result.message || 'Export failed');
         }
 
         progress.report({ increment: 100, message: t('export.complete') });

@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { CommandContext } from './index';
 import { Logger } from '../utils/logger';
 
 export function registerFilterCommands(
     context: vscode.ExtensionContext,
-    mcpClient: MCPClient,
+    apiClient: ApiClient,
     providers: CommandContext
 ): void {
     const { filterToolbar } = providers;
@@ -100,13 +100,10 @@ export function registerFilterCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterActiveProject', async () => {
             try {
-                const result = await mcpClient.callTool('aktif_proje_goster', {});
-                const content = result.content[0].text;
-                
-                // Parse active project ID
-                const match = content.match(/ID: ([a-f0-9-]+)/);
-                if (match) {
-                    providers.gorevTreeProvider.updateFilter({ projeId: match[1] });
+                const result = await apiClient.getActiveProject();
+
+                if (result.success && result.data) {
+                    providers.gorevTreeProvider.updateFilter({ projeId: result.data.id });
                     vscode.window.showInformationMessage(t('filter.showingActiveProject'));
                 } else {
                     vscode.window.showWarningMessage(t('filter.activeProjectNotFound'));

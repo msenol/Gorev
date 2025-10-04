@@ -4,21 +4,28 @@ GO=go
 GOFLAGS=-v
 
 # Versiyon bilgisi
-VERSION ?= 0.15.24
+VERSION ?= 0.16.0
 BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # Build flags
 LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.gitCommit=$(GIT_COMMIT)"
 
-.PHONY: all build build-all clean test run install lint fmt
+.PHONY: all build build-all build-web clean test run install lint fmt
 
 all: clean test build
 
-build:
+# Build web UI first, then Go binary
+build: build-web
 	$(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BINARY_NAME) ./cmd/gorev
 
-build-all:
+# Build web UI production bundle
+build-web:
+	@echo "Building Web UI..."
+	@cd ../gorev-web && npm run build
+	@echo "Web UI built successfully"
+
+build-all: build-web
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-linux-amd64 ./cmd/gorev
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-darwin-amd64 ./cmd/gorev
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build $(LDFLAGS) -o dist/$(BINARY_NAME)-windows-amd64.exe ./cmd/gorev

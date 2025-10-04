@@ -23,10 +23,61 @@ type VeriYonetici struct {
 	db *sql.DB
 }
 
+// configureSQLiteForConcurrency configures SQLite for better concurrent access
+func configureSQLiteForConcurrency(db *sql.DB) error {
+	// Enable WAL mode for better concurrent access
+	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
+		return fmt.Errorf("failed to enable WAL mode: %w", err)
+	}
+
+	// Set busy timeout to avoid immediate failures (10 seconds)
+	if _, err := db.Exec("PRAGMA busy_timeout=10000"); err != nil {
+		return fmt.Errorf("failed to set busy timeout: %w", err)
+	}
+
+	// Set connection pooling for better concurrency
+	// Lower max open connections to reduce contention
+	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(2)
+	db.SetConnMaxLifetime(time.Hour)
+
+	return nil
+}
+
+// retryOnBusy retries a database operation if it fails with SQLITE_BUSY error
+func retryOnBusy(operation func() error, maxRetries int) error {
+	var err error
+	for i := 0; i <= maxRetries; i++ {
+		err = operation()
+		if err == nil {
+			return nil
+		}
+
+		// Check if error is SQLITE_BUSY
+		if strings.Contains(err.Error(), "database is locked") ||
+			strings.Contains(err.Error(), "SQLITE_BUSY") {
+			// Exponential backoff: 10ms, 20ms, 40ms, 80ms, 160ms
+			backoff := time.Duration(10<<uint(i)) * time.Millisecond
+			time.Sleep(backoff)
+			continue
+		}
+
+		// Not a busy error, return immediately
+		return err
+	}
+	return fmt.Errorf("operation failed after %d retries: %w", maxRetries, err)
+}
+
 func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, error) {
 	db, err := sql.Open("sqlite", dbYolu)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
+	}
+
+	// Configure SQLite for better concurrent access
+	if err := configureSQLiteForConcurrency(db); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to configure database: %w", err)
 	}
 
 	vy := &VeriYonetici{db: db}
@@ -42,6 +93,12 @@ func YeniVeriYoneticiWithEmbeddedMigrations(dbYolu string, migrationsFS fs.FS) (
 	db, err := sql.Open("sqlite", dbYolu)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
+	}
+
+	// Configure SQLite for better concurrent access
+	if err := configureSQLiteForConcurrency(db); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to configure database: %w", err)
 	}
 
 	vy := &VeriYonetici{db: db}
@@ -410,20 +467,22 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 	sorgu := `INSERT INTO gorevler (id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih)
 	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err := vy.db.Exec(sorgu,
-		gorev.ID,
-		gorev.Baslik,
-		gorev.Aciklama,
-		gorev.Durum,
-		gorev.Oncelik,
-		gorev.ProjeID,
-		sql.NullString{String: gorev.ParentID, Valid: gorev.ParentID != ""},
-		gorev.OlusturmaTarih,
-		gorev.GuncellemeTarih,
-		gorev.SonTarih,
-	)
-
-	return err
+	// Use retry logic for better concurrent write handling
+	return retryOnBusy(func() error {
+		_, err := vy.db.Exec(sorgu,
+			gorev.ID,
+			gorev.Baslik,
+			gorev.Aciklama,
+			gorev.Durum,
+			gorev.Oncelik,
+			gorev.ProjeID,
+			sql.NullString{String: gorev.ParentID, Valid: gorev.ParentID != ""},
+			gorev.OlusturmaTarih,
+			gorev.GuncellemeTarih,
+			gorev.SonTarih,
+		)
+		return err
+	}, 5) // Retry up to 5 times
 }
 
 func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
@@ -466,6 +525,14 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 		gorev.Etiketler = []*Etiket{}
 	} else {
 		gorev.Etiketler = etiketler
+	}
+
+	// Proje adını getir (Web UI ve VS Code için)
+	if gorev.ProjeID != "" {
+		proje, err := vy.ProjeGetir(gorev.ProjeID)
+		if err == nil && proje != nil {
+			gorev.ProjeName = proje.Isim
+		}
 	}
 
 	return gorev, nil
@@ -548,6 +615,14 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 		}
 		gorev.Etiketler = etiketler
 
+		// Proje adını getir (Web UI ve VS Code için)
+		if gorev.ProjeID != "" {
+			proje, err := vy.ProjeGetir(gorev.ProjeID)
+			if err == nil && proje != nil {
+				gorev.ProjeName = proje.Isim
+			}
+		}
+
 		gorevler = append(gorevler, gorev)
 	}
 
@@ -622,36 +697,39 @@ func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket,
 }
 
 func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
-	tx, err := vy.db.Begin()
-	if err != nil {
-		return fmt.Errorf(i18n.T("error.transactionFailed", map[string]interface{}{"Error": err}))
-	}
-	defer func() {
-		// Silently ignore rollback errors as transaction may already be committed
-		_ = tx.Rollback()
-	}()
-
-	// Mevcut bağlantıları sil
-	if _, err := tx.Exec("DELETE FROM gorev_etiketleri WHERE gorev_id = ?", gorevID); err != nil {
-		return fmt.Errorf(i18n.T("error.currentTagsRemoveFailed", map[string]interface{}{"Error": err}))
-	}
-
-	// Yeni bağlantıları ekle
-	stmt, err := tx.Prepare("INSERT INTO gorev_etiketleri (gorev_id, etiket_id) VALUES (?, ?)")
-	if err != nil {
-		return fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
-	}
-	defer func() {
-		_ = stmt.Close()
-	}()
-
-	for _, etiket := range etiketler {
-		if _, err := stmt.Exec(gorevID, etiket.ID); err != nil {
-			return fmt.Errorf(i18n.T("error.taskTagAddFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
+	// Use retry logic for the entire transaction
+	return retryOnBusy(func() error {
+		tx, err := vy.db.Begin()
+		if err != nil {
+			return fmt.Errorf(i18n.T("error.transactionFailed", map[string]interface{}{"Error": err}))
 		}
-	}
+		defer func() {
+			// Silently ignore rollback errors as transaction may already be committed
+			_ = tx.Rollback()
+		}()
 
-	return tx.Commit()
+		// Mevcut bağlantıları sil
+		if _, err := tx.Exec("DELETE FROM gorev_etiketleri WHERE gorev_id = ?", gorevID); err != nil {
+			return fmt.Errorf(i18n.T("error.currentTagsRemoveFailed", map[string]interface{}{"Error": err}))
+		}
+
+		// Yeni bağlantıları ekle
+		stmt, err := tx.Prepare("INSERT INTO gorev_etiketleri (gorev_id, etiket_id) VALUES (?, ?)")
+		if err != nil {
+			return fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
+		}
+		defer func() {
+			_ = stmt.Close()
+		}()
+
+		for _, etiket := range etiketler {
+			if _, err := stmt.Exec(gorevID, etiket.ID); err != nil {
+				return fmt.Errorf(i18n.T("error.taskTagAddFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
+			}
+		}
+
+		return tx.Commit()
+	}, 5) // Retry up to 5 times
 }
 
 func (vy *VeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
@@ -716,8 +794,12 @@ func (vy *VeriYonetici) ProjeGetir(id string) (*Proje, error) {
 }
 
 func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
-	sorgu := `SELECT id, isim, tanim, olusturma_tarih, guncelleme_tarih
-	          FROM projeler ORDER BY olusturma_tarih DESC`
+	sorgu := `SELECT p.id, p.isim, p.tanim, p.olusturma_tarih, p.guncelleme_tarih,
+	          COUNT(g.id) as gorev_sayisi
+	          FROM projeler p
+	          LEFT JOIN gorevler g ON p.id = g.proje_id
+	          GROUP BY p.id, p.isim, p.tanim, p.olusturma_tarih, p.guncelleme_tarih
+	          ORDER BY p.olusturma_tarih DESC`
 
 	rows, err := vy.db.Query(sorgu)
 	if err != nil {
@@ -736,6 +818,7 @@ func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
 			&proje.Tanim,
 			&proje.OlusturmaTarih,
 			&proje.GuncellemeTarih,
+			&proje.GorevSayisi,
 		)
 		if err != nil {
 			return nil, err
@@ -811,6 +894,27 @@ func (vy *VeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
 	sorgu := `INSERT INTO baglantilar (id, kaynak_id, hedef_id, baglanti_tip) VALUES (?, ?, ?, ?)`
 	_, err := vy.db.Exec(sorgu, baglanti.ID, baglanti.KaynakID, baglanti.HedefID, baglanti.BaglantiTip)
 	return err
+}
+
+// BaglantiSil removes a dependency relationship between two tasks
+func (vy *VeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
+	sorgu := `DELETE FROM baglantilar WHERE kaynak_id = ? AND hedef_id = ?`
+	result, err := vy.db.Exec(sorgu, kaynakID, hedefID)
+	if err != nil {
+		return err
+	}
+
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("dependency not found between tasks %s and %s", kaynakID, hedefID)
+	}
+
+	return nil
 }
 
 func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
@@ -1466,30 +1570,101 @@ func (vy *VeriYonetici) GorevSonAIEtkilesiminiGuncelle(taskID string, timestamp 
 
 // GorevDosyaYoluEkle adds a file path to a task
 func (vy *VeriYonetici) GorevDosyaYoluEkle(taskID string, path string) error {
-	// This would need proper implementation with a file_paths table
-	// For now, return nil as a placeholder
+	// Insert file path for task into task_file_paths table
+	query := `
+		INSERT INTO task_file_paths (task_id, file_path)
+		VALUES (?, ?)
+		ON CONFLICT(task_id, file_path) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+	`
+	_, err := vy.db.Exec(query, taskID, path)
+	if err != nil {
+		return fmt.Errorf("dosya yolu eklenirken hata: %w", err)
+	}
 	return nil
 }
 
 // GorevDosyaYoluSil removes a file path from a task
 func (vy *VeriYonetici) GorevDosyaYoluSil(taskID string, path string) error {
-	// This would need proper implementation with a file_paths table
-	// For now, return nil as a placeholder
+	// Delete file path from task_file_paths table
+	query := `
+		DELETE FROM task_file_paths
+		WHERE task_id = ? AND file_path = ?
+	`
+	result, err := vy.db.Exec(query, taskID, path)
+	if err != nil {
+		return fmt.Errorf("dosya yolu silinirken hata: %w", err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("silinecek dosya yolu bulunamadı")
+	}
+
 	return nil
 }
 
 // GorevDosyaYollariGetir gets all file paths for a task
 func (vy *VeriYonetici) GorevDosyaYollariGetir(taskID string) ([]string, error) {
-	// This would need proper implementation with a file_paths table
-	// For now, return empty slice as a placeholder
-	return []string{}, nil
+	// Query file paths from task_file_paths table
+	query := `
+		SELECT file_path
+		FROM task_file_paths
+		WHERE task_id = ?
+		ORDER BY created_at ASC
+	`
+
+	rows, err := vy.db.Query(query, taskID)
+	if err != nil {
+		return nil, fmt.Errorf("dosya yolları sorgulanırken hata: %w", err)
+	}
+	defer rows.Close()
+
+	var paths []string
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return nil, fmt.Errorf("dosya yolu okunurken hata: %w", err)
+		}
+		paths = append(paths, path)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("satır okuma hatası: %w", err)
+	}
+
+	return paths, nil
 }
 
 // DosyaYoluGorevleriGetir gets all tasks associated with a file path
 func (vy *VeriYonetici) DosyaYoluGorevleriGetir(path string) ([]string, error) {
-	// This would need proper implementation with a file_paths table
-	// For now, return empty slice as a placeholder
-	return []string{}, nil
+	// Query task IDs from task_file_paths table
+	query := `
+		SELECT task_id
+		FROM task_file_paths
+		WHERE file_path = ?
+		ORDER BY created_at ASC
+	`
+
+	rows, err := vy.db.Query(query, path)
+	if err != nil {
+		return nil, fmt.Errorf("görevler sorgulanırken hata: %w", err)
+	}
+	defer rows.Close()
+
+	var taskIDs []string
+	for rows.Next() {
+		var taskID string
+		if err := rows.Scan(&taskID); err != nil {
+			return nil, fmt.Errorf("görev ID okunurken hata: %w", err)
+		}
+		taskIDs = append(taskIDs, taskID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("satır okuma hatası: %w", err)
+	}
+
+	return taskIDs, nil
 }
 
 // repairMigrationStateIfNeeded checks if existing tables exist but migration state is missing

@@ -2,24 +2,34 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** 22 September 2025 | **Version:** v0.15.24
+**Last Updated:** October 5, 2025 | **Version:** v0.16.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
 ## 🚀 Recent Major Update
 
-**v0.15.24 - Database Compatibility & VS Code Stability Fixes (22 Sep 2025)**
+**v0.16.0 - Embedded Web UI (October 4, 2025)**
 
-- **Database Compatibility Enhancement**: Fixed SearchEngine connection errors and IDE tool activation
-- **VS Code Extension Stability**: Eliminated infinite loops and performance issues
-- **100% MCP Tool Compatibility**: All 41 tools now fully functional
+- **Embedded Web UI**: Modern React + TypeScript interface built into Go binary
+- **Zero Configuration**: Automatically available at http://localhost:5082 with `npx @mehmetsenol/gorev-mcp-server serve`
+- **Multi-Workspace Support**: SHA256-based workspace IDs, auto-detection, workspace switcher in Web UI
+- **REST API Migration**: VS Code extension migrated from MCP to REST API (23 endpoints, type-safe, faster)
+- **Template Aliases**: Use `bug`, `feature`, `research` instead of UUIDs for template creation
+- **NPM Package**: Official package `@mehmetsenol/gorev-mcp-server`
+- **Language Synchronization**: Web UI language switcher syncs with MCP server (TR/EN)
+- **Backward Compatible**: All existing MCP and VS Code features maintained
+- **Production Ready**: Vite-built React app served via Go embed.FS
 
 ## 📋 Project Overview
 
-**Gorev** is a two-module MCP (Model Context Protocol) server written in Go:
+**Gorev** is a three-module task management project with MCP (Model Context Protocol) integration:
 
 1. **gorev-mcpserver**: Core MCP server (Go) - Task management for AI assistants
+   - Includes embedded Web UI (React + TypeScript) 🌐
+   - REST API server (Fiber framework)
+   - Automatically available at http://localhost:5082
 2. **gorev-vscode**: Optional VS Code extension - Rich visual interface
+3. **gorev-web**: React + TypeScript source code (for development only)
 
 **Core Features**: 41 MCP tools, unlimited subtask hierarchy, task dependencies, template system, data export/import, IDE extension management, file watching, bilingual support (TR/EN), AI context management, enhanced NLP processing, advanced search & filtering, fuzzy matching, filter profiles.
 
@@ -30,9 +40,14 @@ cmd/gorev/main.go                  → Entry point, CLI commands (cobra)
 internal/mcp/handlers.go           → MCP handlers (refactored, 2,362 lines)
 internal/mcp/tool_registry.go      → MCP tool registration (570 lines)
 internal/mcp/tool_helpers.go       → Validation & formatting utilities (286 lines)
+internal/api/                      → REST API server (Fiber framework)
+  ├── server.go                   → HTTP server, request handlers & routes
+  ├── static.go                   → Embedded web UI file serving
+  └── middleware/                 → CORS, logging middleware
 internal/testing/helpers.go        → Standardized test infrastructure
 internal/gorev/is_yonetici.go      → Business logic orchestration
 internal/gorev/veri_yonetici.go    → Data access layer (SQLite)
+internal/gorev/modeller.go         → Enhanced data models (subtasks, dependencies)
 internal/i18n/manager.go           → Internationalization system
 internal/i18n/helpers.go           → DRY i18n patterns
 locales/[tr|en].json              → Translation files
@@ -41,6 +56,14 @@ gorev-npm/                        → NPM package wrapper
   ├── index.js                    → Platform detection & binary wrapper
   ├── postinstall.js              → Auto-download from GitHub releases
   └── bin/gorev-mcp               → Executable entry point
+gorev-web/                        → React + TypeScript web UI
+  ├── src/
+  │   ├── components/             → React components (TaskCard, Sidebar, etc.)
+  │   ├── api/client.ts           → API client (React Query)
+  │   ├── types/index.ts          → TypeScript type definitions
+  │   └── App.tsx                 → Main application component
+  ├── public/                     → Static assets
+  └── package.json                → Web UI dependencies
 ```
 
 ## 🔧 Development Commands
@@ -83,6 +106,28 @@ npm install               # Install dependencies
 npm run compile           # Compile TypeScript
 npm test                  # Run tests
 vsce package              # Package extension as .vsix file
+```
+
+### Web UI (gorev-web)
+
+> **📝 Not**: Web UI artık Go binary'sine embedded olarak gömülüdür. Ayrı kurulum ve çalıştırmaya gerek yoktur!
+
+**Production Kullanım** (Otomatik):
+```bash
+cd gorev-mcpserver
+./gorev serve --api-port 5082    # Web UI otomatik olarak http://localhost:5082 adresinde hazır
+```
+
+**Development** (Sadece web UI geliştirme için):
+```bash
+cd gorev-web
+npm install               # Install dependencies
+npm run dev               # Start development server (port 5001)
+npm run build             # Build for production (output: ../gorev-mcpserver/cmd/gorev/web/dist)
+
+# API server must be running (default port 5082)
+cd gorev-mcpserver
+./gorev serve --api-port 5082 --debug
 ```
 
 ## 🛠️ MCP Tools Summary
@@ -131,10 +176,10 @@ Migrations: `gorev-mcpserver/internal/veri/migrations/`
 ## 🧪 Testing Strategy
 
 - **Standardized Test Infrastructure**: Centralized `internal/testing/helpers.go` package
-- **Test Coverage**: 90%+ server coverage, 100% extension coverage
+- **Test Coverage**: ~71% server coverage (constants: 100%, testing: 95%, i18n: 84%), 100% extension coverage
 - **Unit Tests**: Business logic (`internal/gorev/`)
 - **Integration Tests**: MCP handlers (`test/integration_test.go`)
-- **Performance Testing**: Concurrent access, memory allocation, stress testing
+- **Performance Testing**: Concurrent access, memory allocation, stress testing with realistic SQLite expectations
 
 ## 🔄 Adding New MCP Tools
 
@@ -161,12 +206,30 @@ gorev serve --lang=tr    # Turkish interface
 
 ## 📚 Essential References
 
-- **MCP Tools Reference**: @docs/tr/mcp-araclari.md (Turkish documentation)
-- **Development History**: @docs/development/TASKS.md
-- **VS Code Data Export/Import**: @docs/guides/user/vscode-data-export-import.md
-- **Architecture Details**: Project structure above + clean architecture pattern
-- **Database Migrations**: @internal/veri/migrations/
-- **Testing Guide**: DRY patterns, table-driven tests
+### Getting Started Guides
+- **Quick Start**: @docs/guides/getting-started/quick-start.md - Get up and running in 10 minutes
+- **Installation**: @docs/guides/getting-started/installation.md - Platform-specific installation instructions
+- **Troubleshooting**: @docs/guides/getting-started/troubleshooting.md - Common issues and solutions
+- **Migration Guide**: @docs/migration/v0.15-to-v0.16.md - Upgrade from v0.15.x to v0.16.0
+
+### Feature Documentation
+- **Web UI Guide**: @docs/guides/features/web-ui.md - Embedded React interface documentation
+- **Multi-Workspace**: @docs/guides/features/multi-workspace.md - Managing multiple isolated workspaces
+- **Template System**: @docs/guides/features/template-system.md - Task templates and aliases
+- **AI Context Management**: @docs/guides/features/ai-context-management.md - AI assistant integration
+
+### Reference Documentation
+- **MCP Tools Reference**: @docs/legacy/tr/mcp-araclari.md - Complete reference for 41 MCP tools (Turkish)
+- **MCP Configuration**: @docs/guides/mcp-config-examples.md - IDE setup guides (Claude, VS Code, Cursor, Windsurf)
+- **VS Code Extension**: @docs/guides/user/vscode-extension.md - Extension features and usage
+- **VS Code Export/Import**: @docs/guides/user/vscode-data-export-import.md - Data migration guide
+
+### Development Resources
+- **Architecture**: Project structure above + @docs/architecture/architecture-v2.md
+- **Development History**: @docs/development/TASKS.md - Complete project history
+- **Contributing Guide**: @docs/development/contributing.md - How to contribute
+- **Database Migrations**: @internal/veri/migrations/ - SQLite schema evolution
+- **Testing Guide**: @internal/testing/helpers.go - DRY patterns, table-driven tests
 - **Version Management**: Build-time injection via Makefile LDFLAGS
 
 ## 🚨 Rule 15: Comprehensive Problem-Solving & Zero Technical Debt
@@ -197,7 +260,7 @@ gorev serve --lang=tr    # Turkish interface
 - **Template Enforcement**: All tasks MUST use templates (v0.10.0+)
 - **Domain Terms**: Turkish domain terminology must be preserved
 - **i18n Compliance**: Use `i18n.T()` for all user-facing strings
-- **Test Coverage**: Maintain %90+ (server), %100 (extension)
+- **Test Coverage**: Maintain ~71% server (goal: 80%+), 100% extension
 - **Atomic Tasks**: Even atomic tasks must be comprehensive
 
 ### Quality Checklist

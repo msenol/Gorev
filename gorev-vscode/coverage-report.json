@@ -1,10 +1,22 @@
 {
-  "timestamp": "2025-07-17T20:50:44.055Z",
+  "timestamp": "2025-09-30T14:25:33.250Z",
   "coverage": 100,
-  "total": 36,
-  "tested": 36,
+  "total": 43,
+  "tested": 43,
   "untested": [],
   "tests": [
+    {
+      "source": "api/client.ts",
+      "test": "integration/apiCommands.test.js"
+    },
+    {
+      "source": "commands/dataCommands.ts",
+      "test": "unit/dataCommands.test.js"
+    },
+    {
+      "source": "commands/databaseCommands.ts",
+      "test": "unit/databaseCommands.test.js"
+    },
     {
       "source": "commands/debugCommands.ts",
       "test": "unit/debugCommands.test.js"
@@ -19,7 +31,7 @@
     },
     {
       "source": "commands/gorevCommands.ts",
-      "test": "integration/extension.test.js"
+      "test": "integration/apiCommands.test.js"
     },
     {
       "source": "commands/index.ts",
@@ -35,7 +47,7 @@
     },
     {
       "source": "commands/projeCommands.ts",
-      "test": "unit/projeCommands.test.js"
+      "test": "integration/apiCommands.test.js"
     },
     {
       "source": "commands/templateCommands.ts",
@@ -47,7 +59,7 @@
     },
     {
       "source": "debug/testDataSeeder.ts",
-      "test": "unit/debugCommands.test.js"
+      "test": "unit/testDataSeeder.test.js"
     },
     {
       "source": "debug/testDataSeederWithTemplates.ts",
@@ -58,12 +70,12 @@
       "test": "fixtures/createTestData.js"
     },
     {
-      "source": "mcp/client.ts",
-      "test": "unit/debugCommands.test.js"
+      "source": "managers/refreshManager.ts",
+      "test": "unit/refreshManager.test.js"
     },
     {
       "source": "models/common.ts",
-      "test": "unit/dragDropController.test.js"
+      "test": "integration/apiCommands.test.js"
     },
     {
       "source": "models/gorev.ts",
@@ -79,7 +91,7 @@
     },
     {
       "source": "models/treeModels.ts",
-      "test": "unit/dragDropController.test.js"
+      "test": "unit/treeModels.test.js"
     },
     {
       "source": "providers/decorationProvider.ts",
@@ -91,7 +103,7 @@
     },
     {
       "source": "providers/enhancedGorevTreeProvider.ts",
-      "test": "unit/enhancedGorevTreeProvider.test.js"
+      "test": "integration/apiProviders.test.js"
     },
     {
       "source": "providers/gorevTreeProvider.ts",
@@ -103,23 +115,31 @@
     },
     {
       "source": "providers/inlineEditProvider.ts",
-      "test": "unit/inlineEditCommands.test.js"
+      "test": "unit/inlineEditProvider.test.js"
     },
     {
       "source": "providers/projeTreeProvider.ts",
-      "test": "unit/debugCommands.test.js"
+      "test": "integration/apiProviders.test.js"
     },
     {
       "source": "providers/templateTreeProvider.ts",
-      "test": "unit/debugCommands.test.js"
+      "test": "integration/apiProviders.test.js"
+    },
+    {
+      "source": "ui/exportDialog.ts",
+      "test": "unit/exportDialog.test.js"
     },
     {
       "source": "ui/filterToolbar.ts",
-      "test": "unit/filterCommands.test.js"
+      "test": "unit/filterToolbar.test.js"
+    },
+    {
+      "source": "ui/importWizard.ts",
+      "test": "unit/importWizard.test.js"
     },
     {
       "source": "ui/statusBar.ts",
-      "test": "unit/debugCommands.test.js"
+      "test": "unit/statusBar.test.js"
     },
     {
       "source": "ui/taskDetailPanel.ts",
@@ -127,7 +147,7 @@
     },
     {
       "source": "ui/templateWizard.ts",
-      "test": "unit/templateCommands.test.js"
+      "test": "unit/templateWizard.test.js"
     },
     {
       "source": "utils/config.ts",
@@ -135,19 +155,27 @@
     },
     {
       "source": "utils/constants.ts",
-      "test": "unit/inlineEditCommands.test.js"
+      "test": "unit/constants.test.js"
+    },
+    {
+      "source": "utils/debounce.ts",
+      "test": "unit/debounce.test.js"
     },
     {
       "source": "utils/dragDropTypes.ts",
-      "test": "unit/utils.test.js"
+      "test": "unit/dragDropTypes.test.js"
+    },
+    {
+      "source": "utils/l10n.ts",
+      "test": "unit/l10n.test.js"
     },
     {
       "source": "utils/logger.ts",
-      "test": "unit/debugCommands.test.js"
+      "test": "unit/logger.test.js"
     },
     {
-      "source": "utils/markdownParser.ts",
-      "test": "unit/markdownParser.test.js"
+      "source": "utils/performance.ts",
+      "test": "unit/performance.test.js"
     }
   ]
 }

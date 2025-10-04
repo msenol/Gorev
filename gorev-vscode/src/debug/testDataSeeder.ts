@@ -1,4 +1,4 @@
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { t } from '../utils/l10n';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { Logger } from '../utils/logger';
@@ -17,7 +17,7 @@ export class TestDataSeeder {
         ARASTIRMA_GOREVI: '13f04fe2-b5b6-4fd6-8684-5eca5dc2770d'
     };
 
-    constructor(private mcpClient: MCPClient) {}
+    constructor(private apiClient: ApiClient) {}
 
     /**
      * Test verilerini oluştur
@@ -119,7 +119,7 @@ export class TestDataSeeder {
 
         for (const project of projects) {
             try {
-                const result = await this.mcpClient.callTool('proje_olustur', project);
+                const result = await this.apiClient.callTool('proje_olustur', project);
                 // ID'yi response'tan çıkar - daha geniş bir regex kullan
                 const responseText = result.content[0].text;
                 Logger.debug('Project creation response:', responseText);
@@ -139,7 +139,7 @@ export class TestDataSeeder {
 
         // İlk projeyi aktif yap
         if (projectIds.length > 0) {
-            await this.mcpClient.callTool('proje_aktif_yap', { proje_id: projectIds[0] });
+            await this.apiClient.callTool('proje_aktif_yap', { proje_id: projectIds[0] });
         }
 
         return projectIds;
@@ -384,7 +384,7 @@ export class TestDataSeeder {
         for (const taskGroup of [bugTasks, featureTasks, techDebtTasks, researchTasks, additionalTasks]) {
             for (const task of taskGroup) {
                 try {
-                    const result = await this.mcpClient.callTool('templateden_gorev_olustur', {
+                    const result = await this.apiClient.callTool('templateden_gorev_olustur', {
                         template_id: task.templateId,
                         degerler: task.degerler
                     });
@@ -400,7 +400,7 @@ export class TestDataSeeder {
                         // Assign to project if specified
                         if (task.projectId) {
                             try {
-                                await this.mcpClient.callTool('gorev_duzenle', {
+                                await this.apiClient.callTool('gorev_duzenle', {
                                     id: taskId,
                                     proje_id: task.projectId
                                 });
@@ -435,7 +435,7 @@ export class TestDataSeeder {
         for (const dep of dependencies) {
             if (taskIds[dep.kaynak] && taskIds[dep.hedef]) {
                 try {
-                    await this.mcpClient.callTool('gorev_bagimlilik_ekle', {
+                    await this.apiClient.callTool('gorev_bagimlilik_ekle', {
                         kaynak_id: taskIds[dep.kaynak],
                         hedef_id: taskIds[dep.hedef],
                         baglanti_tipi: dep.tip
@@ -456,7 +456,7 @@ export class TestDataSeeder {
         for (const index of inProgressTasks) {
             if (taskIds[index]) {
                 try {
-                    await this.mcpClient.callTool('gorev_guncelle', {
+                    await this.apiClient.callTool('gorev_guncelle', {
                         id: taskIds[index],
                         durum: GorevDurum.DevamEdiyor
                     });
@@ -471,7 +471,7 @@ export class TestDataSeeder {
         for (const index of completedTasks) {
             if (taskIds[index]) {
                 try {
-                    await this.mcpClient.callTool('gorev_guncelle', {
+                    await this.apiClient.callTool('gorev_guncelle', {
                         id: taskIds[index],
                         durum: GorevDurum.Tamamlandi
                     });
@@ -514,14 +514,14 @@ export class TestDataSeeder {
 
             for (const subtask of subtasks) {
                 try {
-                    const result = await this.mcpClient.callTool('gorev_altgorev_olustur', subtask);
+                    const result = await this.apiClient.callTool('gorev_altgorev_olustur', subtask);
                     
                     // İkinci seviye alt görev ekle
                     if (subtask.baslik === 'Hero section mockup') {
                         const responseText = result.content[0].text;
                         const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
                         if (idMatch) {
-                            await this.mcpClient.callTool('gorev_altgorev_olustur', {
+                            await this.apiClient.callTool('gorev_altgorev_olustur', {
                                 parent_id: idMatch[1],
                                 baslik: 'Color palette seçimi',
                                 aciklama: 'Brand guidelines\'a uygun renk paleti',
@@ -558,7 +558,7 @@ export class TestDataSeeder {
 
             for (const subtask of subtasks) {
                 try {
-                    await this.mcpClient.callTool('gorev_altgorev_olustur', subtask);
+                    await this.apiClient.callTool('gorev_altgorev_olustur', subtask);
                 } catch (error) {
                     Logger.error('Failed to create subtask:', error);
                 }
@@ -601,7 +601,7 @@ export class TestDataSeeder {
 
             for (const task of additionalTasks) {
                 try {
-                    const result = await this.mcpClient.callTool('templateden_gorev_olustur', {
+                    const result = await this.apiClient.callTool('templateden_gorev_olustur', {
                         template_id: task.templateId,
                         degerler: task.degerler
                     });
@@ -611,7 +611,7 @@ export class TestDataSeeder {
                         const responseText = result.content[0].text;
                         const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
                         if (idMatch) {
-                            await this.mcpClient.callTool('gorev_duzenle', {
+                            await this.apiClient.callTool('gorev_duzenle', {
                                 id: idMatch[1],
                                 proje_id: projectIds[2] // Backend API project
                             });
@@ -634,27 +634,27 @@ export class TestDataSeeder {
         if (taskIds.length > 0) {
             try {
                 // İlk görevi aktif yap
-                await this.mcpClient.callTool('gorev_set_active', {
+                await this.apiClient.callTool('gorev_set_active', {
                     task_id: taskIds[0]
                 });
                 Logger.info('Set active task for AI context');
 
                 // Doğal dil sorgusu test et
                 const nlpResults = [
-                    await this.mcpClient.callTool('gorev_nlp_query', { query: 'bugün yapılacak görevler' }),
-                    await this.mcpClient.callTool('gorev_nlp_query', { query: 'yüksek öncelikli görevler' }),
-                    await this.mcpClient.callTool('gorev_nlp_query', { query: 'etiket:bug' })
+                    await this.apiClient.callTool('gorev_nlp_query', { query: 'bugün yapılacak görevler' }),
+                    await this.apiClient.callTool('gorev_nlp_query', { query: 'yüksek öncelikli görevler' }),
+                    await this.apiClient.callTool('gorev_nlp_query', { query: 'etiket:bug' })
                 ];
 
                 Logger.info('Tested NLP queries');
 
                 // Context summary al
-                const contextSummary = await this.mcpClient.callTool('gorev_context_summary', {});
+                const contextSummary = await this.apiClient.callTool('gorev_context_summary', {});
                 Logger.info('Generated AI context summary');
 
                 // Batch update test et - bazı görevlerin durumunu toplu güncelle
                 if (taskIds.length > 5) {
-                    await this.mcpClient.callTool('gorev_batch_update', {
+                    await this.apiClient.callTool('gorev_batch_update', {
                         updates: [
                             { id: taskIds[2], updates: { durum: 'devam_ediyor' } },
                             { id: taskIds[3], updates: { durum: 'devam_ediyor' } }
@@ -693,17 +693,22 @@ export class TestDataSeeder {
 
         try {
             // Önce tüm görevleri listele ve sil
-            const tasksResult = await this.mcpClient.callTool('gorev_listele', {
+            const tasksResult = await this.apiClient.callTool('gorev_listele', {
                 tum_projeler: true
             });
 
             // Parse task IDs from response
             const taskIdMatches = tasksResult.content[0].text.matchAll(/ID: ([a-f0-9-]+)/g);
-            const taskIds = Array.from(taskIdMatches).map(match => match[1]);
+            const taskIds: string[] = [];
+            for (const match of taskIdMatches) {
+                if (match[1]) {
+                    taskIds.push(match[1]);
+                }
+            }
 
             for (const taskId of taskIds) {
                 try {
-                    await this.mcpClient.callTool('gorev_sil', {
+                    await this.apiClient.callTool('gorev_sil', {
                         id: taskId,
                         onay: true
                     });
@@ -742,7 +747,7 @@ export class TestDataSeeder {
                     }
                 };
 
-                const result = await this.mcpClient.callTool('templateden_gorev_olustur', taskData);
+                const result = await this.apiClient.callTool('templateden_gorev_olustur', taskData);
                 const taskId = this.extractTaskId(result);
                 if (taskId) {
                     taskIds.push(taskId);
@@ -801,7 +806,7 @@ export class TestDataSeeder {
                     }
                 };
 
-                const result = await this.mcpClient.callTool('templateden_gorev_olustur', taskData);
+                const result = await this.apiClient.callTool('templateden_gorev_olustur', taskData);
                 const taskId = this.extractTaskId(result);
                 if (taskId) {
                     parentTaskIds.push(taskId);
@@ -838,13 +843,13 @@ export class TestDataSeeder {
                         }
                     };
 
-                    const result = await this.mcpClient.callTool('templateden_gorev_olustur', taskData);
+                    const result = await this.apiClient.callTool('templateden_gorev_olustur', taskData);
                     const taskId = this.extractTaskId(result);
                     if (taskId) {
                         taskIds.push(taskId);
 
                         // Set parent relationship
-                        await this.mcpClient.callTool('gorev_ust_gorev_degistir', {
+                        await this.apiClient.callTool('gorev_ust_gorev_degistir', {
                             gorev_id: taskId,
                             ust_gorev_id: parentId
                         });

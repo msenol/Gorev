@@ -1,18 +1,20 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ApiClient, ApiError, Template } from '../api/client';
 import { GorevTemplate, TemplateKategori } from '../models/template';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
-import { MarkdownParser } from '../utils/markdownParser';
 import { t } from '../utils/l10n';
 
 export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTreeItem | TemplateCategoryItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<TemplateTreeItem | TemplateCategoryItem | undefined | null | void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
-  
+
   private templates: GorevTemplate[] = [];
 
-  constructor(private mcpClient: MCPClient) {}
+
+  constructor(private apiClient: ApiClient) {
+    // Initialize API client
+  }
 
   getTreeItem(element: TemplateTreeItem | TemplateCategoryItem): vscode.TreeItem {
     return element;
@@ -21,7 +23,7 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   async getChildren(element?: TemplateTreeItem | TemplateCategoryItem): Promise<(TemplateTreeItem | TemplateCategoryItem)[]> {
     console.log('[TemplateTreeProvider] getChildren called with element:', element);
     
-    if (!this.mcpClient.isConnected()) {
+    if (!this.apiClient.isConnected()) {
       console.log('[TemplateTreeProvider] MCP client not connected');
       return [];
     }
@@ -59,20 +61,25 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
 
   private async loadTemplates(): Promise<void> {
     try {
-      const result = await this.mcpClient.callTool('template_listele');
-      
-      // Debug: Log raw response
-      console.log('[TemplateTreeProvider] Raw MCP response:', result);
-      console.log('[TemplateTreeProvider] Content text:', result.content[0].text);
-      
-      // Parse the markdown content to extract templates
-      this.templates = MarkdownParser.parseTemplateListesi(result.content[0].text);
-      
-      // Debug: Log parsed templates
-      console.log('[TemplateTreeProvider] Parsed templates count:', this.templates.length);
-      console.log('[TemplateTreeProvider] Parsed templates:', this.templates);
+      // Use REST API to get templates
+      const response = await this.apiClient.getTemplates();
+
+      if (!response.success || !response.data) {
+        Logger.warn('[TemplateTreeProvider] No templates returned from API');
+        this.templates = [];
+        return;
+      }
+
+      // Convert API Template[] to internal GorevTemplate[] model
+      this.templates = response.data.map(template => this.convertTemplateToGorevTemplate(template));
+
+      Logger.info(`[TemplateTreeProvider] Loaded ${this.templates.length} templates`);
     } catch (error) {
-      Logger.error('Failed to load templates:', error);
+      if (error instanceof ApiError) {
+        Logger.error(`[TemplateTreeProvider] API Error ${error.statusCode}:`, error.apiError);
+      } else {
+        Logger.error('[TemplateTreeProvider] Failed to load templates:', error);
+      }
       throw error;
     }
   }
@@ -87,6 +94,47 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
       const count = this.templates.filter((t) => t.kategori === category).length;
       return new TemplateCategoryItem(category, count);
     });
+  }
+
+  /**
+   * Convert API Template to internal GorevTemplate model
+   */
+  private convertTemplateToGorevTemplate(template: Template): GorevTemplate {
+    return {
+      id: template.id,
+      isim: template.isim,
+      tanim: template.tanim,
+      varsayilan_baslik: '', // Not provided by API
+      aciklama_template: template.tanim,
+      alanlar: template.alanlar.map(field => ({
+        isim: field.isim,
+        tur: this.mapFieldType(field.tip),
+        zorunlu: field.zorunlu,
+        varsayilan: field.varsayilan,
+        secenekler: field.secenekler,
+      })),
+      ornek_degerler: {}, // Not provided by current API
+      kategori: template.kategori as TemplateKategori,
+      aktif: template.aktif,
+    };
+  }
+
+  /**
+   * Map API field type to internal field type
+   */
+  private mapFieldType(apiType: string): 'metin' | 'sayi' | 'tarih' | 'secim' {
+    switch (apiType) {
+      case 'text':
+        return 'metin';
+      case 'number':
+        return 'sayi';
+      case 'date':
+        return 'tarih';
+      case 'select':
+        return 'secim';
+      default:
+        return 'metin';
+    }
   }
 
 }

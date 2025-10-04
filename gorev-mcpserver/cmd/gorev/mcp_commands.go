@@ -116,37 +116,49 @@ func createMCPCallCommand() *cobra.Command {
 			toolName := args[0]
 			params := make(map[string]interface{})
 
-			// Parse parameters
-			for i := 1; i < len(args); i++ {
-				parts := strings.SplitN(args[i], "=", 2)
-				if len(parts) == 2 {
-					key := parts[0]
-					value := parts[1]
+			// Try to parse as single JSON string first
+			isJSON := false
+			if len(args) == 2 {
+				var jsonParams map[string]interface{}
+				if err := json.Unmarshal([]byte(args[1]), &jsonParams); err == nil {
+					params = jsonParams
+					isJSON = true
+				}
+			}
 
-					// Special handling for degerler parameter (JSON object)
-					if key == constants.ParamDegerler {
-						var degerlerMap map[string]interface{}
-						if err := json.Unmarshal([]byte(value), &degerlerMap); err == nil {
-							params[key] = degerlerMap
-						} else {
-							return fmt.Errorf("degerler parametresi geçerli JSON objesi olmalı: %v", err)
+			// If not JSON, parse as key=value pairs
+			if !isJSON {
+				for i := 1; i < len(args); i++ {
+					parts := strings.SplitN(args[i], "=", 2)
+					if len(parts) == 2 {
+						key := parts[0]
+						value := parts[1]
+
+						// Special handling for degerler parameter (JSON object)
+						if key == constants.ParamDegerler {
+							var degerlerMap map[string]interface{}
+							if err := json.Unmarshal([]byte(value), &degerlerMap); err == nil {
+								params[key] = degerlerMap
+							} else {
+								return fmt.Errorf("degerler parametresi geçerli JSON objesi olmalı: %v", err)
+							}
+							continue
 						}
-						continue
-					}
 
-					// Convert boolean strings
-					switch value {
-					case "true":
-						params[key] = true
-					case "false":
-						params[key] = false
-					default:
-						// Try to parse as JSON for nested objects
-						var jsonValue interface{}
-						if err := json.Unmarshal([]byte(value), &jsonValue); err == nil {
-							params[key] = jsonValue
-						} else {
-							params[key] = value
+						// Convert boolean strings
+						switch value {
+						case "true":
+							params[key] = true
+						case "false":
+							params[key] = false
+						default:
+							// Try to parse as JSON for nested objects
+							var jsonValue interface{}
+							if err := json.Unmarshal([]byte(value), &jsonValue); err == nil {
+								params[key] = jsonValue
+							} else {
+								params[key] = value
+							}
 						}
 					}
 				}

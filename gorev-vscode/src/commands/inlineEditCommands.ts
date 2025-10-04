@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { InlineEditProvider } from '../providers/inlineEditProvider';
@@ -9,10 +9,10 @@ import { Logger } from '../utils/logger';
 
 export function registerInlineEditCommands(
     context: vscode.ExtensionContext,
-    mcpClient: MCPClient,
+    apiClient: ApiClient,
     providers: CommandContext
 ): void {
-    const editProvider = new InlineEditProvider(mcpClient);
+    const editProvider = new InlineEditProvider(apiClient);
     const treeProvider = providers.gorevTreeProvider as EnhancedGorevTreeProvider;
 
     // Edit Task Title (F2)

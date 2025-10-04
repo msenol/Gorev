@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/msenol/gorev/internal/api"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	"github.com/msenol/gorev/internal/mcp"
@@ -17,11 +20,13 @@ import (
 )
 
 var (
-	version   = "v0.15.24"
-	buildTime = "unknown"
-	gitCommit = "unknown"
-	langFlag  string
-	debugFlag bool
+	version     = "v0.16.0"
+	buildTime   = "unknown"
+	gitCommit   = "unknown"
+	langFlag    string
+	debugFlag   bool
+	apiPortFlag string
+	noAPIFlag   bool
 )
 
 // getMigrationsPath returns the correct path to migrations folder
@@ -159,7 +164,11 @@ func initWorkspaceDatabase(global bool) error {
 	var dbPath string
 	var dbDir string
 
-	if global {
+	// Check GOREV_DB_PATH environment variable first
+	if envDBPath := os.Getenv("GOREV_DB_PATH"); envDBPath != "" {
+		dbPath = envDBPath
+		dbDir = filepath.Dir(dbPath)
+	} else if global {
 		// Global database in user home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
@@ -271,6 +280,8 @@ func main() {
 		},
 	}
 	serveCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, i18n.T("cli.debug"))
+	serveCmd.PersistentFlags().StringVar(&apiPortFlag, "api-port", "5082", "API server port")
+	serveCmd.PersistentFlags().BoolVar(&noAPIFlag, "no-api", false, "Disable API server (MCP only)")
 
 	versionCmd := &cobra.Command{
 		Use:   "version",
@@ -398,23 +409,80 @@ func runServer() error {
 		go checkAndPromptIDEExtensions()
 	}
 
-	// MCP sunucusunu başlat (debug desteği ile)
-	sunucu, err := mcp.YeniMCPSunucuWithDebug(isYonetici, debugFlag)
-	if err != nil {
-		return errors.New(i18n.T("error.mcpServerCreate", map[string]interface{}{"Error": err}))
+	// Setup signal handling for graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start API server (unless disabled)
+	var apiServer *api.APIServer
+	if !noAPIFlag {
+		apiServer = api.NewAPIServer(apiPortFlag, isYonetici)
+
+		// Set migrations FS for workspace manager
+		if migrationsPath == "embedded://migrations" {
+			migrationsFS, fsErr := getEmbeddedMigrationsFS()
+			if fsErr != nil {
+				log.Fatalf("Failed to get embedded migrations for workspace manager: %v", fsErr)
+			}
+			apiServer.SetMigrationsFS(migrationsFS)
+		}
+
+		// Serve embedded web UI static files
+		if err := api.ServeStaticFiles(apiServer.App(), WebDistFS); err != nil {
+			log.Printf("Warning: Failed to serve web UI: %v", err)
+		}
+
+		apiServer.StartAsync()
+		log.Printf("🚀 Unified Gorev Server started:")
+		log.Printf("📱 Web UI: http://localhost:%s", apiPortFlag)
+		log.Printf("🔧 API: http://localhost:%s/api/v1", apiPortFlag)
+		log.Printf("🔗 MCP: stdio (for AI assistants)")
+	} else {
+		log.Printf("🔗 Gorev MCP Server started (API disabled)")
 	}
 
 	// Debug mode mesajı
 	if debugFlag {
-		log.Printf("Starting Gorev MCP server with debug mode enabled")
-		log.Printf("Language: %s", langFlag)
+		log.Printf("Debug mode enabled")
+		if langFlag != "" {
+			log.Printf("Language: %s", langFlag)
+		}
 	}
 
-	// Sunucuyu çalıştır
-	if err := mcp.ServeSunucu(sunucu); err != nil {
-		return errors.New(i18n.T("error.serverStart", map[string]interface{}{"Error": err}))
+	// Start MCP server in a goroutine
+	mcpErrChan := make(chan error, 1)
+	go func() {
+		sunucu, err := mcp.YeniMCPSunucuWithDebug(isYonetici, debugFlag)
+		if err != nil {
+			mcpErrChan <- fmt.Errorf("MCP server creation failed: %w", err)
+			return
+		}
+
+		if err := mcp.ServeSunucu(sunucu); err != nil {
+			mcpErrChan <- fmt.Errorf("MCP server failed: %w", err)
+		}
+	}()
+
+	// Wait for shutdown signal or error
+	select {
+	case sig := <-sigChan:
+		log.Printf("Received signal %v, shutting down gracefully...", sig)
+	case err := <-mcpErrChan:
+		log.Printf("MCP server error: %v", err)
+		return err
 	}
 
+	// Graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if apiServer != nil && !noAPIFlag {
+		if err := apiServer.Shutdown(ctx); err != nil {
+			log.Printf("API server shutdown error: %v", err)
+		}
+	}
+
+	log.Println("🔽 Gorev server stopped")
 	return nil
 }
 

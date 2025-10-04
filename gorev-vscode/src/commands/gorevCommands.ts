@@ -1,17 +1,19 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { MCPClient } from '../mcp/client';
+import { ApiClient, ApiError } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { TaskDetailPanel } from '../ui/taskDetailPanel';
+import { Logger } from '../utils/logger';
 // import { GorevTreeItem } from '../providers/gorevTreeProvider';
 
 export function registerGorevCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
+  // Initialize API client
   // Create Task - Now redirects to template wizard due to mandatory template requirement
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CREATE_TASK, async () => {
@@ -45,7 +47,7 @@ export function registerGorevCommands(
       try {
         // Use the new TaskDetailPanel
         await TaskDetailPanel.createOrShow(
-          mcpClient,
+          apiClient,
           item.task,
           context.extensionUri
         );
@@ -72,15 +74,20 @@ export function registerGorevCommands(
 
         if (!newStatus) return;
 
-        await mcpClient.callTool('gorev_guncelle', {
-          id: item.task.id,
+        // Use REST API to update task
+        await apiClient.updateTask(item.task.id, {
           durum: newStatus.value,
         });
 
         vscode.window.showInformationMessage(t('success.taskStatusUpdated'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(t('error.updateTaskStatus') + `: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[UpdateTaskStatus] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('error.updateTaskStatus') + `: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(t('error.updateTaskStatus') + `: ${error}`);
+        }
       }
     })
   );
@@ -97,15 +104,18 @@ export function registerGorevCommands(
 
         if (confirm !== t('confirm.yes')) return;
 
-        await mcpClient.callTool('gorev_sil', {
-          id: item.task.id,
-          onay: true,
-        });
+        // Use REST API to delete task
+        await apiClient.deleteTask(item.task.id);
 
         vscode.window.showInformationMessage(t('success.taskDeleted'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(t('error.deleteTask') + `: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[DeleteTask] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('error.deleteTask') + `: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(t('error.deleteTask') + `: ${error}`);
+        }
       }
     })
   );
@@ -145,8 +155,8 @@ export function registerGorevCommands(
 
         if (!oncelik) return;
 
-        await mcpClient.callTool('gorev_altgorev_olustur', {
-          parent_id: item.task.id,
+        // Use REST API to create subtask
+        await apiClient.createSubtask(item.task.id, {
           baslik,
           aciklama: aciklama || '',
           oncelik: oncelik.value,
@@ -155,7 +165,12 @@ export function registerGorevCommands(
         vscode.window.showInformationMessage(t('success.subtaskCreated'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(t('error.createSubtask') + `: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[CreateSubtask] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('error.createSubtask') + `: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(t('error.createSubtask') + `: ${error}`);
+        }
       }
     })
   );
@@ -164,29 +179,22 @@ export function registerGorevCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CHANGE_PARENT, async (item: any) => {
       try {
-        // Get all tasks except the current one and its subtasks
-        const result = await mcpClient.callTool('gorev_listele', {
+        // Use REST API to get all tasks
+        const response = await apiClient.getTasks({
           tum_projeler: true,
         });
-        
-        if (!result || !result.content || !result.content[0]) {
+
+        if (!response.success || !response.data) {
           throw new Error(t('error.fetchTasks'));
         }
 
-        const tasks = result.content[0].text
-          .split('\n')
-          .filter((line: string) => line.includes('ID:'))
-          .map((line: string) => {
-            const idMatch = line.match(/ID:\s*([a-f0-9-]+)/);
-            const titleMatch = line.match(/\[.+\]\s+(.+)\s+\(/);
-            return idMatch && titleMatch ? { id: idMatch[1], baslik: titleMatch[1] } : null;
-          })
-          .filter((task: any) => task && task.id !== item.task.id);
+        // Filter out current task and its subtasks (to prevent circular references)
+        const availableTasks = response.data.filter(task => task.id !== item.task.id);
 
         const parentChoice = await vscode.window.showQuickPick(
           [
             { label: t('parent.noParent'), value: null },
-            ...tasks.map((t: any) => ({ label: t.baslik, value: t.id }))
+            ...availableTasks.map(t => ({ label: t.baslik, value: t.id }))
           ],
           {
             placeHolder: t('input.selectParentTask'),
@@ -195,15 +203,18 @@ export function registerGorevCommands(
 
         if (!parentChoice) return;
 
-        await mcpClient.callTool('gorev_ust_degistir', {
-          gorev_id: item.task.id,
-          yeni_parent_id: parentChoice.value || '',
-        });
+        // Use REST API to change parent
+        await apiClient.changeParent(item.task.id, parentChoice.value || '');
 
         vscode.window.showInformationMessage(t('success.parentChanged'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(t('error.changeParent') + `: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[ChangeParent] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('error.changeParent') + `: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(t('error.changeParent') + `: ${error}`);
+        }
       }
     })
   );
@@ -212,15 +223,18 @@ export function registerGorevCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.REMOVE_PARENT, async (item: any) => {
       try {
-        await mcpClient.callTool('gorev_ust_degistir', {
-          gorev_id: item.task.id,
-          yeni_parent_id: '',
-        });
+        // Use REST API to remove parent (empty string makes it root)
+        await apiClient.changeParent(item.task.id, '');
 
         vscode.window.showInformationMessage(t('success.taskIsRootNow'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(t('error.removeParent') + `: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[RemoveParent] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('error.removeParent') + `: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(t('error.removeParent') + `: ${error}`);
+        }
       }
     })
   );
@@ -229,41 +243,28 @@ export function registerGorevCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.ADD_DEPENDENCY, async (item: any) => {
       try {
-        // Get all tasks except the current one
-        const result = await mcpClient.callTool('gorev_listele', {
+        // Use REST API to get all tasks
+        const response = await apiClient.getTasks({
           tum_projeler: true,
         });
-        
-        if (!result || !result.content || !result.content[0]) {
+
+        if (!response.success || !response.data) {
           throw new Error(t('error.fetchTasks'));
         }
 
-        // Parse tasks from the result
-        const tasks = result.content[0].text
-          .split('\n')
-          .filter((line: string) => line.includes('ID:'))
-          .map((line: string) => {
-            const idMatch = line.match(/ID:\s*([a-f0-9-]+)/);
-            const titleMatch = line.match(/\[.+\]\s+(.+?)\s+\(/);
-            const statusMatch = line.match(/\[(beklemede|devam_ediyor|tamamlandi)\]/);
-            return idMatch && titleMatch ? { 
-              id: idMatch[1], 
-              baslik: titleMatch[1].trim(),
-              durum: statusMatch ? statusMatch[1] : 'beklemede'
-            } : null;
-          })
-          .filter((task: any) => task && task.id !== item.task.id);
+        // Filter out current task
+        const availableTasks = response.data.filter(task => task.id !== item.task.id);
 
-        if (tasks.length === 0) {
+        if (availableTasks.length === 0) {
           vscode.window.showInformationMessage(t('info.noTasksForDependency'));
           return;
         }
 
         // Create quick pick items with status icons
-        const quickPickItems = tasks.map((t: any) => ({
-          label: `${t.durum === 'tamamlandi' ? '✓' : t.durum === 'devam_ediyor' ? '▶' : '○'} ${t.baslik}`,
-          description: t.durum === 'tamamlandi' ? t('status.completed') : t.durum === 'devam_ediyor' ? t('status.inProgress') : t('status.pending'),
-          value: t.id
+        const quickPickItems = availableTasks.map(task => ({
+          label: `${task.durum === 'tamamlandi' ? '✓' : task.durum === 'devam_ediyor' ? '▶' : '○'} ${task.baslik}`,
+          description: task.durum === 'tamamlandi' ? t('status.completed') : task.durum === 'devam_ediyor' ? t('status.inProgress') : t('status.pending'),
+          value: task.id
         }));
 
         const selectedTask = await vscode.window.showQuickPick(
@@ -275,17 +276,21 @@ export function registerGorevCommands(
 
         if (!selectedTask) return;
 
-        // Add the dependency
-        await mcpClient.callTool('gorev_bagimlilik_ekle', {
-          kaynak_id: item.task.id,
-          hedef_id: selectedTask.value,
+        // Use REST API to add dependency
+        await apiClient.addDependency(item.task.id, {
+          kaynak_id: selectedTask.value,
           baglanti_tipi: 'bagimli', // depends on
         });
 
         vscode.window.showInformationMessage(t('success.dependencyAdded'));
         await providers.gorevTreeProvider.refresh();
       } catch (error) {
-        vscode.window.showErrorMessage(t('error.addDependency') + `: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[AddDependency] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(t('error.addDependency') + `: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(t('error.addDependency') + `: ${error}`);
+        }
       }
     })
   );

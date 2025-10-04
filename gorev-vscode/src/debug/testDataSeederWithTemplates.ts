@@ -1,4 +1,4 @@
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { Logger } from '../utils/logger';
 import * as vscode from 'vscode';
@@ -16,7 +16,7 @@ export class TestDataSeederWithTemplates {
         ARASTIRMA_GOREVI: '13f04fe2-b5b6-4fd6-8684-5eca5dc2770d'
     };
 
-    constructor(private mcpClient: MCPClient) {}
+    constructor(private apiClient: ApiClient) {}
 
     /**
      * Test verilerini oluştur
@@ -103,7 +103,7 @@ export class TestDataSeederWithTemplates {
 
         for (const project of projects) {
             try {
-                const result = await this.mcpClient.callTool('proje_olustur', project);
+                const result = await this.apiClient.callTool('proje_olustur', project);
                 const responseText = result.content[0].text;
                 Logger.debug('Project creation response:', responseText);
                 
@@ -121,7 +121,7 @@ export class TestDataSeederWithTemplates {
 
         // İlk projeyi aktif yap
         if (projectIds.length > 0) {
-            await this.mcpClient.callTool('proje_aktif_yap', { proje_id: projectIds[0] });
+            await this.apiClient.callTool('proje_aktif_yap', { proje_id: projectIds[0] });
         }
 
         return projectIds;
@@ -384,7 +384,7 @@ export class TestDataSeederWithTemplates {
         // Create tasks from templates
         for (const task of [...bugTasks, ...featureTasks, ...techDebtTasks, ...researchTasks]) {
             try {
-                const result = await this.mcpClient.callTool('templateden_gorev_olustur', {
+                const result = await this.apiClient.callTool('templateden_gorev_olustur', {
                     template_id: task.templateId,
                     degerler: task.degerler
                 });
@@ -401,7 +401,7 @@ export class TestDataSeederWithTemplates {
                     // Assign to project if specified
                     if (task.projectId) {
                         try {
-                            await this.mcpClient.callTool('gorev_duzenle', {
+                            await this.apiClient.callTool('gorev_duzenle', {
                                 id: taskId,
                                 proje_id: task.projectId
                             });
@@ -419,7 +419,7 @@ export class TestDataSeederWithTemplates {
         // Create direct tasks (without templates)
         for (const task of directTasks) {
             try {
-                const result = await this.mcpClient.callTool('gorev_olustur', task);
+                const result = await this.apiClient.callTool('gorev_olustur', task);
                 const responseText = result.content[0].text;
                 
                 const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
@@ -448,7 +448,7 @@ export class TestDataSeederWithTemplates {
         for (const dep of dependencies) {
             if (taskIds[dep.kaynak] && taskIds[dep.hedef]) {
                 try {
-                    await this.mcpClient.callTool('gorev_bagimlilik_ekle', {
+                    await this.apiClient.callTool('gorev_bagimlilik_ekle', {
                         kaynak_id: taskIds[dep.kaynak],
                         hedef_id: taskIds[dep.hedef],
                         baglanti_tipi: dep.tip
@@ -485,7 +485,7 @@ export class TestDataSeederWithTemplates {
 
             for (const subtask of subtasks) {
                 try {
-                    await this.mcpClient.callTool('gorev_altgorev_olustur', subtask);
+                    await this.apiClient.callTool('gorev_altgorev_olustur', subtask);
                 } catch (error) {
                     Logger.error('Failed to create subtask:', error);
                 }
@@ -502,7 +502,7 @@ export class TestDataSeederWithTemplates {
         for (const index of inProgressTasks) {
             if (taskIds[index]) {
                 try {
-                    await this.mcpClient.callTool('gorev_guncelle', {
+                    await this.apiClient.callTool('gorev_guncelle', {
                         id: taskIds[index],
                         durum: GorevDurum.DevamEdiyor
                     });
@@ -517,7 +517,7 @@ export class TestDataSeederWithTemplates {
         for (const index of completedTasks) {
             if (taskIds[index]) {
                 try {
-                    await this.mcpClient.callTool('gorev_guncelle', {
+                    await this.apiClient.callTool('gorev_guncelle', {
                         id: taskIds[index],
                         durum: GorevDurum.Tamamlandi
                     });
@@ -535,13 +535,13 @@ export class TestDataSeederWithTemplates {
         if (taskIds.length > 0) {
             try {
                 // İlk görevi aktif yap
-                await this.mcpClient.callTool('gorev_set_active', {
+                await this.apiClient.callTool('gorev_set_active', {
                     task_id: taskIds[0]
                 });
                 Logger.info('Set active task for AI context');
 
                 // Context summary al
-                const contextSummary = await this.mcpClient.callTool('gorev_context_summary', {});
+                const contextSummary = await this.apiClient.callTool('gorev_context_summary', {});
                 Logger.info('Generated AI context summary');
             } catch (error) {
                 Logger.error('Failed to setup AI context:', error);

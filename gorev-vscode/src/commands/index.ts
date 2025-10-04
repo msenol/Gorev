@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ApiClient, ApiError } from '../api/client';
 import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from '../providers/projeTreeProvider';
 import { TemplateTreeProvider } from '../providers/templateTreeProvider';
@@ -26,41 +26,57 @@ export interface CommandContext {
 
 export function registerCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
   // Register all command groups
-  registerGorevCommands(context, mcpClient, providers);
-  registerProjeCommands(context, mcpClient, providers);
-  registerTemplateCommands(context, mcpClient, providers);
-  registerEnhancedGorevCommands(context, mcpClient, providers);
-  registerInlineEditCommands(context, mcpClient, providers);
-  registerDataCommands(context, mcpClient, providers);
-  registerDatabaseCommands(context, mcpClient, providers);
+  registerGorevCommands(context, apiClient, providers);
+  registerProjeCommands(context, apiClient, providers);
+  registerTemplateCommands(context, apiClient, providers);
+  registerEnhancedGorevCommands(context, apiClient, providers);
+  registerInlineEditCommands(context, apiClient, providers);
+  registerDataCommands(context, apiClient, providers);
+  registerDatabaseCommands(context, apiClient, providers);
   
   if (providers.filterToolbar) {
-    registerFilterCommands(context, mcpClient, providers);
+    registerFilterCommands(context, apiClient, providers);
   }
+
+  // Initialize API client for general commands
 
   // Register general commands
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.SHOW_SUMMARY, async () => {
       try {
-        if (!mcpClient.isConnected()) {
+        if (!apiClient.isConnected()) {
           vscode.window.showWarningMessage('Not connected to Gorev server');
           return;
         }
-        const result = await mcpClient.callTool('ozet_goster');
+
+        // Use REST API to get summary
+        const response = await apiClient.getSummary();
+
+        if (!response.success || !response.data) {
+          vscode.window.showErrorMessage('Failed to get summary from server');
+          return;
+        }
+
         const summaryPanel = vscode.window.createWebviewPanel(
           'gorevSummary',
           'Gorev Summary',
           vscode.ViewColumn.One,
           {}
         );
-        
-        summaryPanel.webview.html = getSummaryHtml(result.content[0].text);
+
+        // Format summary data as HTML
+        summaryPanel.webview.html = getSummaryHtml(formatSummaryData(response.data));
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to show summary: ${error}`);
+        if (error instanceof ApiError) {
+          Logger.error(`[ShowSummary] API Error ${error.statusCode}:`, error.apiError);
+          vscode.window.showErrorMessage(`Failed to show summary: ${error.apiError}`);
+        } else {
+          vscode.window.showErrorMessage(`Failed to show summary: ${error}`);
+        }
       }
     })
   );
@@ -69,7 +85,7 @@ export function registerCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CONNECT, async () => {
       try {
-        await connectToServer(mcpClient, providers);
+        await connectToServer(apiClient, providers);
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to connect: ${error}`);
       }
@@ -79,52 +95,61 @@ export function registerCommands(
   // Disconnect command
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.DISCONNECT, () => {
-      mcpClient.disconnect();
+      apiClient.disconnect();
       providers.statusBarManager.setDisconnected();
       vscode.window.showInformationMessage('Disconnected from Gorev server');
     })
   );
 }
 
-async function connectToServer(mcpClient: MCPClient, providers: CommandContext): Promise<void> {
-  const config = vscode.workspace.getConfiguration('gorev');
-  const serverMode = config.get<string>('serverMode', 'npx');
-  let serverPath = config.get<string>('serverPath');
-
-  // Validate configuration based on server mode
-  if (serverMode === 'binary') {
-    if (!serverPath) {
-      throw new Error('Gorev server path not configured for binary mode. Please set gorev.serverPath in settings.');
-    }
-
-    // Convert WSL path to Windows path if needed
-    if (process.platform === 'win32' && serverPath.startsWith('/mnt/')) {
-      // Convert /mnt/f/... to F:\...
-      const drive = serverPath.charAt(5).toUpperCase();
-      serverPath = drive + ':\\' + serverPath.substring(7).replace(/\//g, '\\');
-      Logger.debug(`Converted WSL path to Windows path: ${serverPath}`);
-    }
-  } else {
-    // NPX mode - no server path validation needed
-    Logger.info('Using NPX mode - no server path required');
-  }
-
+async function connectToServer(client: ApiClient, providers: CommandContext): Promise<void> {
   providers.statusBarManager.setConnecting();
-  
+
   try {
-    await mcpClient.connect(serverPath);
+    // Use the unified client's connect method which handles auto-detection
+    await client.connect();
     providers.statusBarManager.setConnected();
-    
-    // Refresh all views after connection - sequentially to avoid overwhelming the MCP server
+
+    // Refresh all views after connection - sequentially to avoid overwhelming the server
     await providers.gorevTreeProvider.refresh();
     await providers.projeTreeProvider.refresh();
     await providers.templateTreeProvider.refresh();
-    
+
     vscode.window.showInformationMessage('Connected to Gorev server');
   } catch (error) {
     providers.statusBarManager.setDisconnected();
     throw error;
   }
+}
+
+/**
+ * Format summary data from API response to markdown-like text
+ */
+function formatSummaryData(data: any): string {
+  let text = `# Özet Rapor\n\n`;
+
+  if (data.toplam_proje !== undefined) {
+    text += `**Toplam Proje:** ${data.toplam_proje}\n`;
+  }
+  if (data.toplam_gorev !== undefined) {
+    text += `**Toplam Görev:** ${data.toplam_gorev}\n\n`;
+  }
+
+  if (data.durum_dagilimi) {
+    text += `### Durum Dağılımı\n`;
+    text += `- Beklemede: ${data.durum_dagilimi.beklemede || 0}\n`;
+    text += `- Devam Ediyor: ${data.durum_dagilimi.devam_ediyor || 0}\n`;
+    text += `- Tamamlandı: ${data.durum_dagilimi.tamamlandi || 0}\n\n`;
+  }
+
+  if (data.oncelik_dagilimi) {
+    text += `### Öncelik Dağılımı\n`;
+    text += `- Yüksek: ${data.oncelik_dagilimi.yuksek || 0}\n`;
+    text += `- Orta: ${data.oncelik_dagilimi.orta || 0}\n`;
+    text += `- Düşük: ${data.oncelik_dagilimi.dusuk || 0}\n`;
+  }
+
+  return text;
 }
 
 function getSummaryHtml(content: string): string {

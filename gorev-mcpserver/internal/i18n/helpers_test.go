@@ -12,7 +12,7 @@ func TestTCommon(t *testing.T) {
 	// Initialize i18n first
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		key      string
@@ -26,9 +26,9 @@ func TestTCommon(t *testing.T) {
 			expected: "common.test", // Will return key itself if not found
 		},
 		{
-			name: "Common key with data",
-			key:  "test",
-			data: map[string]interface{}{"Name": "example"},
+			name:     "Common key with data",
+			key:      "test",
+			data:     map[string]interface{}{"Name": "example"},
 			expected: "common.test",
 		},
 		{
@@ -50,7 +50,7 @@ func TestTCommon(t *testing.T) {
 func TestTParam(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name      string
 		paramName string
@@ -84,7 +84,7 @@ func TestTParam(t *testing.T) {
 func TestTValidation(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name           string
 		validationType string
@@ -126,7 +126,7 @@ func TestTValidation(t *testing.T) {
 func TestBuildFieldDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		prefix   string
@@ -161,7 +161,7 @@ func TestBuildFieldDescription(t *testing.T) {
 func TestBuildIDDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		entity   string
@@ -193,7 +193,7 @@ func TestBuildIDDescription(t *testing.T) {
 func TestBuildPaginationDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name           string
 		paginationType string
@@ -231,7 +231,7 @@ func TestBuildPaginationDescription(t *testing.T) {
 func TestBuildPrefixedDescription(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name     string
 		prefix   string
@@ -269,7 +269,7 @@ func TestBuildPrefixedDescription(t *testing.T) {
 func TestGetCommonSuffix(t *testing.T) {
 	err := Initialize("tr")
 	assert.NoError(t, err)
-	
+
 	tests := []struct {
 		name       string
 		suffixType string
@@ -296,6 +296,180 @@ func TestGetCommonSuffix(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := GetCommonSuffix(tt.suffixType)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// Test uncovered helper functions for improved coverage
+
+func TestUncoveredHelpers(t *testing.T) {
+	err := Initialize("tr")
+	assert.NoError(t, err)
+
+	// GetEntityName
+	assert.NotEmpty(t, GetEntityName("task"))
+	assert.NotEmpty(t, GetEntityName("project"))
+
+	// Format functions
+	assert.NotEmpty(t, FormatParameterRequired("gorev_id"))
+	assert.NotEmpty(t, FormatInvalidValue("status", "invalid", []string{"beklemede", "tamamlandi"}))
+	assert.NotEmpty(t, FormatEntityNotFound("task", "123"))
+	assert.NotEmpty(t, FormatOperationFailed("create", assert.AnError))
+
+	// TRequired functions
+	assert.NotEmpty(t, TRequiredParam("gorev_id"))
+	assert.NotEmpty(t, TRequiredArray("etiketler"))
+	assert.NotEmpty(t, TRequiredObject("degerler"))
+
+	// TEntity functions
+	assert.NotEmpty(t, TEntityNotFound("task", assert.AnError))
+	assert.NotEmpty(t, TEntityNotFoundByID("task", "123"))
+
+	// TOperation functions
+	assert.NotEmpty(t, TOperationFailed("create", "task", assert.AnError))
+	assert.NotEmpty(t, TSuccess("created", "task", nil))
+
+	// TInvalid functions
+	assert.NotEmpty(t, TInvalidValue("field", "value", []string{"option1", "option2"}))
+	assert.NotEmpty(t, TInvalidStatus("invalid", []string{"beklemede", "tamamlandi"}))
+	assert.NotEmpty(t, TInvalidPriority("invalid"))
+	assert.NotEmpty(t, TInvalidDate("2025-13-45"))
+	assert.NotEmpty(t, TInvalidFormat("date", "2025-13-45"))
+
+	// TAction functions (all require error parameter)
+	testErr := assert.AnError
+	assert.NotEmpty(t, TCreateFailed("task", testErr))
+	assert.NotEmpty(t, TUpdateFailed("task", testErr))
+	assert.NotEmpty(t, TDeleteFailed("task", testErr))
+	assert.NotEmpty(t, TFetchFailed("task", testErr))
+	assert.NotEmpty(t, TSaveFailed("task", testErr))
+	assert.NotEmpty(t, TSetFailed("status", testErr))
+	assert.NotEmpty(t, TInitFailed("database", testErr))
+	assert.NotEmpty(t, TCheckFailed("validation", testErr))
+	assert.NotEmpty(t, TQueryFailed("task", testErr))
+	assert.NotEmpty(t, TProcessFailed("data", testErr))
+	assert.NotEmpty(t, TListFailed("tasks", testErr))
+	assert.NotEmpty(t, TEditFailed("task", testErr))
+	assert.NotEmpty(t, TAddFailed("tag", testErr))
+	assert.NotEmpty(t, TRemoveFailed("tag", testErr))
+	assert.NotEmpty(t, TReadFailed("file", testErr))
+	assert.NotEmpty(t, TConvertFailed("data", "json", testErr))
+	assert.NotEmpty(t, TParseFailed("date", testErr))
+
+	// TSuccess messages
+	assert.NotEmpty(t, TCreated("task", "Test Task", "123"))
+	assert.NotEmpty(t, TUpdated("task", "details"))
+	assert.NotEmpty(t, TDeleted("task", "Test Task", "123"))
+	assert.NotEmpty(t, TSet("status", "devam_ediyor"))
+	assert.NotEmpty(t, TRemoved("tag"))
+	assert.NotEmpty(t, TAdded("tag", "yeni etiket"))
+	assert.NotEmpty(t, TMoved("task"))
+	assert.NotEmpty(t, TEdited("task", "Test Task"))
+
+	// Field helpers
+	assert.NotEmpty(t, TFieldID("task", "create"))
+	assert.NotEmpty(t, TTaskCount("total", "10"))
+	assert.NotEmpty(t, TProjectField("name"))
+	assert.NotEmpty(t, TSubtaskField("title"))
+	assert.NotEmpty(t, TCommaSeparated("tags"))
+	assert.NotEmpty(t, TWithFormat("file path", "json"))
+	assert.NotEmpty(t, TFilePath("import"))
+	assert.NotEmpty(t, TTemplate("bug"))
+	assert.NotEmpty(t, TBatch("update"))
+
+	// Markdown helpers
+	assert.NotEmpty(t, TLabel("test"))
+	assert.NotEmpty(t, TMarkdownLabel("test", "value"))
+	assert.NotEmpty(t, TMarkdownHeader(1, "test"))
+	assert.NotEmpty(t, TMarkdownBold("test"))
+	assert.NotEmpty(t, TMarkdownSection("📝", "test"))
+
+	// Utility helpers
+	assert.NotEmpty(t, TCount("tasks", 5))
+	assert.NotEmpty(t, TDuration("elapsed", 120))
+	assert.NotEmpty(t, TListItem("task", 1))
+}
+
+// TestTStatus tests all status value handling
+func TestTStatus(t *testing.T) {
+	err := Initialize("tr")
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name   string
+		status string
+	}{
+		{
+			name:   "Pending status",
+			status: "beklemede",
+		},
+		{
+			name:   "In progress status",
+			status: "devam_ediyor",
+		},
+		{
+			name:   "Completed status",
+			status: "tamamlandi",
+		},
+		{
+			name:   "Cancelled status",
+			status: "iptal",
+		},
+		{
+			name:   "Unknown status fallback",
+			status: "unknown_status",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := TStatus(tt.status)
+			// Just verify function returns non-empty string
+			assert.NotEmpty(t, result)
+			// Unknown status should return itself
+			if tt.status == "unknown_status" {
+				assert.Equal(t, "unknown_status", result)
+			}
+		})
+	}
+}
+
+// TestTPriority tests all priority value handling
+func TestTPriority(t *testing.T) {
+	err := Initialize("tr")
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		priority string
+	}{
+		{
+			name:     "Low priority",
+			priority: "dusuk",
+		},
+		{
+			name:     "Medium priority",
+			priority: "orta",
+		},
+		{
+			name:     "High priority",
+			priority: "yuksek",
+		},
+		{
+			name:     "Unknown priority fallback",
+			priority: "unknown_priority",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := TPriority(tt.priority)
+			// Just verify function returns non-empty string
+			assert.NotEmpty(t, result)
+			// Unknown priority should return itself
+			if tt.priority == "unknown_priority" {
+				assert.Equal(t, "unknown_priority", result)
+			}
 		})
 	}
 }

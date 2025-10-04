@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { Logger } from '../utils/logger';
@@ -13,7 +13,7 @@ import { ImportWizard } from '../ui/importWizard';
  */
 export function registerDataCommands(
   context: vscode.ExtensionContext,
-  mcpClient: MCPClient,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
   Logger.info('Registering data export/import commands');
@@ -22,12 +22,12 @@ export function registerDataCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.EXPORT_DATA, async () => {
       try {
-        if (!mcpClient.isConnected()) {
+        if (!apiClient.isConnected()) {
           vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
-        const exportDialog = new ExportDialog(context, mcpClient);
+        const exportDialog = new ExportDialog(context, apiClient);
         await exportDialog.show();
       } catch (error) {
         Logger.error('Export data command failed', error);
@@ -42,12 +42,12 @@ export function registerDataCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.IMPORT_DATA, async () => {
       try {
-        if (!mcpClient.isConnected()) {
+        if (!apiClient.isConnected()) {
           vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
-        const importWizard = new ImportWizard(context, mcpClient, providers);
+        const importWizard = new ImportWizard(context, apiClient, providers);
         await importWizard.show();
       } catch (error) {
         Logger.error('Import data command failed', error);
@@ -62,12 +62,12 @@ export function registerDataCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.EXPORT_CURRENT_VIEW, async (element?: any) => {
       try {
-        if (!mcpClient.isConnected()) {
+        if (!apiClient.isConnected()) {
           vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
-        await exportCurrentView(mcpClient, providers, element);
+        await exportCurrentView(apiClient, providers, element);
       } catch (error) {
         Logger.error('Export current view command failed', error);
         vscode.window.showErrorMessage(
@@ -81,12 +81,12 @@ export function registerDataCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.QUICK_EXPORT, async () => {
       try {
-        if (!mcpClient.isConnected()) {
+        if (!apiClient.isConnected()) {
           vscode.window.showWarningMessage(t('connection.notConnected'));
           return;
         }
 
-        await quickExport(mcpClient);
+        await quickExport(apiClient);
       } catch (error) {
         Logger.error('Quick export command failed', error);
         vscode.window.showErrorMessage(
@@ -101,7 +101,7 @@ export function registerDataCommands(
  * Export current filtered view with context-appropriate settings
  */
 async function exportCurrentView(
-  mcpClient: MCPClient,
+  apiClient: ApiClient,
   providers: CommandContext,
   element?: any
 ): Promise<void> {
@@ -153,13 +153,13 @@ async function exportCurrentView(
 
     progress.report({ increment: 30, message: t('export.exporting') });
 
-    // Call MCP export tool
-    const result = await mcpClient.callTool('gorev_export', exportOptions);
+    // Call REST API export endpoint
+    const result = await apiClient.exportData(exportOptions);
 
     progress.report({ increment: 80, message: t('export.completing') });
 
-    if (result.isError) {
-      throw new Error(result.content[0]?.text || 'Export failed');
+    if (!result.success) {
+      throw new Error(result.message || 'Export failed');
     }
 
     progress.report({ increment: 100, message: t('export.complete') });
@@ -180,7 +180,7 @@ async function exportCurrentView(
 /**
  * Quick export with default settings to Downloads folder
  */
-async function quickExport(mcpClient: MCPClient): Promise<void> {
+async function quickExport(apiClient: ApiClient): Promise<void> {
   Logger.info('Performing quick export');
 
   // Generate default filename with timestamp
@@ -210,11 +210,11 @@ async function quickExport(mcpClient: MCPClient): Promise<void> {
 
     progress.report({ increment: 50, message: t('export.exporting') });
 
-    // Call MCP export tool
-    const result = await mcpClient.callTool('gorev_export', exportOptions);
+    // Call REST API export endpoint
+    const result = await apiClient.exportData(exportOptions);
 
-    if (result.isError) {
-      throw new Error(result.content[0]?.text || 'Quick export failed');
+    if (!result.success) {
+      throw new Error(result.message || 'Quick export failed');
     }
 
     progress.report({ increment: 100, message: t('export.complete') });
@@ -271,21 +271,17 @@ export function validateExportOptions(options: any): { isValid: boolean; errors:
 /**
  * Utility function to estimate export size
  */
-export async function estimateExportSize(mcpClient: MCPClient, options: any): Promise<string> {
+export async function estimateExportSize(apiClient: ApiClient, options: any): Promise<string> {
   try {
-    // Get summary to estimate size
-    const summaryResult = await mcpClient.callTool('ozet_goster');
-    if (summaryResult.isError) {
+    // Get summary to estimate size using REST API
+    const summaryResult = await apiClient.getSummary();
+    if (!summaryResult.success || !summaryResult.data) {
       return t('export.sizeUnknown');
     }
 
-    // Parse summary for task/project counts
-    const summaryText = summaryResult.content[0]?.text || '';
-    const taskMatch = summaryText.match(/(\d+).*görev/i);
-    const projectMatch = summaryText.match(/(\d+).*proje/i);
-
-    const taskCount = taskMatch ? parseInt(taskMatch[1]) : 0;
-    const projectCount = projectMatch ? parseInt(projectMatch[1]) : 0;
+    // Extract task and project counts from summary data
+    const taskCount = summaryResult.data.total_tasks || 0;
+    const projectCount = summaryResult.data.total_projects || 0;
 
     // Rough estimation: ~500 bytes per task, ~200 bytes per project
     const estimatedBytes = (taskCount * 500) + (projectCount * 200);

@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.15.24",
+  "version": "0.16.0",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -106,28 +106,17 @@
     "configuration": {
       "title": "Gorev",
       "properties": {
-        "gorev.serverMode": {
+        "gorev.apiHost": {
           "type": "string",
-          "default": "npx",
-          "enum": [
-            "npx",
-            "binary"
-          ],
-          "enumDescriptions": [
-            "%config.serverMode.npx%",
-            "%config.serverMode.binary%"
-          ],
-          "description": "%config.serverMode%"
+          "default": "localhost",
+          "description": "%config.apiHost%"
         },
-        "gorev.serverPath": {
-          "type": "string",
-          "default": "",
-          "description": "%config.serverPath%"
-        },
-        "gorev.autoConnect": {
-          "type": "boolean",
-          "default": true,
-          "description": "%config.autoConnect%"
+        "gorev.apiPort": {
+          "type": "number",
+          "default": 5082,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "%config.apiPort%"
         },
         "gorev.showStatusBar": {
           "type": "boolean",
@@ -421,21 +410,6 @@
           "minimum": 10,
           "maximum": 1000,
           "description": "Maximum number of metrics to keep per operation type"
-        },
-        "gorev.databaseMode": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "workspace",
-            "global"
-          ],
-          "default": "auto",
-          "enumDescriptions": [
-            "Auto-detect: Use workspace database if .gorev/ exists, otherwise global",
-            "Workspace: Always use project-local database in .gorev/",
-            "Global: Always use shared database in user home directory"
-          ],
-          "description": "%config.databaseMode%"
         }
       }
     },
@@ -766,18 +740,6 @@
         "title": "%command.quickExport%",
         "category": "Gorev",
         "icon": "$(export)"
-      },
-      {
-        "command": "gorev.initWorkspaceDatabase",
-        "title": "%command.initWorkspaceDatabase%",
-        "category": "Gorev",
-        "icon": "$(database)"
-      },
-      {
-        "command": "gorev.switchDatabaseMode",
-        "title": "%command.switchDatabaseMode%",
-        "category": "Gorev",
-        "icon": "$(database)"
       }
     ],
     "viewsContainers": {
@@ -1106,6 +1068,7 @@
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
+    "axios-mock-adapter": "^2.1.0",
     "c8": "^9.0.0",
     "eslint": "^9.0.0",
     "glob": "^10.3.10",
@@ -1114,7 +1077,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@types/axios": "^0.9.36",
     "@vscode/l10n": "^0.0.18",
+    "axios": "^1.12.2",
     "vscode-languageclient": "^9.0.1"
   }
 }

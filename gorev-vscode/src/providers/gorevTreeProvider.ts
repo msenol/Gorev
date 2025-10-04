@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { ICONS, COLORS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
@@ -10,14 +10,14 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
   
   private tasks: Gorev[] = [];
 
-  constructor(private mcpClient: MCPClient) {}
+  constructor(private apiClient: ApiClient) {}
 
   getTreeItem(element: GorevTreeItem): vscode.TreeItem {
     return element;
   }
 
   async getChildren(element?: GorevTreeItem): Promise<GorevTreeItem[]> {
-    if (!this.mcpClient.isConnected()) {
+    if (!this.apiClient.isConnected()) {
       return [];
     }
 
@@ -46,47 +46,38 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
       let offset = 0;
       const pageSize = 100;
       let hasMoreTasks = true;
-      
-      // Fetch all tasks with pagination
+
+      // Fetch all tasks with pagination using REST API
       while (hasMoreTasks) {
         console.log('[GorevTreeProvider] Fetching tasks with offset:', offset);
-        
-        const result = await this.mcpClient.callTool('gorev_listele', {
+
+        const result = await this.apiClient.getTasks({
           tum_projeler: true,
           limit: pageSize,
           offset: offset
         });
-        
-        if (!result || !result.content || !result.content[0]) {
+
+        if (!result.success || !result.data) {
           break;
         }
-        
-        const responseText = result.content[0].text;
-        
-        // Check for pagination info
-        const paginationMatch = responseText.match(/Görevler \((\d+)-(\d+) \/ (\d+)\)/);
-        if (paginationMatch) {
-          const [_, start, end, total] = paginationMatch;
-          console.log(`[GorevTreeProvider] Pagination: ${start}-${end} / ${total}`);
-          
-          if (parseInt(end) >= parseInt(total)) {
-            hasMoreTasks = false;
-          }
-        } else {
+
+        // Add tasks from this page
+        this.tasks.push(...result.data);
+
+        // Check if we got fewer tasks than requested - means we're done
+        if (result.data.length < pageSize) {
           hasMoreTasks = false;
         }
-        
-        // Parse tasks from this page
-        const pageTasks = this.parseTasksFromContent(responseText);
-        this.tasks.push(...pageTasks);
-        
+
+        console.log(`[GorevTreeProvider] Fetched ${result.data.length} tasks (total: ${this.tasks.length})`);
+
         // Update offset
         offset += pageSize;
-        
+
         // Safety check
         if (offset > 1000) break;
       }
-      
+
       console.log('[GorevTreeProvider] Total tasks fetched:', this.tasks.length);
     } catch (error) {
       Logger.error('Failed to load tasks:', error);
@@ -163,7 +154,10 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
       if (line.includes('Etiketler:') && currentTask) {
         const tagsMatch = line.match(/Etiketler: (.+)/);
         if (tagsMatch) {
-          currentTask.etiketler = tagsMatch[1].split(',').map(tag => tag.trim());
+          currentTask.etiketler = tagsMatch[1].split(',').map(tag => ({
+            id: `tag-${Date.now()}-${Math.random()}`,
+            isim: tag.trim()
+          }));
         }
         continue;
       }
@@ -253,7 +247,7 @@ export class GorevTreeItem extends vscode.TreeItem {
     }
     
     if (this.task.etiketler && this.task.etiketler.length > 0) {
-      parts.push(`[${this.task.etiketler.join(', ')}]`);
+      parts.push(`[${this.task.etiketler.map(t => t.isim).join(', ')}]`);
     }
     
     return parts.join(' ');

@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { GorevTemplate, TemplateAlan } from '../models/template';
-import { MarkdownParser } from '../utils/markdownParser';
 import { Logger } from '../utils/logger';
 
 /**
@@ -16,7 +15,7 @@ export class TemplateWizard {
     private readonly disposables: vscode.Disposable[] = [];
 
     constructor(
-        private readonly mcpClient: MCPClient,
+        private readonly apiClient: ApiClient,
         private readonly extensionUri: vscode.Uri
     ) {
         this.panel = vscode.window.createWebviewPanel(
@@ -80,7 +79,7 @@ export class TemplateWizard {
         this.loadTemplates();
     }
 
-    public static async show(mcpClient: MCPClient, extensionUri: vscode.Uri, templateId?: string): Promise<void> {
+    public static async show(apiClient: ApiClient, extensionUri: vscode.Uri, templateId?: string): Promise<void> {
         // If panel already exists, reveal it
         if (TemplateWizard.currentPanel) {
             TemplateWizard.currentPanel.panel.reveal(vscode.ViewColumn.One);
@@ -91,7 +90,7 @@ export class TemplateWizard {
         }
 
         // Create new panel
-        TemplateWizard.currentPanel = new TemplateWizard(mcpClient, extensionUri);
+        TemplateWizard.currentPanel = new TemplateWizard(apiClient, extensionUri);
         if (templateId) {
             await TemplateWizard.currentPanel.selectTemplate(templateId);
         }
@@ -99,12 +98,10 @@ export class TemplateWizard {
 
     private async loadTemplates(category?: string): Promise<void> {
         try {
-            const result = await this.mcpClient.callTool('template_listele', { 
-                kategori: category 
-            });
-            
-            const templates = MarkdownParser.parseTemplateListesi(result.content[0].text);
-            
+            const result = await this.apiClient.getTemplates(category);
+
+            const templates = result.success && result.data ? result.data : [];
+
             // Send templates to webview
             await this.panel.webview.postMessage({
                 command: 'templatesLoaded',
@@ -118,11 +115,11 @@ export class TemplateWizard {
 
     private async searchTemplates(query: string): Promise<void> {
         try {
-            // Load all templates and filter client-side
-            const result = await this.mcpClient.callTool('template_listele');
-            const allTemplates = MarkdownParser.parseTemplateListesi(result.content[0].text);
-            
-            const filtered = allTemplates.filter(t => 
+            // Load all templates using REST API and filter client-side
+            const result = await this.apiClient.getTemplates();
+            const templates = result.success && result.data ? result.data : [];
+
+            const filtered = templates.filter((t: any) =>
                 t.isim.toLowerCase().includes(query.toLowerCase()) ||
                 t.tanim?.toLowerCase().includes(query.toLowerCase()) ||
                 t.kategori?.toLowerCase().includes(query.toLowerCase())
@@ -139,11 +136,11 @@ export class TemplateWizard {
 
     private async selectTemplate(templateId: string): Promise<void> {
         try {
-            // Load template details
-            const result = await this.mcpClient.callTool('template_listele');
-            const templates = MarkdownParser.parseTemplateListesi(result.content[0].text);
-            
-            this.template = templates.find(t => t.id === templateId);
+            // Load template details using REST API
+            const result = await this.apiClient.getTemplates();
+            const templates = result.success && result.data ? result.data : [];
+
+            this.template = templates.find(t => t.id === templateId) as any;
             if (!this.template) {
                 throw new Error(t('templateWizard.notFound'));
             }
@@ -179,8 +176,8 @@ export class TemplateWizard {
                 return;
             }
 
-            // Create task from template
-            const result = await this.mcpClient.callTool('templateden_gorev_olustur', {
+            // Create task from template using REST API
+            const result = await this.apiClient.createTaskFromTemplate({
                 template_id: this.template.id,
                 degerler: values
             });
@@ -255,13 +252,13 @@ export class TemplateWizard {
 
     private async loadFavorites(): Promise<void> {
         const favoriteIds = this.getFavorites();
-        
+
         try {
-            const result = await this.mcpClient.callTool('template_listele');
-            const allTemplates = MarkdownParser.parseTemplateListesi(result.content[0].text);
-            
-            const favorites = allTemplates.filter(t => favoriteIds.includes(t.id));
-            
+            const result = await this.apiClient.getTemplates();
+            const templates = result.success && result.data ? result.data : [];
+
+            const favorites = templates.filter((t: any) => favoriteIds.includes(t.id));
+
             await this.panel.webview.postMessage({
                 command: 'favoritesLoaded',
                 templates: favorites

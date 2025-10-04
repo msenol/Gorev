@@ -3,6 +3,7 @@ package gorev
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -46,27 +47,27 @@ type MockVeriYonetici struct {
 	shouldFailBaglantiEkle   bool
 	shouldReturnError        bool
 	errorToReturn            error
-	
+
 	// Additional mock data for coverage tests
-	templates                []*GorevTemplate
-	etiketler               map[string]*Etiket
-	shouldFailTemplate      bool
-	shouldFailEtiket        bool
-	bulkCountsData          map[string]int
+	templates          []*GorevTemplate
+	etiketler          map[string]*Etiket
+	shouldFailTemplate bool
+	shouldFailEtiket   bool
+	bulkCountsData     map[string]int
 }
 
 // Test additional IsYonetici functions for better coverage
 
 func TestIsYonetici_VeriYonetici(t *testing.T) {
 	setupTestI18n()
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler: make(map[string]*Gorev),
 		projeler: make(map[string]*Proje),
 	}
-	
+
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test that VeriYonetici returns the same instance
 	result := iy.VeriYonetici()
 	if result != mockVeri {
@@ -76,7 +77,7 @@ func TestIsYonetici_VeriYonetici(t *testing.T) {
 
 func TestIsYonetici_GorevOlustur_DateParsing(t *testing.T) {
 	setupTestI18n()
-	
+
 	tests := []struct {
 		name       string
 		sonTarih   string
@@ -106,7 +107,7 @@ func TestIsYonetici_GorevOlustur_DateParsing(t *testing.T) {
 			expectErr: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockVeri := &MockVeriYonetici{
@@ -114,21 +115,21 @@ func TestIsYonetici_GorevOlustur_DateParsing(t *testing.T) {
 				etiketler: make(map[string]*Etiket),
 			}
 			iy := YeniIsYonetici(mockVeri)
-			
+
 			gorev, err := iy.GorevOlustur("Test Task", "Test Description", "yuksek", "", tt.sonTarih, nil)
-			
+
 			if tt.expectErr {
 				if err == nil {
 					t.Error("Expected error for invalid date format")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 				return
 			}
-			
+
 			if tt.expectDate {
 				if gorev.SonTarih == nil {
 					t.Error("Expected SonTarih to be set")
@@ -144,22 +145,22 @@ func TestIsYonetici_GorevOlustur_DateParsing(t *testing.T) {
 
 func TestIsYonetici_GorevOlustur_WithTags(t *testing.T) {
 	setupTestI18n()
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler: make(map[string]*Gorev),
 		tags:     make(map[string]*Etiket),
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	etiketIsimleri := []string{"urgent", "bug"}
-	
+
 	gorev, err := iy.GorevOlustur("Test Task", "Test Description", "yuksek", "", "", etiketIsimleri)
-	
+
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 		return
 	}
-	
+
 	if len(gorev.Etiketler) != len(etiketIsimleri) {
 		t.Errorf("Expected %d tags, got %d", len(etiketIsimleri), len(gorev.Etiketler))
 	}
@@ -167,16 +168,16 @@ func TestIsYonetici_GorevOlustur_WithTags(t *testing.T) {
 
 func TestIsYonetici_GorevOlustur_SaveError(t *testing.T) {
 	setupTestI18n()
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler:              make(map[string]*Gorev),
 		shouldFailGorevKaydet: true,
 		errorToReturn:         errors.New("database error"),
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	_, err := iy.GorevOlustur("Test Task", "Test Description", "yuksek", "", "", nil)
-	
+
 	if err == nil {
 		t.Error("Expected error when GorevKaydet fails")
 	}
@@ -184,19 +185,19 @@ func TestIsYonetici_GorevOlustur_SaveError(t *testing.T) {
 
 func TestIsYonetici_GorevListele_EmptyList(t *testing.T) {
 	setupTestI18n()
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler: make(map[string]*Gorev),
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	filters := make(map[string]interface{})
 	gorevler, err := iy.GorevListele(filters)
-	
+
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	
+
 	if len(gorevler) != 0 {
 		t.Errorf("Expected empty list, got %d items", len(gorevler))
 	}
@@ -204,11 +205,11 @@ func TestIsYonetici_GorevListele_EmptyList(t *testing.T) {
 
 func TestIsYonetici_GorevListele_WithBulkDependencies(t *testing.T) {
 	setupTestI18n()
-	
+
 	// Create test tasks
 	task1 := &Gorev{ID: "task1", Baslik: "Task 1"}
 	task2 := &Gorev{ID: "task2", Baslik: "Task 2"}
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler: map[string]*Gorev{
 			"task1": task1,
@@ -219,20 +220,20 @@ func TestIsYonetici_GorevListele_WithBulkDependencies(t *testing.T) {
 			"task2": 1,
 		},
 	}
-	
+
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	filters := make(map[string]interface{})
 	gorevler, err := iy.GorevListele(filters)
-	
+
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	
+
 	if len(gorevler) != 2 {
 		t.Errorf("Expected 2 tasks, got %d", len(gorevler))
 	}
-	
+
 	// Check that bulk dependency counts were set
 	for _, gorev := range gorevler {
 		if gorev.BagimliGorevSayisi == 0 && gorev.TamamlanmamisBagimlilikSayisi == 0 && gorev.BuGoreveBagimliSayisi == 0 {
@@ -245,20 +246,20 @@ func TestIsYonetici_GorevListele_WithBulkDependencies(t *testing.T) {
 
 func TestIsYonetici_GorevGetir(t *testing.T) {
 	setupTestI18n()
-	
+
 	task := &Gorev{
 		ID:     "test-id",
 		Baslik: "Test Task",
 		Durum:  "beklemede",
 	}
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler: map[string]*Gorev{
 			"test-id": task,
 		},
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test successful get
 	result, err := iy.GorevGetir("test-id")
 	if err != nil {
@@ -267,7 +268,7 @@ func TestIsYonetici_GorevGetir(t *testing.T) {
 	if result.ID != "test-id" {
 		t.Errorf("Expected ID 'test-id', got '%s'", result.ID)
 	}
-	
+
 	// Test not found
 	_, err = iy.GorevGetir("non-existent")
 	if err == nil {
@@ -277,20 +278,20 @@ func TestIsYonetici_GorevGetir(t *testing.T) {
 
 func TestIsYonetici_ProjeGetir(t *testing.T) {
 	setupTestI18n()
-	
+
 	proje := &Proje{
 		ID:    "test-proje",
 		Isim:  "Test Project",
 		Tanim: "Test Description",
 	}
-	
+
 	mockVeri := &MockVeriYonetici{
 		projeler: map[string]*Proje{
 			"test-proje": proje,
 		},
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test successful get
 	result, err := iy.ProjeGetir("test-proje")
 	if err != nil {
@@ -299,7 +300,7 @@ func TestIsYonetici_ProjeGetir(t *testing.T) {
 	if result.ID != "test-proje" {
 		t.Errorf("Expected ID 'test-proje', got '%s'", result.ID)
 	}
-	
+
 	// Test not found
 	_, err = iy.ProjeGetir("non-existent")
 	if err == nil {
@@ -309,25 +310,25 @@ func TestIsYonetici_ProjeGetir(t *testing.T) {
 
 func TestIsYonetici_AktifProjeAyarla(t *testing.T) {
 	setupTestI18n()
-	
+
 	proje := &Proje{
 		ID:   "test-proje",
 		Isim: "Test Project",
 	}
-	
+
 	mockVeri := &MockVeriYonetici{
 		projeler: map[string]*Proje{
 			"test-proje": proje,
 		},
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test setting active project
 	err := iy.AktifProjeAyarla("test-proje")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	
+
 	// Test setting non-existent project
 	err = iy.AktifProjeAyarla("non-existent")
 	if err == nil {
@@ -337,12 +338,12 @@ func TestIsYonetici_AktifProjeAyarla(t *testing.T) {
 
 func TestIsYonetici_AktifProjeGetir(t *testing.T) {
 	setupTestI18n()
-	
+
 	proje := &Proje{
 		ID:   "test-proje",
 		Isim: "Test Project",
 	}
-	
+
 	mockVeri := &MockVeriYonetici{
 		projeler: map[string]*Proje{
 			"test-proje": proje,
@@ -351,7 +352,7 @@ func TestIsYonetici_AktifProjeGetir(t *testing.T) {
 		aktifProjeSet: true,
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test getting active project
 	result, err := iy.AktifProjeGetir()
 	if err != nil {
@@ -360,7 +361,7 @@ func TestIsYonetici_AktifProjeGetir(t *testing.T) {
 	if result.ID != "test-proje" {
 		t.Errorf("Expected ID 'test-proje', got '%s'", result.ID)
 	}
-	
+
 	// Test no active project
 	mockVeri.aktifProjeSet = false
 	_, err = iy.AktifProjeGetir()
@@ -371,13 +372,13 @@ func TestIsYonetici_AktifProjeGetir(t *testing.T) {
 
 func TestIsYonetici_AktifProjeKaldir(t *testing.T) {
 	setupTestI18n()
-	
+
 	mockVeri := &MockVeriYonetici{
 		aktifProjeID:  "test-proje",
 		aktifProjeSet: true,
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test removing active project
 	err := iy.AktifProjeKaldir()
 	if err != nil {
@@ -387,14 +388,14 @@ func TestIsYonetici_AktifProjeKaldir(t *testing.T) {
 
 func TestIsYonetici_ProjeGorevleri(t *testing.T) {
 	setupTestI18n()
-	
+
 	task1 := &Gorev{
 		ID:      "task1",
 		Baslik:  "Task 1",
 		ProjeID: "proje1",
 	}
 	task2 := &Gorev{
-		ID:      "task2", 
+		ID:      "task2",
 		Baslik:  "Task 2",
 		ProjeID: "proje1",
 	}
@@ -403,7 +404,7 @@ func TestIsYonetici_ProjeGorevleri(t *testing.T) {
 		Baslik:  "Task 3",
 		ProjeID: "proje2",
 	}
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler: map[string]*Gorev{
 			"task1": task1,
@@ -412,7 +413,7 @@ func TestIsYonetici_ProjeGorevleri(t *testing.T) {
 		},
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test getting tasks for project
 	result, err := iy.ProjeGorevleri("proje1")
 	if err != nil {
@@ -421,7 +422,7 @@ func TestIsYonetici_ProjeGorevleri(t *testing.T) {
 	if len(result) != 2 {
 		t.Errorf("Expected 2 tasks, got %d", len(result))
 	}
-	
+
 	// Check that returned tasks belong to the correct project
 	for _, gorev := range result {
 		if gorev.ProjeID != "proje1" {
@@ -432,11 +433,11 @@ func TestIsYonetici_ProjeGorevleri(t *testing.T) {
 
 func TestIsYonetici_ProjeGorevSayisi(t *testing.T) {
 	setupTestI18n()
-	
+
 	task1 := &Gorev{ID: "task1", ProjeID: "proje1"}
 	task2 := &Gorev{ID: "task2", ProjeID: "proje1"}
 	task3 := &Gorev{ID: "task3", ProjeID: "proje2"}
-	
+
 	mockVeri := &MockVeriYonetici{
 		gorevler: map[string]*Gorev{
 			"task1": task1,
@@ -445,7 +446,7 @@ func TestIsYonetici_ProjeGorevSayisi(t *testing.T) {
 		},
 	}
 	iy := YeniIsYonetici(mockVeri)
-	
+
 	// Test getting task count for project
 	count, err := iy.ProjeGorevSayisi("proje1")
 	if err != nil {
@@ -454,7 +455,7 @@ func TestIsYonetici_ProjeGorevSayisi(t *testing.T) {
 	if count != 2 {
 		t.Errorf("Expected count 2, got %d", count)
 	}
-	
+
 	// Test empty project
 	count, err = iy.ProjeGorevSayisi("empty-proje")
 	if err != nil {
@@ -480,6 +481,10 @@ func NewMockVeriYonetici() *MockVeriYonetici {
 func (m *MockVeriYonetici) AktifProjeAyarla(projeID string) error {
 	if m.shouldFailAktifProje {
 		return errors.New("mock error")
+	}
+	// Check if project exists (like real implementation)
+	if _, exists := m.projeler[projeID]; !exists {
+		return fmt.Errorf("proje bulunamadı: %s", projeID)
 	}
 	m.aktifProjeID = projeID
 	m.aktifProjeSet = true
@@ -759,6 +764,16 @@ func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
 	}
 	m.baglantilar = append(m.baglantilar, baglanti)
 	return nil
+}
+
+func (m *MockVeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
+	for i, b := range m.baglantilar {
+		if b.KaynakID == kaynakID && b.HedefID == hedefID {
+			m.baglantilar = append(m.baglantilar[:i], m.baglantilar[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("dependency not found")
 }
 
 func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
