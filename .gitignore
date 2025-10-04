@@ -108,3 +108,6 @@ gorev-web/.vite/
 # SQLite write-ahead log and shared memory files
 *.db-shm
 *.db-wal
+
+# MCP Registry tokens
+.mcpregistry_*
