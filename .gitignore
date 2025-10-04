@@ -104,3 +104,7 @@ gorev-web/build/
 gorev-web/.vite/
 
 .call_overflow/
+
+# SQLite write-ahead log and shared memory files
+*.db-shm
+*.db-wal
