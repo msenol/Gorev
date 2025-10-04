@@ -21,7 +21,7 @@ export interface Task {
   son_tarih?: string;
   proje_id?: string;
   proje_name?: string;
-  etiketler?: string[];
+  etiketler?: Array<{ id: string; isim: string }>;
 }
 
 export interface Project {
@@ -89,6 +89,25 @@ export interface DependencyRequest {
   baglanti_tipi?: string;
 }
 
+export interface ExportRequest {
+  output_path: string;
+  format?: string;
+  include_completed?: boolean;
+  include_dependencies?: boolean;
+  include_templates?: boolean;
+  include_ai_context?: boolean;
+  project_filter?: string[];
+}
+
+export interface ImportRequest {
+  file_path: string;
+  import_mode?: string;
+  conflict_resolution?: string;
+  dry_run?: boolean;
+  preserve_ids?: boolean;
+  project_mapping?: Record<string, string>;
+}
+
 // Custom error class for API errors
 export class ApiError extends Error {
   constructor(
@@ -138,6 +157,31 @@ export class ApiClient extends EventEmitter {
     this.setupInterceptors();
   }
 
+  isConnected(): boolean {
+    return this.connected;
+  }
+
+  async connect(): Promise<void> {
+    try {
+      const response = await this.axiosInstance.get('/health');
+      this.connected = response.data && response.data.status === 'ok';
+      if (this.connected) {
+        this.emit('connected');
+        Logger.info('[ApiClient] Connected to API server');
+      }
+    } catch (error) {
+      this.connected = false;
+      Logger.error('[ApiClient] Failed to connect:', error);
+      throw error;
+    }
+  }
+
+  disconnect(): void {
+    this.connected = false;
+    this.emit('disconnected');
+    Logger.info('[ApiClient] Disconnected from API server');
+  }
+
   private setupInterceptors(): void {
     // Request interceptor for logging
     this.axiosInstance.interceptors.request.use(
@@ -175,37 +219,6 @@ export class ApiClient extends EventEmitter {
         return Promise.reject(error);
       }
     );
-  }
-
-  async connect(): Promise<void> {
-    try {
-      Logger.info(`[ApiClient] Attempting to connect to API at ${this.baseURL}`);
-
-      // Try to connect by hitting the health endpoint
-      const response = await this.axiosInstance.get('/health');
-
-      if (response.data.status === 'ok') {
-        this.connected = true;
-        this.emit('connected');
-        Logger.info('[ApiClient] Successfully connected to API server');
-      } else {
-        throw new Error('Health check failed');
-      }
-    } catch (error) {
-      Logger.error('[ApiClient] Failed to connect to API server:', error);
-      this.connected = false;
-      throw error;
-    }
-  }
-
-  disconnect(): void {
-    this.connected = false;
-    this.emit('disconnected');
-    Logger.info('[ApiClient] Disconnected from API server');
-  }
-
-  isConnected(): boolean {
-    return this.connected;
   }
 
   // Health check
@@ -293,6 +306,17 @@ export class ApiClient extends EventEmitter {
   // Summary API
   async getSummary(): Promise<any> {
     const response = await this.axiosInstance.get('/summary');
+    return response.data;
+  }
+
+  // Export/Import API
+  async exportData(request: ExportRequest): Promise<ApiResponse<any>> {
+    const response = await this.axiosInstance.post('/export', request);
+    return response.data;
+  }
+
+  async importData(request: ImportRequest): Promise<ApiResponse<any>> {
+    const response = await this.axiosInstance.post('/import', request);
     return response.data;
   }
 
@@ -389,6 +413,14 @@ export class ApiClient extends EventEmitter {
 
         case 'ozet_goster':
           result = await this.getSummary();
+          return this.convertToMCPFormat(result);
+
+        case 'gorev_export':
+          result = await this.exportData(params);
+          return this.convertToMCPFormat(result);
+
+        case 'gorev_import':
+          result = await this.importData(params);
           return this.convertToMCPFormat(result);
 
         default:

@@ -6,12 +6,13 @@ export interface Gorev extends Timestamp {
   id: string;
   baslik: string;
   aciklama: string;
-  durum: GorevDurum;
-  oncelik: GorevOncelik;
-  proje_id: string;
+  durum: 'beklemede' | 'devam_ediyor' | 'tamamlandi';
+  oncelik: 'dusuk' | 'orta' | 'yuksek';
+  proje_id?: string;
   parent_id?: string;
   son_tarih?: string;
-  etiketler?: string[];
+  etiketler?: Array<{ id: string; isim: string }>;
+  proje_name?: string;
   bagimliliklar?: Bagimlilik[];
   alt_gorevler?: Gorev[];
   seviye?: number;
