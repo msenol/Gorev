@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ClientInterface } from '../interfaces/client';
 import { ApiClient, ApiError, Project } from '../api/client';
 import { Proje } from '../models/proje';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
@@ -13,12 +12,9 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
   private projects: Proje[] = [];
   private activeProjectId: string | null = null;
 
-  // API Client for REST API calls
-  private apiClient: ApiClient;
 
-  constructor(private mcpClient: ClientInterface) {
+  constructor(private apiClient: ApiClient) {
     // Initialize API client
-    this.apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
   }
 
   getTreeItem(element: ProjeTreeItem): vscode.TreeItem {
@@ -28,7 +24,7 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
   async getChildren(element?: ProjeTreeItem): Promise<ProjeTreeItem[]> {
     console.log('[ProjeTreeProvider] getChildren called with element:', element);
     
-    if (!this.mcpClient.isConnected()) {
+    if (!this.apiClient.isConnected()) {
       console.log('[ProjeTreeProvider] MCP client not connected');
       return [];
     }
@@ -119,8 +115,8 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
       isim: project.isim,
       tanim: project.tanim || '',
       gorev_sayisi: project.gorev_sayisi,
-      olusturma_tarih: project.olusturma_tarihi,
-      guncelleme_tarih: project.olusturma_tarihi, // API doesn't return update date for projects
+      olusturma_tarihi: project.olusturma_tarihi,
+      guncelleme_tarihi: project.olusturma_tarihi, // API doesn't return update date for projects
       // Task statistics not available from API Project type yet
       // These would need to be fetched separately or added to API response
     };

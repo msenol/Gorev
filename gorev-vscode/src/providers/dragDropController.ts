@@ -12,7 +12,7 @@ import {
 } from '../utils/dragDropTypes';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { GroupingStrategy } from '../models/treeModels';
-import { ClientInterface } from '../interfaces/client';
+import { ApiClient } from '../api/client';
 import { Logger } from '../utils/logger';
 
 /**
@@ -23,11 +23,11 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
     dragMimeTypes = [DragDataType.Task, DragDataType.Tasks];
 
     private config: DragDropConfig;
-    private mcpClient: ClientInterface;
+    private apiClient: ApiClient;
     private currentGrouping: GroupingStrategy;
 
-    constructor(mcpClient: ClientInterface) {
-        this.mcpClient = mcpClient;
+    constructor(apiClient: ApiClient) {
+        this.apiClient = apiClient;
         this.config = this.loadConfig();
         this.currentGrouping = GroupingStrategy.ByStatus;
     }
@@ -295,8 +295,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             return; // Zaten aynı durumda
         }
 
-        await this.mcpClient.callTool('gorev_guncelle', {
-            id: task.id,
+        await this.apiClient.updateTask(task.id, {
             durum: newStatus
         });
 
@@ -311,8 +310,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             return; // Zaten aynı öncelikte
         }
 
-        await this.mcpClient.callTool('gorev_duzenle', {
-            id: task.id,
+        await this.apiClient.updateTask(task.id, {
             oncelik: newPriority
         });
 
@@ -328,8 +326,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             return; // Zaten aynı projede
         }
 
-        await this.mcpClient.callTool('gorev_duzenle', {
-            id: task.id,
+        await this.apiClient.updateTask(task.id, {
             proje_id: newProjectId || ''
         });
 
@@ -397,11 +394,8 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
      */
     private async changeTaskParent(task: Gorev, newParent: Gorev): Promise<void> {
         try {
-            // Circular dependency kontrolü yapmak için MCP tool'u kullan
-            await this.mcpClient.callTool('gorev_ust_degistir', {
-                gorev_id: task.id,
-                yeni_parent_id: newParent.id
-            });
+            // Circular dependency kontrolü API tarafında yapılır
+            await this.apiClient.changeParent(task.id, newParent.id);
 
             vscode.window.showInformationMessage(
                 t('dragDrop.nowSubtaskOf', task.baslik, newParent.baslik)
@@ -425,10 +419,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
      */
     private async removeTaskParent(task: Gorev): Promise<void> {
         try {
-            await this.mcpClient.callTool('gorev_ust_degistir', {
-                gorev_id: task.id,
-                yeni_parent_id: ''
-            });
+            await this.apiClient.changeParent(task.id, '');
 
             vscode.window.showInformationMessage(
                 t('dragDrop.nowRootTask', task.baslik)
@@ -459,9 +450,8 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
         );
 
         if (result) {
-            await this.mcpClient.callTool('gorev_bagimlilik_ekle', {
+            await this.apiClient.addDependency(targetTask.id, {
                 kaynak_id: sourceTask.id,
-                hedef_id: targetTask.id,
                 baglanti_tipi: result.value
             });
 

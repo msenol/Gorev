@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ClientInterface } from '../interfaces/client';
 import { ApiClient, ApiError } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
@@ -11,11 +10,10 @@ import { Logger } from '../utils/logger';
 
 export function registerGorevCommands(
   context: vscode.ExtensionContext,
-  mcpClient: ClientInterface,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
   // Initialize API client
-  const apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
   // Create Task - Now redirects to template wizard due to mandatory template requirement
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CREATE_TASK, async () => {
@@ -49,7 +47,7 @@ export function registerGorevCommands(
       try {
         // Use the new TaskDetailPanel
         await TaskDetailPanel.createOrShow(
-          mcpClient,
+          apiClient,
           item.task,
           context.extensionUri
         );

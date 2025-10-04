@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { ClientInterface } from '../interfaces/client';
 import { ApiClient, ApiError } from '../api/client';
 import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from '../providers/projeTreeProvider';
@@ -27,30 +26,29 @@ export interface CommandContext {
 
 export function registerCommands(
   context: vscode.ExtensionContext,
-  mcpClient: ClientInterface,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
   // Register all command groups
-  registerGorevCommands(context, mcpClient, providers);
-  registerProjeCommands(context, mcpClient, providers);
-  registerTemplateCommands(context, mcpClient, providers);
-  registerEnhancedGorevCommands(context, mcpClient, providers);
-  registerInlineEditCommands(context, mcpClient, providers);
-  registerDataCommands(context, mcpClient, providers);
-  registerDatabaseCommands(context, mcpClient, providers);
+  registerGorevCommands(context, apiClient, providers);
+  registerProjeCommands(context, apiClient, providers);
+  registerTemplateCommands(context, apiClient, providers);
+  registerEnhancedGorevCommands(context, apiClient, providers);
+  registerInlineEditCommands(context, apiClient, providers);
+  registerDataCommands(context, apiClient, providers);
+  registerDatabaseCommands(context, apiClient, providers);
   
   if (providers.filterToolbar) {
-    registerFilterCommands(context, mcpClient, providers);
+    registerFilterCommands(context, apiClient, providers);
   }
 
   // Initialize API client for general commands
-  const apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
 
   // Register general commands
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.SHOW_SUMMARY, async () => {
       try {
-        if (!mcpClient.isConnected()) {
+        if (!apiClient.isConnected()) {
           vscode.window.showWarningMessage('Not connected to Gorev server');
           return;
         }
@@ -87,7 +85,7 @@ export function registerCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.CONNECT, async () => {
       try {
-        await connectToServer(mcpClient, providers);
+        await connectToServer(apiClient, providers);
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to connect: ${error}`);
       }
@@ -97,14 +95,14 @@ export function registerCommands(
   // Disconnect command
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.DISCONNECT, () => {
-      mcpClient.disconnect();
+      apiClient.disconnect();
       providers.statusBarManager.setDisconnected();
       vscode.window.showInformationMessage('Disconnected from Gorev server');
     })
   );
 }
 
-async function connectToServer(client: ClientInterface, providers: CommandContext): Promise<void> {
+async function connectToServer(client: ApiClient, providers: CommandContext): Promise<void> {
   providers.statusBarManager.setConnecting();
 
   try {

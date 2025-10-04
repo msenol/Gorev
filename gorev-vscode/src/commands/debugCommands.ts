@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ClientInterface } from '../interfaces/client';
+import { ApiClient } from '../api/client';
 import { CommandContext } from './index';
 import { TestDataSeeder } from '../debug/testDataSeeder';
 import { Logger } from '../utils/logger';
 
 export function registerDebugCommands(
     context: vscode.ExtensionContext,
-    mcpClient: ClientInterface,
+    apiClient: ApiClient,
     providers: CommandContext
 ): void {
-    const seeder = new TestDataSeeder(mcpClient);
+    const seeder = new TestDataSeeder(apiClient);
 
     // Seed Test Data Command
     context.subscriptions.push(

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { ClientInterface } from '../interfaces/client';
 import { ApiClient, ApiError, Template } from '../api/client';
 import { GorevTemplate, TemplateKategori } from '../models/template';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
@@ -12,12 +11,9 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
 
   private templates: GorevTemplate[] = [];
 
-  // API Client for REST API calls
-  private apiClient: ApiClient;
 
-  constructor(private mcpClient: ClientInterface) {
+  constructor(private apiClient: ApiClient) {
     // Initialize API client
-    this.apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
   }
 
   getTreeItem(element: TemplateTreeItem | TemplateCategoryItem): vscode.TreeItem {
@@ -27,7 +23,7 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   async getChildren(element?: TemplateTreeItem | TemplateCategoryItem): Promise<(TemplateTreeItem | TemplateCategoryItem)[]> {
     console.log('[TemplateTreeProvider] getChildren called with element:', element);
     
-    if (!this.mcpClient.isConnected()) {
+    if (!this.apiClient.isConnected()) {
       console.log('[TemplateTreeProvider] MCP client not connected');
       return [];
     }

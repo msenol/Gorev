@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ClientInterface } from '../interfaces/client';
 import { ApiClient, ApiError } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
@@ -21,8 +20,8 @@ async function getProjectList(apiClient: ApiClient): Promise<Proje[]> {
       isim: project.isim,
       tanim: project.tanim || '',
       gorev_sayisi: project.gorev_sayisi,
-      olusturma_tarih: project.olusturma_tarihi,
-      guncelleme_tarih: project.olusturma_tarihi,
+      olusturma_tarihi: project.olusturma_tarihi,
+      guncelleme_tarihi: project.olusturma_tarihi,
     }));
   } catch (error) {
     if (error instanceof ApiError) {
@@ -36,11 +35,10 @@ async function getProjectList(apiClient: ApiClient): Promise<Proje[]> {
 
 export function registerProjeCommands(
   context: vscode.ExtensionContext,
-  mcpClient: ClientInterface,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
   // Initialize API client
-  const apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
 
   // Create Project
   context.subscriptions.push(

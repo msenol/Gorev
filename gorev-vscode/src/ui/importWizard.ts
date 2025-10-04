@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { ClientInterface } from '../interfaces/client';
+import { ApiClient } from '../api/client';
 import { CommandContext } from '../commands/index';
 import { Logger } from '../utils/logger';
 
@@ -11,12 +11,12 @@ import { Logger } from '../utils/logger';
 export class ImportWizard {
   private panel: vscode.WebviewPanel | undefined;
   private context: vscode.ExtensionContext;
-  private mcpClient: ClientInterface;
+  private apiClient: ApiClient;
   private providers: CommandContext;
 
-  constructor(context: vscode.ExtensionContext, mcpClient: ClientInterface, providers: CommandContext) {
+  constructor(context: vscode.ExtensionContext, apiClient: ApiClient, providers: CommandContext) {
     this.context = context;
-    this.mcpClient = mcpClient;
+    this.apiClient = apiClient;
     this.providers = providers;
   }
 
@@ -164,14 +164,15 @@ export class ImportWizard {
         project_mapping: {}
       };
 
-      const result = await this.mcpClient.callTool('gorev_import', dryRunOptions);
+      // Call REST API import endpoint
+      const result = await this.apiClient.importData(dryRunOptions);
 
-      if (result.isError) {
-        throw new Error(result.content[0]?.text || 'Analysis failed');
+      if (!result.success) {
+        throw new Error(result.message || 'Analysis failed');
       }
 
       // Parse analysis results
-      const analysisResult = this.parseAnalysisResult(result.content[0]?.text || '');
+      const analysisResult = this.parseAnalysisResult(result.message || '');
       
       this.panel.webview.postMessage({
         command: 'analysisCompleted',
@@ -192,15 +193,14 @@ export class ImportWizard {
     if (!this.panel) return;
 
     try {
-      const result = await this.mcpClient.callTool('proje_listele');
-      if (result.isError) {
-        throw new Error(result.content[0]?.text || 'Failed to load projects');
+      const result = await this.apiClient.getProjects();
+      if (!result.success || !result.data) {
+        throw new Error('Failed to load projects');
       }
 
-      const projects = this.parseProjectList(result.content[0]?.text || '');
       this.panel.webview.postMessage({
         command: 'setProjects',
-        projects: projects
+        projects: result.data
       });
 
     } catch (error) {
@@ -222,14 +222,15 @@ export class ImportWizard {
         dry_run: true
       };
 
-      const result = await this.mcpClient.callTool('gorev_import', dryRunOptions);
+      // Call REST API import endpoint
+      const result = await this.apiClient.importData(dryRunOptions);
 
-      if (result.isError) {
-        throw new Error(result.content[0]?.text || 'Dry run failed');
+      if (!result.success) {
+        throw new Error(result.message || 'Dry run failed');
       }
 
       // Parse dry run results
-      const dryRunResult = this.parseDryRunResult(result.content[0]?.text || '');
+      const dryRunResult = this.parseDryRunResult(result.message || '');
       
       this.panel.webview.postMessage({
         command: 'dryRunCompleted',
@@ -268,19 +269,19 @@ export class ImportWizard {
           dry_run: false
         };
 
-        // Call MCP import tool
-        const result = await this.mcpClient.callTool('gorev_import', importOptions);
+        // Call REST API import endpoint
+        const result = await this.apiClient.importData(importOptions);
 
         progress.report({ increment: 80, message: t('import.processing') });
 
-        if (result.isError) {
-          throw new Error(result.content[0]?.text || 'Import failed');
+        if (!result.success) {
+          throw new Error(result.message || 'Import failed');
         }
 
         progress.report({ increment: 100, message: t('import.complete') });
 
         // Parse import results
-        const importResult = this.parseImportResult(result.content[0]?.text || '');
+        const importResult = this.parseImportResult(result.message || '');
 
         // Notify webview of success
         this.panel?.webview.postMessage({

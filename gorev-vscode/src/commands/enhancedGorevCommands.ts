@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ClientInterface } from '../interfaces/client';
+import { ApiClient } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { GorevDurum, GorevOncelik } from '../models/common';
@@ -9,7 +9,7 @@ import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvide
 
 export function registerEnhancedGorevCommands(
   context: vscode.ExtensionContext,
-  mcpClient: ClientInterface,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
   const treeProvider = providers.gorevTreeProvider as EnhancedGorevTreeProvider;
@@ -323,8 +323,7 @@ export function registerEnhancedGorevCommands(
           async (progress) => {
             let completed = 0;
             for (const task of selectedTasks) {
-              await mcpClient.callTool('gorev_guncelle', {
-                id: task.id,
+              await apiClient.updateTask(task.id, {
                 durum: newStatus.value,
               });
               completed++;
@@ -375,10 +374,7 @@ export function registerEnhancedGorevCommands(
           async (progress) => {
             let completed = 0;
             for (const task of selectedTasks) {
-              await mcpClient.callTool('gorev_sil', {
-                id: task.id,
-                onay: true,
-              });
+              await apiClient.deleteTask(task.id);
               completed++;
               progress.report({
                 increment: (completed / selectedTasks.length) * 100,

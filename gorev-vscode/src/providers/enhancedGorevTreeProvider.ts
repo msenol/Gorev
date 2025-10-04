@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ClientInterface } from '../interfaces/client';
 import { ApiClient, ApiError, Task, Project } from '../api/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import {
@@ -58,12 +57,9 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     // Configuration change debouncing
     private debouncedConfigChange: ReturnType<typeof debounceConfig>;
 
-    // API Client for REST API calls
-    private apiClient: ApiClient;
 
-    constructor(private mcpClient: ClientInterface) {
+    constructor(private apiClient: ApiClient) {
         // Initialize API client
-        this.apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
         // Varsayılan konfigürasyon
         this.config = {
             grouping: GroupingStrategy.ByStatus,
@@ -81,7 +77,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
         };
 
         // Drag & Drop controller
-        this.dragDropController = new DragDropController(mcpClient);
+        this.dragDropController = new DragDropController(apiClient);
         this.dropMimeTypes = this.dragDropController.dropMimeTypes;
         this.dragMimeTypes = this.dragDropController.dragMimeTypes;
         
@@ -148,7 +144,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     async getChildren(element?: EnhancedTreeViewItem): Promise<EnhancedTreeViewItem[]> {
         // Root level getChildren call
         
-        if (!this.mcpClient.isConnected()) {
+        if (!this.apiClient.isConnected()) {
             Logger.warn('[EnhancedGorevTreeProvider] MCP client not connected');
             return [new EmptyTreeViewItem(t('enhancedTree.notConnected'))];
         }
@@ -594,8 +590,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             baslik: task.baslik,
             durum: task.durum,
             oncelik: task.oncelik,
-            olusturma_tarih: task.olusturma_tarih,
-            guncelleme_tarih: task.guncelleme_tarih,
+            olusturma_tarihi: task.olusturma_tarihi,
+            guncelleme_tarihi: task.guncelleme_tarihi,
             parent_id: task.parent_id
         }));
 
@@ -643,8 +639,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
                 taskMap.set(task.id, task);
             } else {
                 // Duplicate found - keep the one with the latest update date
-                const currentDate = task.guncelleme_tarih ? new Date(task.guncelleme_tarih) : new Date(0);
-                const existingDate = existingTask.guncelleme_tarih ? new Date(existingTask.guncelleme_tarih) : new Date(0);
+                const currentDate = task.guncelleme_tarihi ? new Date(task.guncelleme_tarihi) : new Date(0);
+                const existingDate = existingTask.guncelleme_tarihi ? new Date(existingTask.guncelleme_tarihi) : new Date(0);
 
                 if (currentDate > existingDate) {
                     Logger.debug(`[EnhancedGorevTreeProvider] Replacing duplicate task ${task.id} with newer version`);
@@ -882,8 +878,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             proje_id: task.proje_id || '',
             son_tarih: task.son_tarih,
             etiketler: task.etiketler,
-            olusturma_tarih: task.olusturma_tarihi,
-            guncelleme_tarih: task.guncelleme_tarihi,
+            olusturma_tarihi: task.olusturma_tarihi,
+            guncelleme_tarihi: task.guncelleme_tarihi,
         };
     }
 }
@@ -1140,7 +1136,7 @@ export class TaskTreeViewItem extends vscode.TreeItem {
 
         // Tags as colored pills (limit to 3 for space)
         if (this.task.etiketler && this.task.etiketler.length > 0) {
-            const tagPills = this.task.etiketler.slice(0, 3).map(tag => `⬤ ${tag}`);
+            const tagPills = this.task.etiketler.slice(0, 3).map(tag => `⬤ ${tag.isim}`);
             if (this.task.etiketler.length > 3) {
                 tagPills.push(`+${this.task.etiketler.length - 3}`);
             }
@@ -1269,14 +1265,14 @@ export class TaskTreeViewItem extends vscode.TreeItem {
         if (this.task.etiketler && this.task.etiketler.length > 0) {
             md.appendMarkdown(`### 🏷️ Etiketler\n\n`);
             this.task.etiketler.forEach(tag => {
-                md.appendMarkdown(`\`${tag}\` `);
+                md.appendMarkdown(`\`${tag.isim}\` `);
             });
             md.appendMarkdown('\n\n');
         }
 
         // Creation date
-        if (this.task.olusturma_tarih) {
-            const createdDate = new Date(this.task.olusturma_tarih);
+        if (this.task.olusturma_tarihi) {
+            const createdDate = new Date(this.task.olusturma_tarihi);
             md.appendMarkdown(`---\n\n*Oluşturulma: ${createdDate.toLocaleDateString('tr-TR')}*`);
         }
 

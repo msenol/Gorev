@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ClientInterface } from '../interfaces/client';
 import { ApiClient, ApiError } from '../api/client';
 import { CommandContext } from './index';
 import { TemplateTreeItem } from '../providers/templateTreeProvider';
@@ -11,16 +10,15 @@ import { COMMANDS } from '../utils/constants';
 
 export function registerTemplateCommands(
   context: vscode.ExtensionContext,
-  mcpClient: ClientInterface,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
   // Initialize API client
-  const apiClient = mcpClient instanceof ApiClient ? mcpClient : new ApiClient();
   // Open template wizard
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.OPEN_TEMPLATE_WIZARD, async (templateId?: string) => {
       try {
-        await TemplateWizard.show(mcpClient, context.extensionUri, templateId);
+        await TemplateWizard.show(apiClient, context.extensionUri, templateId);
       } catch (error) {
         Logger.error('Failed to open template wizard:', error);
         vscode.window.showErrorMessage(t('template.wizardOpenFailed'));
@@ -39,7 +37,7 @@ export function registerTemplateCommands(
         }
 
         // Open wizard with selected template
-        await TemplateWizard.show(mcpClient, context.extensionUri, item.template.id);
+        await TemplateWizard.show(apiClient, context.extensionUri, item.template.id);
       } catch (error) {
         Logger.error('Failed to create task from template:', error);
         vscode.window.showErrorMessage(t('template.createFromFailed'));
@@ -93,7 +91,7 @@ export function registerTemplateCommands(
         });
 
         if (selected) {
-          await TemplateWizard.show(mcpClient, context.extensionUri, selected.template.id);
+          await TemplateWizard.show(apiClient, context.extensionUri, selected.template.id);
         }
       } catch (error) {
         if (error instanceof ApiError) {

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from './mcp/client';
-import { UnifiedClient } from './unified/client';
+import { ApiClient } from './api/client';
 import { EnhancedGorevTreeProvider } from './providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from './providers/projeTreeProvider';
 import { TemplateTreeProvider } from './providers/templateTreeProvider';
@@ -15,8 +14,7 @@ import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from '.
 import { measureAsync } from './utils/performance';
 import { debounceConfig } from './utils/debounce';
 
-let mcpClient: MCPClient;
-let unifiedClient: UnifiedClient;
+let apiClient: ApiClient;
 let statusBarManager: StatusBarManager;
 let filterToolbar: FilterToolbar;
 let gorevTreeProvider: EnhancedGorevTreeProvider;
@@ -41,27 +39,36 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   // Initialize configuration
   Config.initialize(context);
 
-  // Create clients
-  mcpClient = new MCPClient();
+  // Create API client
+  const apiHost = Config.get<string>('apiHost') || 'localhost';
+  const apiPort = Config.get<number>('apiPort') || 5082;
+  apiClient = new ApiClient(`http://${apiHost}:${apiPort}`);
 
-  // Get client mode from configuration (default to 'auto' for automatic detection)
-  const clientMode = Config.get<string>('clientMode') || 'auto';
-  unifiedClient = new UnifiedClient({ mode: clientMode as 'api' | 'mcp' | 'auto' });
+  // Connect to API server
+  try {
+    await apiClient.connect();
+    Logger.info('Successfully connected to API server');
+  } catch (error) {
+    Logger.warn('Failed to connect to API server:', error);
+    vscode.window.showWarningMessage(
+      'Gorev: Could not connect to API server. Please make sure the server is running.'
+    );
+  }
 
   // Initialize RefreshManager first
   refreshManager = RefreshManager.getInstance();
 
-  // Initialize UI components - use unified client for new components
+  // Initialize UI components
   statusBarManager = new StatusBarManager();
-  gorevTreeProvider = new EnhancedGorevTreeProvider(unifiedClient);
-  projeTreeProvider = new ProjeTreeProvider(unifiedClient);
-  templateTreeProvider = new TemplateTreeProvider(unifiedClient);
+  gorevTreeProvider = new EnhancedGorevTreeProvider(apiClient);
+  projeTreeProvider = new ProjeTreeProvider(apiClient);
+  templateTreeProvider = new TemplateTreeProvider(apiClient);
 
   // Note: Other providers will be integrated with RefreshManager in future iterations
   // For now, only EnhancedGorevTreeProvider implements the RefreshProvider interface
 
   // Initialize filter toolbar
-  filterToolbar = new FilterToolbar(unifiedClient, (filter) => {
+  filterToolbar = new FilterToolbar(apiClient, (filter) => {
     // If the filter object is empty, clear all filters
     if (Object.keys(filter).length === 0) {
       gorevTreeProvider.clearFilters();
@@ -90,28 +97,23 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
 
   context.subscriptions.push(tasksView, projectsView, templatesView);
 
-  // Listen for unified client events
-  unifiedClient.on('connected', (data: any) => {
-    Logger.info(`[Extension] Connected via ${data.mode} mode`);
-    statusBarManager.setConnectionStatus(true, data.mode);
+  // Listen for API client events
+  apiClient.on('connected', () => {
+    Logger.info('[Extension] Connected to API server');
+    statusBarManager.setConnectionStatus(true, 'api');
   });
 
-  unifiedClient.on('disconnected', (data: any) => {
-    Logger.info(`[Extension] Disconnected from ${data.mode} mode`);
-    statusBarManager.setConnectionStatus(false, data.mode);
+  apiClient.on('disconnected', () => {
+    Logger.info('[Extension] Disconnected from API server');
+    statusBarManager.setConnectionStatus(false, 'api');
   });
 
-  unifiedClient.on('error', (data: any) => {
-    Logger.error(`[Extension] ${data.mode} error:`, data.error);
+  apiClient.on('error', (error: any) => {
+    Logger.error('[Extension] API error:', error);
   });
 
-  // Listen for database mode changes (MCP only)
-  mcpClient.on('databaseModeChanged', (data: any) => {
-    statusBarManager.setDatabaseMode(data.mode, data.path);
-  });
-
-  // Register commands with unified client
-  registerCommands(context, unifiedClient, {
+  // Register commands with API client
+  registerCommands(context, apiClient, {
     gorevTreeProvider,
     projeTreeProvider,
     templateTreeProvider,
@@ -122,7 +124,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   // Register debug commands if in development mode
   if (isDevelopment) {
     const { registerDebugCommands } = await import('./commands/debugCommands');
-    registerDebugCommands(context, unifiedClient, {
+    registerDebugCommands(context, apiClient, {
       gorevTreeProvider,
       projeTreeProvider,
       templateTreeProvider,
@@ -131,17 +133,18 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     });
   }
 
-  // Auto-connect if configured
-  if (Config.get('autoConnect')) {
-    await vscode.commands.executeCommand(COMMANDS.CONNECT);
-    
+  // Try to connect to API server
+  try {
+    await apiClient.checkHealth();
+    Logger.info('[Extension] API server is available');
+
     // Development modda otomatik test verisi önerisi
     if (isDevelopment) {
       setTimeout(async () => {
         try {
           // Görev sayısını kontrol et
-          const result = await unifiedClient.callTool('gorev_listele', { tum_projeler: true });
-          const hasNoTasks = result.content[0].text.includes('Henüz görev bulunmuyor');
+          const response = await apiClient.getTasks({ tum_projeler: true });
+          const hasNoTasks = response.total === 0;
 
           if (hasNoTasks) {
             const { t } = await import('./utils/l10n');
@@ -160,6 +163,9 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
         }
       }, 2000); // 2 saniye bekle
     }
+  } catch (error) {
+    Logger.error('[Extension] Failed to connect to API server:', error);
+    vscode.window.showWarningMessage('Gorev API server is not running. Please start the server with: ./gorev serve --api-port 5082');
   }
 
   // Set up refresh interval with RefreshManager
@@ -168,18 +174,16 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     Logger.info(`[Extension] Setting up refresh interval: ${refreshInterval} seconds`);
 
     const intervalId = setInterval(async () => {
-      if (unifiedClient.isConnected()) {
-        try {
-          // Use RefreshManager for coordinated refresh
-          await refreshManager.requestRefresh(
-            RefreshReason.INTERVAL,
-            [RefreshTarget.ALL],
-            RefreshPriority.LOW
-          );
-        } catch (error) {
-          const { t } = await import('./utils/l10n');
-          Logger.error(t('log.failedRefreshViews'), error);
-        }
+      try {
+        // Use RefreshManager for coordinated refresh
+        await refreshManager.requestRefresh(
+          RefreshReason.INTERVAL,
+          [RefreshTarget.ALL],
+          RefreshPriority.LOW
+        );
+      } catch (error) {
+        const { t } = await import('./utils/l10n');
+        Logger.error(t('log.failedRefreshViews'), error);
       }
     }, refreshInterval * 1000);
 
@@ -235,12 +239,9 @@ export async function deactivate() {
     refreshManager.dispose();
   }
 
-  if (unifiedClient) {
-    unifiedClient.disconnect();
-  }
 
-  if (mcpClient) {
-    mcpClient.disconnect();
+  if (apiClient) {
+    apiClient.disconnect();
   }
 
   if (statusBarManager) {

@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { ClientInterface } from '../interfaces/client';
+import { ApiClient } from '../api/client';
 import { COMMANDS } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { CommandContext } from './index';
 
 export function registerDatabaseCommands(
   context: vscode.ExtensionContext,
-  mcpClient: ClientInterface,
+  apiClient: ApiClient,
   providers: CommandContext
 ): void {
 

@@ -286,7 +286,7 @@ export class TaskDecorationProvider implements vscode.FileDecorationProvider {
         }
 
         // Return first 3 tags as badges
-        return task.etiketler.slice(0, 3).map(tag => `#${tag}`);
+        return task.etiketler.slice(0, 3).map(tag => `#${tag.isim}`);
     }
 
     /**

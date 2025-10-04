@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MCPClient } from '../mcp/client';
+import { ApiClient } from '../api/client';
 import { COMMANDS } from '../utils/constants';
 import { t } from '../utils/l10n';
 
