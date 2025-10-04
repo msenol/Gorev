@@ -1,7 +1,7 @@
 # Contributing to Gorev
 
-> **Version**: This documentation is valid for v0.15.24+
-> **Last Updated**: September 18, 2025
+> **Version**: This documentation is valid for v0.16.0+
+> **Last Updated**: October 4, 2025
 
 This document explains the development environment setup, code standards, and contribution processes for those
 who want to contribute to the Gorev project.
@@ -437,12 +437,405 @@ func TestXXX(t *testing.T) {
 }
 ```
 
+## Common Development Scenarios
+
+### Scenario 1: Adding a New MCP Tool
+
+**Step-by-step process:**
+
+1. **Define the tool schema** in `internal/mcp/tool_registry.go`:
+
+```go
+{
+    Name: "gorev_my_new_tool",
+    Description: "My new tool description",
+    InputSchema: map[string]interface{}{
+        "type": "object",
+        "properties": map[string]interface{}{
+            "param1": map[string]interface{}{
+                "type":        "string",
+                "description": "Parameter description",
+            },
+        },
+        "required": []interface{}{"param1"},
+    },
+}
+```
+
+2. **Implement the handler** in `internal/mcp/handlers.go`:
+
+```go
+func (h *MCPHandlers) MyNewTool(args map[string]interface{}) (*mcp.CallToolResult, error) {
+    // 1. Extract and validate parameters
+    param1, ok := args["param1"].(string)
+    if !ok || param1 == "" {
+        return mcp.NewToolResultError("param1 gerekli"), nil
+    }
+
+    // 2. Call business logic
+    result, err := h.isYonetici.DoSomething(param1)
+    if err != nil {
+        return mcp.NewToolResultError(fmt.Sprintf("Hata: %v", err)), nil
+    }
+
+    // 3. Format response
+    output := fmt.Sprintf("✓ İşlem başarılı: %s", result)
+    return mcp.NewToolResultText(output), nil
+}
+```
+
+3. **Add tests** in `internal/mcp/handlers_test.go`:
+
+```go
+func TestMyNewTool(t *testing.T) {
+    handlers := setupTestHandlers(t)
+
+    args := map[string]interface{}{
+        "param1": "test-value",
+    }
+
+    result, err := handlers.MyNewTool(args)
+    require.NoError(t, err)
+    require.Contains(t, result.Content[0].Text, "başarılı")
+}
+```
+
+4. **Update documentation** in `docs/tr/mcp-araclari.md` and `docs/api/MCP_TOOLS_REFERENCE.md`
+
+5. **Run tests and verify**:
+
+```bash
+make test
+make build
+./gorev serve --test
+```
+
+### Scenario 2: Fixing a Bug
+
+**Example: Task status not updating properly**
+
+1. **Reproduce the bug**:
+
+```bash
+# Create a failing test first
+func TestGorevDurumGuncelle(t *testing.T) {
+    // Setup
+    handlers := setupTestHandlers(t)
+    gorev := createTestGorev(t, handlers)
+
+    // Execute
+    args := map[string]interface{}{
+        "id": gorev.ID,
+        "durum": "tamamlandi",
+    }
+    result, err := handlers.GorevGuncelle(args)
+
+    // Verify
+    require.NoError(t, err)
+    updated := getGorev(t, handlers, gorev.ID)
+    assert.Equal(t, "tamamlandi", updated.Durum)
+}
+```
+
+2. **Identify root cause**:
+
+```bash
+# Run with debug logging
+./gorev serve --debug
+
+# Or add debug prints
+log.Printf("DEBUG: Updating task %d to status %s", id, durum)
+```
+
+3. **Implement fix**:
+
+```go
+func (v *veriYonetici) GorevGuncelle(id int, durum string) error {
+    // BEFORE (wrong):
+    // _, err := v.db.Exec("UPDATE gorevler SET durum = ?", durum)
+
+    // AFTER (correct):
+    _, err := v.db.Exec(
+        "UPDATE gorevler SET durum = ?, guncelleme_tarih = CURRENT_TIMESTAMP WHERE id = ?",
+        durum, id,
+    )
+    return err
+}
+```
+
+4. **Verify fix**:
+
+```bash
+make test
+# All tests should pass now
+```
+
+5. **Document the fix** in CHANGELOG.md
+
+### Scenario 3: Adding Database Schema Changes
+
+**Example: Adding a new field to tasks**
+
+1. **Create migration file**:
+
+```bash
+# File: migrations/000011_add_task_priority_level.up.sql
+ALTER TABLE gorevler ADD COLUMN priority_level INTEGER DEFAULT 0;
+CREATE INDEX idx_gorevler_priority_level ON gorevler(priority_level);
+```
+
+```bash
+# File: migrations/000011_add_task_priority_level.down.sql
+DROP INDEX IF EXISTS idx_gorevler_priority_level;
+ALTER TABLE gorevler DROP COLUMN priority_level;
+```
+
+2. **Update data model** in `internal/gorev/modeller.go`:
+
+```go
+type Gorev struct {
+    // ... existing fields
+    PriorityLevel int `json:"priority_level,omitempty"`
+}
+```
+
+3. **Update data access layer** in `internal/gorev/veri_yonetici.go`:
+
+```go
+func (v *veriYonetici) GorevOlustur(gorev *Gorev) (*Gorev, error) {
+    result, err := v.db.Exec(`
+        INSERT INTO gorevler (baslik, aciklama, priority_level)
+        VALUES (?, ?, ?)
+    `, gorev.Baslik, gorev.Aciklama, gorev.PriorityLevel)
+    // ...
+}
+```
+
+4. **Test migration**:
+
+```bash
+# Test up migration
+make build
+./gorev serve --test
+
+# Test down migration
+./gorev migrate down
+./gorev migrate up
+```
+
+5. **Update documentation and examples**
+
+## Debugging Tips
+
+### Using VS Code Debugger
+
+**launch.json** configuration:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Gorev Server",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/gorev",
+            "args": ["serve", "--debug"],
+            "env": {
+                "GOREV_LANG": "tr"
+            }
+        },
+        {
+            "name": "Debug Tests",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${fileDirname}",
+            "args": ["-v", "-run", "${selectedText}"]
+        }
+    ]
+}
+```
+
+### Common Debugging Commands
+
+```bash
+# Run with debug logging
+./gorev serve --debug
+
+# Run specific test with verbose output
+go test -v -run TestGorevOlustur ./internal/gorev
+
+# Check database state
+sqlite3 ~/.gorev/gorev.db "SELECT * FROM gorevler LIMIT 5;"
+
+# Profile CPU usage
+go test -cpuprofile cpu.prof -bench .
+go tool pprof cpu.prof
+
+# Check memory usage
+go test -memprofile mem.prof -bench .
+go tool pprof mem.prof
+
+# Race condition detection
+go test -race ./...
+```
+
+### Debugging MCP Communication
+
+```bash
+# Test MCP tool directly
+echo '{"method":"tools/call","params":{"name":"gorev_listele","arguments":{}}}' | \
+  ./gorev serve --stdio
+
+# Monitor MCP traffic
+tail -f ~/.gorev/mcp-debug.log
+
+# Validate JSON schemas
+cat tool-schema.json | jq '.'
+```
+
+### Using Delve Debugger
+
+```bash
+# Install delve
+go install github.com/go-delve/delve/cmd/dlv@latest
+
+# Run with delve
+dlv debug cmd/gorev/main.go -- serve --debug
+
+# Set breakpoints
+(dlv) break internal/mcp/handlers.go:123
+(dlv) continue
+
+# Inspect variables
+(dlv) print gorev
+(dlv) locals
+(dlv) args
+```
+
+## Development Workflows
+
+### Daily Development Workflow
+
+```bash
+# 1. Pull latest changes
+git pull origin main
+
+# 2. Create feature branch
+git checkout -b feature/my-feature
+
+# 3. Make changes and test frequently
+make test
+./gorev serve --test
+
+# 4. Format and lint
+make fmt
+golangci-lint run
+
+# 5. Commit incrementally
+git add .
+git commit -m "feat: add my feature"
+
+# 6. Push and create PR
+git push origin feature/my-feature
+```
+
+### Testing Workflow
+
+```bash
+# Run all tests
+make test
+
+# Run specific package tests
+go test ./internal/gorev -v
+
+# Run with coverage
+go test -cover ./...
+
+# Generate coverage report
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+# Run integration tests
+go test ./test -tags=integration
+
+# Benchmark tests
+go test -bench=. ./internal/gorev
+```
+
+### Release Workflow
+
+```bash
+# 1. Update version in Makefile
+VERSION ?= 0.16.1
+
+# 2. Update CHANGELOG.md
+# Add new version entry with changes
+
+# 3. Build all platforms
+make build-all
+
+# 4. Run full test suite
+make test
+make test-integration
+
+# 5. Tag release
+git tag -a v0.16.1 -m "Release v0.16.1"
+git push origin v0.16.1
+
+# 6. Create GitHub release
+gh release create v0.16.1 --generate-notes
+```
+
+## Performance Optimization Tips
+
+### Database Queries
+
+```go
+// ❌ Bad: N+1 queries
+for _, gorev := range gorevler {
+    etiketler := v.GetEtiketler(gorev.ID)  // Separate query for each task
+}
+
+// ✅ Good: Single query with JOIN
+gorevler := v.GetGorevlerWithEtiketler()  // One query with JOIN
+```
+
+### Memory Management
+
+```go
+// ❌ Bad: Loading all data
+gorevler := v.GetAllGorevler()  // May load thousands of tasks
+
+// ✅ Good: Pagination
+gorevler := v.GetGorevlerPaginated(limit, offset)
+```
+
+### Caching Strategy
+
+```go
+// For frequently accessed, rarely changed data
+type Cache struct {
+    templates map[string]*GorevTemplate
+    mu        sync.RWMutex
+}
+
+func (c *Cache) GetTemplate(id string) *GorevTemplate {
+    c.mu.RLock()
+    defer c.mu.RUnlock()
+    return c.templates[id]
+}
+```
+
 ## Useful Resources
 
 - [Effective Go](https://golang.org/doc/effective_go.html)
 - [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
 - [MCP Specification](https://modelcontextprotocol.io/docs)
 - [SQLite Best Practices](https://www.sqlite.org/bestpractice.html)
+- [Go Testing Best Practices](https://github.com/golang/go/wiki/TestComments)
 
 ## Related Documentation
 
