@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Last Updated:** September 29, 2025 | **Version:** v0.16.0-dev (unreleased)
+**Last Updated:** October 4, 2025 | **Version:** v0.16.0
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
@@ -11,7 +11,7 @@
 ![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Test Coverage](https://img.shields.io/badge/Coverage-75%25-yellow?style=flat-square)
+![Test Coverage](https://img.shields.io/badge/Coverage-71%25-yellow?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20|%20macOS%20|%20Windows-blue?style=flat-square)
 
 **Modern task management system with Turkish support, designed for MCP-compatible AI assistants (Claude, VS Code, Windsurf, Cursor)**
