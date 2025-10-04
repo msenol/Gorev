@@ -43,7 +43,7 @@ Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm
 2. **gorev-vscode** - VS Code extension'ı (opsiyonel görsel arayüz)
 3. **gorev-web** - React + TypeScript kaynak kodu (development)
 
-MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. Web arayüzü `npx gorev serve` komutuyla otomatik olarak http://localhost:5082 adresinde hazır olur. VS Code extension'ı ise IDE içinde zengin görsel deneyim sunar.
+MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. Web arayüzü `npx @mehmetsenol/gorev-mcp-server serve` komutuyla otomatik olarak http://localhost:5082 adresinde hazır olur. VS Code extension'ı ise IDE içinde zengin görsel deneyim sunar.
 
 ## ✨ Özellikler
 
@@ -99,7 +99,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **🌍 Dil Değiştirici** - Türkçe/İngilizce arasında geçiş, MCP sunucusu ile senkronize
 - **Responsive Tasarım** - Tailwind CSS ile mobil uyumlu
 - **Gerçek Zamanlı Sync** - React Query ile otomatik veri güncelleme
-- **🚀 Kurulum Gerektirmez**: `npx gorev serve` komutuyla otomatik aktif!
+- **🚀 Kurulum Gerektirmez**: `npx @mehmetsenol/gorev-mcp-server serve` komutuyla otomatik aktif!
 - **Embedded UI**: Go binary'sine gömülü, ayrı kurulum yok
 - **Erişim**: http://localhost:5082 (varsayılan port)
 

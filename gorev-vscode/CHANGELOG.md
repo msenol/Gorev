@@ -54,7 +54,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 - **NPM Package Reference Updated**: Extension now uses the published @mehmetsenol/gorev-mcp-server package
   - Updated MCP client to use correct NPM package name in NPX mode
   - Fixed client.ts NPX command: `npx @mehmetsenol/gorev-mcp-server@latest serve`
-  - All references to @gorev/mcp-server updated to @mehmetsenol/gorev-mcp-server
+  - All references to @mehmetsenol/gorev-mcp-server updated to @mehmetsenol/gorev-mcp-server
 
 ### Added
 
@@ -77,7 +77,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 - **NPX Mode Support**: Added serverMode configuration for NPX vs binary execution
   - New `gorev.serverMode` setting with "npx" and "binary" options
   - NPX mode as default for zero-installation experience
-  - Automatic NPX package execution with `@gorev/mcp-server@latest`
+  - Automatic NPX package execution with `@mehmetsenol/gorev-mcp-server@latest`
   - Smart path validation only required for binary mode
 
 ### Enhanced

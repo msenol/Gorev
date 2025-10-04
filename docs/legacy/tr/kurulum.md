@@ -58,7 +58,7 @@ MCP istemcileri için `mcp.json` konfigürasyonunuza basitçe ekleyin:
   "servers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"]
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
     }
   }
 }
@@ -161,7 +161,7 @@ code --install-extension mehmetsenol.gorev-vscode
   "servers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"]
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
     }
   }
 }
@@ -194,7 +194,7 @@ Cursor'ın MCP konfigürasyonuna ekleyin:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"]
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
     }
   }
 }

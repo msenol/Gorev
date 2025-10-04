@@ -336,7 +336,7 @@ The built web UI is embedded using Go's `embed` package:
 var webFS embed.FS
 ```
 
-This allows zero-configuration deployment - users just run `npx gorev serve` and the Web UI is automatically available at `http://localhost:5082`.
+This allows zero-configuration deployment - users just run `npx @mehmetsenol/gorev-mcp-server serve` and the Web UI is automatically available at `http://localhost:5082`.
 
 ## 🧪 Testing
 

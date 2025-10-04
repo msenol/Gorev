@@ -69,7 +69,7 @@ Create GitHub release with:
 - Push images: `docker push gorev:latest` && `docker push gorev:$(cat VERSION)`
 
 ## Quality Assurance
-- Test npm installation: `npm install -g gorev-mcp`
+- Test npm installation: `npm install -g @mehmetsenol/gorev-mcp-server`
 - Test VS Code extension installation
 - Verify binary downloads from GitHub release
 - Test Docker image functionality

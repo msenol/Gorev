@@ -91,7 +91,7 @@ Add to your Cursor MCP configuration:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@gorev/mcp-server@latest"]
+      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
     }
   }
 }
@@ -130,29 +130,29 @@ gorev-mcp --help
 npm install @mehmetsenol/gorev-mcp-server
 
 # Run with npx
-npx gorev-mcp serve
+npx @mehmetsenol/gorev-mcp-server serve
 ```
 
 ## 🛠️ Commands
 
 ```bash
 # Start MCP server (default command)
-npx @gorev/mcp-server
+npx @mehmetsenol/gorev-mcp-server
 
 # Initialize database
-npx @gorev/mcp-server init
+npx @mehmetsenol/gorev-mcp-server init
 
 # Initialize with global database
-npx @gorev/mcp-server init --global
+npx @mehmetsenol/gorev-mcp-server init --global
 
 # Initialize default templates
-npx @gorev/mcp-server template init
+npx @mehmetsenol/gorev-mcp-server template init
 
 # Show help
-npx @gorev/mcp-server --help
+npx @mehmetsenol/gorev-mcp-server --help
 
 # Show version
-npx @gorev/mcp-server --version
+npx @mehmetsenol/gorev-mcp-server --version
 ```
 
 ## ✨ Features
@@ -210,7 +210,7 @@ The server provides 48 MCP tools organized in categories:
 ```bash
 # Clear npm cache and reinstall
 npm cache clean --force
-npm uninstall -g @gorev/mcp-server
+npm uninstall -g @mehmetsenol/gorev-mcp-server
 npm install -g @mehmetsenol/gorev-mcp-server@latest
 ```
 
@@ -218,7 +218,7 @@ npm install -g @mehmetsenol/gorev-mcp-server@latest
 
 ```bash
 # Check supported platforms
-npx @gorev/mcp-server --help
+npx @mehmetsenol/gorev-mcp-server --help
 
 # Report issue with platform info
 echo "Platform: $(uname -a)"
@@ -228,10 +228,10 @@ echo "Platform: $(uname -a)"
 
 ```bash
 # Test server startup
-npx @gorev/mcp-server serve
+npx @mehmetsenol/gorev-mcp-server serve
 
 # Check database initialization
-npx @gorev/mcp-server init
+npx @mehmetsenol/gorev-mcp-server init
 ```
 
 ## 📱 Supported Platforms

@@ -613,8 +613,8 @@ None - All changes are additive. Existing functionality remains unchanged.
 
 ### 🚀 Added - NPX Integration
 
-- **NPX Easy Installation**: Zero-config setup via `npx @gorev/mcp-server@latest`
-- **NPM Package Wrapper**: @gorev/mcp-server with automatic binary downloads
+- **NPX Easy Installation**: Zero-config setup via `npx @mehmetsenol/gorev-mcp-server@latest`
+- **NPM Package Wrapper**: @mehmetsenol/gorev-mcp-server with automatic binary downloads
 - **Cross-platform Support**: Windows/macOS/Linux, AMD64/ARM64 architecture support
 - **GitHub Actions CI/CD**: Automated NPM publishing pipeline
 

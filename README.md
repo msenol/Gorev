@@ -33,7 +33,7 @@ Gorev is a powerful **Model Context Protocol (MCP)** server written in Go that p
 2. **gorev-vscode** - VS Code extension (optional visual interface)
 3. **gorev-web** - React + TypeScript source code (development)
 
-Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The Web UI is automatically available at http://localhost:5082 when you run `npx gorev-mcp serve`. The VS Code extension provides a rich IDE-integrated experience.
+Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The Web UI is automatically available at http://localhost:5082 when you run `npx @mehmetsenol/gorev-mcp-server serve`. The VS Code extension provides a rich IDE-integrated experience.
 
 ## 🎉 What's New in v0.16.0
 
@@ -42,7 +42,7 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **Instant Access**: Automatically available at http://localhost:5082
 - **Full Features**: Tasks, projects, templates, subtasks, and dependencies
 - **Language Sync**: Turkish/English switcher synchronized with MCP server
-- **No Separate Installation**: Just run `npx gorev-mcp serve` and you're ready!
+- **No Separate Installation**: Just run `npx @mehmetsenol/gorev-mcp-server serve` and you're ready!
 
 ### 🗂️ Multi-Workspace Support
 - **Isolated Workspaces**: Each project folder gets its own task database
@@ -65,9 +65,9 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **Documentation**: Full guide at [MCP Config Examples](docs/guides/mcp-config-examples.md)
 
 ### 📦 NPM Package
-- **New Package Name**: `gorev-mcp` (simpler, cleaner)
-- **Global Install**: `npm install -g gorev-mcp`
-- **NPX Ready**: `npx gorev-mcp serve` for instant use
+- **Package Name**: `@mehmetsenol/gorev-mcp-server`
+- **Global Install**: `npm install -g @mehmetsenol/gorev-mcp-server`
+- **NPX Ready**: `npx @mehmetsenol/gorev-mcp-server serve` for instant use
 - **Cross-Platform**: Works on Windows, macOS, and Linux
 
 ## ✨ Features
@@ -132,7 +132,7 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **🌍 Language Switcher** - Toggle between Turkish/English, synchronized with MCP server
 - **Quick Actions** - Edit, delete, and status updates
 - **REST API Backend** - Fiber-based high-performance API server
-- **🚀 No Installation Required**: Automatically active with `npx gorev serve`!
+- **🚀 No Installation Required**: Automatically active with `npx @mehmetsenol/gorev-mcp-server serve`!
 - **Embedded UI**: Bundled in Go binary, no separate setup needed
 - **Access**: http://localhost:5082 (default port)
 
