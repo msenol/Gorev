@@ -129,5 +129,7 @@
   "welcome.tasks.noTasks": "No tasks found.\\n[Create Task](command:gorev.createTask)\\n[Create Project First](command:gorev.createProject)",
   "welcome.projects.noProjects": "No projects found.\\n[Create Project](command:gorev.createProject)",
 
-  "config.databaseMode": "Database storage mode: auto (detect workspace), workspace (project-local), or global (shared)"
+  "config.databaseMode": "Database storage mode: auto (detect workspace), workspace (project-local), or global (shared)",
+  "config.apiHost": "API server hostname (for web UI integration)",
+  "config.apiPort": "API server port (for web UI integration)"
 }

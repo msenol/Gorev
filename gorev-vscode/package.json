@@ -106,43 +106,17 @@
     "configuration": {
       "title": "Gorev",
       "properties": {
-        "gorev.serverMode": {
+        "gorev.apiHost": {
           "type": "string",
-          "default": "npx",
-          "enum": [
-            "npx",
-            "binary"
-          ],
-          "enumDescriptions": [
-            "%config.serverMode.npx%",
-            "%config.serverMode.binary%"
-          ],
-          "description": "%config.serverMode%"
+          "default": "localhost",
+          "description": "%config.apiHost%"
         },
-        "gorev.serverPath": {
-          "type": "string",
-          "default": "",
-          "description": "%config.serverPath%"
-        },
-        "gorev.autoConnect": {
-          "type": "boolean",
-          "default": true,
-          "description": "%config.autoConnect%"
-        },
-        "gorev.clientMode": {
-          "type": "string",
-          "default": "auto",
-          "enum": [
-            "auto",
-            "api",
-            "mcp"
-          ],
-          "enumDescriptions": [
-            "Automatically detect the best connection mode (API preferred)",
-            "Use REST API connection only",
-            "Use MCP (Model Context Protocol) connection only"
-          ],
-          "description": "Choose connection mode: auto (detect), api (REST API), or mcp (Model Context Protocol)"
+        "gorev.apiPort": {
+          "type": "number",
+          "default": 5082,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "%config.apiPort%"
         },
         "gorev.showStatusBar": {
           "type": "boolean",
@@ -436,21 +410,6 @@
           "minimum": 10,
           "maximum": 1000,
           "description": "Maximum number of metrics to keep per operation type"
-        },
-        "gorev.databaseMode": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "workspace",
-            "global"
-          ],
-          "default": "auto",
-          "enumDescriptions": [
-            "Auto-detect: Use workspace database if .gorev/ exists, otherwise global",
-            "Workspace: Always use project-local database in .gorev/",
-            "Global: Always use shared database in user home directory"
-          ],
-          "description": "%config.databaseMode%"
         }
       }
     },
@@ -781,18 +740,6 @@
         "title": "%command.quickExport%",
         "category": "Gorev",
         "icon": "$(export)"
-      },
-      {
-        "command": "gorev.initWorkspaceDatabase",
-        "title": "%command.initWorkspaceDatabase%",
-        "category": "Gorev",
-        "icon": "$(database)"
-      },
-      {
-        "command": "gorev.switchDatabaseMode",
-        "title": "%command.switchDatabaseMode%",
-        "category": "Gorev",
-        "icon": "$(database)"
       }
     ],
     "viewsContainers": {
