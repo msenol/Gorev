@@ -188,7 +188,7 @@ export class TreeViewUtils {
             case GroupingStrategy.ByProject:
                 return task.proje_id || 'no-project';
             case GroupingStrategy.ByTag:
-                return task.etiketler?.length ? task.etiketler[0] : 'no-tag';
+                return task.etiketler?.length ? task.etiketler[0].isim : 'no-tag';
             case GroupingStrategy.ByDueDate:
                 return this.getDueDateGroup(task.son_tarih);
             default:
@@ -228,16 +228,16 @@ export class TreeViewUtils {
                     comparison = a.baslik.localeCompare(b.baslik);
                     break;
                 case SortingCriteria.Priority:
-                    comparison = this.comparePriority(a.oncelik, b.oncelik);
+                    comparison = this.comparePriority(a.oncelik as GorevOncelik, b.oncelik as GorevOncelik);
                     break;
                 case SortingCriteria.DueDate:
                     comparison = this.compareDates(a.son_tarih, b.son_tarih);
                     break;
                 case SortingCriteria.Status:
-                    comparison = this.compareStatus(a.durum, b.durum);
+                    comparison = this.compareStatus(a.durum as GorevDurum, b.durum as GorevDurum);
                     break;
                 case SortingCriteria.CreatedDate:
-                    comparison = this.compareDates(a.olusturma_tarih, b.olusturma_tarih);
+                    comparison = this.compareDates(a.olusturma_tarihi, b.olusturma_tarihi);
                     break;
             }
 
@@ -280,10 +280,10 @@ export class TreeViewUtils {
             // Arama sorgusu
             if (filter.searchQuery) {
                 const query = filter.searchQuery.toLowerCase();
-                const matchesSearch = 
+                const matchesSearch =
                     task.baslik.toLowerCase().includes(query) ||
                     (task.aciklama && task.aciklama.toLowerCase().includes(query)) ||
-                    (task.etiketler && task.etiketler.some(tag => tag.toLowerCase().includes(query)));
+                    (task.etiketler && task.etiketler.some(tag => tag.isim.toLowerCase().includes(query)));
                 
                 if (!matchesSearch) return false;
             }
@@ -305,7 +305,7 @@ export class TreeViewUtils {
 
             // Etiket filtresi
             if (filter.tags && filter.tags.length > 0) {
-                if (!task.etiketler || !task.etiketler.some(tag => filter.tags!.includes(tag))) return false;
+                if (!task.etiketler || !task.etiketler.some(tag => filter.tags!.includes(tag.isim))) return false;
             }
 
             // Son tarih aralığı
