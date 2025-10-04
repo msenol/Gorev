@@ -17,7 +17,7 @@ export interface Task {
   proje_name?: string;
   parent_id?: string;
   son_tarih?: string;
-  etiketler?: string[];
+  etiketler?: Array<{ id: string; isim: string }>;
   olusturma_tarihi: string;
   guncelleme_tarihi: string;
   // Subtask and dependency info

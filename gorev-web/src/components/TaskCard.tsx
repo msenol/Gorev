@@ -125,12 +125,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
           {/* Tags */}
           {task.etiketler && task.etiketler.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {task.etiketler.map((tag, index) => (
+              {task.etiketler.map((tag) => (
                 <span
-                  key={index}
+                  key={tag.id}
                   className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700"
                 >
-                  {tag}
+                  {tag.isim}
                 </span>
               ))}
             </div>
