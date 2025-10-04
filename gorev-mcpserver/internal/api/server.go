@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log"
 	"strings"
 	"time"
@@ -11,16 +12,23 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/msenol/gorev/internal/api/middleware"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 )
 
 // APIServer represents the HTTP API server
 type APIServer struct {
-	app        *fiber.App
-	port       string
-	isYonetici *gorev.IsYonetici
-	handlers   interface{} // MCP Handlers for export/import operations
+	app              *fiber.App
+	port             string
+	isYonetici       *gorev.IsYonetici // Legacy single workspace manager (deprecated)
+	workspaceManager *WorkspaceManager // Multi-workspace manager
+	handlers         interface{}       // MCP Handlers for export/import operations
+}
+
+// SetMigrationsFS sets the embedded migrations filesystem for workspace manager
+func (s *APIServer) SetMigrationsFS(migrationsFS fs.FS) {
+	s.workspaceManager.SetMigrationsFS(migrationsFS)
 }
 
 // NewAPIServer creates a new API server instance
@@ -53,15 +61,19 @@ func NewAPIServer(port string, isYonetici *gorev.IsYonetici) *APIServer {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:5000,http://localhost:5001,http://localhost:5002,http://localhost:5003", // Restrict to localhost only
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:     "Origin,Content-Type,Accept",
+		AllowHeaders:     "Origin,Content-Type,Accept,X-Workspace-Id,X-Workspace-Path,X-Workspace-Name", // Add workspace headers
 		AllowCredentials: false,
 	}))
 
 	server := &APIServer{
-		app:        app,
-		port:       port,
-		isYonetici: isYonetici,
+		app:              app,
+		port:             port,
+		isYonetici:       isYonetici,
+		workspaceManager: NewWorkspaceManager(),
 	}
+
+	// Workspace detection middleware (must be after CORS, before routes)
+	app.Use(middleware.WorkspaceMiddleware(server.workspaceManager))
 
 	// Setup routes
 	server.setupRoutes()
@@ -127,6 +139,12 @@ func (s *APIServer) setupRoutes() {
 
 	// Active project routes
 	api.Get("/active-project", s.getActiveProject)
+
+	// Workspace routes
+	api.Post("/workspaces/register", s.registerWorkspaceHandler)
+	api.Get("/workspaces", s.listWorkspacesHandler)
+	api.Get("/workspaces/:id", s.getWorkspaceHandler)
+	api.Delete("/workspaces/:id", s.unregisterWorkspaceHandler)
 	api.Delete("/active-project", s.removeActiveProject)
 
 	// Export/Import routes
@@ -190,8 +208,9 @@ func (s *APIServer) getTasks(c *fiber.Ctx) error {
 		filters["offset"] = offset
 	}
 
-	// Call business logic
-	gorevler, err := s.isYonetici.GorevListele(filters)
+	// Call business logic with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	gorevler, err := iy.GorevListele(filters)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list tasks with filters %v: %v", filters, err))
 	}
@@ -210,8 +229,9 @@ func (s *APIServer) getTask(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
 	}
 
-	// Get task details using MCP handler logic
-	gorev, err := s.isYonetici.VeriYonetici().GorevGetir(id)
+	// Get task details using MCP handler logic with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	gorev, err := iy.VeriYonetici().GorevGetir(id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get task with ID %s: %v", id, err))
 	}
@@ -239,16 +259,17 @@ func (s *APIServer) updateTask(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	// Handle status update - use GorevGuncelle with params map
+	// Handle status update - use GorevGuncelle with params map and workspace context
+	iy := s.getIsYoneticiFromContext(c)
 	if durum, ok := req["durum"].(string); ok {
 		params := map[string]interface{}{"durum": durum}
-		if err := s.isYonetici.VeriYonetici().GorevGuncelle(id, params); err != nil {
+		if err := iy.VeriYonetici().GorevGuncelle(id, params); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update task %s with status %s: %v", id, durum, err))
 		}
 	}
 
 	// Get updated task
-	gorev, err := s.isYonetici.VeriYonetici().GorevGetir(id)
+	gorev, err := iy.VeriYonetici().GorevGetir(id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get updated task with ID %s: %v", id, err))
 	}
@@ -267,7 +288,8 @@ func (s *APIServer) deleteTask(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
 	}
 
-	if err := s.isYonetici.VeriYonetici().GorevSil(id); err != nil {
+	iy := s.getIsYoneticiFromContext(c)
+	if err := iy.VeriYonetici().GorevSil(id); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to delete task with ID %s: %v", id, err))
 	}
 
@@ -291,8 +313,9 @@ func (s *APIServer) createTaskFromTemplate(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Template ID is required")
 	}
 
-	// Create task from template using business logic
-	gorev, err := s.isYonetici.TemplatedenGorevOlustur(req.TemplateID, req.Degerler)
+	// Create task from template using business logic with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	gorev, err := iy.TemplatedenGorevOlustur(req.TemplateID, req.Degerler)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create task from template %s: %v", req.TemplateID, err))
 	}
@@ -304,9 +327,34 @@ func (s *APIServer) createTaskFromTemplate(c *fiber.Ctx) error {
 	})
 }
 
+// getIsYoneticiFromContext extracts workspace-specific IsYonetici from Fiber context
+// Falls back to global isYonetici if workspace context is not available (backward compatibility)
+func (s *APIServer) getIsYoneticiFromContext(c *fiber.Ctx) *gorev.IsYonetici {
+	isYonetici := middleware.GetIsYonetici(c)
+	if isYonetici == nil {
+		log.Printf("[getIsYoneticiFromContext] No workspace context, using global isYonetici for %s %s",
+			c.Method(), c.Path())
+		return s.isYonetici
+	}
+
+	iy, ok := isYonetici.(*gorev.IsYonetici)
+	if !ok {
+		log.Printf("[getIsYoneticiFromContext] Type assertion failed, using global isYonetici for %s %s",
+			c.Method(), c.Path())
+		return s.isYonetici
+	}
+
+	wsID := middleware.GetWorkspaceID(c)
+	log.Printf("[getIsYoneticiFromContext] Using workspace-specific isYonetici for workspace %s (%s %s)",
+		wsID, c.Method(), c.Path())
+	return iy
+}
+
 // getProjects retrieves all projects
 func (s *APIServer) getProjects(c *fiber.Ctx) error {
-	projeler, err := s.isYonetici.ProjeListele()
+	iy := s.getIsYoneticiFromContext(c)
+
+	projeler, err := iy.ProjeListele()
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list projects: %v", err))
 	}
@@ -325,7 +373,8 @@ func (s *APIServer) getProject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Project ID is required")
 	}
 
-	proje, err := s.isYonetici.VeriYonetici().ProjeGetir(id)
+	iy := s.getIsYoneticiFromContext(c)
+	proje, err := iy.VeriYonetici().ProjeGetir(id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get project with ID %s: %v", id, err))
 	}
@@ -350,8 +399,10 @@ func (s *APIServer) createProject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Isim is required")
 	}
 
+	iy := s.getIsYoneticiFromContext(c)
+
 	// Create project using business logic
-	proje, err := s.isYonetici.ProjeOlustur(req.Isim, req.Tanim)
+	proje, err := iy.ProjeOlustur(req.Isim, req.Tanim)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create project '%s': %v", req.Isim, err))
 	}
@@ -376,7 +427,8 @@ func (s *APIServer) getProjectTasks(c *fiber.Ctx) error {
 		"offset":   c.QueryInt("offset", 0),
 	}
 
-	gorevler, err := s.isYonetici.GorevListele(filters)
+	iy := s.getIsYoneticiFromContext(c)
+	gorevler, err := iy.GorevListele(filters)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list tasks for project %s: %v", projeID, err))
 	}
@@ -395,12 +447,13 @@ func (s *APIServer) activateProject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Project ID is required")
 	}
 
-	if err := s.isYonetici.VeriYonetici().AktifProjeAyarla(projeID); err != nil {
+	iy := s.getIsYoneticiFromContext(c)
+	if err := iy.VeriYonetici().AktifProjeAyarla(projeID); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to activate project with ID %s: %v", projeID, err))
 	}
 
 	// Return updated project
-	proje, err := s.isYonetici.VeriYonetici().ProjeGetir(projeID)
+	proje, err := iy.VeriYonetici().ProjeGetir(projeID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get activated project with ID %s: %v", projeID, err))
 	}
@@ -416,7 +469,8 @@ func (s *APIServer) activateProject(c *fiber.Ctx) error {
 func (s *APIServer) getTemplates(c *fiber.Ctx) error {
 	kategori := c.Query("kategori")
 
-	templateler, err := s.isYonetici.VeriYonetici().TemplateListele(kategori)
+	iy := s.getIsYoneticiFromContext(c)
+	templateler, err := iy.VeriYonetici().TemplateListele(kategori)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to list templates with category '%s': %v", kategori, err))
 	}
@@ -519,8 +573,9 @@ func (s *APIServer) createSubtask(c *fiber.Ctx) error {
 		}
 	}
 
-	// Create subtask using business logic
-	gorev, err := s.isYonetici.AltGorevOlustur(parentID, req.Baslik, req.Aciklama, req.Oncelik, req.SonTarih, etiketler)
+	// Create subtask using business logic with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	gorev, err := iy.AltGorevOlustur(parentID, req.Baslik, req.Aciklama, req.Oncelik, req.SonTarih, etiketler)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create subtask under parent %s: %v", parentID, err))
 	}
@@ -546,13 +601,14 @@ func (s *APIServer) changeParent(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	// Change parent using business logic
-	if err := s.isYonetici.GorevUstDegistir(taskID, req.NewParentID); err != nil {
+	// Change parent using business logic with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	if err := iy.GorevUstDegistir(taskID, req.NewParentID); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to change parent for task %s: %v", taskID, err))
 	}
 
 	// Get updated task
-	gorev, err := s.isYonetici.VeriYonetici().GorevGetir(taskID)
+	gorev, err := iy.VeriYonetici().GorevGetir(taskID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get updated task with ID %s: %v", taskID, err))
 	}
@@ -571,8 +627,9 @@ func (s *APIServer) getHierarchy(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
 	}
 
-	// Get hierarchy using business logic
-	hierarchy, err := s.isYonetici.GorevHiyerarsiGetir(taskID)
+	// Get hierarchy using business logic with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	hierarchy, err := iy.GorevHiyerarsiGetir(taskID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get hierarchy for task %s: %v", taskID, err))
 	}
@@ -605,8 +662,9 @@ func (s *APIServer) addDependency(c *fiber.Ctx) error {
 		req.BaglantiTipi = "onceki" // default
 	}
 
-	// Add dependency using business logic
-	if _, err := s.isYonetici.GorevBagimlilikEkle(req.KaynakID, hedefID, req.BaglantiTipi); err != nil {
+	// Add dependency using business logic with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	if _, err := iy.GorevBagimlilikEkle(req.KaynakID, hedefID, req.BaglantiTipi); err != nil{
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add dependency from %s to %s: %v", req.KaynakID, hedefID, err))
 	}
 
@@ -625,8 +683,9 @@ func (s *APIServer) removeDependency(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Both task IDs are required")
 	}
 
-	// Remove dependency using VeriYonetici
-	err := s.isYonetici.VeriYonetici().BaglantiSil(kaynakID, hedefID)
+	// Remove dependency using VeriYonetici with workspace context
+	iy := s.getIsYoneticiFromContext(c)
+	err := iy.VeriYonetici().BaglantiSil(kaynakID, hedefID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to remove dependency: %v", err))
 	}
@@ -639,7 +698,8 @@ func (s *APIServer) removeDependency(c *fiber.Ctx) error {
 
 // getActiveProject retrieves the currently active project
 func (s *APIServer) getActiveProject(c *fiber.Ctx) error {
-	aktifProjeID, err := s.isYonetici.VeriYonetici().AktifProjeGetir()
+	iy := s.getIsYoneticiFromContext(c)
+	aktifProjeID, err := iy.VeriYonetici().AktifProjeGetir()
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get active project: %v", err))
 	}
@@ -653,7 +713,7 @@ func (s *APIServer) getActiveProject(c *fiber.Ctx) error {
 	}
 
 	// Get full project details
-	proje, err := s.isYonetici.VeriYonetici().ProjeGetir(aktifProjeID)
+	proje, err := iy.VeriYonetici().ProjeGetir(aktifProjeID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get active project details: %v", err))
 	}
@@ -666,7 +726,8 @@ func (s *APIServer) getActiveProject(c *fiber.Ctx) error {
 
 // removeActiveProject removes the active project setting
 func (s *APIServer) removeActiveProject(c *fiber.Ctx) error {
-	if err := s.isYonetici.VeriYonetici().AktifProjeKaldir(); err != nil {
+	iy := s.getIsYoneticiFromContext(c)
+	if err := iy.VeriYonetici().AktifProjeKaldir(); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to remove active project: %v", err))
 	}
 

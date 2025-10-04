@@ -100,3 +100,26 @@ export interface AppState {
   taskFilter: TaskFilter;
   sidebarOpen: boolean;
 }
+
+// Workspace Types
+export interface WorkspaceInfo {
+  id: string;
+  name: string;
+  path: string;
+  database_path: string;
+  last_accessed: string;
+  created_at: string;
+  task_count: number;
+}
+
+export interface WorkspaceContext {
+  workspaceId: string;
+  workspaceName: string;
+  workspacePath: string;
+}
+
+export interface WorkspaceListResponse {
+  success: boolean;
+  workspaces: WorkspaceInfo[];
+  total: number;
+}

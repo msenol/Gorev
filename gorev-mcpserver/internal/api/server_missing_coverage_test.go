@@ -120,9 +120,9 @@ func TestCreateSubtask(t *testing.T) {
 	defer cleanup()
 
 	payload := map[string]interface{}{
-		"baslik":    "Test Subtask",
-		"aciklama":  "Subtask Description",
-		"oncelik":   constants.PriorityMedium,
+		"baslik":   "Test Subtask",
+		"aciklama": "Subtask Description",
+		"oncelik":  constants.PriorityMedium,
 	}
 	body, _ := json.Marshal(payload)
 

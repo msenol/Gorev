@@ -460,28 +460,6 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             
             // IMPORTANT: Set filtered tasks after loading with duplicate removal
             this.filteredTasks = this.removeDuplicateTasks([...this.tasks]);
-
-            // DEBUG: Log detailed task information
-            Logger.info(`[EnhancedGorevTreeProvider] FINAL TASK ANALYSIS:`);
-            Logger.info(`[EnhancedGorevTreeProvider] - Raw tasks loaded: ${this.tasks.length}`);
-            Logger.info(`[EnhancedGorevTreeProvider] - Filtered tasks after dedup: ${this.filteredTasks.length}`);
-            Logger.info(`[EnhancedGorevTreeProvider] - Task titles loaded:`);
-            this.tasks.forEach((task, idx) => {
-                Logger.info(`[EnhancedGorevTreeProvider]   ${idx + 1}. "${task.baslik}" (ID: ${task.id}, parent: ${task.parent_id || 'none'})`);
-            });
-
-            // Check if we have the missing tasks
-            const expectedMissingTasks = ['T001: Project Structure Setup', 'T002: Initialize Rust Workspace', 'T003: Initialize TypeScript Project', 'T009: Contract Test - search_code Tool'];
-            expectedMissingTasks.forEach(title => {
-                const found = this.tasks.find(t => t.baslik?.includes(title) || t.baslik?.includes(title.split(':')[0]));
-                if (found) {
-                    Logger.info(`[EnhancedGorevTreeProvider] ✅ Found expected task: "${found.baslik}" (ID: ${found.id})`);
-                } else {
-                    Logger.warn(`[EnhancedGorevTreeProvider] ❌ Missing expected task: "${title}"`);
-                }
-            });
-            // Logger.debug(`[EnhancedGorevTreeProvider] Filtered ${this.tasks.length} tasks to ${this.filteredTasks.length} after duplicate removal`); // Reduced logging
-            // Tasks filtered and ready
         } catch (error) {
             Logger.error('Failed to load tasks:', error);
             throw error;

@@ -899,8 +899,8 @@ func TestErrorPropagation(t *testing.T) {
 			// Accept both configuration and migration error messages
 			errorStr := err.Error()
 			if !strings.Contains(errorStr, "migration") &&
-			   !strings.Contains(errorStr, "failed to configure database") &&
-			   !strings.Contains(errorStr, "WAL mode") {
+				!strings.Contains(errorStr, "failed to configure database") &&
+				!strings.Contains(errorStr, "WAL mode") {
 				t.Errorf("Expected migration or configuration error, got: %v", err)
 			}
 			return

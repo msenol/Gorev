@@ -2,6 +2,7 @@ import React from 'react';
 import { Menu, Search, Filter } from 'lucide-react';
 import type { Project, TaskFilter, TaskStatus, TaskPriority } from '@/types';
 import LanguageSwitcher from './LanguageSwitcher';
+import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface HeaderProps {
@@ -108,6 +109,9 @@ const Header: React.FC<HeaderProps> = ({
                 <option value="dusuk">{t('low')}</option>
               </select>
             </div>
+
+            {/* Workspace Switcher */}
+            <WorkspaceSwitcher />
 
             {/* Language Switcher */}
             <LanguageSwitcher />

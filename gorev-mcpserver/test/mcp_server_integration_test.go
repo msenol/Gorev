@@ -369,8 +369,7 @@ func TestMCPServerLargeDataset(t *testing.T) {
 	text := extractText(t, result)
 	// Check for pagination header (for large datasets) or regular header
 	assert.True(t,
-		len(text) > 0 && (
-			strings.Contains(text, "Görev Listesi") ||
+		len(text) > 0 && (strings.Contains(text, "Görev Listesi") ||
 			strings.Contains(text, "Görevler (")),
 		"Should contain task list or pagination header")
 }

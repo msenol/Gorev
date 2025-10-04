@@ -9,23 +9,23 @@ import (
 
 // ExportRequest represents the export request payload
 type ExportRequest struct {
-	OutputPath           string   `json:"output_path"`
-	Format               string   `json:"format"`
-	IncludeCompleted     bool     `json:"include_completed"`
-	IncludeDependencies  bool     `json:"include_dependencies"`
-	IncludeTemplates     bool     `json:"include_templates"`
-	IncludeAIContext     bool     `json:"include_ai_context"`
-	ProjectFilter        []string `json:"project_filter"`
+	OutputPath          string   `json:"output_path"`
+	Format              string   `json:"format"`
+	IncludeCompleted    bool     `json:"include_completed"`
+	IncludeDependencies bool     `json:"include_dependencies"`
+	IncludeTemplates    bool     `json:"include_templates"`
+	IncludeAIContext    bool     `json:"include_ai_context"`
+	ProjectFilter       []string `json:"project_filter"`
 }
 
 // ImportRequest represents the import request payload
 type ImportRequest struct {
-	FilePath             string            `json:"file_path"`
-	ImportMode           string            `json:"import_mode"`
-	ConflictResolution   string            `json:"conflict_resolution"`
-	DryRun               bool              `json:"dry_run"`
-	PreserveIDs          bool              `json:"preserve_ids"`
-	ProjectMapping       map[string]string `json:"project_mapping"`
+	FilePath           string            `json:"file_path"`
+	ImportMode         string            `json:"import_mode"`
+	ConflictResolution string            `json:"conflict_resolution"`
+	DryRun             bool              `json:"dry_run"`
+	PreserveIDs        bool              `json:"preserve_ids"`
+	ProjectMapping     map[string]string `json:"project_mapping"`
 }
 
 // exportData handles data export requests
@@ -47,12 +47,12 @@ func (s *APIServer) exportData(c *fiber.Ctx) error {
 
 	// Build params for MCP handler
 	params := map[string]interface{}{
-		"output_path":           req.OutputPath,
-		"format":                req.Format,
-		"include_completed":     req.IncludeCompleted,
-		"include_dependencies":  req.IncludeDependencies,
-		"include_templates":     req.IncludeTemplates,
-		"include_ai_context":    req.IncludeAIContext,
+		"output_path":          req.OutputPath,
+		"format":               req.Format,
+		"include_completed":    req.IncludeCompleted,
+		"include_dependencies": req.IncludeDependencies,
+		"include_templates":    req.IncludeTemplates,
+		"include_ai_context":   req.IncludeAIContext,
 	}
 
 	if len(req.ProjectFilter) > 0 {

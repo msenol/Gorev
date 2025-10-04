@@ -299,6 +299,7 @@ func TestGetCommonSuffix(t *testing.T) {
 		})
 	}
 }
+
 // Test uncovered helper functions for improved coverage
 
 func TestUncoveredHelpers(t *testing.T) {

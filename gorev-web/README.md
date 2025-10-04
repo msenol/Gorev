@@ -312,7 +312,7 @@ MIT License - See [LICENSE](../LICENSE) for details
 ## 🔗 Related Documentation
 
 - [Main README](../README.md) - Project overview
-- [MCP Tools Reference](../docs/tr/mcp-araclari.md) - MCP tool documentation
+- [MCP Tools Reference](../docs/legacy/tr/mcp-araclari.md) - MCP tool documentation
 - [API Reference](../docs/api/rest-api-reference.md) - REST API documentation (coming soon)
 - [Development Guide](../docs/development/TASKS.md) - Development roadmap
 

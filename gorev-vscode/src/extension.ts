@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ApiClient } from './api/client';
+import { UnifiedServerManager } from './managers/unifiedServerManager';
 import { EnhancedGorevTreeProvider } from './providers/enhancedGorevTreeProvider';
 import { ProjeTreeProvider } from './providers/projeTreeProvider';
 import { TemplateTreeProvider } from './providers/templateTreeProvider';
@@ -14,6 +15,7 @@ import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from '.
 import { measureAsync } from './utils/performance';
 import { debounceConfig } from './utils/debounce';
 
+let serverManager: UnifiedServerManager;
 let apiClient: ApiClient;
 let statusBarManager: StatusBarManager;
 let filterToolbar: FilterToolbar;
@@ -39,27 +41,39 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   // Initialize configuration
   Config.initialize(context);
 
-  // Create API client
+  // Create UnifiedServerManager
   const apiHost = Config.get<string>('apiHost') || 'localhost';
   const apiPort = Config.get<number>('apiPort') || 5082;
-  apiClient = new ApiClient(`http://${apiHost}:${apiPort}`);
-
-  // Connect to API server
-  try {
-    await apiClient.connect();
-    Logger.info('Successfully connected to API server');
-  } catch (error) {
-    Logger.warn('Failed to connect to API server:', error);
-    vscode.window.showWarningMessage(
-      'Gorev: Could not connect to API server. Please make sure the server is running.'
-    );
-  }
+  serverManager = new UnifiedServerManager(apiHost, apiPort);
 
   // Initialize RefreshManager first
   refreshManager = RefreshManager.getInstance();
 
   // Initialize UI components
   statusBarManager = new StatusBarManager();
+
+  // Initialize server connection and register workspace
+  try {
+    await serverManager.initialize();
+    apiClient = serverManager.getApiClient();
+    Logger.info('Successfully initialized server connection and registered workspace');
+
+    // Update status bar with workspace context
+    const workspaceContext = serverManager.getWorkspaceContext();
+    if (workspaceContext) {
+      statusBarManager.setWorkspaceContext(workspaceContext);
+      vscode.window.showInformationMessage(
+        `Gorev: Workspace "${workspaceContext.workspaceName}" registered successfully`
+      );
+    }
+  } catch (error) {
+    Logger.warn('Failed to initialize server connection:', error);
+    apiClient = serverManager.getApiClient(); // Get client anyway for offline mode
+    statusBarManager.setWorkspaceContext(undefined); // No workspace registered
+    vscode.window.showWarningMessage(
+      'Gorev: Could not connect to API server. Please make sure the server is running.'
+    );
+  }
   gorevTreeProvider = new EnhancedGorevTreeProvider(apiClient);
   projeTreeProvider = new ProjeTreeProvider(apiClient);
   templateTreeProvider = new TemplateTreeProvider(apiClient);
@@ -239,9 +253,9 @@ export async function deactivate() {
     refreshManager.dispose();
   }
 
-
-  if (apiClient) {
-    apiClient.disconnect();
+  // Dispose UnifiedServerManager (this will also disconnect apiClient)
+  if (serverManager) {
+    serverManager.dispose();
   }
 
   if (statusBarManager) {

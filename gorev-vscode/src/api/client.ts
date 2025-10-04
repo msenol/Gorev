@@ -2,6 +2,13 @@ import axios from 'axios';
 import { EventEmitter } from 'events';
 import { Logger } from '../utils/logger';
 import * as vscode from 'vscode';
+import {
+  WorkspaceContext,
+  WorkspaceInfo,
+  WorkspaceRegistration,
+  WorkspaceRegistrationResponse,
+  WorkspaceListResponse
+} from '../models/workspace';
 
 export interface ApiResponse<T = any> {
   data: T;
@@ -141,6 +148,7 @@ export class ApiClient extends EventEmitter {
   private axiosInstance: any;
   private connected = false;
   private baseURL: string;
+  private workspaceContext: WorkspaceContext | undefined;
 
   constructor(baseURL: string = 'http://localhost:5082') {
     super();
@@ -183,9 +191,16 @@ export class ApiClient extends EventEmitter {
   }
 
   private setupInterceptors(): void {
-    // Request interceptor for logging
+    // Request interceptor for logging and workspace header injection
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
+        // Inject workspace headers if context is set
+        if (this.workspaceContext) {
+          config.headers['X-Workspace-Id'] = this.workspaceContext.workspaceId;
+          config.headers['X-Workspace-Path'] = this.workspaceContext.workspacePath;
+          config.headers['X-Workspace-Name'] = this.workspaceContext.workspaceName;
+        }
+
         Logger.debug(`[ApiClient] Request: ${config.method?.toUpperCase()} ${config.url}`, config.data);
         return config;
       },
@@ -469,6 +484,65 @@ export class ApiClient extends EventEmitter {
 
     return JSON.stringify(data, null, 2);
   }
+
+  // Workspace Management API
+
+  /**
+   * Set workspace context for header injection
+   */
+  setWorkspaceHeaders(context: WorkspaceContext): void {
+    this.workspaceContext = context;
+    Logger.info(`[ApiClient] Workspace context set: ${context.workspaceName} (${context.workspaceId})`);
+  }
+
+  /**
+   * Clear workspace context
+   */
+  clearWorkspaceHeaders(): void {
+    this.workspaceContext = undefined;
+    Logger.info('[ApiClient] Workspace context cleared');
+  }
+
+  /**
+   * Get current workspace context
+   */
+  getWorkspaceContext(): WorkspaceContext | undefined {
+    return this.workspaceContext;
+  }
+
+  /**
+   * Register a workspace with the server
+   */
+  async registerWorkspace(registration: WorkspaceRegistration): Promise<WorkspaceRegistrationResponse> {
+    const response = await this.axiosInstance.post('/workspaces/register', registration);
+    return response.data;
+  }
+
+  /**
+   * List all registered workspaces
+   */
+  async listWorkspaces(): Promise<WorkspaceListResponse> {
+    const response = await this.axiosInstance.get('/workspaces');
+    return response.data;
+  }
+
+  /**
+   * Get workspace details by ID
+   */
+  async getWorkspace(workspaceId: string): Promise<ApiResponse<WorkspaceInfo>> {
+    const response = await this.axiosInstance.get(`/workspaces/${workspaceId}`);
+    return response.data;
+  }
+
+  /**
+   * Unregister a workspace
+   */
+  async unregisterWorkspace(workspaceId: string): Promise<ApiResponse<void>> {
+    const response = await this.axiosInstance.delete(`/workspaces/${workspaceId}`);
+    return response.data;
+  }
+
+  // Formatting helpers
 
   private formatTasks(tasks: Task[]): string {
     const grouped = tasks.reduce((acc, task) => {

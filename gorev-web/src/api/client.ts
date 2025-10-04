@@ -7,7 +7,10 @@ import type {
   CreateTaskFromTemplateRequest,
   CreateProjectRequest,
   UpdateTaskRequest,
-  TaskFilter
+  TaskFilter,
+  WorkspaceContext,
+  WorkspaceListResponse,
+  WorkspaceInfo
 } from '@/types';
 
 // Create axios instance with base configuration
@@ -19,9 +22,28 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor for debugging
+// Workspace context management
+let currentWorkspaceContext: WorkspaceContext | null = null;
+
+export const setWorkspaceContext = (context: WorkspaceContext | null) => {
+  currentWorkspaceContext = context;
+  console.log('📁 Workspace context set:', context);
+};
+
+export const getWorkspaceContext = (): WorkspaceContext | null => {
+  return currentWorkspaceContext;
+};
+
+// Add request interceptor for workspace headers and debugging
 api.interceptors.request.use(
   (config) => {
+    // Inject workspace headers if context is set
+    if (currentWorkspaceContext) {
+      config.headers['X-Workspace-Id'] = currentWorkspaceContext.workspaceId;
+      config.headers['X-Workspace-Path'] = currentWorkspaceContext.workspacePath;
+      config.headers['X-Workspace-Name'] = currentWorkspaceContext.workspaceName;
+    }
+
     console.log(`🔥 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -133,6 +155,17 @@ export const getTemplates = async (kategori?: string): Promise<ApiResponse<Templ
 // Summary API
 export const getSummary = async () => {
   const { data } = await api.get('/summary');
+  return data;
+};
+
+// Workspace API
+export const getWorkspaces = async (): Promise<WorkspaceListResponse> => {
+  const { data } = await api.get('/workspaces');
+  return data;
+};
+
+export const getWorkspace = async (id: string): Promise<ApiResponse<WorkspaceInfo>> => {
+  const { data } = await api.get(`/workspaces/${id}`);
   return data;
 };
 

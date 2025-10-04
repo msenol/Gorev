@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App.tsx'
 import './index.css'
 import { LanguageProvider } from './contexts/LanguageContext'
+import { WorkspaceProvider } from './contexts/WorkspaceContext'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -28,7 +29,9 @@ if (rootElement) {
       <React.StrictMode>
         <LanguageProvider>
           <QueryClientProvider client={queryClient}>
-            <App />
+            <WorkspaceProvider>
+              <App />
+            </WorkspaceProvider>
           </QueryClientProvider>
         </LanguageProvider>
       </React.StrictMode>

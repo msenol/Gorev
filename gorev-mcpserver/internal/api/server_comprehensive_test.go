@@ -267,8 +267,8 @@ func TestChangeParent(t *testing.T) {
 	defer cleanup()
 
 	payload := map[string]interface{}{
-		"gorev_id":        "test-task-id",
-		"yeni_parent_id":  "test-parent-id",
+		"gorev_id":       "test-task-id",
+		"yeni_parent_id": "test-parent-id",
 	}
 	body, _ := json.Marshal(payload)
 
@@ -332,8 +332,8 @@ func TestExportImport(t *testing.T) {
 	// Export
 	t.Run("ExportData", func(t *testing.T) {
 		payload := map[string]interface{}{
-			"format":             "json",
-			"include_completed":  true,
+			"format":               "json",
+			"include_completed":    true,
 			"include_dependencies": true,
 		}
 		body, _ := json.Marshal(payload)

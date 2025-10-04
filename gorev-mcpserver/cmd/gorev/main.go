@@ -418,6 +418,15 @@ func runServer() error {
 	if !noAPIFlag {
 		apiServer = api.NewAPIServer(apiPortFlag, isYonetici)
 
+		// Set migrations FS for workspace manager
+		if migrationsPath == "embedded://migrations" {
+			migrationsFS, fsErr := getEmbeddedMigrationsFS()
+			if fsErr != nil {
+				log.Fatalf("Failed to get embedded migrations for workspace manager: %v", fsErr)
+			}
+			apiServer.SetMigrationsFS(migrationsFS)
+		}
+
 		// Serve embedded web UI static files
 		if err := api.ServeStaticFiles(apiServer.App(), WebDistFS); err != nil {
 			log.Printf("Warning: Failed to serve web UI: %v", err)
