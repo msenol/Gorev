@@ -174,10 +174,10 @@ Migrations: `gorev-mcpserver/internal/veri/migrations/`
 ## 🧪 Testing Strategy
 
 - **Standardized Test Infrastructure**: Centralized `internal/testing/helpers.go` package
-- **Test Coverage**: 90%+ server coverage, 100% extension coverage
+- **Test Coverage**: ~71% server coverage (constants: 100%, testing: 95%, i18n: 84%), 100% extension coverage
 - **Unit Tests**: Business logic (`internal/gorev/`)
 - **Integration Tests**: MCP handlers (`test/integration_test.go`)
-- **Performance Testing**: Concurrent access, memory allocation, stress testing
+- **Performance Testing**: Concurrent access, memory allocation, stress testing with realistic SQLite expectations
 
 ## 🔄 Adding New MCP Tools
 
@@ -240,7 +240,7 @@ gorev serve --lang=tr    # Turkish interface
 - **Template Enforcement**: All tasks MUST use templates (v0.10.0+)
 - **Domain Terms**: Turkish domain terminology must be preserved
 - **i18n Compliance**: Use `i18n.T()` for all user-facing strings
-- **Test Coverage**: Maintain %90+ (server), %100 (extension)
+- **Test Coverage**: Maintain ~71% server (goal: 80%+), 100% extension
 - **Atomic Tasks**: Even atomic tasks must be comprehensive
 
 ### Quality Checklist
