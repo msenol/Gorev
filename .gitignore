@@ -111,3 +111,6 @@ gorev-web/.vite/
 
 # MCP Registry tokens
 .mcpregistry_*
+
+# NPM package tarballs (test packages)
+*.tgz
