@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**Last Updated:** October 4, 2025 | **Version:** v0.16.0
+**Last Updated:** October 5, 2025 | **Version:** v0.16.2
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-> 🎉 **NEW in v0.16.0**: Embedded Web UI, Multi-Workspace Support, REST API, Template Aliases! [See What's New](#-whats-new-in-v0160)
+> 🎉 **NEW in v0.16.2**: Critical NPM binary update fix + VS Code auto-start! [See What's New](#-whats-new-in-v0162)
 
 ![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
@@ -35,16 +35,27 @@ Gorev is a powerful **Model Context Protocol (MCP)** server written in Go that p
 
 Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The Web UI is automatically available at http://localhost:5082 when you run `npx @mehmetsenol/gorev-mcp-server serve`. The VS Code extension provides a rich IDE-integrated experience.
 
-## 🎉 What's New in v0.16.0
+## 🎉 What's New in v0.16.2
 
-### 🌐 Embedded Web UI
+### 🐛 Critical Bug Fixes (v0.16.2)
+- **NPM Binary Update Fix**: Fixed critical bug where NPM package upgrades preserved old binaries
+  - Users upgrading from v0.16.1 or earlier were stuck on v0.15.24 (September 2025)
+  - Package size reduced from 78.4 MB to 6.9 KB (binaries now always downloaded from GitHub)
+  - All users now get latest features (REST API, Web UI, VS Code auto-start)
+- **VS Code Auto-Start**: Extension now automatically starts server on activation
+  - No manual `npx gorev serve` required
+  - Checks if server is running, starts if needed
+  - Proper database path configuration (workspace/.gorev/gorev.db)
+  - Graceful server shutdown on extension deactivation
+
+### 🌐 Embedded Web UI (v0.16.0)
 - **Zero-Configuration**: Modern React interface built into Go binary
 - **Instant Access**: Automatically available at http://localhost:5082
 - **Full Features**: Tasks, projects, templates, subtasks, and dependencies
 - **Language Sync**: Turkish/English switcher synchronized with MCP server
 - **No Separate Installation**: Just run `npx @mehmetsenol/gorev-mcp-server serve` and you're ready!
 
-### 🗂️ Multi-Workspace Support
+### 🗂️ Multi-Workspace Support (v0.16.0)
 - **Isolated Workspaces**: Each project folder gets its own task database
 - **Workspace Switcher**: Seamlessly switch between workspaces in Web UI
 - **Auto-Detection**: Automatically detects `.gorev/` directory in current folder
@@ -419,7 +430,7 @@ make docker-build
 
 ## 📊 Project Status
 
-- **Version**: v0.15.24 🚀
+- **Version**: v0.16.2 🚀
 - **Test Coverage**: 75%+ (Comprehensive test coverage with ongoing improvements)
 - **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0

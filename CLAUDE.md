@@ -2,11 +2,22 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** October 5, 2025 | **Version:** v0.16.0
+**Last Updated:** October 5, 2025 | **Version:** v0.16.2
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
 ## 🚀 Recent Major Update
+
+**v0.16.2 - Critical Bug Fixes (October 5, 2025)**
+
+- **NPM Binary Update Fix**: Fixed critical bug where package upgrades preserved old binaries
+  - Users upgrading from v0.16.1 or earlier were stuck on v0.15.24
+  - Package size reduced from 78.4 MB to 6.9 KB
+  - Binaries now always downloaded from GitHub releases
+- **VS Code Auto-Start**: Extension now automatically starts server on activation
+  - No manual `npx gorev serve` required
+  - Proper database path configuration (workspace/.gorev/gorev.db)
+  - Graceful server lifecycle management
 
 **v0.16.0 - Embedded Web UI (October 4, 2025)**
 

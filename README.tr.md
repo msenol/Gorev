@@ -2,9 +2,11 @@
 
 <div align="center">
 
-**Last Updated:** October 4, 2025 | **Version:** v0.16.0
+**Last Updated:** October 5, 2025 | **Version:** v0.16.2
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
+
+> 🎉 **YENİ v0.16.2**: Kritik NPM binary güncelleme hatası düzeltildi + VS Code otomatik başlatma! [Yeniliklere Bak](#-v0162-yenilikleri)
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
 
@@ -44,6 +46,31 @@ Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm
 3. **gorev-web** - React + TypeScript kaynak kodu (development)
 
 MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. Web arayüzü `npx @mehmetsenol/gorev-mcp-server serve` komutuyla otomatik olarak http://localhost:5082 adresinde hazır olur. VS Code extension'ı ise IDE içinde zengin görsel deneyim sunar.
+
+## 🎉 v0.16.2 Yenilikleri
+
+### 🐛 Kritik Hata Düzeltmeleri (v0.16.2)
+- **NPM Binary Güncelleme Hatası**: NPM paket yükseltmelerinde eski binary'lerin korunması hatası düzeltildi
+  - v0.16.1 veya önceki sürümlerden yükseltme yapan kullanıcılar v0.15.24'te (Eylül 2025) takılı kalıyordu
+  - Paket boyutu 78.4 MB'tan 6.9 KB'ye düşürüldü (binary'ler artık GitHub'dan indiriliyor)
+  - Tüm kullanıcılar artık en son özelliklere erişebiliyor (REST API, Web UI, VS Code otomatik başlatma)
+- **VS Code Otomatik Başlatma**: Extension artık server'ı otomatik olarak başlatıyor
+  - Manuel `npx gorev serve` komutuna gerek yok
+  - Server çalışıyor mu kontrol eder, gerekirse başlatır
+  - Doğru veritabanı yolu yapılandırması (workspace/.gorev/gorev.db)
+  - Extension kapatıldığında server'ı düzgün şekilde kapatır
+
+### 🌐 Embedded Web UI (v0.16.0)
+- **Sıfır Yapılandırma**: Modern React arayüzü Go binary'sine gömülü
+- **Anında Erişim**: http://localhost:5082 adresinde otomatik olarak hazır
+- **Tam Özellikler**: Görevler, projeler, şablonlar, alt görevler ve bağımlılıklar
+- **Dil Senkronizasyonu**: Türkçe/İngilizce değiştirici MCP server ile senkronize
+- **Ayrı Kurulum Yok**: Sadece `npx @mehmetsenol/gorev-mcp-server serve` komutuyla hazır!
+
+### 🗂️ Çoklu Workspace Desteği (v0.16.0)
+- **İzole Workspace'ler**: Her proje klasörü kendi görev veritabanına sahip
+- **Workspace Değiştirici**: Web UI'da workspace'ler arası sorunsuz geçiş
+- **Otomatik Tespit**: Mevcut klasördeki `.gorev/` dizinini otomatik algılar
 
 ## ✨ Özellikler
 
@@ -595,7 +622,7 @@ Detaylı bilgi için [Geliştirici Rehberi](docs/development/contributing.md)'ne
 
 ## 📊 Proje Durumu
 
-- **Versiyon**: v0.15.24 🚀
+- **Versiyon**: v0.16.2 🚀
 - **Test Coverage**: %75+ (Comprehensive test coverage with ongoing improvements)
 - **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0

@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.2] - 2025-10-05
+
+### Fixed
+
+#### 🐛 Critical NPM Package Bug Fix
+- **NPM Binary Update Issue** (CRITICAL): Fixed bug where NPM package upgrades preserved old binaries
+  - **Root Cause**: `postinstall.js` had logic "Skip if binary already exists" which prevented updates
+  - **Impact**: Users upgrading from v0.16.1 or earlier were stuck on v0.15.24 (September 2025)
+  - **Solution**: Modified `postinstall.js` to ALWAYS remove old binary before downloading new one
+  - **Package Size**: Reduced from 78.4 MB to 6.9 KB (removed bundled binaries)
+  - **Benefit**: All users now get latest features (REST API, Web UI, VS Code auto-start)
+  - **Files**: `gorev-npm/postinstall.js` (lines 171-175), `gorev-npm/package.json` (version bump)
+
+### Changed
+
+#### 📦 NPM Package Improvements
+- Binaries now always downloaded from GitHub releases (no bundled binaries)
+- Package size dramatically reduced: 78.4 MB → 6.9 KB
+- Faster installation due to smaller package download
+- More reliable updates (always gets correct binary version)
+
+### Documentation
+- Updated README.md with v0.16.2 notes and critical bug fix details
+- Updated CLAUDE.md with v0.16.2 release information
+- Added comprehensive bug fix documentation in this CHANGELOG
+
+## [0.16.1] - 2025-10-05
+
+### Added
+
+#### 🚀 VS Code Extension Auto-Start Feature
+- **Automatic Server Startup**: VS Code extension now automatically starts Gorev server on activation
+  - Checks if server is already running on port 5082
+  - Starts server automatically if not running
+  - No manual `npx gorev serve` required
+  - **Files**: `gorev-vscode/src/managers/unifiedServerManager.ts` (+300 lines)
+
+#### 🗄️ Database Path Configuration
+- **Smart Database Location**: Proper database path configuration for VS Code extension
+  - Priority: Workspace folder (.gorev/gorev.db) → User home directory (~/.gorev/gorev.db)
+  - Automatic directory creation with `fs.mkdirSync`
+  - Set via `GOREV_DB_PATH` environment variable
+  - Fixes SQLite "out of memory" errors (actually file permission issues)
+
+#### 🔧 Server Lifecycle Management
+- **Process Management**: Complete server process lifecycle handling
+  - Spawns server with proper stdio configuration (`['pipe', 'pipe', 'pipe']`)
+  - Keeps stdin open (required for MCP server operation)
+  - Logs server output to VS Code output panel
+  - Port availability checking before server start
+  - Graceful server shutdown on extension deactivation
+  - SIGTERM for graceful stop, SIGKILL fallback after 5 seconds
+
+### Fixed
+
+#### 🐛 VS Code Extension Bug Fixes
+- **Server Exit Issue**: Fixed server exiting immediately after startup
+  - Changed stdio from `['ignore', 'pipe', 'pipe']` to `['pipe', 'pipe', 'pipe']`
+  - MCP server requires open stdin pipe to prevent EOF exit
+- **Flag Compatibility**: Removed unsupported `--api-port` flag from server startup
+  - Server defaults to port 5082 anyway
+  - Ensures compatibility with all binary versions
+
+### Changed
+
+#### 📝 Code Quality Improvements
+- `unifiedServerManager.ts` refactored with comprehensive lifecycle management
+- Added helper methods: `isServerRunning()`, `startServer()`, `waitForServerReady()`, `stopServer()`
+- Extension `dispose()` method now async to properly await server shutdown
+- Cross-platform compatibility (Windows uses `npx.cmd`, Unix uses `npx`)
+
+### Documentation
+- Updated VS Code extension documentation with auto-start feature
+- Added troubleshooting section for common server startup issues
+
 ## [0.16.0] - 2025-09-30
 
 ### Fixed (October 4, 2025 - Critical Bug Fixes)
