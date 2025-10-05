@@ -2,6 +2,119 @@
 
 All notable changes to the "gorev-vscode" extension will be documented in this file.
 
+## [0.16.1] - 2025-10-05
+
+### Added
+
+#### 🚀 Automatic Server Startup
+- **Zero-Configuration Experience**: Extension now automatically starts Gorev server on activation
+  - Checks if server is running on port 5082 before starting
+  - Spawns server process automatically if not running
+  - No manual `npx gorev serve` required
+  - Server lifecycle fully managed by extension
+
+#### 🗄️ Smart Database Management
+- **Workspace-Specific Databases**: Automatic database path configuration
+  - Priority: Workspace folder `.gorev/gorev.db` → User home `~/.gorev/gorev.db`
+  - Automatic directory creation with proper permissions
+  - Set via `GOREV_DB_PATH` environment variable
+  - Fixes SQLite permission errors on Windows
+
+#### 🔧 Complete Server Lifecycle Management
+- **Process Management**: Full control over server process
+  - Port availability checking before server start
+  - Proper stdio configuration (`stdin` kept open for MCP)
+  - Server output logged to VS Code Output panel
+  - Graceful shutdown on extension deactivation
+  - SIGTERM for graceful stop, SIGKILL fallback after 5 seconds timeout
+
+### Fixed
+
+- **Server Exit Issue**: Fixed server exiting immediately after startup
+  - Changed stdio from `['ignore', 'pipe', 'pipe']` to `['pipe', 'pipe', 'pipe']`
+  - MCP server requires open stdin pipe to prevent EOF exit
+
+- **Flag Compatibility**: Removed unsupported `--api-port` flag
+  - Server defaults to port 5082
+  - Ensures compatibility with all binary versions
+
+### Changed
+
+- **UnifiedServerManager Refactor**: Comprehensive lifecycle management implementation
+  - Added helper methods: `isServerRunning()`, `startServer()`, `waitForServerReady()`, `stopServer()`
+  - Extension `dispose()` method now async to properly await server shutdown
+  - Cross-platform compatibility (Windows uses `npx.cmd`, Unix uses `npx`)
+
+## [0.16.0] - 2025-10-04
+
+### Added
+
+#### 🔌 REST API Migration (BREAKING CHANGE)
+- **Type-Safe JSON Communication**: Complete migration from MCP protocol to REST API
+  - 23 comprehensive API endpoints for all operations
+  - Direct JSON request/response (no markdown parsing)
+  - Type-safe TypeScript interfaces for all API models
+  - Enhanced error handling with structured error responses
+  - 3x performance improvement over MCP text-based communication
+
+#### 🌐 Web UI Integration Support
+- **Workspace Registration**: Automatic workspace registration with server
+  - SHA256-based workspace IDs for unique identification
+  - Workspace context injected into all API requests
+  - Multi-workspace support with isolated databases
+  - Workspace switcher integration
+
+#### 📊 Enhanced Data Models
+- **Rich Task Information**: New fields and relationships
+  - Subtask arrays automatically populated in responses
+  - Dependency count fields (total, incomplete, dependent tasks)
+  - Project task counts in project listings
+  - Hierarchical task structures with parent-child relationships
+
+### Changed
+
+- **ApiClient Complete Rewrite**: Switched from MCP to REST
+  - File: `src/api/client.ts` (3,118 lines)
+  - 23 API methods with full TypeScript typing
+  - Axios-based HTTP client with timeout configuration
+  - Automatic workspace header injection
+  - Connection state management
+
+- **UnifiedServerManager**: New manager for server coordination
+  - File: `src/managers/unifiedServerManager.ts` (432 lines)
+  - Manages both API client and server connection
+  - Workspace registration on extension activation
+  - Health check monitoring every 30 seconds
+  - Server status tracking and event emission
+
+- **Extension Activation Flow**: Updated initialization sequence
+  - Server initialization and workspace registration first
+  - API client obtained from UnifiedServerManager
+  - Status bar shows workspace context
+  - User notifications for workspace registration
+
+### Removed
+
+- **MCP Protocol Dependency**: No longer uses MCP for VS Code communication
+  - Removed MCP client initialization code
+  - Removed markdown response parsing
+  - Removed MCP message formatting utilities
+  - MCP still used by server for AI assistant communication (Claude, etc.)
+
+### Fixed
+
+- **Type Safety**: Eliminated markdown parsing errors
+  - No more "undefined" in parsed task lists
+  - Consistent data structures across all operations
+  - Proper null/undefined handling with TypeScript
+
+### Performance
+
+- **3x Faster Operations**: Direct JSON communication
+  - No markdown generation/parsing overhead
+  - Smaller payload sizes with structured data
+  - Faster tree view updates with batch operations
+
 ## [0.6.14] - 2025-09-19
 
 ### Enhanced

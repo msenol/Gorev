@@ -8,14 +8,16 @@
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-[![Version](https://img.shields.io/badge/Version-0.16.0-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+[![Version](https://img.shields.io/badge/Version-0.16.1-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **The ultimate task management powerhouse with 48 MCP tools, unlimited hierarchy, and seamless AI assistant integration**
 
-> 🚀 **NEW in v0.16.0**: Complete REST API Migration! Type-safe JSON responses, enhanced error handling, and Web UI integration. No more markdown parsing - direct API communication for 3x better performance!
+> 🎉 **NEW in v0.16.1**: Automatic Server Startup! Zero-configuration - extension now starts server automatically. No manual commands needed!
+
+> 🚀 **v0.16.0**: Complete REST API Migration! Type-safe JSON responses, enhanced error handling, and Web UI integration. No more markdown parsing - direct API communication for 3x better performance!
 
 </div>
 

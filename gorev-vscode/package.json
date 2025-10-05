@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
