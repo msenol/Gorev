@@ -253,9 +253,9 @@ export async function deactivate() {
     refreshManager.dispose();
   }
 
-  // Dispose UnifiedServerManager (this will also disconnect apiClient)
+  // Dispose UnifiedServerManager (this will also disconnect apiClient and stop server)
   if (serverManager) {
-    serverManager.dispose();
+    await serverManager.dispose();
   }
 
   if (statusBarManager) {

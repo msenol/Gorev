@@ -168,10 +168,10 @@ async function downloadBinary(platformInfo, version) {
 
     const binaryPath = path.join(targetDir, binaryName);
 
-    // Skip if binary already exists
+    // Remove old binary if it exists to ensure we always get the latest version
     if (fs.existsSync(binaryPath)) {
-        console.log(`Binary already exists: ${binaryPath}`);
-        return;
+        console.log(`Removing existing binary: ${binaryPath}`);
+        safeUnlink(binaryPath);
     }
 
     // Construct download URL
