@@ -8,6 +8,30 @@
 
 🇹🇷 **Turkish**: Task management with natural language support | 🇺🇸 **English**: Full bilingual support
 
+## ⚠️ Important: v0.16.2 Upgrade Notice
+
+**If you're upgrading from v0.16.1 or earlier**, you may need to reinstall to get the latest binary (v0.16.2):
+
+```bash
+# Uninstall old version
+npm uninstall -g @mehmetsenol/gorev-mcp-server
+
+# Clear NPM cache
+npm cache clean --force
+
+# Install latest version
+npm install -g @mehmetsenol/gorev-mcp-server@latest
+
+# Verify version (should show v0.16.2)
+gorev-mcp version
+```
+
+**What was fixed in v0.16.2:**
+- 🐛 Critical bug where package upgrades preserved old binaries (users were stuck on v0.15.24)
+- 📦 Package size reduced from 78.4 MB to 6.9 KB
+- 🚀 Binaries now always downloaded from GitHub releases
+- ✨ All users now get latest features (REST API, Web UI, VS Code auto-start)
+
 ## 🚀 Quick Start
 
 ### Using npx (Recommended)
