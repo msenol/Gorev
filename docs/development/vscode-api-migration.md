@@ -10,7 +10,7 @@ This document outlines the migration plan for transitioning the Gorev VS Code ex
 
 ## 🎯 Motivation
 
-### Why Migrate?
+### Why Migrate
 
 1. **Markdown Parsing Hell**
    - MCP responses are markdown strings
@@ -39,6 +39,7 @@ This document outlines the migration plan for transitioning the Gorev VS Code ex
 ### Benefits of REST API
 
 1. **Structured JSON Responses**
+
    ```typescript
    // Before (MCP - bad)
    const response = "## Task List\n- [pending] Task 1..."
@@ -50,6 +51,7 @@ This document outlines the migration plan for transitioning the Gorev VS Code ex
    ```
 
 2. **TypeScript Type Safety**
+
    ```typescript
    interface ApiResponse<T> {
      success: boolean;
@@ -109,7 +111,9 @@ const tasks = parseMarkdownTaskList(response); // ❌ Fragile
 **Goal:** Make `src/api/client.ts` feature-complete
 
 **Tasks:**
+
 1. Add all CRUD methods to API client
+
    ```typescript
    class GorevApiClient {
      async getTasks(filters?: TaskFilters): Promise<Task[]>
@@ -134,6 +138,7 @@ const tasks = parseMarkdownTaskList(response); // ❌ Fragile
    ```
 
 2. Add proper error handling
+
    ```typescript
    class ApiError extends Error {
      constructor(
@@ -147,6 +152,7 @@ const tasks = parseMarkdownTaskList(response); // ❌ Fragile
    ```
 
 3. Add request/response interceptors
+
    ```typescript
    private async request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
      try {
@@ -173,11 +179,13 @@ const tasks = parseMarkdownTaskList(response); // ❌ Fragile
 **Goal:** Replace MCP calls with API calls in all providers
 
 **Files to Update:**
+
 1. `src/providers/enhancedGorevTreeProvider.ts`
 2. `src/providers/projeTreeProvider.ts`
 3. `src/providers/templateTreeProvider.ts`
 
 **Before:**
+
 ```typescript
 // src/providers/enhancedGorevTreeProvider.ts (old)
 const response = await this.mcpClient.callTool('gorev_listele', { durum: 'pending' });
@@ -185,6 +193,7 @@ const tasks = parseMarkdownTaskList(response);
 ```
 
 **After:**
+
 ```typescript
 // src/providers/enhancedGorevTreeProvider.ts (new)
 const tasks = await this.apiClient.getTasks({ durum: 'pending' });
@@ -196,12 +205,14 @@ const tasks = await this.apiClient.getTasks({ durum: 'pending' });
 **Goal:** Replace MCP calls with API calls in all commands
 
 **Files to Update:**
+
 - `src/commands/index.ts`
 - All command handlers
 
 **Example Migration:**
 
 **Before:**
+
 ```typescript
 // commands/createTask.ts (old)
 async function createTask(templateId: string) {
@@ -216,6 +227,7 @@ async function createTask(templateId: string) {
 ```
 
 **After:**
+
 ```typescript
 // commands/createTask.ts (new)
 async function createTask(templateId: string) {
@@ -237,7 +249,9 @@ async function createTask(templateId: string) {
 **Goal:** Deprecate and remove MCP client code
 
 **Steps:**
+
 1. Mark MCP client as deprecated
+
    ```typescript
    /**
     * @deprecated Use GorevApiClient instead
@@ -250,6 +264,7 @@ async function createTask(templateId: string) {
    ```
 
 2. Remove markdown parser
+
    ```bash
    rm src/utils/markdownParser.ts
    ```
@@ -259,6 +274,7 @@ async function createTask(templateId: string) {
    - Keep only HTTP/fetch dependencies
 
 4. Clean up types
+
    ```bash
    rm src/mcp/types.ts
    ```
@@ -270,6 +286,7 @@ async function createTask(templateId: string) {
 **Test Plan:**
 
 1. **Unit Tests**
+
    ```typescript
    // test/unit/apiClient.test.ts
    describe('GorevApiClient', () => {
@@ -282,6 +299,7 @@ async function createTask(templateId: string) {
    ```
 
 2. **Integration Tests**
+
    ```typescript
    // test/integration/commands.test.ts
    describe('Task Commands', () => {
@@ -360,6 +378,7 @@ async function createTask(templateId: string) {
 ### For Developers
 
 1. **Import Changes**
+
    ```typescript
    // Before
    import { MCPClient } from './mcp/client';
@@ -369,6 +388,7 @@ async function createTask(templateId: string) {
    ```
 
 2. **Method Signature Changes**
+
    ```typescript
    // Before
    const response: string = await mcpClient.callTool('gorev_listele', {});
@@ -379,6 +399,7 @@ async function createTask(templateId: string) {
    ```
 
 3. **Error Handling Changes**
+
    ```typescript
    // Before
    try {

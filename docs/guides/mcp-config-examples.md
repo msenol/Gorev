@@ -172,6 +172,7 @@ npx @mehmetsenol/gorev-mcp-server --version
 ### Language Options
 
 **Turkish** (default):
+
 ```json
 "env": {
   "GOREV_LANG": "tr"
@@ -179,6 +180,7 @@ npx @mehmetsenol/gorev-mcp-server --version
 ```
 
 **English**:
+
 ```json
 "env": {
   "GOREV_LANG": "en"
@@ -188,11 +190,13 @@ npx @mehmetsenol/gorev-mcp-server --version
 ### Workspace-Specific Database
 
 **Auto-detection** (recommended):
+
 - No `GOREV_DB_PATH` specified
 - Gorev will look for `.gorev/gorev.db` in current workspace
 - Falls back to global database at `~/.gorev/gorev.db`
 
 **Custom path**:
+
 ```json
 "env": {
   "GOREV_DB_PATH": "/path/to/project/.gorev/gorev.db"
@@ -206,6 +210,7 @@ npx @mehmetsenol/gorev-mcp-server --version
 ### First-time Setup
 
 1. **Initialize workspace**:
+
 ```bash
 cd /path/to/your/project
 npx @mehmetsenol/gorev-mcp-server init
@@ -242,6 +247,7 @@ Create a new project called "Test Project"
 Gorev provides **41 MCP tools** across 10 categories:
 
 ### Core Features
+
 - **Task Management**: 6 tools
 - **Subtask Management**: 3 tools
 - **Templates**: 2 tools
@@ -249,6 +255,7 @@ Gorev provides **41 MCP tools** across 10 categories:
 - **AI Context Management**: 6 tools
 
 ### Advanced Features
+
 - **Search & Filtering**: 6 tools (FTS5, fuzzy matching)
 - **Data Export/Import**: 2 tools (JSON/CSV)
 - **IDE Management**: 5 tools
@@ -273,6 +280,7 @@ Quick shortcuts for common task templates:
 | `doc` | Dokümantasyon | Documentation |
 
 **Usage example**:
+
 ```
 Create a bug task using the bug template for login issue
 ```
@@ -284,6 +292,7 @@ Create a bug task using the bug template for login issue
 ### MCP Server Not Connecting
 
 1. **Check NPM installation**:
+
 ```bash
 npx @mehmetsenol/gorev-mcp-server --version
 ```
@@ -297,6 +306,7 @@ npx @mehmetsenol/gorev-mcp-server --version
 ### Database Not Found
 
 1. **Initialize workspace**:
+
 ```bash
 npx @mehmetsenol/gorev-mcp-server init
 ```
@@ -308,6 +318,7 @@ npx @mehmetsenol/gorev-mcp-server init
 ### Permission Errors
 
 **macOS/Linux**:
+
 ```bash
 chmod 755 ~/.gorev
 chmod 644 ~/.gorev/gorev.db
@@ -322,6 +333,7 @@ chmod 644 ~/.gorev/gorev.db
 ### Option 1: Auto-Detection (Recommended)
 
 Don't specify `GOREV_DB_PATH`. Gorev will automatically:
+
 1. Look for `.gorev/gorev.db` in current workspace
 2. Create new database if not found
 3. Register workspace with Web UI
@@ -331,6 +343,7 @@ Don't specify `GOREV_DB_PATH`. Gorev will automatically:
 Create workspace-specific config:
 
 **Project A** (`.kilocode/mcp.json`):
+
 ```json
 {
   "mcpServers": {
@@ -346,6 +359,7 @@ Create workspace-specific config:
 ```
 
 **Project B** (`.kilocode/mcp.json`):
+
 ```json
 {
   "mcpServers": {
@@ -371,6 +385,7 @@ http://localhost:5082
 ```
 
 Features:
+
 - Multi-workspace switcher
 - Project and task management
 - Visual task creation

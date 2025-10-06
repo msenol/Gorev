@@ -8,16 +8,18 @@
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-[![Version](https://img.shields.io/badge/Version-0.16.1-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
+[![Version](https://img.shields.io/badge/Version-0.16.3-blue?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/mehmetsenol.gorev-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**The ultimate task management powerhouse with 48 MCP tools, unlimited hierarchy, and seamless AI assistant integration**
+**The ultimate task management powerhouse with 24 optimized MCP tools (unified from 45), unlimited hierarchy, and seamless AI assistant integration**
 
-> 🎉 **NEW in v0.16.1**: Automatic Server Startup! Zero-configuration - extension now starts server automatically. No manual commands needed!
+> 🎉 **NEW in v0.16.3**: Critical MCP Tool Fixes! 100% success rate for bulk operations, enhanced search query parsing, and VS Code dependency indicator fixes.
 
-> 🚀 **v0.16.0**: Complete REST API Migration! Type-safe JSON responses, enhanced error handling, and Web UI integration. No more markdown parsing - direct API communication for 3x better performance!
+> 🚀 **v0.16.2**: Automatic Server Startup! Zero-configuration - extension now starts server automatically. No manual commands needed!
+
+> 🔧 **v0.16.0**: Complete REST API Migration! Type-safe JSON responses, enhanced error handling, and Web UI integration. No more markdown parsing - direct API communication for 3x better performance!
 
 </div>
 
@@ -26,7 +28,7 @@
 Gorev transforms VS Code into a **professional task management powerhouse** with unique capabilities that set it apart:
 
 - **🚀 Zero-Installation NPX Setup** - Get started in seconds with no binary downloads
-- **🤖 48 MCP Tools** - Most comprehensive task management API for AI assistants
+- **🤖 24 Optimized MCP Tools** (unified from 45) - Comprehensive task management API for AI assistants
 - **🌳 Unlimited Hierarchy** - Infinite subtask nesting with visual progress tracking
 - **🔍 Advanced Search** - FTS5 full-text search with fuzzy matching and NLP
 - **🎯 Smart Dependencies** - Visual dependency management with auto-resolution
@@ -72,7 +74,7 @@ Follow the [installation guide](https://github.com/msenol/Gorev/blob/main/README
 | Category | Feature | Description | Status |
 |----------|---------|-------------|--------|
 | **🚀 Setup** | NPX Zero-Install | No downloads, instant setup | ✅ |
-| **🤖 AI Integration** | 48 MCP Tools | Complete API for AI assistants | ✅ |
+| **🤖 AI Integration** | 24 Optimized Tools (from 45) | Complete API for AI assistants | ✅ |
 | **🌳 Task Management** | Unlimited Hierarchy | Infinite subtask nesting | ✅ |
 | **🔗 Dependencies** | Smart Resolution | Visual dependency management | ✅ |
 | **🔍 Search** | FTS5 Full-Text | SQLite virtual tables, fuzzy matching | ✅ |
@@ -108,7 +110,7 @@ Talk to your AI assistant naturally:
 🗨️ "Export all completed tasks from last month to CSV"
 ```
 
-### 48 MCP Tools Categories
+### 24 Optimized MCP Tools (Unified from 45)
 
 | Category | Tools | Description |
 |----------|--------|-------------|
@@ -268,6 +270,7 @@ Revolutionary refresh system with 90% performance improvement:
 Complete migration from MCP (stdio + markdown) to REST API (HTTP + JSON):
 
 **Key Benefits:**
+
 - **⚡ 3x Faster** - Direct HTTP communication vs stdio streams
 - **🔒 Type-Safe** - Full TypeScript type checking, zero parsing errors
 - **🛡️ Better Errors** - Structured error responses with status codes
@@ -275,6 +278,7 @@ Complete migration from MCP (stdio + markdown) to REST API (HTTP + JSON):
 - **📊 Debuggable** - Standard HTTP requests visible in network tools
 
 **Architecture Improvements:**
+
 ```typescript
 // Before v0.16.0 (MCP + Markdown Parsing)
 const result = await mcpClient.callTool('gorev_listele', {});
@@ -288,6 +292,7 @@ const tasks = response.data; // Task[] - fully typed!
 ```
 
 **What Changed:**
+
 - ✅ All TreeView providers use REST API
 - ✅ All command handlers use REST API
 - ✅ Enhanced error handling with ApiError class
@@ -296,6 +301,7 @@ const tasks = response.data; // Task[] - fully typed!
 - ⚠️ MarkdownParser deprecated (removal in v0.18.0)
 
 **Migration Status:** 90% complete
+
 - Remaining: TemplateWizard & TaskDetailPanel (v0.17.0)
 
 ## 🎨 Rich Visual Interface
@@ -695,7 +701,7 @@ Enable debug logging for troubleshooting:
 ### Extension Metrics
 
 - **📊 Test Coverage**: 100% (VS Code extension)
-- **🎯 MCP Tools**: 48 tools available
+- **🎯 MCP Tools**: 24 optimized tools (unified from 45)
 - **🌍 Languages**: English + Turkish support
 - **💻 Platforms**: Windows, macOS, Linux
 - **⚡ Performance**: 90% operation reduction
@@ -718,7 +724,7 @@ Enable debug logging for troubleshooting:
 
 | Client | Status | Features |
 |--------|--------|----------|
-| **Claude Desktop** | ✅ Full | All 48 MCP tools, conversation integration |
+| **Claude Desktop** | ✅ Full | All 24 optimized MCP tools, conversation integration |
 | **VS Code MCP** | ✅ Full | Native extension, direct integration |
 | **Cursor IDE** | ✅ Full | AI coding assistant, context awareness |
 | **Windsurf** | ✅ Full | Development environment integration |
@@ -736,7 +742,7 @@ Enable debug logging for troubleshooting:
 ### Documentation
 
 - 📖 [Main Repository](https://github.com/msenol/Gorev) - Complete source code and docs
-- 🔧 [MCP Tools Reference](https://github.com/msenol/Gorev/blob/main/docs/mcp-araclari.md) - All 48 tools documented
+- 🔧 [MCP Tools Reference](https://github.com/msenol/Gorev/blob/main/docs/api/MCP_TOOLS_REFERENCE.md) - All 24 optimized tools documented
 - 📋 [Installation Guide](https://github.com/msenol/Gorev/blob/main/README.en.md#-installation) - Binary setup instructions
 - 🎯 [VS Code Extension Guide](https://github.com/msenol/Gorev/blob/main/docs/user-guide/vscode-extension.md) - Advanced usage
 

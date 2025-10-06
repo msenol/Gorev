@@ -207,14 +207,14 @@ npx @mehmetsenol/gorev-mcp-server --version
 
 ### 🤖 AI Integration
 
-- **48 MCP tools** - Complete API for AI assistants
+- **24 optimized MCP tools** (unified from 45) - Complete API for AI assistants
 - **Natural language processing** - Smart command interpretation
 - **Bilingual support** - Turkish and English interfaces
 - **Cross-platform** - Windows, macOS, Linux support
 
 ## 📊 MCP Tools Available
 
-The server provides 48 MCP tools organized in categories:
+The server provides 24 optimized MCP tools (unified from 45 in v0.16.0) organized in categories:
 
 - **Task Management** (6 tools): `gorev_listele`, `gorev_detay`, `gorev_guncelle`, etc.
 - **Subtask Management** (3 tools): `gorev_altgorev_olustur`, etc.

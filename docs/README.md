@@ -12,6 +12,7 @@
 Welcome to the Gorev documentation! Gorev is a modern task management system designed for AI assistants (Claude, VS Code, Windsurf, Cursor) with MCP (Model Context Protocol) integration.
 
 **Key Features:**
+
 - 🌐 Embedded Web UI (React + TypeScript)
 - 🗂️ Multi-Workspace Support (isolated databases per project)
 - 🤖 41 MCP Tools for AI integration
@@ -23,16 +24,20 @@ Welcome to the Gorev documentation! Gorev is a modern task management system des
 
 ## 🚀 Quick Navigation
 
-### New to Gorev?
+### New to Gorev
+
 Start here → **[Quick Start Guide](guides/getting-started/quick-start.md)** (10 minutes)
 
-### Installing Gorev?
+### Installing Gorev
+
 See → **[Installation Guide](guides/getting-started/installation.md)** (platform-specific)
 
-### Upgrading from v0.15.x?
+### Upgrading from v0.15.x
+
 Read → **[Migration Guide](migration/v0.15-to-v0.16.md)** (15-30 minutes)
 
-### Having Issues?
+### Having Issues
+
 Check → **[Troubleshooting Guide](guides/getting-started/troubleshooting.md)** (comprehensive solutions)
 
 ---
@@ -104,6 +109,7 @@ Check → **[Troubleshooting Guide](guides/getting-started/troubleshooting.md)**
 ### Primary Language: English
 
 All new documentation (v0.16.0+) is written in English as the primary language. This includes:
+
 - Getting Started guides
 - Feature documentation
 - Reference documentation
@@ -112,15 +118,18 @@ All new documentation (v0.16.0+) is written in English as the primary language. 
 ### Secondary Language: Turkish
 
 Legacy Turkish documentation has been preserved in the `legacy/tr/` directory:
+
 - [MCP Araçları Referansı](legacy/tr/mcp-araclari.md) - Comprehensive MCP tools reference in Turkish
 - [Kullanım Örnekleri](legacy/tr/ornekler.md) - Usage examples in Turkish
 - And other Turkish legacy docs
 
 **Main README files:**
+
 - [README.md](../README.md) - English
 - [README.tr.md](../README.tr.md) - Turkish
 
 **AI Assistant Instructions:**
+
 - [CLAUDE.en.md](../CLAUDE.en.md) - English
 - [CLAUDE.md](../CLAUDE.md) - Turkish
 
@@ -172,23 +181,27 @@ docs/
 ### By Role
 
 **End Users (Task Management)**
+
 1. Start with [Quick Start Guide](guides/getting-started/quick-start.md)
 2. Configure your AI assistant: [MCP Configuration](guides/mcp-config-examples.md)
 3. Learn templates: [Template System](guides/features/template-system.md)
 4. Explore Web UI: [Web UI Guide](guides/features/web-ui.md)
 
 **VS Code Users**
+
 1. Install extension: [VS Code Extension Guide](guides/user/vscode-extension.md)
 2. Set up workspace: [Multi-Workspace Guide](guides/features/multi-workspace.md)
 3. Export/import data: [VS Code Export/Import](guides/user/vscode-data-export-import.md)
 
 **Developers (Contributing)**
+
 1. Read architecture: [System Architecture](architecture/architecture-v2.md)
 2. Review contributing guide: [Contributing Guide](development/contributing.md)
 3. Understand MCP tools: [MCP Tools Reference](legacy/tr/mcp-araclari.md)
 4. Check development history: [Development History](development/TASKS.md)
 
 **AI Assistant Users (Claude, Copilot, etc.)**
+
 1. Configure MCP: [MCP Configuration Examples](guides/mcp-config-examples.md)
 2. Understand AI context: [AI Context Management](guides/features/ai-context-management.md)
 3. Learn MCP tools: [MCP Tools Reference](legacy/tr/mcp-araclari.md)
@@ -232,16 +245,19 @@ docs/
 ## 🆘 Getting Help
 
 ### Documentation Issues
+
 - **Broken links?** → [Open an issue](https://github.com/msenol/gorev/issues)
 - **Unclear documentation?** → [Open an issue](https://github.com/msenol/gorev/issues)
 - **Missing information?** → [Open an issue](https://github.com/msenol/gorev/issues)
 
 ### Technical Support
+
 - **Bug reports** → [GitHub Issues](https://github.com/msenol/gorev/issues)
 - **Feature requests** → [GitHub Discussions](https://github.com/msenol/gorev/discussions)
 - **Questions** → [GitHub Discussions](https://github.com/msenol/gorev/discussions)
 
 ### Community
+
 - **GitHub Repository**: https://github.com/msenol/gorev
 - **VS Code Marketplace**: https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode
 - **Issue Tracker**: https://github.com/msenol/gorev/issues
@@ -253,6 +269,7 @@ docs/
 ## 🔄 Version History
 
 ### v0.16.0 (October 4, 2025) - Current
+
 - Embedded Web UI (React + TypeScript)
 - Multi-workspace support
 - REST API (23 endpoints)
@@ -261,15 +278,18 @@ docs/
 - **Documentation overhaul**: 60,000+ words of new English documentation
 
 ### v0.15.x (September 2025)
+
 - Advanced search & filtering (FTS5, fuzzy matching)
 - Filter profiles
 - Performance improvements
 
 ### v0.14.x (August 2025)
+
 - Data export/import (JSON/CSV)
 - Enhanced error handling
 
 ### v0.13.x (July 2025)
+
 - IDE extension management
 - Multi-IDE support
 
@@ -280,12 +300,14 @@ See [ROADMAP.md](../ROADMAP.md) for future plans.
 ## 📝 Contributing to Documentation
 
 We welcome documentation contributions! Please see:
+
 - [Contributing Guide](development/contributing.md) for general guidelines
 - Documentation follows [Markdown best practices](https://www.markdownguide.org/basic-syntax/)
 - Primary language: English
 - All guides should include: version info, estimated reading time, last updated date
 
 ### Documentation Checklist
+
 - [ ] Clear, concise writing
 - [ ] Code examples tested
 - [ ] Screenshots up-to-date

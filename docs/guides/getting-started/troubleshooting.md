@@ -34,6 +34,7 @@ ps aux | grep gorev
 **Platform**: Windows
 
 **Symptoms**:
+
 ```
 Error: spawn npx ENOENT
 ```
@@ -41,6 +42,7 @@ Error: spawn npx ENOENT
 **Cause**: Node.js not installed or not in PATH
 
 **Solution**:
+
 ```cmd
 REM 1. Install Node.js
 REM Download from: https://nodejs.org/
@@ -59,11 +61,13 @@ npx @mehmetsenol/gorev-mcp-server --version
 ### NPM: Package Not Found
 
 **Symptoms**:
+
 ```
 npm ERR! 404 '@mehmetsenol/gorev-mcp-server' is not in the npm registry
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Check package name (common typo)
 npm view @mehmetsenol/gorev-mcp-server
@@ -81,6 +85,7 @@ npm config get registry  # Should be https://registry.npmjs.org/
 ### Binary Installation Fails
 
 **Linux/macOS**:
+
 ```bash
 # Permission denied
 sudo chmod +x gorev-linux-amd64
@@ -91,6 +96,7 @@ sudo mv gorev-linux-amd64 /usr/local/bin/gorev
 ```
 
 **Windows**:
+
 ```powershell
 # Run as Administrator
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -106,6 +112,7 @@ Invoke-WebRequest -Uri "https://github.com/msenol/gorev/releases/latest/download
 ### Server Won't Start
 
 **Symptoms**:
+
 ```
 Error: listen EADDRINUSE: address already in use :::5082
 ```
@@ -113,6 +120,7 @@ Error: listen EADDRINUSE: address already in use :::5082
 **Cause**: Port 5082 already in use
 
 **Solutions**:
+
 ```bash
 # 1. Find process using port
 lsof -i :5082                    # Linux/macOS
@@ -129,11 +137,13 @@ npx @mehmetsenol/gorev-mcp-server serve --api-port 8080
 ### Server Crashes on Startup
 
 **Symptoms**:
+
 ```
 panic: runtime error: invalid memory address
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Check database integrity
 sqlite3 .gorev/gorev.db "PRAGMA integrity_check;"
@@ -152,10 +162,12 @@ npx @mehmetsenol/gorev-mcp-server serve --debug 2>&1 | tee gorev.log
 ### MCP Server Not Responding
 
 **Symptoms**:
+
 - Claude/Cursor shows "Server not connected"
 - MCP tools timeout
 
 **Solutions**:
+
 ```bash
 # 1. Verify server is running
 ps aux | grep gorev
@@ -179,6 +191,7 @@ echo '{"method":"tools/list"}' | npx @mehmetsenol/gorev-mcp-server serve
 ### Database Locked
 
 **Symptoms**:
+
 ```
 Error: database is locked (code 5)
 ```
@@ -186,6 +199,7 @@ Error: database is locked (code 5)
 **Cause**: Multiple processes accessing database, or WAL mode on network drive
 
 **Solutions**:
+
 ```bash
 # 1. Close all Gorev instances
 pkill gorev
@@ -205,11 +219,13 @@ cd /tmp/workspace
 ### Corrupted Database
 
 **Symptoms**:
+
 ```
 Error: database disk image is malformed
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Backup immediately
 cp .gorev/gorev.db .gorev/gorev.db.corrupt
@@ -233,11 +249,13 @@ npx @mehmetsenol/gorev-mcp-server import --input backup.json
 ### Database Migration Failed
 
 **Symptoms**:
+
 ```
 Error: migration failed at version 003
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Check current schema version
 sqlite3 .gorev/gorev.db "SELECT version FROM schema_version;"
@@ -259,10 +277,12 @@ sqlite3 .gorev/gorev.db "UPDATE schema_version SET version = 3;"
 ### Web UI Not Loading
 
 **Symptoms**:
+
 - Browser shows 404 or blank page
 - "Cannot GET /" error
 
 **Solutions**:
+
 ```bash
 # 1. Verify server is running
 curl http://localhost:5082/api/health
@@ -284,12 +304,14 @@ npx @mehmetsenol/gorev-mcp-server --version
 ### API Connection Errors
 
 **Symptoms**:
+
 ```
 Network Error: Failed to fetch
 ERR_CONNECTION_REFUSED
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Verify API server running
 curl http://localhost:5082/api/workspaces
@@ -310,10 +332,12 @@ npx @mehmetsenol/gorev-mcp-server serve
 ### Workspace Not Loading
 
 **Symptoms**:
+
 - Empty workspace list
 - "No workspace selected" error
 
 **Solutions**:
+
 ```bash
 # 1. Initialize workspace
 cd /path/to/project
@@ -337,9 +361,11 @@ npx @mehmetsenol/gorev-mcp-server workspace register \
 ### Language Not Switching
 
 **Symptoms**:
+
 - UI stays in Turkish despite setting English
 
 **Solutions**:
+
 ```bash
 # 1. Restart server with language flag
 GOREV_LANG=en npx @mehmetsenol/gorev-mcp-server serve
@@ -363,10 +389,12 @@ cat ~/.config/Claude/claude_desktop_config.json
 ### Extension Not Detecting Workspace
 
 **Symptoms**:
+
 - Task TreeView empty
 - "No workspace found" in status bar
 
 **Solutions**:
+
 ```bash
 # 1. Initialize workspace
 cd /path/to/vscode/workspace
@@ -388,10 +416,12 @@ ls -la .gorev/
 ### MCP Server Connection Failed
 
 **Symptoms**:
+
 - Extension shows "Server: Disconnected"
 - MCP tools don't work
 
 **Solutions**:
+
 ```bash
 # 1. Check MCP config exists
 ls -la .kilocode/mcp.json
@@ -413,9 +443,11 @@ npx @mehmetsenol/gorev-mcp-server serve
 ### Extension Commands Not Working
 
 **Symptoms**:
+
 - "Command 'gorev.createTask' not found"
 
 **Solutions**:
+
 ```bash
 # 1. Verify extension installed
 code --list-extensions | grep gorev
@@ -438,9 +470,11 @@ code --install-extension mehmetsenol.gorev-vscode
 ### Claude Desktop: Server Not Connecting
 
 **Symptoms**:
+
 - Claude shows "gorev (not connected)"
 
 **Solutions**:
+
 ```bash
 # 1. Verify config file location
 # Linux:   ~/.config/Claude/claude_desktop_config.json
@@ -471,9 +505,11 @@ pkill Claude && open -a Claude
 ### Cursor: MCP Tools Not Available
 
 **Symptoms**:
+
 - Cursor doesn't show Gorev tools in autocomplete
 
 **Solutions**:
+
 ```bash
 # 1. Create .cursor/mcp.json in workspace root
 mkdir -p .cursor
@@ -507,11 +543,13 @@ EOF
 ### Template Not Found
 
 **Symptoms**:
+
 ```
 Error: template not found: bug
 ```
 
 **Solutions**:
+
 ```bash
 # 1. List available templates
 npx @mehmetsenol/gorev-mcp-server template list
@@ -530,11 +568,13 @@ sqlite3 .gorev/gorev.db < gorev-mcpserver/internal/veri/migrations/002_default_t
 ### Required Field Missing
 
 **Symptoms**:
+
 ```
 Error: Required field 'baslik' is missing
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Check template schema
 npx @mehmetsenol/gorev-mcp-server template show --alias bug
@@ -559,9 +599,11 @@ npx @mehmetsenol/gorev-mcp-server task create --template bug \
 ### Slow Task Listing
 
 **Symptoms**:
+
 - Task list takes > 5 seconds to load
 
 **Solutions**:
+
 ```bash
 # 1. Check database size
 du -h .gorev/gorev.db
@@ -586,9 +628,11 @@ sqlite3 .gorev/gorev.db "ANALYZE;"
 ### High Memory Usage
 
 **Symptoms**:
+
 - Gorev process uses > 500MB RAM
 
 **Solutions**:
+
 ```bash
 # 1. Check for memory leaks
 # Monitor over time
@@ -611,11 +655,13 @@ watch -n 1 'ps aux | grep gorev'
 ### Export Fails with Timeout
 
 **Symptoms**:
+
 ```
 Error: export timed out after 30s
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Export in smaller chunks
 npx @mehmetsenol/gorev-mcp-server export \
@@ -636,11 +682,13 @@ sqlite3 .gorev/gorev.db ".dump" > database-dump.sql
 ### Import Conflicts
 
 **Symptoms**:
+
 ```
 Warning: 15 tasks skipped due to conflicts
 ```
 
 **Solutions**:
+
 ```bash
 # 1. Use overwrite mode
 npx @mehmetsenol/gorev-mcp-server import \
@@ -769,6 +817,7 @@ npx @mehmetsenol/gorev-mcp-server serve --debug 2>&1 | head -50
 **GitHub Issues**: https://github.com/msenol/gorev/issues
 
 Include:
+
 - Gorev version
 - Operating system
 - Error messages (full stack trace)

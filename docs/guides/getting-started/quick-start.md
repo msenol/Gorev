@@ -8,9 +8,10 @@ Get up and running with Gorev in minutes!
 
 ---
 
-## What is Gorev?
+## What is Gorev
 
 Gorev is a task management system designed for AI assistants (Claude, Copilot, etc.) with:
+
 - **MCP Protocol**: 41 tools for AI-powered task management
 - **Embedded Web UI**: Browser-based interface at http://localhost:5082
 - **VS Code Extension**: Rich IDE integration (optional)
@@ -29,6 +30,7 @@ npx @mehmetsenol/gorev-mcp-server serve
 ```
 
 Or install globally:
+
 ```bash
 npm install -g @mehmetsenol/gorev-mcp-server
 gorev-mcp serve
@@ -37,11 +39,13 @@ gorev-mcp serve
 ### Option 2: Download Binary
 
 **Linux/macOS**:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/msenol/Gorev/main/install.sh | bash
 ```
 
 **Windows PowerShell**:
+
 ```powershell
 irm https://raw.githubusercontent.com/msenol/Gorev/main/install.ps1 | iex
 ```
@@ -58,6 +62,7 @@ npx @mehmetsenol/gorev-mcp-server init
 ```
 
 **Output**:
+
 ```
 ✓ Created .gorev/ directory
 ✓ Initialized database: gorev.db
@@ -71,6 +76,7 @@ npx @mehmetsenol/gorev-mcp-server serve
 ```
 
 **Output**:
+
 ```
 🚀 Gorev MCP Server v0.16.0
 📦 Web UI: http://localhost:5082
@@ -83,6 +89,7 @@ npx @mehmetsenol/gorev-mcp-server serve
 Open browser: **http://localhost:5082**
 
 You'll see:
+
 - Workspace switcher (top-right)
 - Project sidebar (left)
 - Task list (center)
@@ -147,6 +154,7 @@ npx @mehmetsenol/gorev-mcp-server task create \
 ### Test Connection
 
 In Claude:
+
 ```
 List all my tasks
 ```
@@ -182,11 +190,13 @@ Claude should respond with your task list!
 **Web UI**: Sidebar → "New Project" → Enter name
 
 **CLI**:
+
 ```bash
 npx @mehmetsenol/gorev-mcp-server project create --name "My Project"
 ```
 
 **AI Assistant**:
+
 ```
 Create a new project called "Backend API"
 ```
@@ -196,11 +206,13 @@ Create a new project called "Backend API"
 **Web UI**: View in center panel (auto-updates)
 
 **CLI**:
+
 ```bash
 npx @mehmetsenol/gorev-mcp-server task list
 ```
 
 **AI Assistant**:
+
 ```
 Show me all my tasks
 ```
@@ -210,11 +222,13 @@ Show me all my tasks
 **Web UI**: Click task → Change status dropdown
 
 **CLI**:
+
 ```bash
 npx @mehmetsenol/gorev-mcp-server task update --id <ID> --status completed
 ```
 
 **AI Assistant**:
+
 ```
 Mark the login button task as completed
 ```
@@ -224,6 +238,7 @@ Mark the login button task as completed
 **Web UI**: Top-right dropdown → Select workspace
 
 **CLI**: Change directory and run commands
+
 ```bash
 cd /path/to/other/project
 npx @mehmetsenol/gorev-mcp-server task list
@@ -307,6 +322,7 @@ GOREV_DB_PATH=/custom/path # Custom database location
 ### 1. Use Template Aliases
 
 Instead of remembering UUIDs:
+
 ```bash
 # ✅ Good
 npx @mehmetsenol/gorev-mcp-server task create --template bug
@@ -318,6 +334,7 @@ npx @mehmetsenol/gorev-mcp-server task create --template 39f28dbd-10f3-454c-8b35
 ### 2. Workspace Auto-Detection
 
 Don't specify `GOREV_DB_PATH` - let Gorev find `.gorev/` automatically:
+
 ```bash
 cd /projects/project-a
 npx @mehmetsenol/gorev-mcp-server task list  # Uses project-a database
@@ -329,6 +346,7 @@ npx @mehmetsenol/gorev-mcp-server task list  # Uses project-b database
 ### 3. AI Assistant Prompts
 
 Use natural language:
+
 ```
 "Create a bug task for login issue"
 "Show me high priority tasks"
@@ -361,6 +379,7 @@ Use natural language:
 ### Report Bugs
 
 Open issue with:
+
 - Gorev version (`npx @mehmetsenol/gorev-mcp-server --version`)
 - Error messages
 - Steps to reproduce

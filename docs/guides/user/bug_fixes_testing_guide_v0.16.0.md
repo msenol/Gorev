@@ -12,6 +12,7 @@
 **Düzeltme**: Artık flat format kullanıyor `{id: "x", durum: "y"}`
 
 **Test Adımları**:
+
 ```bash
 # MCP server başlat
 cd /mnt/c/tmp/gorev-test/workspace
@@ -25,6 +26,7 @@ cd /mnt/c/tmp/gorev-test/workspace
 ```
 
 **MCP Tool Test**:
+
 ```json
 {
   "name": "gorev_batch_update",
@@ -50,6 +52,7 @@ cd /mnt/c/tmp/gorev-test/workspace
 **Düzeltme**: Artık database'e kaydediliyor
 
 **Test Adımları**:
+
 ```bash
 # 1. Server başlat
 /mnt/c/tmp/gorev-test/binaries/gorev serve
@@ -63,6 +66,7 @@ cd /mnt/c/tmp/gorev-test/workspace
 ```
 
 **MCP Tool Test**:
+
 ```json
 // 1. Dosya izleme ekle
 {
@@ -88,6 +92,7 @@ cd /mnt/c/tmp/gorev-test/workspace
 **Düzeltme**: Artık tüm detaylar gösteriliyor
 
 **Test Adımları**:
+
 ```bash
 # 1. Server başlat
 # 2. Filtre profili kaydet
@@ -97,6 +102,7 @@ cd /mnt/c/tmp/gorev-test/workspace
 ```
 
 **MCP Tool Test**:
+
 ```json
 // 1. Profil kaydet
 {
@@ -131,16 +137,19 @@ cd /mnt/c/tmp/gorev-test/workspace
 ## 🔍 Debug İpuçları
 
 **Debug mode ile çalıştır**:
+
 ```bash
 /mnt/c/tmp/gorev-test/binaries/gorev serve --debug
 ```
 
 **Log dosyasını izle**:
+
 ```bash
 tail -f /mnt/c/tmp/gorev-test/logs/gorev-debug.log
 ```
 
 **Database'i kontrol et**:
+
 ```bash
 sqlite3 /mnt/c/tmp/gorev-test/workspace/.gorev/gorev.db
 

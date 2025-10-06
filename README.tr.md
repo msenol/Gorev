@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**Last Updated:** October 5, 2025 | **Version:** v0.16.2
+**Last Updated:** October 6, 2025 | **Version:** v0.16.3
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
-> 🎉 **YENİ v0.16.2**: Kritik NPM binary güncelleme hatası düzeltildi + VS Code otomatik başlatma! [Yeniliklere Bak](#-v0162-yenilikleri)
+> 🎉 **YENİ v0.16.3**: MCP araç parametre dönüşümü düzeltmeleri + %100 test başarısı! [Yeniliklere Bak](#-v0163-yenilikleri)
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
 
@@ -26,7 +26,7 @@
 
 **Gorev** is a powerful **Model Context Protocol (MCP)** server written in Go that provides task management capabilities to AI assistants (Claude, VS Code, Windsurf, Cursor). It features unlimited subtask hierarchy, dependency management, tagging system, and templates for structured task creation.
 
-**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, advanced search & filtering with FTS5, 41 MCP tools, and optional VS Code extension with rich visual interface.
+**Key Features**: Natural language task creation, project organization, due date tracking, AI context management, enhanced NLP processing, advanced search & filtering with FTS5, 24 optimized MCP tools (unified from 45), and optional VS Code extension with rich visual interface.
 
 **Quick Start**: [Installation Guide](README.en.md#-installation) | [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode)
 
@@ -47,20 +47,91 @@ Gorev, **Model Context Protocol (MCP)** standardını kullanarak MCP uyumlu tüm
 
 MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabilirsiniz. Web arayüzü `npx @mehmetsenol/gorev-mcp-server serve` komutuyla otomatik olarak http://localhost:5082 adresinde hazır olur. VS Code extension'ı ise IDE içinde zengin görsel deneyim sunar.
 
-## 🎉 v0.16.2 Yenilikleri
+### 🔌 Daemon Mimarisi (v0.16.0+)
 
-### 🐛 Kritik Hata Düzeltmeleri (v0.16.2)
+Gorev, **arka plan daemon process** olarak çalışır ve şu avantajları sağlar:
+
+**Temel Özellikler:**
+
+- **Tek Instance Yönetimi**: Lock dosyası (`~/.gorev-daemon/.lock`) port çakışmalarını önler
+- **Çoklu İstemci Desteği**: Birden fazla MCP istemcisi (Claude, VS Code, Windsurf, Cursor) aynı anda bağlanabilir
+- **Otomatik Başlatma**: VS Code extension daemon'u otomatik tespit eder ve başlatır (v0.16.2+)
+- **Sağlık İzleme**: `/api/health` endpoint'i ile gerçek zamanlı durum kontrolü
+- **WebSocket Desteği**: Gerçek zamanlı görev güncelleme olayları (deneysel)
+
+**Hızlı Başlangıç:**
+
+```bash
+# Daemon'u arka planda başlat
+gorev daemon --detach
+
+# Daemon durumunu kontrol et
+curl http://localhost:5082/api/health
+
+# Web arayüzü otomatik olarak hazır
+open http://localhost:5082
+```
+
+**Mimari Bileşenler:**
+
+- **Lock Dosyası**: `~/.gorev-daemon/.lock` PID, port, versiyon ve daemon URL içerir
+- **REST API Server**: VS Code extension için 23 endpoint (Fiber framework)
+- **MCP Proxy**: stdio MCP protokol isteklerini internal handler'lara yönlendirir
+- **WebSocket Server**: Görev güncellemeleri için gerçek zamanlı olay yayını
+- **Workspace Manager**: SHA256 tabanlı ID'lerle çoklu workspace desteği
+
+**VS Code Entegrasyonu:**
+Extension daemon yaşam döngüsünü otomatik yönetir:
+
+1. Aktivasyonda daemon'un çalışıp çalışmadığını kontrol eder (lock dosyasını okur)
+2. Çalışmıyorsa daemon'u başlatır
+3. Tüm işlemler için REST API'ye bağlanır
+4. Deaktivasyonda daemon'u kapatır (eğer extension başlattıysa)
+
+Detaylı teknik özellikler için [Daemon Mimari Dokümantasyonu](docs/architecture/daemon-architecture.md)'na bakın.
+
+## 🎉 v0.16.3 Yenilikleri
+
+### 🔧 MCP Araç Parametre Dönüşüm Düzeltmeleri (6 Ekim 2025)
+
+**gorev_bulk** - Tüm 3 operasyon artık tamamen çalışıyor:
+
+- **`update` operasyonu**: `{ids: [], data: {}}` → `{updates: [{id, ...alanlar}]}` dönüşümü düzgün çalışıyor
+- **`transition` operasyonu**: Hem `durum` hem `yeni_durum` parametrelerini kabul ediyor
+- **`tag` operasyonu**: Hem `operation` hem `tag_operation` parametrelerini kabul ediyor
+- **Test sonucu**: %100 başarı oranı (5/5 operasyon production'da test edildi)
+
+**gorev_guncelle** - Çoklu alan güncelleme desteği eklendi:
+
+- `durum` (durum), `oncelik` (öncelik) veya her ikisini birden güncelleyebilir
+- En az bir parametre gerekli (validasyon)
+- Mevcut kodla geriye dönük uyumlu
+
+**gorev_search (gelişmiş mod)** - Akıllı sorgu ayrıştırma eklendi:
+
+- **Örnek**: `"durum:devam_ediyor oncelik:yuksek tags:frontend"`
+- Doğal dil sorgularından filtreleri otomatik olarak çıkarır
+- Boşlukla ayrılmış key:value çiftleri ile çoklu filtre desteği
+- Mevcut filtre parametreleriyle sorunsuz çalışır
+
+**VS Code Tree View** - Bağımlılık göstergeleri artık görünür:
+
+- 🔒 (bloke), 🔓 (bloke değil), 🔗 (bağımlı) ikonları düzgün gösteriliyor
+- JSON serileştirme sorunu düzeltildi (bağımlılık sayaçlarından `omitempty` kaldırıldı)
+- Tüm bağımlılık ilişkileri artık tree yapısında görünür
+
+**Doğrulama**: Kilocode AI kapsamlı test raporu ile %100 başarı oranı onaylandı
+
+---
+
+### 🐛 Önceki Güncellemeler (v0.16.2 - 5 Ekim 2025)
+
 - **NPM Binary Güncelleme Hatası**: NPM paket yükseltmelerinde eski binary'lerin korunması hatası düzeltildi
-  - v0.16.1 veya önceki sürümlerden yükseltme yapan kullanıcılar v0.15.24'te (Eylül 2025) takılı kalıyordu
   - Paket boyutu 78.4 MB'tan 6.9 KB'ye düşürüldü (binary'ler artık GitHub'dan indiriliyor)
-  - Tüm kullanıcılar artık en son özelliklere erişebiliyor (REST API, Web UI, VS Code otomatik başlatma)
 - **VS Code Otomatik Başlatma**: Extension artık server'ı otomatik olarak başlatıyor
-  - Manuel `npx gorev serve` komutuna gerek yok
-  - Server çalışıyor mu kontrol eder, gerekirse başlatır
-  - Doğru veritabanı yolu yapılandırması (workspace/.gorev/gorev.db)
-  - Extension kapatıldığında server'ı düzgün şekilde kapatır
 
 ### 🌐 Embedded Web UI (v0.16.0)
+
 - **Sıfır Yapılandırma**: Modern React arayüzü Go binary'sine gömülü
 - **Anında Erişim**: http://localhost:5082 adresinde otomatik olarak hazır
 - **Tam Özellikler**: Görevler, projeler, şablonlar, alt görevler ve bağımlılıklar
@@ -68,6 +139,7 @@ MCP protokolü sayesinde server'a herhangi bir MCP uyumlu editörden bağlanabil
 - **Ayrı Kurulum Yok**: Sadece `npx @mehmetsenol/gorev-mcp-server serve` komutuyla hazır!
 
 ### 🗂️ Çoklu Workspace Desteği (v0.16.0)
+
 - **İzole Workspace'ler**: Her proje klasörü kendi görev veritabanına sahip
 - **Workspace Değiştirici**: Web UI'da workspace'ler arası sorunsuz geçiş
 - **Otomatik Tespit**: Mevcut klasördeki `.gorev/` dizinini otomatik algılar
@@ -519,7 +591,7 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne bakın:
 
 ### Referans
 
-- 🛠️ [MCP Araçları](docs/legacy/tr/mcp-araclari.md) - 41 MCP aracının komple referansı
+- 🛠️ [MCP Araçları](gorev-mcpserver/docs/mcp-araclari.md) - 24 optimize MCP aracının komple referansı (45'ten birleştirildi)
 - 🔧 [MCP Konfigürasyon Örnekleri](docs/guides/mcp-config-examples.md) - IDE kurulum kılavuzları
 - 📖 [Kullanım Kılavuzu](docs/guides/user/usage.md) - Detaylı kullanım örnekleri
 - 🎨 [VS Code Extension](docs/guides/user/vscode-extension.md) - Extension dokümantasyonu

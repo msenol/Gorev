@@ -7,6 +7,7 @@
 ## 🎯 Goal
 
 Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
+
 - Better type safety
 - Easier debugging
 - Consistency with Web UI
@@ -21,15 +22,18 @@ Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
 **New Endpoints Added:**
 
 #### Subtask Management
+
 - `POST /api/v1/tasks/:id/subtasks` - Create subtask
 - `PUT /api/v1/tasks/:id/parent` - Change parent task
 - `GET /api/v1/tasks/:id/hierarchy` - Get task hierarchy
 
 #### Dependency Management
+
 - `POST /api/v1/tasks/:id/dependencies` - Add dependency
 - `DELETE /api/v1/tasks/:id/dependencies/:dep_id` - Remove dependency (stub)
 
 #### Active Project Management
+
 - `GET /api/v1/active-project` - Get active project
 - `DELETE /api/v1/active-project` - Remove active project
 
@@ -38,12 +42,14 @@ Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
 ### 2. Code Implementation
 
 **Method Mappings:**
+
 - `AltGorevOlustur()` → Subtask creation
 - `GorevUstDegistir()` → Parent change
 - `GorevHiyerarsiGetir()` → Hierarchy retrieval
 - `GorevBagimlilikEkle()` → Dependency addition
 
 **Features:**
+
 - ✅ Consistent JSON response format
 - ✅ Proper error handling with HTTP status codes
 - ✅ Input validation
@@ -55,6 +61,7 @@ Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
 **File:** `gorev-mcpserver/internal/api/server_simple_test.go`
 
 **Test Coverage:**
+
 - ✅ Health endpoint test passing
 - ✅ Binary builds successfully
 - ✅ Code formatted with gofmt
@@ -87,14 +94,17 @@ Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
 ### 5. Git Commits
 
 **Commit 1:** `feat(web-ui): add language synchronization between Web UI and MCP server`
+
 - Web UI language switcher
 - API endpoints for language management
 - Documentation updates
 
 **Commit 2:** `style: apply gofmt formatting to all files`
+
 - Code formatting across project
 
 **Commit 3:** `feat(api): add comprehensive REST API endpoints for all MCP operations`
+
 - 7 new REST API endpoints
 - Subtask, dependency, and active project management
 - Tests and documentation
@@ -116,11 +126,12 @@ Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
 
 ## 🔍 Key Design Decisions
 
-### 1. Why Not Complete Test Suite?
+### 1. Why Not Complete Test Suite
 
 **Decision:** Created minimal test (health check only) instead of comprehensive suite
 
 **Reasoning:**
+
 - Testing helper (`internal/testing/helpers.go`) needs review
 - Test DB setup complexity
 - Time constraint (token usage)
@@ -128,11 +139,12 @@ Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
 
 **Future:** Add comprehensive integration tests in Phase 2
 
-### 2. Why Stub Dependency Deletion?
+### 2. Why Stub Dependency Deletion
 
 **Decision:** Return 501 Not Implemented for DELETE /dependencies/:dep_id
 
 **Reasoning:**
+
 - No `BagimlilikSil()` method found in VeriYonetici interface
 - Requires adding new method to interface
 - Can be added in future sprint
@@ -140,11 +152,12 @@ Migrate VS Code extension from MCP (stdio/markdown) to REST API (HTTP/JSON) for:
 
 **Future:** Implement proper deletion in v0.17.1
 
-### 3. Why Keep MCP Client?
+### 3. Why Keep MCP Client
 
 **Decision:** Don't remove MCP code yet
 
 **Reasoning:**
+
 - Claude Desktop and other MCP-only tools still need it
 - VS Code extension migration can happen gradually
 - Allows A/B testing during transition
@@ -227,6 +240,7 @@ TreeView Providers
 ```
 
 **Benefits:**
+
 - ✅ Type safety (TypeScript interfaces)
 - ✅ Standard HTTP debugging tools
 - ✅ Consistent with Web UI

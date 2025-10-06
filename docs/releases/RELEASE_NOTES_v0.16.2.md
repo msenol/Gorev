@@ -12,6 +12,7 @@
 **Root Cause**: The `postinstall.js` script had logic to "skip if binary already exists", which prevented binary updates during package upgrades.
 
 **Impact**:
+
 - All users who upgraded from v0.16.1 or earlier couldn't access v0.16.x features:
   - ❌ REST API integration
   - ❌ Embedded Web UI at http://localhost:5082
@@ -20,6 +21,7 @@
   - ❌ SHA256-based workspace IDs
 
 **Solution**:
+
 - Modified `postinstall.js` to **ALWAYS** remove old binary before downloading new one
 - Removed bundled binaries from NPM package distribution
 - Package size dramatically reduced: **78.4 MB → 6.9 KB** 📦
@@ -27,6 +29,7 @@
 - Ensures all users get the correct binary version matching package version
 
 **Files Changed**:
+
 - `gorev-npm/postinstall.js` (lines 171-175): Added `safeUnlink(binaryPath)` before download
 - `gorev-npm/package.json`: Version bump to 0.16.2
 - `gorev-npm/binaries/`: Removed directory (no longer bundling binaries)

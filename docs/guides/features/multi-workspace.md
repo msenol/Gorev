@@ -26,11 +26,13 @@ Gorev v0.16.0 introduces **multi-workspace support**, allowing you to manage sep
 ### Workspace
 
 A **workspace** is a project directory containing:
+
 - `.gorev/` directory (created by `gorev init`)
 - `gorev.db` SQLite database file
 - Optional MCP configuration (`.kilocode/mcp.json`, `.cursor/mcp.json`, etc.)
 
 **Example**:
+
 ```
 /projects/my-app/
 ├── .gorev/
@@ -52,6 +54,7 @@ Workspace ID:    4a5d7c9b (first 8 characters used for display)
 ```
 
 **Benefits**:
+
 - Deterministic (same path → same ID)
 - Collision-resistant
 - Platform-independent
@@ -71,6 +74,7 @@ Workspaces must be **registered** before use. Registration stores metadata in a 
 | `last_accessed` | Last access timestamp |
 
 **Registration Methods**:
+
 1. Automatic: VS Code extension registers on activation
 2. Manual: Web UI detects and registers on first access
 3. CLI: `gorev init` creates and registers workspace
@@ -91,6 +95,7 @@ gorev init
 ```
 
 **Output**:
+
 ```
 ✓ Created workspace directory: /path/to/your/project/.gorev
 ✓ Initialized database: gorev.db
@@ -106,6 +111,7 @@ gorev workspace list
 ```
 
 **Output**:
+
 ```
 Registered Workspaces:
   1. my-project (ID: 4a5d7c9b)
@@ -135,6 +141,7 @@ Gorev automatically detects the nearest `.gorev/` directory by walking up the di
 #### 1. Open Project
 
 Open workspace in VS Code:
+
 ```bash
 code /path/to/your/project
 ```
@@ -142,11 +149,13 @@ code /path/to/your/project
 #### 2. Automatic Registration
 
 The Gorev VS Code extension automatically:
+
 - Detects workspace root
 - Runs `gorev init` if `.gorev/` doesn't exist
 - Registers workspace with metadata
 
 **Status Bar** shows:
+
 ```
 Gorev: my-project (15 tasks)
 ```
@@ -154,6 +163,7 @@ Gorev: my-project (15 tasks)
 #### 3. Workspace-Specific Views
 
 All TreeView panels (Tasks, Projects, Templates) filter to current workspace:
+
 - Tasks panel shows only tasks from current workspace database
 - Projects panel shows projects from current workspace
 - Creating tasks automatically uses current workspace
@@ -161,6 +171,7 @@ All TreeView panels (Tasks, Projects, Templates) filter to current workspace:
 #### 4. Multi-Workspace Setup
 
 Open multiple workspace folders in VS Code:
+
 ```
 File → Add Folder to Workspace
 ```
@@ -182,6 +193,7 @@ Navigate to http://localhost:5082
 #### 3. Workspace Switcher
 
 **Top-right corner** shows workspace dropdown:
+
 ```
 ┌────────────────────────────┐
 │  my-project (15 tasks)   ▼ │
@@ -193,6 +205,7 @@ Navigate to http://localhost:5082
 ```
 
 Click to switch. UI automatically:
+
 - Invalidates all React Query caches
 - Refetches tasks/projects from selected workspace
 - Updates HTTP headers (`X-Workspace-Id`, `X-Workspace-Path`, `X-Workspace-Name`)
@@ -210,6 +223,7 @@ Click to switch. UI automatically:
 | `GOREV_WORKSPACE_NAME` | Override workspace name | Directory name | `My Project` |
 
 **Example**:
+
 ```bash
 GOREV_DB_PATH=/custom/workspace/.gorev/gorev.db gorev serve
 ```
@@ -219,11 +233,13 @@ GOREV_DB_PATH=/custom/workspace/.gorev/gorev.db gorev serve
 #### Auto-Detection (Recommended)
 
 Don't specify `GOREV_DB_PATH`. Gorev will:
+
 1. Look for `.gorev/gorev.db` in current directory
 2. Walk up parent directories to find workspace root
 3. Fall back to global database (`~/.gorev/gorev.db`) if not found
 
 **Example** (`.kilocode/mcp.json`):
+
 ```json
 {
   "mcpServers": {
@@ -243,6 +259,7 @@ Don't specify `GOREV_DB_PATH`. Gorev will:
 Specify `GOREV_DB_PATH` for each workspace:
 
 **Project A** (`.kilocode/mcp.json`):
+
 ```json
 {
   "mcpServers": {
@@ -258,6 +275,7 @@ Specify `GOREV_DB_PATH` for each workspace:
 ```
 
 **Project B** (`.kilocode/mcp.json`):
+
 ```json
 {
   "mcpServers": {
@@ -428,6 +446,7 @@ gorev workspace list
 ```
 
 **Options**:
+
 - `--active-only`: Show only recently accessed workspaces
 - `--sort-by-tasks`: Sort by task count (descending)
 - `--json`: Output as JSON
@@ -453,6 +472,7 @@ gorev workspace info --id 4a5d7c9b
 ```
 
 **Output**:
+
 ```yaml
 Workspace: my-project
 ID: 4a5d7c9b8f3e2a1d
@@ -482,6 +502,7 @@ gorev workspace cleanup
 ```
 
 Removes workspace registrations where:
+
 - Workspace path no longer exists
 - Database file is missing or corrupted
 - Last accessed > 90 days ago
@@ -493,6 +514,7 @@ gorev workspace archive --id 4a5d7c9b
 ```
 
 Exports workspace data to JSON and marks as archived:
+
 ```
 ~/.gorev/archives/my-project-2025-10-05.json
 ```
@@ -504,6 +526,7 @@ Exports workspace data to JSON and marks as archived:
 ### 1. One Workspace Per Project
 
 **Recommended**:
+
 ```
 /projects/
 ├── project-a/
@@ -515,6 +538,7 @@ Exports workspace data to JSON and marks as archived:
 ```
 
 **Avoid**:
+
 ```
 /projects/
 └── .gorev/gorev.db        # Single database for all projects
@@ -523,12 +547,14 @@ Exports workspace data to JSON and marks as archived:
 ### 2. Consistent Naming
 
 Use descriptive workspace names:
+
 ```bash
 gorev init --name "E-commerce Backend"
 gorev init --name "Mobile App v2.0"
 ```
 
 Avoid generic names:
+
 ```bash
 gorev init --name "project"
 gorev init --name "test"
@@ -537,6 +563,7 @@ gorev init --name "test"
 ### 3. Regular Backups
 
 Export workspace data weekly:
+
 ```bash
 # Automated backup script
 #!/bin/bash
@@ -552,6 +579,7 @@ gorev export \
 ### 4. Share Workspace Config
 
 Commit MCP config to version control:
+
 ```
 project-root/
 ├── .kilocode/
@@ -562,6 +590,7 @@ project-root/
 ```
 
 **.gitignore**:
+
 ```
 .gorev/gorev.db
 .gorev/gorev.db-shm
@@ -575,10 +604,12 @@ project-root/
 ### Issue: Workspace Not Found
 
 **Symptoms**:
+
 - CLI shows "No workspace detected"
 - VS Code extension shows empty task list
 
 **Solutions**:
+
 ```bash
 # Verify .gorev/ directory exists
 ls -la .gorev/
@@ -596,9 +627,11 @@ gorev workspace list
 ### Issue: Wrong Workspace Selected
 
 **Symptoms**:
+
 - Web UI shows tasks from different project
 
 **Solutions**:
+
 ```bash
 # Check workspace switcher (top-right corner)
 # Select correct workspace from dropdown
@@ -613,9 +646,11 @@ http://localhost:5082/?workspace=4a5d7c9b
 ### Issue: Database Locked
 
 **Symptoms**:
+
 - "database is locked" error in VS Code or Web UI
 
 **Solutions**:
+
 ```bash
 # Check for running Gorev processes
 ps aux | grep gorev
@@ -634,9 +669,11 @@ sqlite3 gorev.db "PRAGMA journal_mode=DELETE;"
 ### Issue: Workspace ID Collision
 
 **Symptoms**:
+
 - Two workspaces with same ID (extremely rare)
 
 **Solutions**:
+
 ```bash
 # Unregister conflicting workspace
 gorev workspace unregister --id 4a5d7c9b
@@ -693,12 +730,14 @@ done
 ### Hardening
 
 **File Permissions** (Linux/macOS):
+
 ```bash
 chmod 700 ~/.gorev
 chmod 600 ~/.gorev/gorev.db
 ```
 
 **Encrypted Workspace** (Future Enhancement):
+
 ```bash
 # Create encrypted container for workspace
 # (Future feature - not yet implemented)
@@ -720,11 +759,13 @@ gorev workspace create --encrypted --passphrase "strong-password"
 | `/api/workspaces/:id/stats` | GET | Get workspace statistics |
 
 **Example Request**:
+
 ```bash
 curl -X GET http://localhost:5082/api/workspaces
 ```
 
 **Response**:
+
 ```json
 {
   "workspaces": [
@@ -764,27 +805,32 @@ curl -X GET http://localhost:5082/api/workspaces
 ### From v0.15 to v0.16
 
 - [ ] **Backup existing database**:
+
   ```bash
   cp ~/.gorev/gorev.db ~/gorev.db.backup-$(date +%Y%m%d)
   ```
 
 - [ ] **Update to v0.16.0**:
+
   ```bash
   npm install -g @mehmetsenol/gorev-mcp-server@latest
   ```
 
 - [ ] **Initialize workspaces** for each project:
+
   ```bash
   cd /path/to/project-a && gorev init
   cd /path/to/project-b && gorev init
   ```
 
 - [ ] **Export legacy tasks**:
+
   ```bash
   gorev export --output ~/legacy-tasks.json
   ```
 
 - [ ] **Import into workspaces**:
+
   ```bash
   cd /path/to/project-a
   gorev import --input ~/legacy-tasks.json --project-filter "Project A"

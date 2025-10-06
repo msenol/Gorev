@@ -27,12 +27,14 @@ Gorev's **AI Context Management** system helps AI assistants (Claude, Copilot, e
 ### Active Task
 
 The **active task** is the task you're currently working on. Setting a task as active:
+
 - Automatically updates status to `in_progress` (if currently `pending`)
 - Adds task to recent history
 - Provides AI assistant with focused context
 - Enables quick task switching
 
 **Example Workflow**:
+
 ```
 User: "Make task #42 active"
 → Task #42 status: pending → in_progress
@@ -46,6 +48,7 @@ User: "What am I working on?"
 ### Recent History
 
 **Recent history** tracks the last 20 tasks you've viewed or modified:
+
 - Tasks are added when viewed, edited, or set as active
 - Most recent tasks appear first
 - Helps AI assistant understand your workflow
@@ -54,6 +57,7 @@ User: "What am I working on?"
 ### AI Context Session
 
 An **AI context session** represents a conversation thread with an AI assistant:
+
 - Started when first MCP tool is called
 - Tracks all tool invocations
 - Stores query patterns and preferences
@@ -74,6 +78,7 @@ Set a task as the active task and automatically update its status.
 | `task_id` | string | ✅ | UUID of task to activate |
 
 **Behavior**:
+
 1. Validates task exists
 2. If task status is `pending`, changes to `in_progress`
 3. Sets as active task
@@ -92,12 +97,14 @@ Set a task as the active task and automatically update its status.
 ```
 
 **Response**:
+
 ```
 ✓ Aktif görev ayarlandı: API authentication implementasyonu
   Durum güncellendi: beklemede → devam_ediyor
 ```
 
 **AI Assistant Usage**:
+
 ```
 User: "I'm going to work on the authentication task now"
 AI: [Calls gorev_set_active with task_id]
@@ -121,6 +128,7 @@ Retrieve the currently active task.
 ```
 
 **Response**:
+
 ```markdown
 ## Aktif Görev
 
@@ -141,6 +149,7 @@ JWT tabanlı authentication sistemi kur. Refresh token desteği olmalı.
 ```
 
 **No Active Task**:
+
 ```
 Henüz aktif görev ayarlanmamış.
 ```
@@ -167,6 +176,7 @@ List recently accessed tasks.
 ```
 
 **Response**:
+
 ```markdown
 ## Son Görüntülenen Görevler
 
@@ -199,6 +209,7 @@ Get a summary of the current AI session context.
 ```
 
 **Response**:
+
 ```markdown
 ## AI Oturum Özeti
 
@@ -236,6 +247,7 @@ Update multiple tasks in a single operation.
 | `updates` | array | ✅ | List of task updates |
 
 **Update Object**:
+
 ```typescript
 {
   id: string,           // Task UUID
@@ -272,6 +284,7 @@ Update multiple tasks in a single operation.
 ```
 
 **Response**:
+
 ```
 ✓ Toplu güncelleme tamamlandı:
   - 3 görev başarıyla güncellendi
@@ -335,6 +348,7 @@ The system extracts intent from natural language:
 | "overdue" | due_date < today |
 
 **Response**:
+
 ```markdown
 ## Arama Sonuçları: "high priority bugs in production"
 
@@ -365,12 +379,14 @@ The system extracts intent from natural language:
 **User**: "I'm going to work on the authentication feature"
 
 **AI Assistant Actions**:
+
 1. Search for tasks matching "authentication"
 2. If multiple matches, ask user to clarify
 3. Call `gorev_set_active` with selected task
 4. Provide task summary and next steps
 
 **Example Conversation**:
+
 ```
 User: "I'm going to work on the authentication feature"
 
@@ -400,11 +416,13 @@ AI: [Calls gorev_set_active with task #1]
 **User**: "What am I working on?"
 
 **AI Assistant Actions**:
+
 1. Call `gorev_get_active`
 2. Display active task details
 3. Show progress and next steps
 
 **Example**:
+
 ```
 User: "What am I working on?"
 
@@ -429,11 +447,13 @@ AI: [Calls gorev_get_active]
 **User**: "Mark all completed tasks from yesterday as done and archive them"
 
 **AI Assistant Actions**:
+
 1. Query tasks from yesterday with status "in_progress"
 2. Call `gorev_batch_update` to set all as "completed"
 3. Optionally export to archive
 
 **Example**:
+
 ```
 User: "Mark all tasks I finished yesterday as completed"
 
@@ -463,6 +483,7 @@ AI: [Calls gorev_batch_update with 5 task IDs]
 **User**: "What should I work on next?"
 
 **AI Assistant Actions**:
+
 1. Call `gorev_context_summary` for session overview
 2. Analyze recent history and priorities
 3. Suggest next task based on:
@@ -472,6 +493,7 @@ AI: [Calls gorev_batch_update with 5 task IDs]
    - User's work patterns
 
 **Example**:
+
 ```
 User: "What should I work on next?"
 
@@ -556,6 +578,7 @@ LIMIT 20;
 ### Session Management
 
 **Start New Session**:
+
 ```json
 {
   "name": "gorev_context_summary",
@@ -569,6 +592,7 @@ Creates new session if none exists.
 Sessions are automatically continued when you restart the MCP server. Session ID is stored in database and restored on startup.
 
 **Clear Session**:
+
 ```bash
 # CLI (planned feature)
 gorev session clear
@@ -577,16 +601,19 @@ gorev session clear
 ### Context Persistence
 
 **Automatic Persistence**:
+
 - Active task: Saved to database immediately
 - Recent history: Updated on every task access
 - Session preferences: Stored in JSON blob
 
 **Manual Export**:
+
 ```bash
 gorev export --include-ai-context --output backup.json
 ```
 
 **Import Context**:
+
 ```bash
 gorev import --input backup.json --restore-ai-context
 ```
@@ -594,6 +621,7 @@ gorev import --input backup.json --restore-ai-context
 ### Multi-User Context (Future)
 
 **User-Specific Context** (planned for v0.17.0):
+
 ```json
 {
   "name": "gorev_set_active",
@@ -613,6 +641,7 @@ Allows multiple users to have separate active tasks and context.
 ### 1. Use Active Task Consistently
 
 **Good Workflow**:
+
 ```
 Morning:
   - Review task list
@@ -628,6 +657,7 @@ Evening:
 ```
 
 **Avoid**:
+
 - Setting multiple tasks as active
 - Forgetting to clear active task when switching
 - Not updating active task when context switching
@@ -635,12 +665,14 @@ Evening:
 ### 2. Leverage Recent History
 
 Use recent history for:
+
 - Quick access to recently viewed tasks
 - Understanding your work patterns
 - Resuming interrupted work
 - Context-aware AI suggestions
 
 **AI Prompt Examples**:
+
 ```
 "Show me what I worked on yesterday"
 "Continue where I left off"
@@ -652,6 +684,7 @@ Use recent history for:
 Instead of updating tasks one by one:
 
 **Inefficient**:
+
 ```
 gorev task update --id task1 --status completed
 gorev task update --id task2 --status completed
@@ -659,6 +692,7 @@ gorev task update --id task3 --status completed
 ```
 
 **Efficient**:
+
 ```json
 {
   "name": "gorev_batch_update",
@@ -675,6 +709,7 @@ gorev task update --id task3 --status completed
 ### 4. Descriptive NLP Queries
 
 **Good Queries**:
+
 ```
 "Show me high priority bugs in production"
 "Tasks I worked on this week"
@@ -683,6 +718,7 @@ gorev task update --id task3 --status completed
 ```
 
 **Vague Queries**:
+
 ```
 "Show tasks"
 "What's there?"
@@ -692,6 +728,7 @@ gorev task update --id task3 --status completed
 ### 5. Regular Context Summaries
 
 Check context summary periodically:
+
 ```
 "What's my context summary?"
 "How many tasks did I complete today?"
@@ -809,11 +846,13 @@ Cursor: [Reads active task context from Gorev]
 ### Optimization
 
 **Caching Strategy**:
+
 - Active task: Cached in memory, invalidated on update
 - Recent history: Cached for 60 seconds
 - Context summary: Cached for 30 seconds
 
 **Database Optimization**:
+
 - Indexes on `session_id`, `task_id`, `created_at`
 - Vacuum database monthly
 - Archive old sessions (> 90 days)
@@ -825,9 +864,11 @@ Cursor: [Reads active task context from Gorev]
 ### Issue: Active Task Not Updating Status
 
 **Symptoms**:
+
 - Task set as active but status stays "pending"
 
 **Solutions**:
+
 ```bash
 # Check task current status
 gorev task show --id 550e8400...
@@ -842,9 +883,11 @@ gorev context active
 ### Issue: Recent History Empty
 
 **Symptoms**:
+
 - `gorev_recent` returns no tasks
 
 **Solutions**:
+
 ```bash
 # Verify AI interactions are being logged
 sqlite3 .gorev/gorev.db "SELECT COUNT(*) FROM ai_interactions;"
@@ -860,9 +903,11 @@ gorev task show --id <task-id>
 ### Issue: NLP Query Returns Unexpected Results
 
 **Symptoms**:
+
 - Query like "high priority bugs" returns unrelated tasks
 
 **Solutions**:
+
 - Use more specific queries: "high priority bugs tagged with 'security'"
 - Check tag spelling and priority values
 - Fall back to manual filters if NLP fails
@@ -883,6 +928,7 @@ gorev task show --id <task-id>
 | `/api/context/nlp-query` | POST | Natural language search |
 
 **Example**:
+
 ```bash
 curl -X POST http://localhost:5082/api/context/active \
   -H "Content-Type: application/json" \

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### 🐛 Critical NPM Package Bug Fix
+
 - **NPM Binary Update Issue** (CRITICAL): Fixed bug where NPM package upgrades preserved old binaries
   - **Root Cause**: `postinstall.js` had logic "Skip if binary already exists" which prevented updates
   - **Impact**: Users upgrading from v0.16.1 or earlier were stuck on v0.15.24 (September 2025)
@@ -23,12 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### 📦 NPM Package Improvements
+
 - Binaries now always downloaded from GitHub releases (no bundled binaries)
 - Package size dramatically reduced: 78.4 MB → 6.9 KB
 - Faster installation due to smaller package download
 - More reliable updates (always gets correct binary version)
 
 ### Documentation
+
 - Updated README.md with v0.16.2 notes and critical bug fix details
 - Updated CLAUDE.md with v0.16.2 release information
 - Added comprehensive bug fix documentation in this CHANGELOG
@@ -38,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### 🚀 VS Code Extension Auto-Start Feature
+
 - **Automatic Server Startup**: VS Code extension now automatically starts Gorev server on activation
   - Checks if server is already running on port 5082
   - Starts server automatically if not running
@@ -45,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Files**: `gorev-vscode/src/managers/unifiedServerManager.ts` (+300 lines)
 
 #### 🗄️ Database Path Configuration
+
 - **Smart Database Location**: Proper database path configuration for VS Code extension
   - Priority: Workspace folder (.gorev/gorev.db) → User home directory (~/.gorev/gorev.db)
   - Automatic directory creation with `fs.mkdirSync`
@@ -52,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixes SQLite "out of memory" errors (actually file permission issues)
 
 #### 🔧 Server Lifecycle Management
+
 - **Process Management**: Complete server process lifecycle handling
   - Spawns server with proper stdio configuration (`['pipe', 'pipe', 'pipe']`)
   - Keeps stdin open (required for MCP server operation)
@@ -63,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### 🐛 VS Code Extension Bug Fixes
+
 - **Server Exit Issue**: Fixed server exiting immediately after startup
   - Changed stdio from `['ignore', 'pipe', 'pipe']` to `['pipe', 'pipe', 'pipe']`
   - MCP server requires open stdin pipe to prevent EOF exit
@@ -73,12 +80,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### 📝 Code Quality Improvements
+
 - `unifiedServerManager.ts` refactored with comprehensive lifecycle management
 - Added helper methods: `isServerRunning()`, `startServer()`, `waitForServerReady()`, `stopServer()`
 - Extension `dispose()` method now async to properly await server shutdown
 - Cross-platform compatibility (Windows uses `npx.cmd`, Unix uses `npx`)
 
 ### Documentation
+
 - Updated VS Code extension documentation with auto-start feature
 - Added troubleshooting section for common server startup issues
 
@@ -87,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed (October 4, 2025 - Critical Bug Fixes)
 
 #### 🐛 MCP Server Bug Fixes
+
 - **Batch Update Handler** (CRITICAL): Fixed schema mismatch in `gorev_batch_update`
   - Changed from nested format `{id: "x", updates: {durum: "y"}}` to flat format `{id: "x", durum: "y"}`
   - Now correctly processes all update fields without "Geçerli güncelleme bulunamadı" error
@@ -107,12 +117,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - File: `internal/mcp/handlers.go:3117-3196`
 
 #### 📚 Documentation Updates
+
 - **MCP Tools Documentation**: Fixed batch_update examples in all documentation files
   - Updated Turkish docs: `docs/tr/mcp-araclari-ai.md`
   - Updated English docs: `docs/api/MCP_TOOLS_REFERENCE.md`
   - Corrected format from nested to flat structure
 
 #### ✅ Test Improvements
+
 - Added comprehensive test helpers: `internal/testing/helpers_test.go` (+107 lines)
 - Added i18n test coverage: `internal/i18n/helpers_test.go` (+173 lines)
 - All FileWatcher tests passing (15/15)
@@ -124,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### 🌐 Gorev Web UI (NEW MODULE)
+
 - **React + TypeScript web application** for visual task management
 - **Vite-based modern build system** with hot reload and fast refresh
 - **Full-featured task management interface**:
@@ -146,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `LanguageContext` - React context for language state management
 
 #### 🔌 REST API Server (internal/api)
+
 - **Fiber-based HTTP server** providing backend for web UI
 - **Complete RESTful API endpoints**:
   - `GET /api/v1/tasks` - List tasks with filtering
@@ -165,6 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CLI Integration**: `--api-port` flag to start API server alongside MCP server
 
 #### 📊 Enhanced Backend Data Models
+
 - **Proje.GorevSayisi** field for accurate task count tracking
 - **Gorev.AltGorevler** subtask array automatically populated in API responses
 - **Dependency count fields** in task responses:
@@ -175,12 +190,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Backend Improvements
+
 - **ProjeleriGetir()**: Now uses SQL LEFT JOIN to calculate task counts efficiently
 - **GorevListele()**: Automatically fetches subtasks for parent tasks (performance optimized)
 - **API Server Integration**: Seamless integration in main.go with optional `--api-port` flag
 - **Database Schema**: Enhanced with task count calculations
 
 #### Frontend Architecture
+
 - **Modern React Stack**: React 18+ with TypeScript for type safety
 - **State Management**: React Query (TanStack Query) for server state
 - **Routing**: React Router for SPA navigation
@@ -189,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build Tool**: Vite for lightning-fast HMR and optimized production builds
 
 #### 🔌 VS Code Extension API Migration
+
 - **Complete REST API Integration**: Migrated from MCP (stdio + markdown parsing) to REST API (HTTP + JSON)
 - **New API Client**: `src/api/client.ts` with 30+ methods for all REST endpoints
 - **Type-Safe Responses**: Eliminated ~300 lines of fragile markdown parsing code
@@ -202,18 +220,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 
 #### New Dependencies (gorev-mcpserver)
+
 ```
 github.com/gofiber/fiber/v2 v2.52.5
 github.com/gofiber/cors/v2 v2.2.2
 ```
 
 #### New Dependencies (gorev-vscode)
+
 ```
 axios ^1.7.9            # HTTP client for REST API
 axios-mock-adapter ^2.1.0  # HTTP mocking for tests
 ```
 
 #### New Packages and Modules
+
 - `gorev-mcpserver/internal/api/` - Complete REST API server implementation
   - `handlers.go` - HTTP request handlers for all endpoints
   - `router.go` - Route definitions and middleware setup
@@ -235,6 +256,7 @@ axios-mock-adapter ^2.1.0  # HTTP mocking for tests
   - `integration/apiCommands.test.js` - 17 integration tests for commands
 
 #### Testing and Validation
+
 - ✅ Web UI manually tested with Chrome DevTools MCP integration
 - ✅ Subtask creation, display, and expand/collapse verified
 - ✅ Dependency relationships confirmed working with visual indicators
@@ -249,22 +271,26 @@ axios-mock-adapter ^2.1.0  # HTTP mocking for tests
 - ✅ **TypeScript Compilation**: 0 errors (from 11 errors)
 
 #### Development Setup
+
 - **Web UI Dev Server**: `npm run dev` in gorev-web/ (runs on http://localhost:5001)
 - **API Server**: `./gorev serve --api-port 5082` (runs on http://localhost:5082)
 - **Concurrent Development**: Both servers can run simultaneously for full-stack development
 
 ### Breaking Changes
+
 None - All changes are additive. Existing functionality remains unchanged.
 
 ### Migration Notes
 
 #### For End Users
+
 - No migration required - all changes are backward compatible
 - Web UI is an optional interface alongside MCP and VS Code extension
 - All three interfaces (MCP, VS Code, Web) share the same database and backend
 - VS Code extension automatically uses REST API when available, falls back to MCP
 
 #### For Developers
+
 - **VS Code Extension**: MCPClient and MarkdownParser marked as `@deprecated`
   - Will be removed in v0.18.0
   - Use `ApiClient` from `src/api/client.ts` instead

@@ -933,6 +933,7 @@ const blocked = await searchAdvanced({
 ---
 
 **See Also:**
+
 - [MCP Tools Reference](MCP_TOOLS_REFERENCE.md) - Complete tool documentation
 - [REST API Reference](rest-api-reference.md) - HTTP API endpoints
 - [Usage Guide](../guides/user/usage.md) - User guide and tutorials

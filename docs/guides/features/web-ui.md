@@ -71,6 +71,7 @@ graph LR
 ```
 
 **Production Build**:
+
 1. `cd gorev-web && npm run build` generates optimized static files
 2. Output copied to `gorev-mcpserver/cmd/gorev/web/dist/`
 3. Go's `embed.FS` packages files into binary at compile time
@@ -83,18 +84,21 @@ graph LR
 ### 1. Multi-Workspace Management
 
 **Workspace Switcher** (Top Right Corner):
+
 - Lists all registered workspaces
 - Shows workspace name and task counts
 - Click to switch between workspaces
 - Auto-saves last selected workspace to localStorage
 
 **Workspace Context**:
+
 - Each workspace has isolated SQLite database (`.gorev/gorev.db`)
 - SHA256-based workspace IDs for uniqueness
 - Automatic registration when VS Code extension activates
 - Manual registration via `gorev init` in workspace root
 
 **HTTP Headers**:
+
 ```
 X-Workspace-Id: <sha256-hash>
 X-Workspace-Path: /path/to/workspace
@@ -106,6 +110,7 @@ All API requests include these headers for workspace isolation.
 ### 2. Task Management
 
 **Task Card Components**:
+
 - Visual task cards with metadata (status, priority, due date, tags)
 - Expandable/collapsible subtask hierarchy
 - Dependency badges showing blocked/blocking relationships
@@ -113,12 +118,14 @@ All API requests include these headers for workspace isolation.
 - Markdown rendering for task descriptions
 
 **Task Creation**:
+
 - Template-based creation wizard
 - Supports all 6 default templates (bug, feature, research, refactor, test, doc)
 - Dynamic form generation based on template schema
 - Field validation before submission
 
 **Task Filtering**:
+
 - Filter by status (pending, in_progress, completed)
 - Filter by priority (low, medium, high)
 - Filter by tags (multi-select)
@@ -128,12 +135,14 @@ All API requests include these headers for workspace isolation.
 ### 3. Project Organization
 
 **Sidebar Navigation**:
+
 - Project list with task counts per status
 - Active project highlighting
 - Quick project switching
 - Project creation modal
 
 **Project Details**:
+
 - Project name, description, creation date
 - Task statistics (total, completed, in-progress, pending)
 - Task list grouped by status
@@ -152,6 +161,7 @@ All API requests include these headers for workspace isolation.
 | `doc` | Dokümantasyon | Documentation |
 
 **Template Features**:
+
 - Predefined field schemas (title, description, priority, tags, etc.)
 - Required vs. optional fields validation
 - Select fields with predefined options
@@ -160,12 +170,14 @@ All API requests include these headers for workspace isolation.
 ### 5. Language Synchronization
 
 **Bilingual Support**:
+
 - Language switcher in top navigation
 - Options: Turkish (Türkçe) / English
 - Synchronized with MCP server language setting
 - Persisted to localStorage
 
 **Translation Coverage**:
+
 - All UI labels and buttons
 - Status names (Beklemede, Devam Ediyor, Tamamlandı)
 - Priority levels (Düşük, Orta, Yüksek)
@@ -200,6 +212,7 @@ The Web UI communicates with the Fiber-based REST API server:
 ### React Query Integration
 
 **Query Keys**:
+
 ```typescript
 ['workspaces'] // All workspaces
 ['projects', workspaceId] // Projects for workspace
@@ -209,11 +222,13 @@ The Web UI communicates with the Fiber-based REST API server:
 ```
 
 **Optimistic Updates**:
+
 - Task status changes reflected immediately in UI
 - Background sync with server
 - Automatic rollback on error
 
 **Automatic Refetching**:
+
 - On window focus (staleTime: 60 seconds)
 - On network reconnect
 - On workspace switch (invalidates all queries)
@@ -225,6 +240,7 @@ The Web UI communicates with the Fiber-based REST API server:
 ### Local Development Setup
 
 **Prerequisites**:
+
 - Node.js 18+ and npm
 - Go 1.23+
 - Running MCP server (API backend)
@@ -232,12 +248,14 @@ The Web UI communicates with the Fiber-based REST API server:
 **Steps**:
 
 1. **Start API Server**:
+
 ```bash
 cd gorev-mcpserver
 ./gorev serve --api-port 5082 --debug
 ```
 
 2. **Start Dev Server** (separate terminal):
+
 ```bash
 cd gorev-web
 npm install
@@ -245,6 +263,7 @@ npm run dev
 ```
 
 3. **Access**:
+
 ```
 http://localhost:5001  # Dev server with hot reload
 http://localhost:5082  # Production embedded UI (from Go binary)
@@ -292,6 +311,7 @@ gorev-web/
 **Example: Add New API Endpoint**
 
 1. **Define TypeScript Type** (`src/types/index.ts`):
+
 ```typescript
 export interface TaskComment {
   id: string;
@@ -302,6 +322,7 @@ export interface TaskComment {
 ```
 
 2. **Add API Function** (`src/api/client.ts`):
+
 ```typescript
 export const getTaskComments = async (taskId: string): Promise<TaskComment[]> => {
   const { data } = await api.get(`/api/tasks/${taskId}/comments`);
@@ -310,6 +331,7 @@ export const getTaskComments = async (taskId: string): Promise<TaskComment[]> =>
 ```
 
 3. **Create React Query Hook** (`src/api/client.ts`):
+
 ```typescript
 export const useTaskComments = (taskId: string) => {
   return useQuery({
@@ -321,6 +343,7 @@ export const useTaskComments = (taskId: string) => {
 ```
 
 4. **Use in Component**:
+
 ```typescript
 const TaskComments: React.FC<{ taskId: string }> = ({ taskId }) => {
   const { data: comments, isLoading } = useTaskComments(taskId);
@@ -344,6 +367,7 @@ const TaskComments: React.FC<{ taskId: string }> = ({ taskId }) => {
 ### Building for Production
 
 **1. Build Web UI**:
+
 ```bash
 cd gorev-web
 npm run build
@@ -352,11 +376,13 @@ npm run build
 This creates optimized static files in `dist/` directory.
 
 **2. Copy to Go Project**:
+
 ```bash
 cp -r dist/* ../gorev-mcpserver/cmd/gorev/web/dist/
 ```
 
 **3. Build Go Binary**:
+
 ```bash
 cd ../gorev-mcpserver
 make build-all
@@ -365,6 +391,7 @@ make build-all
 This embeds the web UI into platform-specific binaries.
 
 **4. Verify Embedding**:
+
 ```bash
 ./gorev serve --debug
 # Should log: "📦 Web UI embedded in binary, serving from memory"
@@ -373,6 +400,7 @@ This embeds the web UI into platform-specific binaries.
 ### Deployment Options
 
 **Option 1: NPM Package** (Recommended):
+
 ```bash
 npm install -g @mehmetsenol/gorev-mcp-server
 gorev-mcp serve
@@ -381,12 +409,14 @@ gorev-mcp serve
 Web UI automatically available at http://localhost:5082
 
 **Option 2: Docker** (Future):
+
 ```bash
 docker run -p 5082:5082 ghcr.io/msenol/gorev:latest
 ```
 
 **Option 3: Standalone Binary**:
 Download from [GitHub Releases](https://github.com/msenol/gorev/releases), then:
+
 ```bash
 chmod +x gorev-linux-amd64
 ./gorev-linux-amd64 serve
@@ -405,6 +435,7 @@ chmod +x gorev-linux-amd64
 | `GOREV_DB_PATH` | Database path | Auto-detected |
 
 **Example**:
+
 ```bash
 GOREV_API_PORT=8080 GOREV_LANG=en gorev serve
 ```
@@ -412,6 +443,7 @@ GOREV_API_PORT=8080 GOREV_LANG=en gorev serve
 ### Port Configuration
 
 **Change Default Port**:
+
 ```bash
 gorev serve --api-port 8080
 ```
@@ -429,6 +461,7 @@ Web UI will be available at http://localhost:8080
 **Symptoms**: 404 errors, blank page
 
 **Solutions**:
+
 ```bash
 # Check if server is running
 curl http://localhost:5082/api/health
@@ -446,6 +479,7 @@ netstat -ano | findstr :5082  # Windows
 **Symptoms**: "Network Error", "Failed to fetch"
 
 **Solutions**:
+
 ```bash
 # Verify API server is running
 gorev serve --debug
@@ -462,6 +496,7 @@ curl -H "X-Workspace-Id: test" http://localhost:5082/api/workspaces
 **Symptoms**: Empty workspace list, "No workspace selected"
 
 **Solutions**:
+
 ```bash
 # Initialize workspace
 cd /path/to/project
@@ -479,6 +514,7 @@ sqlite3 .gorev/gorev.db "SELECT * FROM workspace_metadata;"
 **Symptoms**: UI stays in Turkish despite setting English
 
 **Solutions**:
+
 ```bash
 # Clear localStorage
 # Browser DevTools → Application → Local Storage → Clear All
@@ -497,21 +533,25 @@ echo $GOREV_LANG
 ### Optimization Strategies
 
 **1. Code Splitting**:
+
 - React Router lazy loading for routes
 - Dynamic imports for large components
 - Reduces initial bundle size
 
 **2. Caching**:
+
 - React Query cache (5 minutes default)
 - localStorage for workspace preference
 - Browser cache for static assets (1 year)
 
 **3. Bundle Size**:
+
 - Production build: ~250KB gzipped
 - Vite tree-shaking removes unused code
 - No external CDN dependencies
 
 **4. API Efficiency**:
+
 - Batched queries where possible
 - Optimistic UI updates reduce perceived latency
 - Debounced search input (300ms)
@@ -549,6 +589,7 @@ echo $GOREV_LANG
 | Opera | 76+ | ✅ Fully Supported |
 
 **Required Features**:
+
 - ES6 modules support
 - Fetch API
 - LocalStorage API
@@ -588,12 +629,14 @@ echo $GOREV_LANG
 | **AI Integration** | ❌ None | ✅ Claude/Copilot |
 
 **Use Web UI When**:
+
 - You want browser-based access
 - You need mobile/tablet support
 - You don't use VS Code daily
 - You want real-time data synchronization
 
 **Use VS Code Extension When**:
+
 - You work primarily in VS Code
 - You need AI assistant integration (Claude Code, Copilot)
 - You want keyboard-driven workflow
@@ -609,6 +652,7 @@ Found a bug in the Web UI? Please report it at:
 https://github.com/msenol/gorev/issues
 
 Include:
+
 - Browser name and version
 - Steps to reproduce
 - Screenshots or screen recordings
@@ -617,6 +661,7 @@ Include:
 ### Feature Requests
 
 Submit feature requests with:
+
 - Use case description
 - Expected behavior
 - Mockups or wireframes (if applicable)

@@ -109,12 +109,14 @@ function MyComponent() {
 ```
 
 **Features:**
+
 - LocalStorage persistence
 - Async API sync to MCP server (`POST /api/v1/language`)
 - Translation function `t(key)` for all UI text
 - Supports Turkish (tr) and English (en)
 
 **Translation Keys:**
+
 ```typescript
 // Example translations
 {
@@ -149,6 +151,7 @@ const mutation = useMutation({
 ```
 
 **React Query Configuration:**
+
 - Stale time: 30 seconds
 - Cache time: 5 minutes
 - Retry: 1 attempt
@@ -159,6 +162,7 @@ const mutation = useMutation({
 **Purpose:** Displays individual task with metadata, status, and actions
 
 **Features:**
+
 - Subtask count badge
 - Dependency indicator (🔗 count + ⚠️ incomplete)
 - Inline status dropdown
@@ -167,6 +171,7 @@ const mutation = useMutation({
 - Expand/collapse for long descriptions
 
 **Props:**
+
 ```typescript
 interface TaskCardProps {
   task: Task;
@@ -180,12 +185,14 @@ interface TaskCardProps {
 **Purpose:** Multi-step wizard for creating tasks from templates
 
 **Steps:**
+
 1. Template selection (grid view with categories)
 2. Field filling (dynamic form based on template)
 3. Preview (review before creation)
 4. Confirmation (success message + quick actions)
 
 **State Management:**
+
 ```typescript
 const [step, setStep] = useState(1);
 const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -197,12 +204,14 @@ const [formData, setFormData] = useState<Record<string, string>>({});
 **Purpose:** Globe icon dropdown for language selection
 
 **Features:**
+
 - 🌍 Globe icon (Lucide)
 - Dropdown with flags (🇹🇷/🇬🇧)
 - Auto-sync with MCP server
 - LocalStorage persistence
 
 **Implementation:**
+
 ```typescript
 <select
   value={language}
@@ -258,6 +267,7 @@ Error responses:
 ### Tailwind CSS Classes
 
 **Common Patterns:**
+
 ```css
 /* Card */
 .card { @apply bg-white rounded-lg shadow p-4 }
@@ -310,6 +320,7 @@ npm run build
 ### Build Configuration
 
 **vite.config.ts:**
+
 ```typescript
 export default defineConfig({
   plugins: [react()],
@@ -364,6 +375,7 @@ Install React DevTools browser extension for component inspection.
 ### Network Debugging
 
 Use browser DevTools Network tab to inspect API calls:
+
 - Look for `http://localhost:5082/api/v1/*` requests
 - Check request/response payloads
 - Verify CORS headers
@@ -371,6 +383,7 @@ Use browser DevTools Network tab to inspect API calls:
 ### Console Logging
 
 Language changes are logged:
+
 ```javascript
 console.log(`🌍 MCP server language changed to: ${lang}`);
 ```
@@ -378,21 +391,27 @@ console.log(`🌍 MCP server language changed to: ${lang}`);
 ### Common Issues
 
 **1. API Connection Failed**
+
 ```
 Error: Failed to fetch
 ```
+
 **Solution:** Ensure API server is running at `http://localhost:5082`
 
 **2. CORS Error**
+
 ```
 Access to fetch at 'http://localhost:5082' from origin 'http://localhost:5001' has been blocked by CORS policy
 ```
+
 **Solution:** Check CORS middleware in `internal/api/server.go`
 
 **3. Build Errors**
+
 ```
 Error: Cannot find module '@tanstack/react-query'
 ```
+
 **Solution:** Run `npm install` to install dependencies
 
 ## 📚 Best Practices

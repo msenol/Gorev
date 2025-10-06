@@ -3,11 +3,13 @@
 ## GitHub Social Preview Settings
 
 ### Repository Description
+
 ```
 Modern task management system with Turkish support for MCP-compatible AI assistants (Claude, VS Code, Windsurf, Cursor). Features unlimited subtask hierarchy, dependencies, templates, and 84.6% test coverage.
 ```
 
 ### Topics Added
+
 - `ai-assistant` - For AI tool discovery
 - `productivity` - General productivity tools
 - `project-management` - Project management category
@@ -18,11 +20,13 @@ Modern task management system with Turkish support for MCP-compatible AI assista
 - `sqlite` - Database technology
 
 ### Homepage URL
+
 - Set to VS Code Marketplace: `https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode`
 
 ## Social Media Sharing Template
 
 ### Twitter/X Post Template
+
 ```
 🚀 Introducing Gorev - Modern task management for AI assistants!
 
@@ -39,6 +43,7 @@ https://github.com/msenol/Gorev
 ```
 
 ### LinkedIn Post Template
+
 ```
 Excited to share Gorev - a powerful task management system designed for AI assistants! 🤖
 
@@ -56,6 +61,7 @@ Perfect for developers and teams using AI-powered workflows. Available on GitHub
 ```
 
 ### Reddit Post Template (r/golang, r/productivity)
+
 ```
 Title: Gorev - Task Management System for AI Assistants (MCP Compatible)
 

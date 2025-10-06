@@ -43,12 +43,10 @@
     "lists": true
   },
   "MD033": {
-    "allowed_elements": ["br", "details", "summary", "sup", "sub"]
+    "allowed_elements": ["br", "details", "summary", "sup", "sub", "div", "img", "a", "b", "kbd"]
   },
   "MD034": false,
-  "MD036": {
-    "punctuation": ".,;:!?"
-  },
+  "MD036": false,
   "MD040": true,
   "MD041": true,
   "MD046": {
@@ -63,5 +61,6 @@
   },
   "MD050": {
     "style": "asterisk"
-  }
+  },
+  "MD051": false
 }

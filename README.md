@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**Last Updated:** October 5, 2025 | **Version:** v0.16.2
+**Last Updated:** October 6, 2025 | **Version:** v0.16.3
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-> 🎉 **NEW in v0.16.2**: Critical NPM binary update fix + VS Code auto-start! [See What's New](#-whats-new-in-v0162)
+> 🎉 **NEW in v0.16.3**: MCP tool parameter transformation fixes + 100% test success! [See What's New](#-whats-new-in-v0163)
 
 ![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
@@ -35,9 +35,138 @@ Gorev is a powerful **Model Context Protocol (MCP)** server written in Go that p
 
 Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The Web UI is automatically available at http://localhost:5082 when you run `npx @mehmetsenol/gorev-mcp-server serve`. The VS Code extension provides a rich IDE-integrated experience.
 
-## 🎉 What's New in v0.16.2
+### 🔌 Daemon Architecture (v0.16.0+)
 
-### 🐛 Critical Bug Fixes (v0.16.2)
+Gorev runs as a **background daemon process**, providing these key benefits:
+
+**Core Features:**
+
+- **Single Instance Management**: Lock file (`~/.gorev-daemon/.lock`) prevents port conflicts
+- **Multi-Client Support**: Multiple MCP clients (Claude, VS Code, Windsurf, Cursor) can connect simultaneously
+- **Auto-Start**: VS Code extension automatically detects and starts daemon (v0.16.2+)
+- **Health Monitoring**: Real-time status via `/api/health` endpoint
+- **WebSocket Support**: Real-time task update events (experimental)
+
+**Quick Start:**
+
+```bash
+# Start daemon in background
+gorev daemon --detach
+
+# Check daemon status
+curl http://localhost:5082/api/health
+
+# Web UI automatically available
+open http://localhost:5082
+```
+
+#### Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "External Clients"
+        Claude[Claude Desktop/Code]
+        VSCode[VS Code Extension]
+        Cursor[Cursor IDE]
+        Windsurf[Windsurf]
+    end
+
+    subgraph "Gorev Daemon (Port 5082)"
+        Lock[Lock File<br/>~/.gorev-daemon/.lock]
+
+        subgraph "Protocol Layers"
+            MCP[MCP Proxy<br/>stdio]
+            REST[REST API<br/>Fiber - 23 endpoints]
+            WS[WebSocket<br/>Real-time events]
+        end
+
+        Handler[MCP Handlers<br/>24 Unified Tools]
+
+        subgraph "Storage"
+            DB[(SQLite DB<br/>.gorev/gorev.db)]
+        end
+
+        WebUI[Embedded Web UI<br/>React + TypeScript]
+    end
+
+    Claude -->|MCP/stdio| MCP
+    VSCode -->|REST/HTTP| REST
+    Cursor -->|MCP/stdio| MCP
+    Windsurf -->|MCP/stdio| MCP
+
+    MCP --> Handler
+    REST --> Handler
+    WS -.->|broadcasts| VSCode
+
+    Handler --> DB
+
+    REST --> WebUI
+
+    Lock -.->|manages| MCP
+    Lock -.->|manages| REST
+
+    style Claude fill:#f9f,stroke:#333
+    style VSCode fill:#9cf,stroke:#333
+    style Cursor fill:#fc9,stroke:#333
+    style Windsurf fill:#9fc,stroke:#333
+    style Handler fill:#ff9,stroke:#333
+    style DB fill:#9f9,stroke:#333
+```
+
+**Architecture Components:**
+
+- **Lock File**: `~/.gorev-daemon/.lock` contains PID, port, version, and daemon URL
+- **REST API Server**: 23 endpoints for VS Code extension (Fiber framework)
+- **MCP Proxy**: Forwards stdio MCP protocol requests to internal handlers
+- **WebSocket Server**: Real-time event broadcasting for task updates
+- **Workspace Manager**: Multi-workspace support with SHA256-based IDs
+
+**VS Code Integration:**
+The extension automatically manages the daemon lifecycle:
+
+1. On activation, checks if daemon is running (reads lock file)
+2. Starts daemon if not running
+3. Connects to REST API for all operations
+4. Optionally shuts down daemon on deactivation (if extension started it)
+
+See [Daemon Architecture Documentation](docs/architecture/daemon-architecture.md) for detailed technical specifications.
+
+## 🎉 What's New in v0.16.3
+
+### 🔧 MCP Tool Parameter Transformation Fixes (October 6, 2025)
+
+**gorev_bulk** - All 3 operations now fully functional:
+
+- **`update` operation**: Properly transforms `{ids: [], data: {}}` → `{updates: [{id, ...fields}]}`
+- **`transition` operation**: Accepts both `durum` and `yeni_durum` parameter names for flexibility
+- **`tag` operation**: Accepts both `operation` and `tag_operation` parameter names
+- **Test result**: 100% success rate (5/5 operations passed in production)
+
+**gorev_guncelle** - Extended to support multiple field updates:
+
+- Can update `durum` (status), `oncelik` (priority), or both simultaneously
+- At least one parameter required for validation
+- Backward compatible with existing code
+
+**gorev_search (advanced mode)** - Smart query parsing added:
+
+- **Example**: `"durum:devam_ediyor oncelik:yuksek tags:frontend"`
+- Automatically extracts filters from natural language queries
+- Multi-filter support with space-separated key:value pairs
+- Works seamlessly with existing filter parameters
+
+**VS Code Tree View** - Dependency indicators now visible:
+
+- 🔒 (blocked), 🔓 (unblocked), 🔗 (dependents) icons display correctly
+- Fixed JSON serialization issue (removed `omitempty` from dependency counters)
+- All dependency relationships now visible in tree structure
+
+**Validation**: 100% success rate confirmed by Kilocode AI comprehensive test report
+
+---
+
+### 🐛 Previous Updates (v0.16.2 - October 5, 2025)
+
 - **NPM Binary Update Fix**: Fixed critical bug where NPM package upgrades preserved old binaries
   - Users upgrading from v0.16.1 or earlier were stuck on v0.15.24 (September 2025)
   - Package size reduced from 78.4 MB to 6.9 KB (binaries now always downloaded from GitHub)
@@ -49,6 +178,7 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
   - Graceful server shutdown on extension deactivation
 
 ### 🌐 Embedded Web UI (v0.16.0)
+
 - **Zero-Configuration**: Modern React interface built into Go binary
 - **Instant Access**: Automatically available at http://localhost:5082
 - **Full Features**: Tasks, projects, templates, subtasks, and dependencies
@@ -56,6 +186,7 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **No Separate Installation**: Just run `npx @mehmetsenol/gorev-mcp-server serve` and you're ready!
 
 ### 🗂️ Multi-Workspace Support (v0.16.0)
+
 - **Isolated Workspaces**: Each project folder gets its own task database
 - **Workspace Switcher**: Seamlessly switch between workspaces in Web UI
 - **Auto-Detection**: Automatically detects `.gorev/` directory in current folder
@@ -63,6 +194,7 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **VS Code Integration**: Extension auto-registers workspace on activation
 
 ### 🔌 REST API Migration
+
 - **23 Endpoints**: Complete Fiber-based REST API
 - **VS Code Extension**: Migrated from MCP to REST API for better performance
 - **Type-Safe**: 100% TypeScript with zero parsing errors
@@ -70,12 +202,14 @@ Thanks to the MCP protocol, you can connect to the server from any MCP-compatibl
 - **Backward Compatible**: MCP protocol still fully supported
 
 ### 🏷️ Template Aliases
+
 - **Quick Commands**: Use `bug`, `feature`, `research` instead of template IDs
 - **Consistency**: Same aliases across all workspaces
 - **No More UUID Hunting**: Human-readable template identifiers
 - **Documentation**: Full guide at [MCP Config Examples](docs/guides/mcp-config-examples.md)
 
 ### 📦 NPM Package
+
 - **Package Name**: `@mehmetsenol/gorev-mcp-server`
 - **Global Install**: `npm install -g @mehmetsenol/gorev-mcp-server`
 - **NPX Ready**: `npx @mehmetsenol/gorev-mcp-server serve` for instant use
@@ -358,7 +492,7 @@ For detailed documentation, see the [docs/](docs/) folder:
 
 ### Reference
 
-- 🛠️ [MCP Tools Reference](docs/legacy/tr/mcp-araclari.md) - Complete reference for 41 MCP tools
+- 🛠️ [MCP Tools Reference](docs/api/MCP_TOOLS_REFERENCE.md) - Complete reference for 24 optimized MCP tools (unified from 45)
 - 🔧 [MCP Configuration Examples](docs/guides/mcp-config-examples.md) - IDE setup guides
 - 📖 [Usage Guide](docs/guides/user/usage.md) - Detailed usage examples
 - 🎨 [VS Code Extension](docs/guides/user/vscode-extension.md) - Extension documentation
@@ -430,7 +564,7 @@ make docker-build
 
 ## 📊 Project Status
 
-- **Version**: v0.16.2 🚀
+- **Version**: v0.16.3 🚀
 - **Test Coverage**: 75%+ (Comprehensive test coverage with ongoing improvements)
 - **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0

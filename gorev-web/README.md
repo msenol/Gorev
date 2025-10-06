@@ -2,7 +2,7 @@
 
 Modern React + TypeScript web interface for Gorev task management system.
 
-**Version:** 0.16.0 | **License:** MIT
+**Version:** 0.16.3 | **License:** MIT
 
 ## 📋 Overview
 
@@ -11,12 +11,14 @@ Gorev Web UI is a browser-based interface that provides full access to your Gore
 ## ✨ Features
 
 ### Task Management
+
 - **Create Tasks**: Use templates to create structured tasks
 - **View Tasks**: Card-based task visualization with filtering
 - **Update Tasks**: Edit task details, status, and priority
 - **Delete Tasks**: Remove tasks with confirmation
 
 ### Advanced Features
+
 - **Subtask Hierarchy**: View and manage nested subtasks with expand/collapse
 - **Dependencies**: Visualize task dependencies with badges
 - **Project Organization**: Group tasks by project
@@ -26,6 +28,7 @@ Gorev Web UI is a browser-based interface that provides full access to your Gore
 - **Real-time Updates**: React Query for automatic data synchronization
 
 ### UI Components
+
 - **Sidebar**: Project list with task counts
 - **Task Cards**: Rich task display with metadata
 - **Create Modal**: Template-based task creation wizard
@@ -194,17 +197,22 @@ theme: {
 ### Common Issues
 
 **Issue: "Failed to fetch" errors**
+
 - Solution: Ensure MCP server is running with `--api-port 5082`
 - Check CORS settings in server configuration
 
 **Issue: Dates showing "Invalid Date"**
+
 - Solution: Already fixed in v0.16.0 with null safety checks
 
 **Issue: Task counts showing "NaN"**
+
 - Solution: Already fixed in v0.16.0 with fallback values
 
 **Issue: Port 5001 already in use**
+
 - Solution: Change port in `vite.config.ts`:
+
   ```typescript
   server: {
     port: 3000, // Your preferred port
@@ -237,12 +245,14 @@ npm run build
 ### Deployment Options
 
 **Static Hosting** (Netlify, Vercel, GitHub Pages):
+
 ```bash
 npm run build
 # Deploy dist/ folder
 ```
 
 **Docker**:
+
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app
@@ -254,6 +264,7 @@ CMD ["npm", "run", "preview"]
 ```
 
 **Nginx**:
+
 ```nginx
 server {
     listen 80;

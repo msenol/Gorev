@@ -9,6 +9,7 @@
 ## 🎯 Immediate Actions (BEFORE Release)
 
 ### 1. Update README.md Version String
+
 **Priority**: 🔴 HIGH
 **Status**: ⏳ Pending
 **Effort**: 1 minute
@@ -22,6 +23,7 @@
 ```
 
 **Verification**:
+
 ```bash
 grep "Version:" README.md
 ```
@@ -29,17 +31,20 @@ grep "Version:" README.md
 ---
 
 ### 2. Go Version Documentation Update
+
 **Priority**: 🟡 MEDIUM
 **Status**: ⏳ Pending
 **Effort**: 15 minutes
 
 **Files to check and update**:
+
 - CLAUDE.md
 - README.md
 - docs/guides/getting-started/installation.md
 - docs/development/contributing.md
 
 **Search command**:
+
 ```bash
 grep -r "Go 1.22" .
 grep -r "go 1.22" .
@@ -49,6 +54,7 @@ grep -r "go 1.22" .
 **Update to**: `Go 1.23.2`
 
 **Verification**:
+
 ```bash
 cat gorev-mcpserver/go.mod | grep "^go "
 # Should show: go 1.23.2
@@ -57,6 +63,7 @@ cat gorev-mcpserver/go.mod | grep "^go "
 ---
 
 ### 3. CLAUDE.md Size Check
+
 **Priority**: 🟢 LOW (Already Verified)
 **Status**: ✅ Complete
 **Current Size**: 11,885 bytes (11KB)
@@ -64,6 +71,7 @@ cat gorev-mcpserver/go.mod | grep "^go "
 **Headroom**: 3,475 bytes (3.4KB) ✅
 
 **Verification command**:
+
 ```bash
 wc -c CLAUDE.md
 ls -lh CLAUDE.md
@@ -74,6 +82,7 @@ ls -lh CLAUDE.md
 ## 📋 Pre-Release Checklist
 
 ### Documentation Verification
+
 - [ ] README.md version updated to v0.16.0
 - [ ] Go version references updated to 1.23.2
 - [ ] CHANGELOG.md includes all v0.16.0 changes ✅ (Already done)
@@ -81,11 +90,13 @@ ls -lh CLAUDE.md
 - [ ] All release notes finalized ✅ (Already done)
 
 ### Cross-Reference Check
+
 - [ ] Run link checker on all markdown files
 - [ ] Verify all internal docs/ links work
 - [ ] Check external GitHub URLs
 
 ### Version Consistency
+
 - [ ] Makefile VERSION=0.16.0 ✅
 - [ ] gorev-vscode/package.json version matches ✅
 - [ ] Binary version injection correct ✅
@@ -96,10 +107,12 @@ ls -lh CLAUDE.md
 ## 🚀 Short-Term Actions (Next 2 Weeks)
 
 ### 1. Clean Up TODO Placeholders
+
 **Priority**: 🟡 MEDIUM
 **Effort**: 30 minutes
 
 **Files containing TODOs**:
+
 - docs/development/TASKS.md (historical - keep as-is)
 - docs/development/contributing.md
 - docs/development/ROADMAP.md
@@ -110,15 +123,18 @@ ls -lh CLAUDE.md
 ---
 
 ### 2. Expand API Reference Documentation
+
 **Priority**: 🟡 MEDIUM
 **Effort**: 2-3 hours
 
 **Enhance**:
+
 - docs/api/reference.md - Add more code examples
 - docs/api/rest-api-reference.md - Document all REST endpoints
 - Add request/response examples for each endpoint
 
 **Example additions needed**:
+
 ```markdown
 ## GET /api/tasks
 
@@ -128,11 +144,13 @@ curl http://localhost:5082/api/tasks
 ```
 
 **Response**:
+
 ```json
 {
   "tasks": [...]
 }
 ```
+
 ```
 
 ---
@@ -178,10 +196,12 @@ fi
 ---
 
 ### 2. Create Examples Directory
+
 **Priority**: 🟢 LOW
 **Effort**: 3-4 hours
 
 **Structure**:
+
 ```
 docs/examples/
 ├── README.md
@@ -202,10 +222,12 @@ docs/examples/
 ---
 
 ### 3. Video Tutorial Production
+
 **Priority**: 🟢 LOW
 **Effort**: 8-10 hours
 
 **Planned videos**:
+
 1. Installation and setup (5 min)
 2. Basic task management (10 min)
 3. VS Code extension features (8 min)
@@ -231,6 +253,7 @@ docs/examples/
 ### Tracking
 
 Monitor documentation-related:
+
 - GitHub issues tagged with "documentation"
 - User questions in Discussions
 - Contributing guide adoption rate
@@ -241,6 +264,7 @@ Monitor documentation-related:
 ## 🛠️ Tools & Resources
 
 ### Link Checking
+
 ```bash
 # Install markdown-link-check
 npm install -g markdown-link-check
@@ -250,12 +274,14 @@ find docs -name "*.md" -exec markdown-link-check {} \;
 ```
 
 ### Version Consistency Check
+
 ```bash
 # Check all version references
 grep -r "v0\." README.md CLAUDE.md docs/ | grep -v ".git"
 ```
 
 ### Documentation Statistics
+
 ```bash
 # Count all markdown files
 find . -name "*.md" | wc -l
@@ -273,6 +299,7 @@ find docs -name "*.md" -exec wc -c {} + | tail -1
 **Update Frequency**: As needed, minimum monthly review
 
 **Related Documents**:
+
 - [Comprehensive Audit Report](DOCUMENTATION_AUDIT_v0.16.0_COMPREHENSIVE.md)
 - [Release Notes v0.16.0](../releases/RELEASE_NOTES_v0.16.0.md)
 - [Bug Fixes Summary](../releases/v0.16.0_bug_fixes_summary.md)

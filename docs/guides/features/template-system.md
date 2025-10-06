@@ -27,6 +27,7 @@ Gorev's **template system** provides structured, standardized task creation with
 ### Template
 
 A **template** is a blueprint for creating tasks with:
+
 - **Unique ID**: UUID identifier
 - **Alias**: Short, memorable name (`bug`, `feature`)
 - **Category**: Grouping (Technical, Feature, Process, Research)
@@ -47,6 +48,7 @@ A **template** is a blueprint for creating tasks with:
 | `doc` | Dokümantasyon | `4c7a2e8b-...` |
 
 **Benefits**:
+
 - No need to remember or look up UUIDs
 - Consistent across all workspaces
 - Easier to use in AI assistant prompts
@@ -109,6 +111,7 @@ gorev task create --template bug \
 ```
 
 **AI Assistant Prompt**:
+
 ```
 Create a bug task for login button not responding in production
 ```
@@ -302,6 +305,7 @@ gorev template list
 ```
 
 **Output**:
+
 ```
 Available Templates:
 
@@ -351,6 +355,7 @@ gorev task create --template 39f28dbd-10f3-454c-8b35-52ae6b7ea391 \
 ```
 
 **Response**:
+
 ```markdown
 ## 📋 Görev Template'leri
 
@@ -386,6 +391,7 @@ gorev task create --template 39f28dbd-10f3-454c-8b35-52ae6b7ea391 \
 ```
 
 **Response**:
+
 ```json
 {
   "content": [{
@@ -404,6 +410,7 @@ Create a bug task for the login button issue in production
 ```
 
 AI assistant automatically:
+
 1. Selects `bug` template
 2. Prompts for required fields
 3. Fills in defaults
@@ -457,6 +464,7 @@ Right-click in Tasks TreeView → "Create Task from Template" → Select templat
 5. **Create**: Task appears in task list immediately
 
 **Features**:
+
 - Template search and filtering
 - Required field highlighting
 - Default value pre-population
@@ -526,6 +534,7 @@ Templates support **placeholder substitution** in title patterns:
 **Pattern**: `🐛 [{{modul}}] {{baslik}}`
 
 **Field Values**:
+
 ```json
 {
   "baslik": "Login hatası",
@@ -536,6 +545,7 @@ Templates support **placeholder substitution** in title patterns:
 **Generated Title**: `🐛 [auth] Login hatası`
 
 **Supported Placeholders**:
+
 - `{{fieldname}}`: Direct field value
 - `{{FIELDNAME}}`: Uppercase transformation
 - `{{fieldname|default:value}}`: Default if empty (future)
@@ -543,6 +553,7 @@ Templates support **placeholder substitution** in title patterns:
 ### Field Validation
 
 **Required Fields**:
+
 ```json
 {
   "isim": "baslik",
@@ -551,11 +562,13 @@ Templates support **placeholder substitution** in title patterns:
 ```
 
 Validation error if missing:
+
 ```
 Error: Required field 'baslik' is missing
 ```
 
 **Select Field Options**:
+
 ```json
 {
   "isim": "oncelik",
@@ -565,11 +578,13 @@ Error: Required field 'baslik' is missing
 ```
 
 Validation error if invalid:
+
 ```
 Error: Invalid value 'urgent' for field 'oncelik'. Must be one of: dusuk, orta, yuksek
 ```
 
 **Default Values**:
+
 ```json
 {
   "isim": "oncelik",
@@ -584,6 +599,7 @@ Auto-fills if not provided by user.
 Templates have language-specific field names:
 
 **Turkish**:
+
 ```json
 {
   "isim": "baslik",
@@ -592,6 +608,7 @@ Templates have language-specific field names:
 ```
 
 **English Translation** (via i18n system):
+
 ```json
 {
   "name": "title",
@@ -608,6 +625,7 @@ Language selected via `GOREV_LANG` environment variable.
 ### Creating Custom Templates (Future Feature)
 
 **CLI Command** (planned for v0.17.0):
+
 ```bash
 gorev template create \
   --name "Code Review" \
@@ -621,11 +639,13 @@ gorev template create \
 ```
 
 **JSON Import**:
+
 ```bash
 gorev template import --file my-templates.json
 ```
 
 **Web UI Template Builder**:
+
 - Drag-and-drop field creation
 - Visual field type selection
 - Real-time preview
@@ -634,16 +654,19 @@ gorev template import --file my-templates.json
 ### Template Sharing (Future Feature)
 
 **Export**:
+
 ```bash
 gorev template export --id 39f28dbd... --output bug-template.json
 ```
 
 **Import**:
+
 ```bash
 gorev template import --input bug-template.json
 ```
 
 **Template Marketplace** (planned):
+
 - Community-contributed templates
 - Category browsing
 - One-click install
@@ -667,6 +690,7 @@ gorev template import --input bug-template.json
 ### 2. Fill Required Fields Completely
 
 **Bad**:
+
 ```json
 {
   "baslik": "Fix bug"
@@ -674,6 +698,7 @@ gorev template import --input bug-template.json
 ```
 
 **Good**:
+
 ```json
 {
   "baslik": "Login button not responding",
@@ -688,16 +713,19 @@ gorev template import --input bug-template.json
 ### 3. Use Consistent Naming
 
 **Module Names**:
+
 - ✅ `auth`, `api`, `frontend`, `backend`
 - ❌ `Authentication Module`, `The API`, `Front-End`
 
 **Tags**:
+
 - ✅ `bug`, `security`, `performance`
 - ❌ `Bug Report`, `Sec Issue`, `perf`
 
 ### 4. Leverage Defaults
 
 Define sensible defaults in templates:
+
 ```json
 {
   "isim": "oncelik",
@@ -710,31 +738,37 @@ Reduces user input burden for common cases.
 ### 5. Template Selection Guidelines
 
 **Use `bug` when**:
+
 - Something is broken
 - Unexpected behavior occurs
 - Error messages appear
 
 **Use `feature` when**:
+
 - Adding new functionality
 - Enhancing existing features
 - User stories need tracking
 
 **Use `research` when**:
+
 - Evaluating new technologies
 - Performance analysis needed
 - Proof-of-concept required
 
 **Use `refactor` when**:
+
 - Code quality issues exist
 - Technical debt accumulates
 - Maintainability suffers
 
 **Use `test` when**:
+
 - Test coverage gaps identified
 - New code needs testing
 - Test framework changes
 
 **Use `doc` when**:
+
 - Documentation missing
 - README outdated
 - API docs needed
@@ -746,10 +780,12 @@ Reduces user input burden for common cases.
 ### Issue: Template Not Found
 
 **Symptoms**:
+
 - "Template not found: bug"
 - "Template ID invalid"
 
 **Solutions**:
+
 ```bash
 # List available templates
 gorev template list
@@ -764,9 +800,11 @@ gorev task create --template 39f28dbd-...
 ### Issue: Required Field Missing
 
 **Symptoms**:
+
 - "Required field 'baslik' is missing"
 
 **Solutions**:
+
 ```bash
 # Check template schema
 gorev template show --alias bug
@@ -784,9 +822,11 @@ gorev task create --template bug \
 ### Issue: Invalid Select Value
 
 **Symptoms**:
+
 - "Invalid value 'urgent' for field 'oncelik'"
 
 **Solutions**:
+
 ```bash
 # Check valid options
 gorev template show --alias bug | grep oncelik
@@ -813,11 +853,13 @@ doc       → Dokümantasyon        → 📝 Process
 ### Alias Usage in Different Contexts
 
 **CLI**:
+
 ```bash
 gorev task create --template bug ...
 ```
 
 **MCP**:
+
 ```json
 {
   "name": "templateden_gorev_olustur",
@@ -828,11 +870,13 @@ gorev task create --template bug ...
 ```
 
 **AI Assistant**:
+
 ```
 Use the bug template to create a task
 ```
 
 **Web UI**:
+
 - Template selector shows aliases prominently
 - Click "bug" card to select template
 
@@ -868,6 +912,7 @@ Use the bug template to create a task
 **Required**: All task creation must use templates
 
 **Before (v0.9.x)**:
+
 ```json
 {
   "name": "gorev_olustur",
@@ -880,6 +925,7 @@ Use the bug template to create a task
 ```
 
 **After (v0.10.0+)**:
+
 ```json
 {
   "name": "templateden_gorev_olustur",
@@ -900,6 +946,7 @@ Use the bug template to create a task
 ```
 
 **Migration Script**:
+
 ```bash
 # Export existing tasks
 gorev export --output tasks-backup.json
@@ -923,11 +970,13 @@ gorev export --output tasks-backup.json
 | `/api/tasks/from-template` | POST | Create task from template |
 
 **Example**:
+
 ```bash
 curl -X GET http://localhost:5082/api/templates
 ```
 
 **Response**:
+
 ```json
 {
   "templates": [

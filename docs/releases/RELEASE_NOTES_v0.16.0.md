@@ -9,6 +9,7 @@
 Version 0.16.0 is a **major architectural milestone** that modernizes the Gorev VS Code extension by migrating from MCP protocol (stdio + markdown parsing) to REST API (HTTP + JSON). This release also includes the previously released Web UI and REST API server.
 
 **Key Achievements:**
+
 - ✅ Complete REST API implementation (23 endpoints)
 - ✅ VS Code extension migrated to REST API (100% complete)
 - ✅ Eliminated 300+ lines of fragile markdown parsing
@@ -23,6 +24,7 @@ Version 0.16.0 is a **major architectural milestone** that modernizes the Gorev 
 The VS Code extension has been completely refactored to use REST API instead of MCP protocol.
 
 #### Benefits
+
 - **Type Safety**: Eliminated markdown parsing in favor of type-safe JSON responses
 - **Performance**: Direct HTTP calls are faster than stdio+parsing
 - **Reliability**: Structured API responses prevent parsing errors
@@ -30,6 +32,7 @@ The VS Code extension has been completely refactored to use REST API instead of 
 - **Error Handling**: Rich error messages with `ApiError` class
 
 #### Technical Details
+
 - **New API Client**: `src/api/client.ts` with 30+ methods
 - **Unified Interface**: `ClientInterface` allows both MCP and API implementations
 - **TreeView Migration**: All 3 providers (gorev, proje, template) migrated
@@ -41,6 +44,7 @@ The VS Code extension has been completely refactored to use REST API instead of 
 The React + TypeScript web application is now embedded directly into the Go binary.
 
 #### Features
+
 - **Zero Configuration**: Automatically available at http://localhost:5082
 - **Modern UI**: React 18+ with Tailwind CSS
 - **Full Functionality**: Task CRUD, project management, template system
@@ -54,6 +58,7 @@ The React + TypeScript web application is now embedded directly into the Go bina
 Complete Fiber-based REST API providing backend for both Web UI and VS Code extension.
 
 #### Endpoints (23 Total)
+
 - **Tasks**: GET, POST, PUT, DELETE with filtering and pagination
 - **Projects**: GET, POST with task counts
 - **Templates**: GET all available templates
@@ -94,6 +99,7 @@ Complete Fiber-based REST API providing backend for both Web UI and VS Code exte
 ### For End Users
 
 **No action required!** Everything works as before with these improvements:
+
 - VS Code extension is faster and more reliable
 - Web UI is now available at http://localhost:5082
 - All existing workflows continue to function
@@ -103,18 +109,21 @@ Complete Fiber-based REST API providing backend for both Web UI and VS Code exte
 If you're extending the VS Code extension:
 
 #### Before (MCP + Markdown Parsing)
+
 ```typescript
 const result = await mcpClient.callTool('gorev_listele', {});
 const tasks = MarkdownParser.parseGorevListesi(result.content[0].text);
 ```
 
 #### After (REST API + JSON)
+
 ```typescript
 const response = await apiClient.getTasks();
 const tasks = response.data; // Already typed!
 ```
 
 #### Updating Custom Commands
+
 If you've created custom commands that use `MCPClient`:
 
 ```typescript
@@ -135,12 +144,14 @@ export function myCommand(client: ClientInterface) {
 Comprehensive test suite added for all new functionality:
 
 ### Unit Tests (35 tests)
+
 - All API client methods tested
 - Error handling scenarios (404, 500, network, timeout)
 - ApiError helper methods validation
 - Response parsing and type checking
 
 ### Integration Tests - Providers (22 tests)
+
 - TreeView data loading from API
 - Model conversion (API → Domain models)
 - Refresh functionality
@@ -148,6 +159,7 @@ Comprehensive test suite added for all new functionality:
 - Empty state handling
 
 ### Integration Tests - Commands (17 tests)
+
 - Task command operations (create, update, delete)
 - Project command operations
 - User interaction flows
@@ -171,6 +183,7 @@ Total new documentation: ~2,100 lines
 ## 🔮 Future Roadmap
 
 ### v0.17.0 (Planned)
+
 - Complete dependency deletion endpoint
 - Enhanced summary endpoint with real data
 - WebSocket support for real-time updates
@@ -178,6 +191,7 @@ Total new documentation: ~2,100 lines
 - Enhanced error recovery
 
 ### v0.18.0 (Planned)
+
 - Remove deprecated MCPClient and MarkdownParser
 - Advanced query language
 - File attachment support
@@ -196,16 +210,19 @@ This release represents a significant architectural improvement that sets the fo
 ## 📦 Installation
 
 ### NPX (Recommended)
+
 ```bash
 npx @mehmetsenol/gorev-mcp-server@latest
 ```
 
 ### VS Code Extension
+
 1. Open VS Code
 2. Search for "Gorev" in Extensions
 3. Install version 0.16.0 or later
 
 ### Web UI
+
 ```bash
 cd gorev-mcpserver
 ./gorev serve --api-port 5082

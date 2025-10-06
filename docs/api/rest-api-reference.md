@@ -14,6 +14,7 @@ The Gorev REST API provides a complete HTTP interface for task management operat
 Currently, the API does not require authentication as it's designed for local development use only.
 
 **CORS Policy:**
+
 - Allowed Origins: `http://localhost:5000-5003` (development only)
 - Allowed Methods: `GET, POST, PUT, DELETE, OPTIONS`
 - Credentials: Not allowed
@@ -51,6 +52,7 @@ All API responses follow a consistent JSON structure:
 Check if the API server is running.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -79,11 +81,13 @@ List tasks with optional filtering.
 | `offset` | number | ❌ | Number of tasks to skip | `0` |
 
 **Example Request:**
+
 ```bash
 curl "http://localhost:5082/api/v1/tasks?durum=devam_ediyor&limit=10"
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -113,14 +117,17 @@ curl "http://localhost:5082/api/v1/tasks?durum=devam_ediyor&limit=10"
 Get detailed information about a specific task.
 
 **Path Parameters:**
+
 - `id` (string, required): Task UUID
 
 **Example Request:**
+
 ```bash
 curl "http://localhost:5082/api/v1/tasks/550e8400-e29b-41d4-a716-446655440000"
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -160,6 +167,7 @@ curl "http://localhost:5082/api/v1/tasks/550e8400-e29b-41d4-a716-446655440000"
 **⚠️ DEPRECATED**: Direct task creation is deprecated. Use `/api/v1/tasks/from-template` instead.
 
 **Response:**
+
 ```json
 {
   "success": false,
@@ -172,6 +180,7 @@ curl "http://localhost:5082/api/v1/tasks/550e8400-e29b-41d4-a716-446655440000"
 Create a new task from a template.
 
 **Request Body:**
+
 ```json
 {
   "template_id": "39f28dbd-10f3-454c-8b35-52ae6b7ea391",
@@ -190,6 +199,7 @@ Create a new task from a template.
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -208,9 +218,11 @@ Create a new task from a template.
 Update an existing task.
 
 **Path Parameters:**
+
 - `id` (string, required): Task UUID
 
 **Request Body:**
+
 ```json
 {
   "durum": "tamamlandi"
@@ -218,12 +230,14 @@ Update an existing task.
 ```
 
 **Supported Fields:**
+
 - `durum`: Status (beklemede, devam_ediyor, tamamlandi)
 - `oncelik`: Priority (dusuk, orta, yuksek)
 - `baslik`: Title (string)
 - `aciklama`: Description (markdown string)
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -241,9 +255,11 @@ Update an existing task.
 Delete a task permanently.
 
 **Path Parameters:**
+
 - `id` (string, required): Task UUID
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -260,6 +276,7 @@ Delete a task permanently.
 List all projects with task counts.
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -288,9 +305,11 @@ List all projects with task counts.
 Get detailed information about a specific project.
 
 **Path Parameters:**
+
 - `id` (string, required): Project UUID
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -309,6 +328,7 @@ Get detailed information about a specific project.
 Create a new project.
 
 **Request Body:**
+
 ```json
 {
   "isim": "Mobile App v3.0",
@@ -317,6 +337,7 @@ Create a new project.
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -336,18 +357,22 @@ Create a new project.
 Get all tasks for a specific project.
 
 **Path Parameters:**
+
 - `id` (string, required): Project UUID
 
 **Query Parameters:**
+
 - `limit` (number, optional): Max tasks to return (default: 50)
 - `offset` (number, optional): Number of tasks to skip (default: 0)
 
 **Example Request:**
+
 ```bash
 curl "http://localhost:5082/api/v1/projects/6ba7b810-9dad-11d1-80b4-00c04fd430c8/tasks?limit=10"
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -363,9 +388,11 @@ curl "http://localhost:5082/api/v1/projects/6ba7b810-9dad-11d1-80b4-00c04fd430c8
 Set a project as the active project.
 
 **Path Parameters:**
+
 - `id` (string, required): Project UUID
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -387,14 +414,17 @@ Set a project as the active project.
 List all available task templates.
 
 **Query Parameters:**
+
 - `kategori` (string, optional): Filter by category
 
 **Example Request:**
+
 ```bash
 curl "http://localhost:5082/api/v1/templates?kategori=Teknik"
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -435,6 +465,7 @@ curl "http://localhost:5082/api/v1/templates?kategori=Teknik"
 Get system-wide summary statistics.
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -453,9 +484,11 @@ Get system-wide summary statistics.
 Create a subtask under a parent task.
 
 **Path Parameters:**
+
 - `id` (string, required): Parent task UUID
 
 **Request Body:**
+
 ```json
 {
   "baslik": "Implement API endpoint",
@@ -467,6 +500,7 @@ Create a subtask under a parent task.
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -485,9 +519,11 @@ Create a subtask under a parent task.
 Change the parent of a task.
 
 **Path Parameters:**
+
 - `id` (string, required): Task UUID to move
 
 **Request Body:**
+
 ```json
 {
   "new_parent_id": "new-parent-uuid"
@@ -497,6 +533,7 @@ Change the parent of a task.
 **Note:** Leave `new_parent_id` empty string to move task to root level.
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -513,9 +550,11 @@ Change the parent of a task.
 Get the full hierarchy of a task (parent chain and all subtasks).
 
 **Path Parameters:**
+
 - `id` (string, required): Task UUID
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -546,9 +585,11 @@ Get the full hierarchy of a task (parent chain and all subtasks).
 Add a dependency between tasks (task `:id` depends on `kaynak_id`).
 
 **Path Parameters:**
+
 - `id` (string, required): Target task UUID (dependent task)
 
 **Request Body:**
+
 ```json
 {
   "kaynak_id": "prerequisite-task-uuid",
@@ -557,6 +598,7 @@ Add a dependency between tasks (task `:id` depends on `kaynak_id`).
 ```
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -569,6 +611,7 @@ Add a dependency between tasks (task `:id` depends on `kaynak_id`).
 Remove a dependency between tasks.
 
 **Path Parameters:**
+
 - `id` (string, required): Target task UUID
 - `dep_id` (string, required): Source task UUID (dependency to remove)
 
@@ -583,6 +626,7 @@ Remove a dependency between tasks.
 Get the currently active project.
 
 **Example Response (with active project):**
+
 ```json
 {
   "success": true,
@@ -595,6 +639,7 @@ Get the currently active project.
 ```
 
 **Example Response (no active project):**
+
 ```json
 {
   "success": true,
@@ -608,6 +653,7 @@ Get the currently active project.
 Remove the active project setting.
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -624,6 +670,7 @@ Remove the active project setting.
 Get the current MCP server language setting.
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -636,6 +683,7 @@ Get the current MCP server language setting.
 Change the MCP server language.
 
 **Request Body:**
+
 ```json
 {
   "language": "en"
@@ -643,10 +691,12 @@ Change the MCP server language.
 ```
 
 **Supported Languages:**
+
 - `tr`: Turkish
 - `en`: English
 
 **Example Response:**
+
 ```json
 {
   "success": true,
@@ -656,6 +706,7 @@ Change the MCP server language.
 ```
 
 **Notes:**
+
 - Language change affects all subsequent MCP tool responses
 - Web UI automatically syncs language with this endpoint
 - Language preference is stored server-side (not persisted across restarts)
@@ -675,6 +726,7 @@ Change the MCP server language.
 ### Common Error Responses
 
 **400 Bad Request:**
+
 ```json
 {
   "success": false,
@@ -683,6 +735,7 @@ Change the MCP server language.
 ```
 
 **404 Not Found:**
+
 ```json
 {
   "success": false,
@@ -691,6 +744,7 @@ Change the MCP server language.
 ```
 
 **500 Internal Server Error:**
+
 ```json
 {
   "success": false,
@@ -703,6 +757,7 @@ Change the MCP server language.
 Currently, there is no rate limiting implemented. The API is designed for local development use.
 
 **Future Considerations:**
+
 - Implement token bucket algorithm for production use
 - Default: 100 requests per minute per IP
 - Burst: 20 requests
@@ -712,6 +767,7 @@ Currently, there is no rate limiting implemented. The API is designed for local 
 List endpoints support pagination via `limit` and `offset` parameters.
 
 **Example:**
+
 ```bash
 # Get first 10 tasks
 GET /api/v1/tasks?limit=10&offset=0
@@ -721,6 +777,7 @@ GET /api/v1/tasks?limit=10&offset=10
 ```
 
 **Best Practices:**
+
 - Default `limit`: 50
 - Maximum `limit`: 100
 - Use `total` field in response to calculate total pages
