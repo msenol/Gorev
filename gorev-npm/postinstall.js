@@ -168,10 +168,20 @@ async function downloadBinary(platformInfo, version) {
 
     const binaryPath = path.join(targetDir, binaryName);
 
-    // Remove old binary if it exists to ensure we always get the latest version
+    // Check if binary already exists in the package (bundled binaries)
     if (fs.existsSync(binaryPath)) {
-        console.log(`Removing existing binary: ${binaryPath}`);
-        safeUnlink(binaryPath);
+        // Verify the binary is executable and valid
+        try {
+            if (process.platform !== 'win32') {
+                fs.chmodSync(binaryPath, 0o755);
+            }
+            console.log(`✅ Binary already exists: ${binaryPath}`);
+            console.log('Skipping download (using bundled binary)...');
+            return; // Skip download if binary exists
+        } catch (err) {
+            console.log(`Existing binary is invalid, will re-download: ${err.message}`);
+            safeUnlink(binaryPath);
+        }
     }
 
     // Construct download URL
