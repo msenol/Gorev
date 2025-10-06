@@ -72,6 +72,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### 🐛 Bug Fixes
 
+- **NPM Package Upgrade Reliability** (CRITICAL): Version-aware binary checking prevents upgrade issues
+  - **Problem**: v0.16.3 initially regressed v0.16.2 fix by blindly using bundled binaries
+  - **Impact**: Users upgrading from older versions would keep outdated binaries
+  - **Solution**: Implemented version detection via `binary version` command
+  - **Behavior**:
+    - Fresh install: Uses bundled binary (offline support)
+    - Upgrade: Detects version mismatch, downloads new binary
+    - Offline: Falls back to bundled binary if version check fails
+  - **Best of Both Worlds**: Offline installation + reliable upgrades
+  - **Files**: `gorev-npm/postinstall.js` (lines 179-209)
 - **NPM Wrapper**: Fixed `bin/gorev-mcp` missing `wrapper.main()` call
 - **Binary Installation**: Improved postinstall.js reliability
 - **VS Code**: Fixed extension not connecting to freshly started server

@@ -170,14 +170,43 @@ async function downloadBinary(platformInfo, version) {
 
     // Check if binary already exists in the package (bundled binaries)
     if (fs.existsSync(binaryPath)) {
-        // Verify the binary is executable and valid
+        // Verify the binary is executable and has correct version
         try {
             if (process.platform !== 'win32') {
                 fs.chmodSync(binaryPath, 0o755);
             }
-            console.log(`✅ Binary already exists: ${binaryPath}`);
-            console.log('Skipping download (using bundled binary)...');
-            return; // Skip download if binary exists
+
+            // Check binary version to ensure it matches package version
+            const { execSync } = require('child_process');
+            try {
+                const binaryVersion = execSync(`"${binaryPath}" version`, {
+                    encoding: 'utf8',
+                    timeout: 5000,
+                    stdio: ['ignore', 'pipe', 'ignore']
+                }).trim();
+
+                // Extract version from output (format: "Gorev vX.Y.Z" or just "vX.Y.Z")
+                const versionMatch = binaryVersion.match(/v?\d+\.\d+\.\d+/);
+                const extractedVersion = versionMatch ? versionMatch[0] : null;
+
+                // Remove 'v' prefix from both for comparison
+                const normalizedBinaryVersion = extractedVersion ? extractedVersion.replace(/^v/, '') : null;
+                const normalizedPackageVersion = version.replace(/^v/, '');
+
+                if (normalizedBinaryVersion === normalizedPackageVersion) {
+                    console.log(`✅ Binary already exists with correct version: ${binaryPath} (v${normalizedBinaryVersion})`);
+                    console.log('Skipping download (using bundled binary)...');
+                    return; // Skip download if binary exists with correct version
+                } else {
+                    console.log(`⚠️  Existing binary version mismatch: ${normalizedBinaryVersion} != ${normalizedPackageVersion}`);
+                    console.log(`Removing outdated binary and downloading new version...`);
+                    safeUnlink(binaryPath);
+                }
+            } catch (versionErr) {
+                // Binary exists but version check failed - treat as bundled binary from fresh install
+                console.log(`✅ Using bundled binary (version check skipped): ${binaryPath}`);
+                return; // Skip download for bundled binaries in fresh installs
+            }
         } catch (err) {
             console.log(`Existing binary is invalid, will re-download: ${err.message}`);
             safeUnlink(binaryPath);
