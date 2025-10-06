@@ -7,6 +7,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.3] - 2025-10-07
+
+### Added
+
+#### 🚀 Daemon Architecture (Major Feature)
+
+- **Background Daemon Process**: Gorev now runs as a persistent background service
+  - Single daemon serves multiple MCP clients simultaneously (Claude, VS Code, Cursor, Windsurf)
+  - Lock file mechanism at `~/.gorev-daemon/.lock` ensures single instance
+  - Multi-client MCP proxy with JSON-RPC 2.0 protocol handling
+  - **Files**: `cmd/gorev/daemon.go`, `cmd/gorev/mcp_proxy.go`, `cmd/gorev/process_manager.go`
+
+- **Multi-Client Support**: Multiple AI assistants can connect to same workspace
+  - Each client gets unique ID for request routing
+  - Shared workspace state across all clients
+  - Concurrent MCP request handling
+  - **Files**: `internal/api/mcp_bridge.go`
+
+- **Real-Time Updates**: WebSocket-based task synchronization
+  - WebSocket hub broadcasts updates to all connected clients
+  - VS Code extension receives real-time task changes
+  - Database file watcher detects external modifications
+  - **Files**: `internal/websocket/hub.go`, `gorev-vscode/src/managers/websocketClient.ts`
+
+- **VS Code Auto-Start**: Extension automatically detects and starts daemon
+  - Checks for running daemon via lock file
+  - Starts daemon if not running
+  - Registers workspace automatically
+  - **Files**: `gorev-vscode/src/managers/unifiedServerManager.ts`
+
+- **Multi-Workspace Support**: SHA256-based workspace isolation
+  - Each workspace gets unique ID (first 16 chars of SHA256 hash)
+  - Separate databases per workspace
+  - Workspace context in HTTP headers (`X-Workspace-Id`, `X-Workspace-Path`, `X-Workspace-Name`)
+  - **Files**: `internal/api/workspace_manager.go`, `internal/api/workspace_models.go`
+
+#### 🔧 Commands
+
+- `gorev daemon` - Daemon lifecycle management
+- `gorev daemon-status` - Check daemon status
+- `gorev daemon-stop` - Stop running daemon
+- `gorev mcp-proxy` - MCP proxy to daemon (for AI assistants)
+
+### Changed
+
+#### ⚡ Architecture Changes
+
+- **MCP Server**: Now runs as background daemon (port 5082)
+  - Old: `npx gorev serve` (foreground)
+  - New: `npx gorev daemon --detach` (background) or VS Code auto-starts
+- **VS Code Extension**: Uses REST API + WebSocket instead of direct MCP
+  - Better performance with async operations
+  - Real-time updates without polling
+  - Reduced resource usage
+
+#### 📚 Documentation
+
+- Added comprehensive daemon architecture documentation
+- Updated MCP configuration examples
+- Added multi-workspace usage guide
+
+### Fixed
+
+#### 🐛 Bug Fixes
+
+- **NPM Wrapper**: Fixed `bin/gorev-mcp` missing `wrapper.main()` call
+- **Binary Installation**: Improved postinstall.js reliability
+- **VS Code**: Fixed extension not connecting to freshly started server
+
+### Technical Details
+
+**Core Architecture:**
+- Lock File: `~/.gorev-daemon/.lock` (JSON format with PID, port, start time)
+- Health Check: `http://localhost:5082/api/v1/health`
+- WebSocket: `ws://localhost:5082/ws?workspace_id=<id>`
+- REST API: 23 endpoints for CRUD operations
+
+**Dependencies Added:**
+- `github.com/gofiber/contrib/websocket` v1.3.4
+- WebSocket support for real-time updates
+
+**Performance:**
+- Multi-client support with minimal overhead
+- Shared database connections
+- Efficient workspace context caching
+
 ## [0.16.2] - 2025-10-05
 
 ### Fixed
