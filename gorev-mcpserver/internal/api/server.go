@@ -700,7 +700,7 @@ func (s *APIServer) addDependency(c *fiber.Ctx) error {
 
 	// Add dependency using business logic with workspace context
 	iy := s.getIsYoneticiFromContext(c)
-	if _, err := iy.GorevBagimlilikEkle(req.KaynakID, hedefID, req.BaglantiTipi); err != nil{
+	if _, err := iy.GorevBagimlilikEkle(req.KaynakID, hedefID, req.BaglantiTipi); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to add dependency from %s to %s: %v", req.KaynakID, hedefID, err))
 	}
 

@@ -12,9 +12,9 @@ import (
 func getMigrationsPath() string {
 	// Assuming tests run from project root or internal/api directory
 	paths := []string{
-		"internal/veri/migrations",                    // From project root
-		"../veri/migrations",                          // From internal/api
-		"../../internal/veri/migrations",              // From test subdirectory
+		"internal/veri/migrations",       // From project root
+		"../veri/migrations",             // From internal/api
+		"../../internal/veri/migrations", // From test subdirectory
 		"/home/msenol/Projects/Gorev/gorev-mcpserver/internal/veri/migrations", // Absolute fallback
 	}
 

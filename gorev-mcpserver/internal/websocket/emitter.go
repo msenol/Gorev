@@ -140,11 +140,13 @@ func NewNoOpEventEmitter() *NoOpEventEmitter {
 	return &NoOpEventEmitter{}
 }
 
-func (e *NoOpEventEmitter) EmitTaskCreated(workspaceID, taskID string, data map[string]interface{})    {}
-func (e *NoOpEventEmitter) EmitTaskUpdated(workspaceID, taskID string, data map[string]interface{})    {}
-func (e *NoOpEventEmitter) EmitTaskDeleted(workspaceID, taskID string)                                 {}
-func (e *NoOpEventEmitter) EmitProjectCreated(workspaceID, projectID string, data map[string]interface{}) {}
-func (e *NoOpEventEmitter) EmitProjectUpdated(workspaceID, projectID string, data map[string]interface{}) {}
-func (e *NoOpEventEmitter) EmitProjectDeleted(workspaceID, projectID string)                           {}
-func (e *NoOpEventEmitter) EmitTemplateChanged(workspaceID string)                                     {}
-func (e *NoOpEventEmitter) EmitWorkspaceSync(workspaceID string)                                       {}
+func (e *NoOpEventEmitter) EmitTaskCreated(workspaceID, taskID string, data map[string]interface{}) {}
+func (e *NoOpEventEmitter) EmitTaskUpdated(workspaceID, taskID string, data map[string]interface{}) {}
+func (e *NoOpEventEmitter) EmitTaskDeleted(workspaceID, taskID string)                              {}
+func (e *NoOpEventEmitter) EmitProjectCreated(workspaceID, projectID string, data map[string]interface{}) {
+}
+func (e *NoOpEventEmitter) EmitProjectUpdated(workspaceID, projectID string, data map[string]interface{}) {
+}
+func (e *NoOpEventEmitter) EmitProjectDeleted(workspaceID, projectID string) {}
+func (e *NoOpEventEmitter) EmitTemplateChanged(workspaceID string)           {}
+func (e *NoOpEventEmitter) EmitWorkspaceSync(workspaceID string)             {}

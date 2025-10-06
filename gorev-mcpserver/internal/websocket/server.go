@@ -12,14 +12,14 @@ import (
 type EventType string
 
 const (
-	EventTaskCreated   EventType = "task_created"
-	EventTaskUpdated   EventType = "task_updated"
-	EventTaskDeleted   EventType = "task_deleted"
-	EventProjectCreated EventType = "project_created"
-	EventProjectUpdated EventType = "project_updated"
-	EventProjectDeleted EventType = "project_deleted"
+	EventTaskCreated     EventType = "task_created"
+	EventTaskUpdated     EventType = "task_updated"
+	EventTaskDeleted     EventType = "task_deleted"
+	EventProjectCreated  EventType = "project_created"
+	EventProjectUpdated  EventType = "project_updated"
+	EventProjectDeleted  EventType = "project_deleted"
 	EventTemplateChanged EventType = "template_changed"
-	EventWorkspaceSync  EventType = "workspace_sync"
+	EventWorkspaceSync   EventType = "workspace_sync"
 )
 
 // ChangeEvent represents a database change event
@@ -166,7 +166,7 @@ func (c *Client) ReadPump(hub *Hub) {
 			if msgType == "ping" {
 				// Send pong
 				pong := map[string]interface{}{
-					"type": "pong",
+					"type":      "pong",
 					"timestamp": msg["timestamp"],
 				}
 				c.Conn.WriteJSON(pong)

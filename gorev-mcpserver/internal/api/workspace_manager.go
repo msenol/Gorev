@@ -275,9 +275,9 @@ func findMigrationsPath() string {
 
 	// List of possible migration paths (relative to CWD)
 	possiblePaths := []string{
-		"internal/veri/migrations",           // From project root
-		"../veri/migrations",                 // From internal/api
-		"../../internal/veri/migrations",     // From test subdirectory
+		"internal/veri/migrations",       // From project root
+		"../veri/migrations",             // From internal/api
+		"../../internal/veri/migrations", // From test subdirectory
 		filepath.Join(cwd, "internal/veri/migrations"),
 		filepath.Join(filepath.Dir(cwd), "veri/migrations"),
 		filepath.Join(filepath.Dir(filepath.Dir(cwd)), "internal/veri/migrations"),
