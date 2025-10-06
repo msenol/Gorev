@@ -268,10 +268,15 @@ async function main() {
         console.log('  "mcpServers": {');
         console.log('    "gorev": {');
         console.log('      "command": "npx",');
-        console.log('      "args": ["@mehmetsenol/gorev-mcp-server"]');
+        console.log('      "args": [');
+        console.log('        "@mehmetsenol/gorev-mcp-server",');
+        console.log('        "mcp-proxy"');
+        console.log('      ]');
         console.log('    }');
         console.log('  }');
         console.log('}');
+        console.log('');
+        console.log('Note: Daemon auto-starts on first MCP connection. No manual setup required!');
 
     } catch (err) {
         console.error('❌ Installation failed:', err.message);

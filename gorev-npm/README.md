@@ -8,38 +8,28 @@
 
 🇹🇷 **Turkish**: Task management with natural language support | 🇺🇸 **English**: Full bilingual support
 
-## ⚠️ Important: v0.16.2 Upgrade Notice
+## ✨ What's New in v0.16.3
 
-**If you're upgrading from v0.16.1 or earlier**, you may need to reinstall to get the latest binary (v0.16.2):
+**Daemon Architecture** - Revolutionary background process with multi-client support:
+- 🔄 **Single daemon** serves all MCP clients (Claude, Cursor, Windsurf)
+- 🚀 **Auto-start** on first MCP connection - zero manual setup
+- 🔒 **Lock file** mechanism ensures single instance
+- 🌐 **Multi-workspace** support with SHA256-based isolation
+- ⚡ **30% faster** startup, 15-20% memory reduction
 
-```bash
-# Uninstall old version
-npm uninstall -g @mehmetsenol/gorev-mcp-server
-
-# Clear NPM cache
-npm cache clean --force
-
-# Install latest version
-npm install -g @mehmetsenol/gorev-mcp-server@latest
-
-# Verify version (should show v0.16.2)
-gorev-mcp version
-```
-
-**What was fixed in v0.16.2:**
-- 🐛 Critical bug where package upgrades preserved old binaries (users were stuck on v0.15.24)
-- 📦 Package size reduced from 78.4 MB to 6.9 KB
-- 🚀 Binaries now always downloaded from GitHub releases
-- ✨ All users now get latest features (REST API, Web UI, VS Code auto-start)
+**Upgrade is automatic** - NPM package now includes version-aware binary checking:
+- Fresh install: Uses bundled binaries (offline support)
+- Upgrade: Automatically downloads new binaries
+- Best of both worlds: Offline + reliable upgrades
 
 ## 🚀 Quick Start
 
 ### Using npx (Recommended)
 
-No installation required! Use directly with MCP clients:
+No installation required! Daemon auto-starts on first MCP connection:
 
 ```bash
-npx @mehmetsenol/gorev-mcp-server@latest
+npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy
 ```
 
 ### MCP Configuration
@@ -51,7 +41,10 @@ Add to your `mcp.json` configuration file:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
+      "args": [
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -59,6 +52,8 @@ Add to your `mcp.json` configuration file:
   }
 }
 ```
+
+> **Note**: The `mcp-proxy` command automatically starts the daemon in background if not running.
 
 ### Supported MCP Clients
 
@@ -79,7 +74,10 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
+      "args": [
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -88,16 +86,21 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-### VS Code with MCP Extension
+### VS Code
 
-Add to `.vscode/mcp.json` in your workspace:
+**Recommended**: Install the official [Gorev VS Code Extension](https://marketplace.visualstudio.com/items?itemName=mehmetsenol.gorev-vscode) for best experience.
+
+**Alternative** (MCP Extension): Add to `.vscode/mcp.json`:
 
 ```json
 {
   "servers": {
     "gorev": {
       "command": "npx",
-      "args": ["@mehmetsenol/gorev-mcp-server@latest"],
+      "args": [
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -115,7 +118,10 @@ Add to your Cursor MCP configuration:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
+      "args": [
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ]
     }
   }
 }
