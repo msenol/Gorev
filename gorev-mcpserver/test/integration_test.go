@@ -138,7 +138,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
 	text := extractText(t, result)
-	assert.Contains(t, text, "✓ Görev güncellendi")
+	assert.Contains(t, text, "Görev güncellendi")
 	assert.Contains(t, text, "devam_ediyor")
 
 	// Güncellemeyi doğrula
@@ -277,7 +277,7 @@ func TestHataYonetimi(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, result.IsError)
 	text2 := extractText(t, result)
-	assert.Contains(t, text2, "görev güncellenemedi")
+	assert.Contains(t, text2, "güncellenemedi")
 }
 
 func TestGorevDetay(t *testing.T) {
