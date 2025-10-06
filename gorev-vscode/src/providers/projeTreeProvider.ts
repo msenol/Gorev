@@ -4,8 +4,9 @@ import { ApiClient, ApiError, Project } from '../api/client';
 import { Proje } from '../models/proje';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
+import { RefreshProvider, RefreshTarget } from '../managers/refreshManager';
 
-export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem> {
+export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>, RefreshProvider {
   private _onDidChangeTreeData = new vscode.EventEmitter<ProjeTreeItem | undefined | null | void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
@@ -54,6 +55,17 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
     await this.loadProjects();
     await this.loadActiveProject();
     this._onDidChangeTreeData.fire();
+  }
+
+  /**
+   * RefreshProvider interface implementation
+   */
+  getName(): string {
+    return 'ProjeTreeProvider';
+  }
+
+  supportsTarget(target: RefreshTarget): boolean {
+    return target === RefreshTarget.PROJECTS || target === RefreshTarget.ALL;
   }
 
   private async loadProjects(): Promise<void> {

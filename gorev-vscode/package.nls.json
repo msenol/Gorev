@@ -3,9 +3,10 @@
   "description": "🚀 **Ultra-Comprehensive Task Management System** - Professional-grade task management with unlimited subtask hierarchy, advanced dependency visualization, smart progress tracking, AI-powered natural language processing, and enterprise-level data export/import capabilities. Seamlessly integrates with MCP-compatible AI assistants (Claude, VS Code, Windsurf, Cursor) featuring 48 powerful MCP tools, advanced search & filtering with 6 specialized tools, template-based task creation with 9+ pre-built templates, workspace/global database modes, performance monitoring with RefreshManager architecture (90% performance improvement), full bilingual Turkish/English support with 668+ localization keys, and zero-installation NPX setup. Perfect for developers, teams, and power users who demand sophisticated task organization with AI assistant integration.",
   
   "command.createTask": "Create Task",
-  "command.refreshTasks": "Refresh Tasks", 
+  "command.refreshTasks": "Refresh Tasks",
   "command.createProject": "Create Project",
   "command.setActiveProject": "Set Active Project",
+  "command.refreshProjects": "Refresh Projects",
   "command.showTaskDetail": "Show Task Details",
   "command.updateTaskStatus": "Update Task Status",
   "command.deleteTask": "Delete Task",

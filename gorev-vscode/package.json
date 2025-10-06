@@ -2,7 +2,7 @@
   "name": "gorev-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.16.1",
+  "version": "0.16.3",
   "publisher": "mehmetsenol",
   "icon": "media/icon.png",
   "engines": {
@@ -438,6 +438,12 @@
         "category": "Gorev"
       },
       {
+        "command": "gorev.refreshProjects",
+        "title": "%command.refreshProjects%",
+        "category": "Gorev",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "gorev.showTaskDetail",
         "title": "%command.showTaskDetail%",
         "category": "Gorev"
@@ -828,7 +834,12 @@
         {
           "command": "gorev.createProject",
           "when": "view == gorevProjects",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "gorev.refreshProjects",
+          "when": "view == gorevProjects",
+          "group": "navigation@2"
         },
         {
           "command": "gorev.openTemplateWizard",
@@ -1078,8 +1089,10 @@
   },
   "dependencies": {
     "@types/axios": "^0.9.36",
+    "@types/ws": "^8.18.1",
     "@vscode/l10n": "^0.0.18",
     "axios": "^1.12.2",
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^9.0.1",
+    "ws": "^8.18.3"
   }
 }

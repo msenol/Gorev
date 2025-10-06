@@ -643,17 +643,43 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 		return result, nil
 	}
 
-	durum, result := h.toolHelpers.Validator.ValidateTaskStatus(params, true)
-	if result != nil {
-		return result, nil
+	// Check if we have durum or oncelik (at least one required)
+	durum, durumResult := h.toolHelpers.Validator.ValidateTaskStatus(params, false)
+	oncelik, oncelikResult := h.toolHelpers.Validator.ValidateTaskPriority(params, false)
+
+	// If both are invalid/missing, return error
+	if durumResult != nil && oncelikResult != nil {
+		return mcp.NewToolResultError("durum veya oncelik parametresi gerekli"), nil
 	}
 
-	if err := h.isYonetici.GorevDurumGuncelle(id, durum); err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("görev güncellenemedi", err), nil
+	// Update status if provided
+	if durum != "" {
+		if err := h.isYonetici.GorevDurumGuncelle(id, durum); err != nil {
+			return h.toolHelpers.ErrorFormatter.FormatOperationError("görev durumu güncellenemedi", err), nil
+		}
+	}
+
+	// Update priority if provided
+	if oncelik != "" {
+		updateParams := map[string]interface{}{
+			"oncelik": oncelik,
+		}
+		if err := h.isYonetici.VeriYonetici().GorevGuncelle(id, updateParams); err != nil {
+			return h.toolHelpers.ErrorFormatter.FormatOperationError("görev önceliği güncellenemedi", err), nil
+		}
+	}
+
+	// Build success message
+	var updates []string
+	if durum != "" {
+		updates = append(updates, fmt.Sprintf("durum: %s", durum))
+	}
+	if oncelik != "" {
+		updates = append(updates, fmt.Sprintf("öncelik: %s", oncelik))
 	}
 
 	return mcp.NewToolResultText(
-		h.toolHelpers.Formatter.FormatSuccessMessage("Görev güncellendi", id, durum),
+		fmt.Sprintf("✅ Görev güncellendi (ID: %s)\n%s", id, strings.Join(updates, ", ")),
 	), nil
 }
 
@@ -3029,6 +3055,17 @@ func (h *Handlers) GorevSearchAdvanced(params map[string]interface{}) (*mcp.Call
 		}
 	}
 
+	// Parse query string for "key:value" patterns and add to filters
+	// Supports queries like "durum:devam_ediyor oncelik:yuksek"
+	if query != "" && len(options.Filters) == 0 {
+		parsedFilters := parseQueryFilters(query)
+		if len(parsedFilters) > 0 {
+			options.Filters = parsedFilters
+			// Clear query if it was fully parsed into filters
+			options.Query = ""
+		}
+	}
+
 	// Extract search fields if provided
 	if fieldsParam, ok := params["search_fields"]; ok {
 		if fields, ok := fieldsParam.([]interface{}); ok {
@@ -3256,4 +3293,301 @@ func (h *Handlers) GorevSearchHistory(params map[string]interface{}) (*mcp.CallT
 	}
 
 	return mcp.NewToolResultText(responseText), nil
+}
+
+// ============================================================================
+// UNIFIED HANDLERS - Optimized Tool Set
+// ============================================================================
+
+// AktifProje - Unified handler for active project operations
+// Replaces: AktifProjeAyarla, AktifProjeGoster, AktifProjeKaldir
+func (h *Handlers) AktifProje(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	action, ok := params["action"].(string)
+	if !ok {
+		return mcp.NewToolResultError("action parameter is required (set|get|clear)"), nil
+	}
+
+	switch action {
+	case "set":
+		return h.AktifProjeAyarla(params)
+	case "get":
+		return h.AktifProjeGoster(params)
+	case "clear":
+		return h.AktifProjeKaldir(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: set|get|clear)", action)), nil
+	}
+}
+
+// GorevBulk - Unified handler for bulk operations
+// Replaces: GorevBulkTransition, GorevBulkTag, GorevBatchUpdate
+func (h *Handlers) GorevBulk(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	operation, ok := params["operation"].(string)
+	if !ok {
+		return mcp.NewToolResultError("operation parameter is required (transition|tag|update)"), nil
+	}
+
+	// Get ids array (required for all operations)
+	idsRaw, ok := params["ids"]
+	if !ok {
+		return mcp.NewToolResultError("ids parameter is required"), nil
+	}
+
+	// Transform unified parameters to operation-specific format
+	transformedParams := make(map[string]interface{})
+
+	// Extract data object
+	data, hasData := params["data"].(map[string]interface{})
+
+	switch operation {
+	case "transition":
+		// Transform: ids → task_ids
+		transformedParams["task_ids"] = idsRaw
+
+		if hasData {
+			// Accept both "durum" and "yeni_durum" for flexibility
+			if durum, ok := data["durum"].(string); ok {
+				transformedParams["durum"] = durum
+			} else if yeniDurum, ok := data["yeni_durum"].(string); ok {
+				transformedParams["durum"] = yeniDurum
+			}
+
+			// Optional parameters
+			if force, ok := data["force"].(bool); ok {
+				transformedParams["force"] = force
+			}
+			if checkDeps, ok := data["check_dependencies"].(bool); ok {
+				transformedParams["check_dependencies"] = checkDeps
+			}
+			if dryRun, ok := data["dry_run"].(bool); ok {
+				transformedParams["dry_run"] = dryRun
+			}
+		}
+
+		return h.GorevBulkTransition(transformedParams)
+
+	case "tag":
+		// Transform: ids → task_ids
+		transformedParams["task_ids"] = idsRaw
+
+		if hasData {
+			// data.tags → tags
+			if tags, ok := data["tags"]; ok {
+				transformedParams["tags"] = tags
+			}
+
+			// Accept both "operation" and "tag_operation"
+			if op, ok := data["operation"].(string); ok {
+				transformedParams["operation"] = op
+			} else if tagOp, ok := data["tag_operation"].(string); ok {
+				transformedParams["operation"] = tagOp
+			}
+
+			// Optional parameters
+			if dryRun, ok := data["dry_run"].(bool); ok {
+				transformedParams["dry_run"] = dryRun
+			}
+		}
+
+		return h.GorevBulkTag(transformedParams)
+
+	case "update":
+		// Transform: ids + data → updates array
+		// GorevBatchUpdate expects: {"updates": [{"id": "...", "field1": "...", ...}]}
+		idsArray, ok := idsRaw.([]interface{})
+		if !ok {
+			return mcp.NewToolResultError("ids must be an array"), nil
+		}
+
+		if !hasData || len(data) == 0 {
+			return mcp.NewToolResultError("data object is required for update operation"), nil
+		}
+
+		// Create updates array: each id gets the same data fields
+		updates := make([]interface{}, len(idsArray))
+		for i, idRaw := range idsArray {
+			id, ok := idRaw.(string)
+			if !ok {
+				return mcp.NewToolResultError(fmt.Sprintf("invalid id at index %d", i)), nil
+			}
+
+			updateObj := map[string]interface{}{"id": id}
+			// Copy all data fields to this update object
+			for key, value := range data {
+				updateObj[key] = value
+			}
+			updates[i] = updateObj
+		}
+
+		transformedParams["updates"] = updates
+		return h.GorevBatchUpdate(transformedParams)
+
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid operation: %s (expected: transition|tag|update)", operation)), nil
+	}
+}
+
+// GorevHierarchy - Unified handler for hierarchy operations
+// Replaces: GorevAltGorevOlustur, GorevUstDegistir, GorevHiyerarsiGoster
+func (h *Handlers) GorevHierarchy(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	action, ok := params["action"].(string)
+	if !ok {
+		return mcp.NewToolResultError("action parameter is required (create_subtask|change_parent|show)"), nil
+	}
+
+	switch action {
+	case "create_subtask":
+		return h.GorevAltGorevOlustur(params)
+	case "change_parent":
+		return h.GorevUstDegistir(params)
+	case "show":
+		return h.GorevHiyerarsiGoster(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: create_subtask|change_parent|show)", action)), nil
+	}
+}
+
+// GorevFilterProfile - Unified handler for filter profile operations
+// Replaces: GorevFilterProfileSave, GorevFilterProfileLoad, GorevFilterProfileList, GorevFilterProfileDelete
+func (h *Handlers) GorevFilterProfile(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	action, ok := params["action"].(string)
+	if !ok {
+		return mcp.NewToolResultError("action parameter is required (save|load|list|delete)"), nil
+	}
+
+	switch action {
+	case "save":
+		return h.GorevFilterProfileSave(params)
+	case "load":
+		return h.GorevFilterProfileLoad(params)
+	case "list":
+		return h.GorevFilterProfileList(params)
+	case "delete":
+		return h.GorevFilterProfileDelete(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: save|load|list|delete)", action)), nil
+	}
+}
+
+// GorevFileWatch - Unified handler for file watch operations
+// Replaces: GorevFileWatchAdd, GorevFileWatchRemove, GorevFileWatchList, GorevFileWatchStats
+func (h *Handlers) GorevFileWatch(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	action, ok := params["action"].(string)
+	if !ok {
+		return mcp.NewToolResultError("action parameter is required (add|remove|list|stats)"), nil
+	}
+
+	switch action {
+	case "add":
+		return h.GorevFileWatchAdd(params)
+	case "remove":
+		return h.GorevFileWatchRemove(params)
+	case "list":
+		return h.GorevFileWatchList(params)
+	case "stats":
+		return h.GorevFileWatchStats(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: add|remove|list|stats)", action)), nil
+	}
+}
+
+// IDEManage - Unified handler for IDE extension management
+// Replaces: IDEDetect, IDEInstallExtension, IDEUninstallExtension, IDEExtensionStatus, IDEUpdateExtension
+func (h *Handlers) IDEManage(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	action, ok := params["action"].(string)
+	if !ok {
+		return mcp.NewToolResultError("action parameter is required (detect|install|uninstall|status|update)"), nil
+	}
+
+	switch action {
+	case "detect":
+		return h.IDEDetect(params)
+	case "install":
+		return h.IDEInstallExtension(params)
+	case "uninstall":
+		return h.IDEUninstallExtension(params)
+	case "status":
+		return h.IDEExtensionStatus(params)
+	case "update":
+		return h.IDEUpdateExtension(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: detect|install|uninstall|status|update)", action)), nil
+	}
+}
+
+// GorevContext - Unified handler for AI context operations
+// Replaces: GorevSetActive, GorevGetActive, GorevRecent, GorevContextSummary
+func (h *Handlers) GorevContext(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	action, ok := params["action"].(string)
+	if !ok {
+		return mcp.NewToolResultError("action parameter is required (set_active|get_active|recent|summary)"), nil
+	}
+
+	switch action {
+	case "set_active":
+		return h.GorevSetActive(params)
+	case "get_active":
+		return h.GorevGetActive(params)
+	case "recent":
+		return h.GorevRecent(params)
+	case "summary":
+		return h.GorevContextSummary(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: set_active|get_active|recent|summary)", action)), nil
+	}
+}
+
+// GorevSearch - Unified handler for search operations
+// Replaces: GorevNLPQuery, GorevSearchAdvanced, GorevSearchHistory
+func (h *Handlers) GorevSearch(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	mode, ok := params["mode"].(string)
+	if !ok {
+		return mcp.NewToolResultError("mode parameter is required (nlp|advanced|history)"), nil
+	}
+
+	// Transform parameter: arama_metni → query
+	if aramaMetni, ok := params["arama_metni"].(string); ok && aramaMetni != "" {
+		params["query"] = aramaMetni
+	}
+
+	switch mode {
+	case "nlp":
+		return h.GorevNLPQuery(params)
+	case "advanced":
+		return h.GorevSearchAdvanced(params)
+	case "history":
+		return h.GorevSearchHistory(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid mode: %s (expected: nlp|advanced|history)", mode)), nil
+	}
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// parseQueryFilters parses query strings like "durum:devam_ediyor oncelik:yuksek"
+// into a filters map for advanced search
+func parseQueryFilters(query string) map[string]interface{} {
+	filters := make(map[string]interface{})
+
+	// Split by spaces, but preserve quoted strings
+	parts := strings.Fields(query)
+
+	for _, part := range parts {
+		// Look for "key:value" pattern
+		if strings.Contains(part, ":") {
+			kv := strings.SplitN(part, ":", 2)
+			if len(kv) == 2 {
+				key := strings.TrimSpace(kv[0])
+				value := strings.TrimSpace(kv[1])
+
+				if key != "" && value != "" {
+					filters[key] = value
+				}
+			}
+		}
+	}
+
+	return filters
 }

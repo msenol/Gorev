@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/gorev"
+	ws "github.com/msenol/gorev/internal/websocket"
 )
 
 // WorkspaceContextInterface is satisfied by *WorkspaceContext
@@ -21,6 +22,7 @@ type WorkspaceContext struct {
 	DatabasePath string              `json:"database_path"` // Path to workspace database
 	VeriYonetici *gorev.VeriYonetici `json:"-"`             // Database manager (not serialized)
 	IsYonetici   *gorev.IsYonetici   `json:"-"`             // Business logic manager (not serialized)
+	EventEmitter ws.EventEmitter     `json:"-"`             // Event emitter for real-time updates (not serialized)
 	LastAccessed time.Time           `json:"last_accessed"` // Last time this workspace was accessed
 	CreatedAt    time.Time           `json:"created_at"`    // When workspace was registered
 	TaskCount    int                 `json:"task_count"`    // Cached task count for UI

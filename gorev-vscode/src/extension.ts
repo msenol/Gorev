@@ -14,6 +14,8 @@ import { initializeL10n } from './utils/l10n';
 import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from './managers/refreshManager';
 import { measureAsync } from './utils/performance';
 import { debounceConfig } from './utils/debounce';
+import { DatabaseFileWatcher } from './managers/databaseFileWatcher';
+import { WebSocketClient } from './managers/websocketClient';
 
 let serverManager: UnifiedServerManager;
 let apiClient: ApiClient;
@@ -23,6 +25,8 @@ let gorevTreeProvider: EnhancedGorevTreeProvider;
 let projeTreeProvider: ProjeTreeProvider;
 let templateTreeProvider: TemplateTreeProvider;
 let refreshManager: RefreshManager;
+let databaseWatcher: DatabaseFileWatcher;
+let webSocketClient: WebSocketClient | null = null;
 
 let context: vscode.ExtensionContext;
 let debouncedConfigHandler: ReturnType<typeof debounceConfig>;
@@ -78,8 +82,10 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   projeTreeProvider = new ProjeTreeProvider(apiClient);
   templateTreeProvider = new TemplateTreeProvider(apiClient);
 
-  // Note: Other providers will be integrated with RefreshManager in future iterations
-  // For now, only EnhancedGorevTreeProvider implements the RefreshProvider interface
+  // Register all providers with RefreshManager for coordinated refresh
+  refreshManager.registerProvider([RefreshTarget.PROJECTS], projeTreeProvider);
+  refreshManager.registerProvider([RefreshTarget.TEMPLATES], templateTreeProvider);
+  Logger.info('[Extension] All tree providers registered with RefreshManager');
 
   // Initialize filter toolbar
   filterToolbar = new FilterToolbar(apiClient, (filter) => {
@@ -230,6 +236,35 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     })
   );
 
+  // Initialize and start database file watcher for real-time sync
+  databaseWatcher = new DatabaseFileWatcher(refreshManager);
+  databaseWatcher.start();
+  context.subscriptions.push({
+    dispose: () => databaseWatcher.dispose(),
+  });
+
+  // Initialize WebSocket client for real-time updates (daemon mode)
+  const workspaceContext = serverManager.getWorkspaceContext();
+  if (workspaceContext && workspaceContext.workspaceId) {
+    const daemonUrl = `http://${apiHost}:${apiPort}`;
+    const outputChannel = vscode.window.createOutputChannel('Gorev WebSocket');
+    webSocketClient = new WebSocketClient(daemonUrl, workspaceContext.workspaceId, outputChannel);
+    webSocketClient.connect();
+
+    context.subscriptions.push({
+      dispose: () => {
+        if (webSocketClient) {
+          webSocketClient.disconnect();
+        }
+        outputChannel.dispose();
+      }
+    });
+
+    Logger.info(`[Extension] WebSocket client initialized for workspace: ${workspaceContext.workspaceId}`);
+  } else {
+    Logger.warn('[Extension] WebSocket client not initialized - no workspace context');
+  }
+
   const { t } = await import('./utils/l10n');
   Logger.info(t('extension.activated'));
 }
@@ -262,27 +297,6 @@ export async function deactivate() {
     statusBarManager.dispose();
   }
 }
-
-
-/**
- * DEPRECATED: Use RefreshManager.requestRefresh() instead
- * Legacy function kept for backward compatibility during transition
- */
-async function refreshAllViews(): Promise<void> {
-  Logger.warn('[Extension] refreshAllViews() is deprecated, use RefreshManager instead');
-
-  if (!refreshManager) {
-    Logger.error('[Extension] RefreshManager not initialized');
-    return;
-  }
-
-  await refreshManager.requestRefresh(
-    RefreshReason.MANUAL,
-    [RefreshTarget.ALL],
-    RefreshPriority.HIGH
-  );
-}
-
 /**
  * Handle configuration changes with RefreshManager integration
  */

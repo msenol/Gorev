@@ -29,6 +29,14 @@ export interface Task {
   proje_id?: string;
   proje_name?: string;
   etiketler?: Array<{ id: string; isim: string }>;
+  // Hierarchy fields
+  parent_id?: string;
+  alt_gorevler?: Task[];
+  seviye?: number;
+  // Dependency count fields
+  bagimli_gorev_sayisi?: number;
+  tamamlanmamis_bagimlilik_sayisi?: number;
+  bu_goreve_bagimli_sayisi?: number;
 }
 
 export interface Project {

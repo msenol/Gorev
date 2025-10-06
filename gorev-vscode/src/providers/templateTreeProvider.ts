@@ -4,8 +4,9 @@ import { GorevTemplate, TemplateKategori } from '../models/template';
 import { ICONS, CONTEXT_VALUES } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { t } from '../utils/l10n';
+import { RefreshProvider, RefreshTarget } from '../managers/refreshManager';
 
-export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTreeItem | TemplateCategoryItem> {
+export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTreeItem | TemplateCategoryItem>, RefreshProvider {
   private _onDidChangeTreeData = new vscode.EventEmitter<TemplateTreeItem | TemplateCategoryItem | undefined | null | void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
@@ -57,6 +58,17 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   async refresh(): Promise<void> {
     await this.loadTemplates();
     this._onDidChangeTreeData.fire();
+  }
+
+  /**
+   * RefreshProvider interface implementation
+   */
+  getName(): string {
+    return 'TemplateTreeProvider';
+  }
+
+  supportsTarget(target: RefreshTarget): boolean {
+    return target === RefreshTarget.TEMPLATES || target === RefreshTarget.ALL;
   }
 
   private async loadTemplates(): Promise<void> {

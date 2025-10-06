@@ -7,6 +7,7 @@ import { TemplateWizard } from '../ui/templateWizard';
 import { GorevTemplate } from '../models/template';
 import { Logger } from '../utils/logger';
 import { COMMANDS } from '../utils/constants';
+import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from '../managers/refreshManager';
 
 export function registerTemplateCommands(
   context: vscode.ExtensionContext,
@@ -105,14 +106,19 @@ export function registerTemplateCommands(
     })
   );
 
-  // Refresh templates
+  // Refresh templates - using RefreshManager for coordinated refresh
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMANDS.REFRESH_TEMPLATES, async () => {
       try {
-        await providers.templateTreeProvider.refresh();
+        const refreshManager = RefreshManager.getInstance();
+        await refreshManager.requestRefresh(
+          RefreshReason.MANUAL,
+          [RefreshTarget.TEMPLATES],
+          RefreshPriority.HIGH
+        );
         vscode.window.showInformationMessage(t('template.refreshed'));
       } catch (error) {
-        Logger.error('Failed to refresh templates:', error);
+        Logger.error('[RefreshTemplates] Failed to refresh templates:', error);
         vscode.window.showErrorMessage(t('template.refreshFailed'));
       }
     })

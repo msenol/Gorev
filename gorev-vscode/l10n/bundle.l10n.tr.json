@@ -240,7 +240,9 @@
   "project.deactivated": "Proje devre dışı bırakıldı",
   "project.updateActiveFailed": "Aktif proje güncellenemedi: {0}",
   "project.getListFailed": "Proje listesi alınamadı: {0}",
-  
+  "project.refreshed": "Projeler başarıyla yenilendi",
+  "project.refreshFailed": "Projeler yenilenemedi",
+
   "template.wizardOpenFailed": "Şablon sihirbazı açılamadı",
   "template.createFromFailed": "Şablondan görev oluşturulamadı",
   "template.noTemplatesDefined": "Henüz şablon tanımlanmamış",

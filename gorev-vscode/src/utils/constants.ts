@@ -50,7 +50,8 @@ export const COMMANDS = {
   // Project commands
   CREATE_PROJECT: 'gorev.createProject',
   SET_ACTIVE_PROJECT: 'gorev.setActiveProject',
-  
+  REFRESH_PROJECTS: 'gorev.refreshProjects',
+
   // General commands
   SHOW_SUMMARY: 'gorev.showSummary',
   CONNECT: 'gorev.connect',

@@ -6,6 +6,7 @@
   "command.refreshTasks": "Görevleri Yenile",
   "command.createProject": "Proje Oluştur",
   "command.setActiveProject": "Aktif Proje Yap",
+  "command.refreshProjects": "Projeleri Yenile",
   "command.showTaskDetail": "Görev Detayını Göster",
   "command.updateTaskStatus": "Görev Durumunu Güncelle",
   "command.deleteTask": "Görev Sil",

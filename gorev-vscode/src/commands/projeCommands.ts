@@ -6,6 +6,7 @@ import { COMMANDS } from '../utils/constants';
 import { ProjeTreeItem } from '../providers/projeTreeProvider';
 import { Proje } from '../models/proje';
 import { Logger } from '../utils/logger';
+import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from '../managers/refreshManager';
 
 async function getProjectList(apiClient: ApiClient): Promise<Proje[]> {
   try {
@@ -141,6 +142,24 @@ export function registerProjeCommands(
         } else {
           vscode.window.showErrorMessage(t('project.updateActiveFailed', String(error)));
         }
+      }
+    })
+  );
+
+  // Refresh Projects
+  context.subscriptions.push(
+    vscode.commands.registerCommand(COMMANDS.REFRESH_PROJECTS, async () => {
+      try {
+        const refreshManager = RefreshManager.getInstance();
+        await refreshManager.requestRefresh(
+          RefreshReason.MANUAL,
+          [RefreshTarget.PROJECTS],
+          RefreshPriority.HIGH
+        );
+        vscode.window.showInformationMessage(t('project.refreshed'));
+      } catch (error) {
+        Logger.error('[RefreshProjects] Failed to refresh projects:', error);
+        vscode.window.showErrorMessage(t('project.refreshFailed'));
       }
     })
   );

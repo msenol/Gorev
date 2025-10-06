@@ -15,6 +15,7 @@ import (
 	"github.com/msenol/gorev/internal/api/middleware"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
+	ws "github.com/msenol/gorev/internal/websocket"
 )
 
 // APIServer represents the HTTP API server
@@ -24,6 +25,7 @@ type APIServer struct {
 	isYonetici       *gorev.IsYonetici // Legacy single workspace manager (deprecated)
 	workspaceManager *WorkspaceManager // Multi-workspace manager
 	handlers         interface{}       // MCP Handlers for export/import operations
+	wsHub            *ws.Hub           // WebSocket hub for real-time updates
 }
 
 // SetMigrationsFS sets the embedded migrations filesystem for workspace manager
@@ -65,12 +67,23 @@ func NewAPIServer(port string, isYonetici *gorev.IsYonetici) *APIServer {
 		AllowCredentials: false,
 	}))
 
+	// Create WebSocket hub
+	wsHub := ws.NewHub()
+
+	// Create workspace manager with hub reference
+	workspaceManager := NewWorkspaceManager()
+	workspaceManager.wsHub = wsHub
+
 	server := &APIServer{
 		app:              app,
 		port:             port,
 		isYonetici:       isYonetici,
-		workspaceManager: NewWorkspaceManager(),
+		workspaceManager: workspaceManager,
+		wsHub:            wsHub,
 	}
+
+	// Start WebSocket hub in background
+	go wsHub.Run()
 
 	// Workspace detection middleware (must be after CORS, before routes)
 	app.Use(middleware.WorkspaceMiddleware(server.workspaceManager))
@@ -78,8 +91,17 @@ func NewAPIServer(port string, isYonetici *gorev.IsYonetici) *APIServer {
 	// Setup routes
 	server.setupRoutes()
 
+	// Register MCP bridge routes (for proxy support)
+	server.registerMCPBridgeRoutes()
+
+	// Register WebSocket routes
+	server.registerWebSocketRoutes()
+
 	return server
 }
+
+// Global variable to track server start time
+var serverStartTime = time.Now()
 
 // App returns the underlying Fiber app instance
 func (s *APIServer) App() *fiber.App {
@@ -93,9 +115,20 @@ func (s *APIServer) SetHandlers(handlers interface{}) {
 
 // setupRoutes configures all API routes
 func (s *APIServer) setupRoutes() {
+	// Health check endpoint (for daemon detection, no /v1 prefix)
+	s.app.Get("/api/health", func(c *fiber.Ctx) error {
+		uptime := time.Since(serverStartTime)
+		return c.JSON(fiber.Map{
+			"status":  "healthy",
+			"version": "v0.16.1", // TODO: get from build variable
+			"uptime":  uptime.Seconds(),
+			"time":    time.Now().Unix(),
+		})
+	})
+
 	api := s.app.Group("/api/v1")
 
-	// Health check
+	// Health check (legacy, v1 prefix)
 	api.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status": "ok",
@@ -150,6 +183,9 @@ func (s *APIServer) setupRoutes() {
 	// Export/Import routes
 	api.Post("/export", s.exportData)
 	api.Post("/import", s.importData)
+
+	// MCP Protocol routes (for AI assistant integration)
+	api.Post("/mcp/*", s.handleMCPToolCall)
 
 	// Note: Static web UI is served by ServeStaticFiles() called from main.go after server creation
 }

@@ -240,7 +240,9 @@
   "project.deactivated": "Project deactivated",
   "project.updateActiveFailed": "Failed to update active project: {0}",
   "project.getListFailed": "Failed to get project list: {0}",
-  
+  "project.refreshed": "Projects refreshed successfully",
+  "project.refreshFailed": "Failed to refresh projects",
+
   "template.wizardOpenFailed": "Failed to open template wizard",
   "template.createFromFailed": "Failed to create task from template",
   "template.noTemplatesDefined": "No templates defined yet",

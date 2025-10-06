@@ -10,12 +10,14 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/gorev"
+	ws "github.com/msenol/gorev/internal/websocket"
 )
 
 // WorkspaceManager manages multiple workspace contexts with their database connections
 type WorkspaceManager struct {
 	workspaces   map[string]*WorkspaceContext // Keyed by workspace ID
 	migrationsFS fs.FS                        // Embedded migrations filesystem (optional)
+	wsHub        *ws.Hub                      // WebSocket hub for real-time updates
 	mu           sync.RWMutex
 }
 
@@ -102,6 +104,15 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 	// Get task count
 	taskCount, _ := wm.getTaskCount(isYonetici)
 
+	// Create event emitter for real-time updates
+	var eventEmitter ws.EventEmitter
+	if wm.wsHub != nil {
+		eventEmitter = ws.NewHubEventEmitter(wm.wsHub)
+	} else {
+		// Fallback to no-op emitter if hub not available
+		eventEmitter = ws.NewNoOpEventEmitter()
+	}
+
 	// Create workspace context
 	workspace := &WorkspaceContext{
 		ID:           workspaceID,
@@ -110,6 +121,7 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 		DatabasePath: dbPath,
 		VeriYonetici: veriYonetici,
 		IsYonetici:   isYonetici,
+		EventEmitter: eventEmitter,
 		LastAccessed: time.Now(),
 		CreatedAt:    time.Now(),
 		TaskCount:    taskCount,

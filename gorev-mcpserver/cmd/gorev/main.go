@@ -363,10 +363,18 @@ func main() {
 	// IDE management commands
 	ideCmd := createIDECommand()
 
+	// Daemon management commands
+	daemonCmd := createDaemonCommand()
+	daemonStopCmd := createDaemonStopCommand()
+	daemonStatusCmd := createDaemonStatusCommand()
+
+	// MCP proxy command
+	mcpProxyCmd := createMCPProxyCommand()
+
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&langFlag, "lang", "", i18n.T("flags.language"))
 
-	rootCmd.AddCommand(serveCmd, versionCmd, initCmd, templateCmd, mcpCmd, ideCmd)
+	rootCmd.AddCommand(serveCmd, versionCmd, initCmd, templateCmd, mcpCmd, ideCmd, daemonCmd, daemonStopCmd, daemonStatusCmd, mcpProxyCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Hata: %v\n", err)

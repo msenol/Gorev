@@ -845,9 +845,10 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
     /**
      * Convert API Task to internal Gorev model
+     * Recursively converts subtasks as well
      */
     private convertTaskToGorev(task: Task): Gorev {
-        return {
+        const gorev: Gorev = {
             id: task.id,
             baslik: task.baslik,
             aciklama: task.aciklama,
@@ -858,7 +859,21 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             etiketler: task.etiketler,
             olusturma_tarihi: task.olusturma_tarihi,
             guncelleme_tarihi: task.guncelleme_tarihi,
+            // Hierarchy fields
+            parent_id: task.parent_id,
+            seviye: task.seviye,
+            // Dependency count fields
+            bagimli_gorev_sayisi: task.bagimli_gorev_sayisi,
+            tamamlanmamis_bagimlilik_sayisi: task.tamamlanmamis_bagimlilik_sayisi,
+            bu_goreve_bagimli_sayisi: task.bu_goreve_bagimli_sayisi,
         };
+
+        // Recursively convert subtasks
+        if (task.alt_gorevler && task.alt_gorevler.length > 0) {
+            gorev.alt_gorevler = task.alt_gorevler.map(subtask => this.convertTaskToGorev(subtask));
+        }
+
+        return gorev;
     }
 }
 

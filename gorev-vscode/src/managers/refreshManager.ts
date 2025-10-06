@@ -18,14 +18,16 @@ export enum RefreshReason {
     PROJECT_CHANGE = 'project-change',
     TEMPLATE_CHANGE = 'template-change',
     STARTUP = 'startup',
-    CONNECTION = 'connection'
+    CONNECTION = 'connection',
+    EXTERNAL_CHANGE = 'external-change' // WebSocket real-time updates
 }
 
 export enum RefreshPriority {
     LOW = 0,
     NORMAL = 1,
     HIGH = 2,
-    CRITICAL = 3
+    CRITICAL = 3,
+    REALTIME = 4 // WebSocket real-time updates (highest priority)
 }
 
 export interface RefreshRequest {
@@ -234,6 +236,10 @@ export class RefreshManager {
 
     private async scheduleProcessing(request: RefreshRequest): Promise<void> {
         switch (request.priority) {
+            case RefreshPriority.REALTIME:
+                // WebSocket real-time events - immediate refresh, no debouncing
+                await this.requestImmediateRefresh(request.reason, request.targets, request.metadata);
+                break;
             case RefreshPriority.CRITICAL:
                 await this.requestImmediateRefresh(request.reason, request.targets, request.metadata);
                 break;

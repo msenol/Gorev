@@ -7,6 +7,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ### Added
 
 #### 🚀 Automatic Server Startup
+
 - **Zero-Configuration Experience**: Extension now automatically starts Gorev server on activation
   - Checks if server is running on port 5082 before starting
   - Spawns server process automatically if not running
@@ -14,6 +15,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
   - Server lifecycle fully managed by extension
 
 #### 🗄️ Smart Database Management
+
 - **Workspace-Specific Databases**: Automatic database path configuration
   - Priority: Workspace folder `.gorev/gorev.db` → User home `~/.gorev/gorev.db`
   - Automatic directory creation with proper permissions
@@ -21,6 +23,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
   - Fixes SQLite permission errors on Windows
 
 #### 🔧 Complete Server Lifecycle Management
+
 - **Process Management**: Full control over server process
   - Port availability checking before server start
   - Proper stdio configuration (`stdin` kept open for MCP)
@@ -50,6 +53,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
 ### Added
 
 #### 🔌 REST API Migration (BREAKING CHANGE)
+
 - **Type-Safe JSON Communication**: Complete migration from MCP protocol to REST API
   - 23 comprehensive API endpoints for all operations
   - Direct JSON request/response (no markdown parsing)
@@ -58,6 +62,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
   - 3x performance improvement over MCP text-based communication
 
 #### 🌐 Web UI Integration Support
+
 - **Workspace Registration**: Automatic workspace registration with server
   - SHA256-based workspace IDs for unique identification
   - Workspace context injected into all API requests
@@ -65,6 +70,7 @@ All notable changes to the "gorev-vscode" extension will be documented in this f
   - Workspace switcher integration
 
 #### 📊 Enhanced Data Models
+
 - **Rich Task Information**: New fields and relationships
   - Subtask arrays automatically populated in responses
   - Dependency count fields (total, incomplete, dependent tasks)
