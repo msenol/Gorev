@@ -43,8 +43,11 @@ Gorev Web UI is a browser-based interface that provides full access to your Gore
 Web UI otomatik olarak MCP sunucusuyla birlikte gelir:
 
 ```bash
-# MCP sunucusunu başlat
-npx @mehmetsenol/gorev-mcp-server@latest
+# MCP sunucusunu başlat (daemon auto-starts)
+npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy
+
+# Or start daemon directly
+gorev daemon --detach
 
 # Web UI otomatik olarak şu adreste hazır:
 # http://localhost:5082

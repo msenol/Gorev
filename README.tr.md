@@ -245,7 +245,11 @@ npx @mehmetsenol/gorev-mcp-server serve
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -262,7 +266,11 @@ npx @mehmetsenol/gorev-mcp-server serve
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "tr"
       }
@@ -279,7 +287,11 @@ npx @mehmetsenol/gorev-mcp-server serve
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -552,23 +564,29 @@ Cursor'da MCP entegrasyonu için:
 ### CLI Komutları
 
 ```bash
-# Server başlatma
+# Daemon yönetimi (önerilen)
+gorev daemon --detach        # Daemon'u arka planda başlat
+gorev daemon-status          # Daemon durumunu kontrol et
+gorev daemon-stop            # Çalışan daemon'u durdur
+gorev mcp-proxy              # MCP proxy (AI asistanlar için)
+
+# Geliştirme/test (foreground mod)
 gorev serve                  # Normal mod
-gorev serve --debug         # Debug modunda
-gorev serve --port 8080     # Farklı port
+gorev serve --debug          # Debug modunda
+gorev serve --port 8080      # Farklı port
 
 # Görev işlemleri
-gorev task list             # Görevleri listele
-gorev task create           # Yeni görev oluştur
-gorev task show <id>        # Görev detayı
+gorev task list              # Görevleri listele
+gorev task create            # Yeni görev oluştur
+gorev task show <id>         # Görev detayı
 
 # Proje işlemleri
-gorev project list          # Projeleri listele
-gorev project create        # Yeni proje oluştur
+gorev project list           # Projeleri listele
+gorev project create         # Yeni proje oluştur
 
 # Diğer
-gorev version              # Versiyon bilgisi
-gorev help                 # Yardım
+gorev version                # Versiyon bilgisi
+gorev help                   # Yardım
 ```
 
 ## 📚 Dokümantasyon

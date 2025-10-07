@@ -1,9 +1,10 @@
 # MCP Configuration Examples
 
-Production-ready MCP server configuration examples for various AI coding assistants.
+Production-ready MCP server configuration examples for various AI coding assistants with **daemon architecture** support.
 
-> **Version**: v0.16.0
-> **Last Updated**: 4 October 2025
+> **Version**: v0.16.3
+> **Last Updated**: 7 October 2025
+> **Note**: All configurations use `mcp-proxy` command for automatic daemon management
 
 ---
 
@@ -34,7 +35,11 @@ npx @mehmetsenol/gorev-mcp-server --version
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -50,7 +55,11 @@ npx @mehmetsenol/gorev-mcp-server --version
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en",
         "GOREV_DB_PATH": "/path/to/custom/.gorev/gorev.db"
@@ -71,7 +80,11 @@ npx @mehmetsenol/gorev-mcp-server --version
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       },
@@ -129,7 +142,11 @@ npx @mehmetsenol/gorev-mcp-server --version
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -149,7 +166,11 @@ npx @mehmetsenol/gorev-mcp-server --version
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -349,7 +370,11 @@ Create workspace-specific config:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_DB_PATH": "/projects/project-a/.gorev/gorev.db"
       }
@@ -365,7 +390,11 @@ Create workspace-specific config:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_DB_PATH": "/projects/project-b/.gorev/gorev.db"
       }

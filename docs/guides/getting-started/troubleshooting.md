@@ -489,7 +489,11 @@ cat ~/.config/Claude/claude_desktop_config.json | jq .
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"]
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ]
     }
   }
 }
@@ -518,7 +522,11 @@ cat > .cursor/mcp.json << 'EOF'
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }

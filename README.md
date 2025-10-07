@@ -33,7 +33,7 @@ Gorev is a powerful **Model Context Protocol (MCP)** server written in Go that p
 2. **gorev-vscode** - VS Code extension (optional visual interface)
 3. **gorev-web** - React + TypeScript source code (development)
 
-Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The Web UI is automatically available at http://localhost:5082 when you run `npx @mehmetsenol/gorev-mcp-server serve`. The VS Code extension provides a rich IDE-integrated experience.
+Thanks to the MCP protocol, you can connect to the server from any MCP-compatible editor. The **daemon automatically starts** on first MCP connection, and the Web UI becomes available at http://localhost:5082. The VS Code extension provides a rich IDE-integrated experience with automatic daemon management.
 
 ### 🔌 Daemon Architecture (v0.16.0+)
 
@@ -171,11 +171,11 @@ See [Daemon Architecture Documentation](docs/architecture/daemon-architecture.md
   - Users upgrading from v0.16.1 or earlier were stuck on v0.15.24 (September 2025)
   - Package size reduced from 78.4 MB to 6.9 KB (binaries now always downloaded from GitHub)
   - All users now get latest features (REST API, Web UI, VS Code auto-start)
-- **VS Code Auto-Start**: Extension now automatically starts server on activation
-  - No manual `npx gorev serve` required
-  - Checks if server is running, starts if needed
+- **VS Code Auto-Start**: Extension now automatically detects and starts daemon
+  - No manual commands required - daemon auto-starts via lock file detection
+  - Checks if daemon is running (~/.gorev-daemon/.lock), starts if needed
   - Proper database path configuration (workspace/.gorev/gorev.db)
-  - Graceful server shutdown on extension deactivation
+  - Shared daemon across all MCP clients (Claude, Cursor, Windsurf)
 
 ### 🌐 Embedded Web UI (v0.16.0)
 
@@ -311,13 +311,18 @@ npx @mehmetsenol/gorev-mcp-server serve
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
     }
   }
 }
+// Note: Daemon auto-starts on first connection. No manual setup required!
 ```
 
 **For Kilo Code (VS Code Extension):**
@@ -328,7 +333,11 @@ npx @mehmetsenol/gorev-mcp-server serve
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -345,7 +354,11 @@ npx @mehmetsenol/gorev-mcp-server serve
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -394,7 +407,10 @@ If you get `ENOENT: spawn npx` error:
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["@mehmetsenol/gorev-mcp-server@latest"]
+      "args": [
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ]
     }
   }
 }
@@ -453,22 +469,28 @@ code --install-extension mehmetsenol.gorev-vscode
 ### CLI Commands
 
 ```bash
-# Start server
+# Daemon management (recommended)
+gorev daemon --detach        # Start daemon in background
+gorev daemon-status          # Check daemon status
+gorev daemon-stop            # Stop running daemon
+gorev mcp-proxy              # MCP proxy (for AI assistants)
+
+# Development/testing (foreground mode)
 gorev serve                  # Normal mode
-gorev serve --debug         # Debug mode
-gorev serve --port 8080     # Different port
+gorev serve --debug          # Debug mode
+gorev serve --port 8080      # Different port
 
 # Task operations
-gorev task list             # List tasks
-gorev task create           # Create new task
-gorev task show <id>        # Task details
+gorev task list              # List tasks
+gorev task create            # Create new task
+gorev task show <id>         # Task details
 
 # Project operations
-gorev project list          # List projects
-gorev project create        # Create new project
+gorev project list           # List projects
+gorev project create         # Create new project
 
 # Other
-gorev version              # Version info
+gorev version                # Version info
 gorev help                 # Help
 ```
 

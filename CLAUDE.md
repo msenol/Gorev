@@ -131,6 +131,11 @@ export GOREV_LANG=tr     # Turkish (default)
 **CLI Usage:**
 
 ```bash
+# Daemon mode (recommended for MCP usage)
+gorev daemon --detach --lang=en    # English interface
+gorev daemon --detach --lang=tr    # Turkish interface
+
+# Direct server mode (for development/debugging)
 gorev serve --lang=en    # English interface
 gorev serve --lang=tr    # Turkish interface
 ```

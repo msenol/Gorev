@@ -26,14 +26,14 @@ Gorev is a task management system designed for AI assistants (Claude, Copilot, e
 
 ```bash
 # Use directly with NPX (no installation)
-npx @mehmetsenol/gorev-mcp-server serve
+npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy
 ```
 
 Or install globally:
 
 ```bash
 npm install -g @mehmetsenol/gorev-mcp-server
-gorev-mcp serve
+gorev daemon --detach
 ```
 
 ### Option 2: Download Binary
@@ -72,7 +72,7 @@ npx @mehmetsenol/gorev-mcp-server init
 ### 2. Start Server
 
 ```bash
-npx @mehmetsenol/gorev-mcp-server serve
+npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy
 ```
 
 **Output**:
@@ -140,7 +140,11 @@ npx @mehmetsenol/gorev-mcp-server task create \
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -170,7 +174,11 @@ Claude should respond with your task list!
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server", "serve"],
+      "args": [
+        "-y",
+        "@mehmetsenol/gorev-mcp-server@latest",
+        "mcp-proxy"
+      ],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -285,7 +293,7 @@ npx @mehmetsenol/gorev-mcp-server task list
 
 ```bash
 # Server
-npx @mehmetsenol/gorev-mcp-server serve          # Start server
+npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy          # Start server
 npx @mehmetsenol/gorev-mcp-server --version      # Version info
 
 # Workspace

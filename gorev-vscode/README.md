@@ -44,9 +44,14 @@ The easiest way to get started - no binary installation required:
 
 1. **Install Extension**: Search "Gorev" in VS Code marketplace
 2. **Auto-Configuration**: Extension uses NPX mode by default
-3. **Start Working**: Create projects and tasks immediately!
+3. **Daemon Auto-Start**: Background daemon automatically starts on first use
+4. **Start Working**: Create projects and tasks immediately!
 
-The extension automatically runs `npx @mehmetsenol/gorev-mcp-server@latest` behind the scenes.
+**How it works:**
+- Extension detects if Gorev daemon is running (checks `~/.gorev-daemon/.lock`)
+- If not running, automatically starts daemon in background
+- Daemon serves multiple clients (VS Code + Claude/Cursor/Windsurf simultaneously)
+- Web UI automatically available at http://localhost:5082
 
 ```json
 // Default configuration - no setup needed!
