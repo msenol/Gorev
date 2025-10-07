@@ -75,14 +75,23 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 		return nil, fmt.Errorf("failed to create .gorev directory: %w", err)
 	}
 
-	// Initialize database manager
+	// Create event emitter for real-time updates BEFORE initializing database
+	var eventEmitter ws.EventEmitter
+	if wm.wsHub != nil {
+		eventEmitter = ws.NewHubEventEmitter(wm.wsHub)
+	} else {
+		// Fallback to no-op emitter if hub not available
+		eventEmitter = ws.NewNoOpEventEmitter()
+	}
+
+	// Initialize database manager with event emitter
 	var veriYonetici *gorev.VeriYonetici
 	// Already holding write lock, no need for read lock
 	migrationsFS := wm.migrationsFS
 
 	if migrationsFS != nil {
-		// Use embedded migrations if available
-		veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, migrationsFS)
+		// Use embedded migrations if available with event emitter
+		veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrationsAndEventEmitter(dbPath, migrationsFS, eventEmitter, workspaceID)
 	} else {
 		// Fallback to filesystem migrations (for tests and backwards compatibility)
 		// Search for migrations in standard locations
@@ -91,7 +100,7 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 			// Use embedded path as last resort (will use embedded FS if available in binary)
 			migrationsPath = "embedded://migrations"
 		}
-		veriYonetici, err = gorev.YeniVeriYonetici(dbPath, migrationsPath)
+		veriYonetici, err = gorev.YeniVeriYoneticiWithEventEmitter(dbPath, migrationsPath, eventEmitter, workspaceID)
 	}
 
 	if err != nil {
@@ -104,16 +113,7 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 	// Get task count
 	taskCount, _ := wm.getTaskCount(isYonetici)
 
-	// Create event emitter for real-time updates
-	var eventEmitter ws.EventEmitter
-	if wm.wsHub != nil {
-		eventEmitter = ws.NewHubEventEmitter(wm.wsHub)
-	} else {
-		// Fallback to no-op emitter if hub not available
-		eventEmitter = ws.NewNoOpEventEmitter()
-	}
-
-	// Create workspace context
+	// Create workspace context (eventEmitter already created above)
 	workspace := &WorkspaceContext{
 		ID:           workspaceID,
 		Name:         name,

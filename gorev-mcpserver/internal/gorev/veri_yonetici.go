@@ -19,8 +19,23 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// EventEmitter interface for emitting database change events
+// Import from websocket package to avoid circular dependency
+type EventEmitter interface {
+	EmitTaskCreated(workspaceID, taskID string, data map[string]interface{})
+	EmitTaskUpdated(workspaceID, taskID string, data map[string]interface{})
+	EmitTaskDeleted(workspaceID, taskID string)
+	EmitProjectCreated(workspaceID, projectID string, data map[string]interface{})
+	EmitProjectUpdated(workspaceID, projectID string, data map[string]interface{})
+	EmitProjectDeleted(workspaceID, projectID string)
+	EmitTemplateChanged(workspaceID string)
+	EmitWorkspaceSync(workspaceID string)
+}
+
 type VeriYonetici struct {
-	db *sql.DB
+	db           *sql.DB
+	eventEmitter EventEmitter
+	workspaceID  string // Workspace ID for event emission
 }
 
 // configureSQLiteForConcurrency configures SQLite for better concurrent access
@@ -69,6 +84,11 @@ func retryOnBusy(operation func() error, maxRetries int) error {
 }
 
 func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, error) {
+	return YeniVeriYoneticiWithEventEmitter(dbYolu, migrationsYolu, nil, "")
+}
+
+// YeniVeriYoneticiWithEventEmitter creates a new VeriYonetici with optional event emitter
+func YeniVeriYoneticiWithEventEmitter(dbYolu string, migrationsYolu string, eventEmitter EventEmitter, workspaceID string) (*VeriYonetici, error) {
 	db, err := sql.Open("sqlite", dbYolu)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
@@ -80,7 +100,11 @@ func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, erro
 		return nil, fmt.Errorf("failed to configure database: %w", err)
 	}
 
-	vy := &VeriYonetici{db: db}
+	vy := &VeriYonetici{
+		db:           db,
+		eventEmitter: eventEmitter,
+		workspaceID:  workspaceID,
+	}
 	if err := vy.migrateDB(migrationsYolu); err != nil {
 		return nil, fmt.Errorf(i18n.T("error.migrationFailed", map[string]interface{}{"Error": err}))
 	}
@@ -90,6 +114,11 @@ func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, erro
 
 // YeniVeriYoneticiWithEmbeddedMigrations creates a new VeriYonetici with embedded migrations
 func YeniVeriYoneticiWithEmbeddedMigrations(dbYolu string, migrationsFS fs.FS) (*VeriYonetici, error) {
+	return YeniVeriYoneticiWithEmbeddedMigrationsAndEventEmitter(dbYolu, migrationsFS, nil, "")
+}
+
+// YeniVeriYoneticiWithEmbeddedMigrationsAndEventEmitter creates a new VeriYonetici with embedded migrations and optional event emitter
+func YeniVeriYoneticiWithEmbeddedMigrationsAndEventEmitter(dbYolu string, migrationsFS fs.FS, eventEmitter EventEmitter, workspaceID string) (*VeriYonetici, error) {
 	db, err := sql.Open("sqlite", dbYolu)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.dbOpenFailed", map[string]interface{}{"Error": err}))
@@ -101,7 +130,11 @@ func YeniVeriYoneticiWithEmbeddedMigrations(dbYolu string, migrationsFS fs.FS) (
 		return nil, fmt.Errorf("failed to configure database: %w", err)
 	}
 
-	vy := &VeriYonetici{db: db}
+	vy := &VeriYonetici{
+		db:           db,
+		eventEmitter: eventEmitter,
+		workspaceID:  workspaceID,
+	}
 	if err := vy.migrateDBWithFS(migrationsFS); err != nil {
 		return nil, fmt.Errorf(i18n.T("error.migrationFailed", map[string]interface{}{"Error": err}))
 	}
@@ -468,7 +501,7 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// Use retry logic for better concurrent write handling
-	return retryOnBusy(func() error {
+	err := retryOnBusy(func() error {
 		_, err := vy.db.Exec(sorgu,
 			gorev.ID,
 			gorev.Baslik,
@@ -483,6 +516,17 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 		)
 		return err
 	}, 5) // Retry up to 5 times
+
+	// Emit task created event if operation succeeded
+	if err == nil && vy.eventEmitter != nil {
+		vy.eventEmitter.EmitTaskCreated(vy.workspaceID, gorev.ID, map[string]interface{}{
+			"baslik":  gorev.Baslik,
+			"durum":   gorev.Durum,
+			"oncelik": gorev.Oncelik,
+		})
+	}
+
+	return err
 }
 
 func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
@@ -755,6 +799,12 @@ func (vy *VeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
 	args = append(args, taskID)
 
 	_, err := vy.db.Exec(sorgu, args...)
+
+	// Emit task updated event if operation succeeded
+	if err == nil && vy.eventEmitter != nil {
+		vy.eventEmitter.EmitTaskUpdated(vy.workspaceID, taskID, paramsMap)
+	}
+
 	return err
 }
 
@@ -844,6 +894,11 @@ func (vy *VeriYonetici) GorevSil(id string) error {
 
 	if rowsAffected == 0 {
 		return fmt.Errorf(i18n.TEntityNotFound("task", errors.New("not found")))
+	}
+
+	// Emit task deleted event if operation succeeded
+	if vy.eventEmitter != nil {
+		vy.eventEmitter.EmitTaskDeleted(vy.workspaceID, id)
 	}
 
 	return nil
