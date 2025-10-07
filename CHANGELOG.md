@@ -48,7 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `gorev daemon` - Daemon lifecycle management
 - `gorev daemon-status` - Check daemon status
 - `gorev daemon-stop` - Stop running daemon
-- `gorev mcp-proxy` - MCP proxy to daemon (for AI assistants)
 
 ### Changed
 

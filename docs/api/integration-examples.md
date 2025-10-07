@@ -35,7 +35,7 @@ async def main():
     # Connect to Gorev MCP Server
     server_params = StdioServerParameters(
         command="npx",
-        args=["-y", "@mehmetsenol/gorev-mcp-server@latest", "mcp-proxy"],
+        args=["-y", "@mehmetsenol/gorev-mcp-server@latest"],
         env={"GOREV_LANG": "en"}
     )
 

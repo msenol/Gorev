@@ -247,8 +247,7 @@ Don't specify `GOREV_DB_PATH`. Gorev will:
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -271,8 +270,7 @@ Specify `GOREV_DB_PATH` for each workspace:
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_DB_PATH": "/projects/project-a/.gorev/gorev.db"
@@ -291,8 +289,7 @@ Specify `GOREV_DB_PATH` for each workspace:
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_DB_PATH": "/projects/project-b/.gorev/gorev.db"

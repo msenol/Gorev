@@ -69,7 +69,7 @@ Add this configuration to your Claude Desktop config file:
   "mcpServers": {
     "gorev": {
       "command": "/usr/local/bin/gorev",
-      "args": ["mcp-proxy"],
+      "args": [],
       "env": {
         "GOREV_DATA_DIR": "~/.gorev"
       }
@@ -99,7 +99,7 @@ Install an MCP extension and add to `settings.json`:
   "mcp.servers": {
     "gorev": {
       "command": "/usr/local/bin/gorev",
-      "args": ["mcp-proxy"]
+      "args": []
     }
   }
 }
@@ -133,8 +133,7 @@ docker run -d --name gorev-server \
       "args": [
         "run", "--rm", "-i",
         "-v", "gorev-data:/data",
-        "ghcr.io/msenol/gorev:latest",
-        "mcp-proxy"
+        "ghcr.io/msenol/gorev:latest"
       ]
     }
   }
@@ -159,7 +158,7 @@ docker run -d --name gorev-server \
   "mcpServers": {
     "gorev": {
       "command": "gorev",
-      "args": ["mcp-proxy"]
+      "args": []
     }
   }
 }
@@ -172,7 +171,7 @@ docker run -d --name gorev-server \
   "mcpServers": {
     "gorev": {
       "command": "gorev",
-      "args": ["mcp-proxy"],
+      "args": [],
       "env": {
         "GOREV_LOG_LEVEL": "debug"
       }
@@ -188,14 +187,14 @@ docker run -d --name gorev-server \
   "mcpServers": {
     "gorev-personal": {
       "command": "gorev",
-      "args": ["mcp-proxy"],
+      "args": [],
       "env": {
         "GOREV_DATA_DIR": "~/.gorev-personal"
       }
     },
     "gorev-work": {
       "command": "gorev",
-      "args": ["mcp-proxy"],
+      "args": [],
       "env": {
         "GOREV_DATA_DIR": "~/.gorev-work"
       }

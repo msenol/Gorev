@@ -140,7 +140,6 @@ npx @mehmetsenol/gorev-mcp-server@0.16.3
 - `gorev daemon` - Start/manage daemon process
 - `gorev daemon-status` - Check daemon status
 - `gorev daemon-stop` - Stop running daemon
-- `gorev mcp-proxy` - MCP proxy for AI assistants
 
 ### 🐛 Bug Fixes
 

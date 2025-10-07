@@ -4,7 +4,7 @@ Production-ready MCP server configuration examples for various AI coding assista
 
 > **Version**: v0.16.3
 > **Last Updated**: 7 October 2025
-> **Note**: All configurations use `mcp-proxy` command for automatic daemon management
+> **Note**: Daemon automatically starts on first connection. No manual setup required!
 
 ---
 
@@ -37,8 +37,7 @@ npx @mehmetsenol/gorev-mcp-server --version
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -57,8 +56,7 @@ npx @mehmetsenol/gorev-mcp-server --version
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en",
@@ -82,8 +80,7 @@ npx @mehmetsenol/gorev-mcp-server --version
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -144,8 +141,7 @@ npx @mehmetsenol/gorev-mcp-server --version
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -168,8 +164,7 @@ npx @mehmetsenol/gorev-mcp-server --version
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -372,8 +367,7 @@ Create workspace-specific config:
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_DB_PATH": "/projects/project-a/.gorev/gorev.db"
@@ -392,8 +386,7 @@ Create workspace-specific config:
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_DB_PATH": "/projects/project-b/.gorev/gorev.db"

@@ -44,7 +44,7 @@ Web UI otomatik olarak MCP sunucusuyla birlikte gelir:
 
 ```bash
 # MCP sunucusunu başlat (daemon auto-starts)
-npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy
+npx @mehmetsenol/gorev-mcp-server@latest
 
 # Or start daemon directly
 gorev daemon --detach

@@ -29,7 +29,7 @@
 No installation required! Daemon auto-starts on first MCP connection:
 
 ```bash
-npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy
+npx @mehmetsenol/gorev-mcp-server@latest
 ```
 
 ### MCP Configuration
@@ -42,8 +42,7 @@ Add to your `mcp.json` configuration file:
     "gorev": {
       "command": "npx",
       "args": [
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "tr"
@@ -53,7 +52,7 @@ Add to your `mcp.json` configuration file:
 }
 ```
 
-> **Note**: The `mcp-proxy` command automatically starts the daemon in background if not running.
+> **Note**: Daemon automatically starts in background on first connection. No manual setup required!
 
 ### Supported MCP Clients
 
@@ -75,8 +74,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
     "gorev": {
       "command": "npx",
       "args": [
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "tr"
@@ -98,8 +96,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
     "gorev": {
       "command": "npx",
       "args": [
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -119,8 +116,7 @@ Add to your Cursor MCP configuration:
     "gorev": {
       "command": "npx",
       "args": [
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ]
     }
   }

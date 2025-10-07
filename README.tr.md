@@ -247,8 +247,7 @@ npx @mehmetsenol/gorev-mcp-server serve
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "tr"
@@ -268,8 +267,7 @@ npx @mehmetsenol/gorev-mcp-server serve
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "tr"
@@ -289,8 +287,7 @@ npx @mehmetsenol/gorev-mcp-server serve
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -568,7 +565,6 @@ Cursor'da MCP entegrasyonu için:
 gorev daemon --detach        # Daemon'u arka planda başlat
 gorev daemon-status          # Daemon durumunu kontrol et
 gorev daemon-stop            # Çalışan daemon'u durdur
-gorev mcp-proxy              # MCP proxy (AI asistanlar için)
 
 # Geliştirme/test (foreground mod)
 gorev serve                  # Normal mod

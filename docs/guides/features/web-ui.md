@@ -28,7 +28,7 @@ Gorev v0.16.0 introduces an **embedded web UI** - a modern React + TypeScript in
 
 ```bash
 # Using NPX (no installation)
-npx @mehmetsenol/gorev-mcp-server@latest mcp-proxy
+npx @mehmetsenol/gorev-mcp-server@latest
 
 # Or if installed globally
 gorev daemon --detach

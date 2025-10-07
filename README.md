@@ -313,8 +313,7 @@ npx @mehmetsenol/gorev-mcp-server serve
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -335,8 +334,7 @@ npx @mehmetsenol/gorev-mcp-server serve
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -356,8 +354,7 @@ npx @mehmetsenol/gorev-mcp-server serve
       "command": "npx",
       "args": [
         "-y",
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ],
       "env": {
         "GOREV_LANG": "en"
@@ -408,8 +405,7 @@ If you get `ENOENT: spawn npx` error:
     "gorev": {
       "command": "npx",
       "args": [
-        "@mehmetsenol/gorev-mcp-server@latest",
-        "mcp-proxy"
+        "@mehmetsenol/gorev-mcp-server@latest"
       ]
     }
   }
@@ -473,7 +469,6 @@ code --install-extension mehmetsenol.gorev-vscode
 gorev daemon --detach        # Start daemon in background
 gorev daemon-status          # Check daemon status
 gorev daemon-stop            # Stop running daemon
-gorev mcp-proxy              # MCP proxy (for AI assistants)
 
 # Development/testing (foreground mode)
 gorev serve                  # Normal mode

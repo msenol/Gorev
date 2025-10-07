@@ -66,7 +66,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
   "mcpServers": {
     "gorev": {
       "command": "npx",
-      "args": ["-y", "@mehmetsenol/gorev-mcp-server@latest", "mcp-proxy"],
+      "args": ["-y", "@mehmetsenol/gorev-mcp-server@latest"],
       "env": {
         "GOREV_LANG": "en"
       }
@@ -453,7 +453,7 @@ from mcp.client.stdio import stdio_client
 async def generate_daily_report():
     server_params = StdioServerParameters(
         command="npx",
-        args=["-y", "@mehmetsenol/gorev-mcp-server@latest", "mcp-proxy"],
+        args=["-y", "@mehmetsenol/gorev-mcp-server@latest"],
         env={"GOREV_LANG": "en"}
     )
 
