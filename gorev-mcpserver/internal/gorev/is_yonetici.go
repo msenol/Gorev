@@ -35,15 +35,15 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 	}
 
 	gorev := &Gorev{
-		ID:              uuid.New().String(),
-		Baslik:          baslik,
-		Aciklama:        aciklama,
-		Oncelik:         oncelik,
-		Durum:           constants.TaskStatusPending,
-		ProjeID:         projeID,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
-		SonTarih:        sonTarih,
+		ID:          uuid.New().String(),
+		Title:       baslik,
+		Description: aciklama,
+		Priority:    oncelik,
+		Status:      constants.TaskStatusPending,
+		ProjeID:     projeID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		DueDate:     sonTarih,
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
@@ -58,7 +58,7 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
 			return nil, fmt.Errorf(i18n.TSetFailed("task_tags", err))
 		}
-		gorev.Etiketler = etiketler
+		gorev.Tags = etiketler
 	}
 
 	return gorev, nil
@@ -104,22 +104,22 @@ func (iy *IsYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, er
 	// Her görev için hesaplanan değerleri ata
 	for _, gorev := range gorevler {
 		if count, exists := bagimliSayilari[gorev.ID]; exists {
-			gorev.BagimliGorevSayisi = count
+			gorev.DependencyCount = count
 		}
 
 		if count, exists := tamamlanmamisSayilari[gorev.ID]; exists {
-			gorev.TamamlanmamisBagimlilikSayisi = count
+			gorev.UncompletedDependencyCount = count
 		}
 
 		if count, exists := buGoreveBagimliSayilari[gorev.ID]; exists {
-			gorev.BuGoreveBagimliSayisi = count
+			gorev.DependentOnThisCount = count
 		}
 
 		// Alt görevleri getir (parent_id null olan görevler için)
 		if gorev.ParentID == "" {
 			altGorevler, err := iy.veriYonetici.AltGorevleriGetir(gorev.ID)
 			if err == nil && len(altGorevler) > 0 {
-				gorev.AltGorevler = altGorevler
+				gorev.Subtasks = altGorevler
 			}
 		}
 	}
@@ -147,7 +147,7 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	}
 
 	// Eğer görev "devam_ediyor" durumuna geçiyorsa, bağımlılıkları kontrol et
-	if durum == constants.TaskStatusInProgress && gorev.Durum == constants.TaskStatusPending {
+	if durum == constants.TaskStatusInProgress && gorev.Status == constants.TaskStatusPending {
 		bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(id)
 		if err != nil {
 			return fmt.Errorf(i18n.TCheckFailed("dependency", err))
@@ -159,35 +159,35 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 	}
 
 	// Eğer görev "tamamlandi" durumuna geçiyorsa, tüm alt görevlerin tamamlandığını kontrol et
-	if durum == constants.TaskStatusCompleted && gorev.Durum != constants.TaskStatusCompleted {
+	if durum == constants.TaskStatusCompleted && gorev.Status != constants.TaskStatusCompleted {
 		altGorevler, err := iy.veriYonetici.AltGorevleriGetir(id)
 		if err != nil {
 			return fmt.Errorf(i18n.T("error.subtasksCheckFailed", map[string]interface{}{"Error": err}))
 		}
 
 		for _, altGorev := range altGorevler {
-			if altGorev.Durum != constants.TaskStatusCompleted {
+			if altGorev.Status != constants.TaskStatusCompleted {
 				return fmt.Errorf(i18n.T("error.taskCannotCompleteSubtasks"))
 			}
 		}
 	}
 
-	gorev.Durum = durum
-	gorev.GuncellemeTarih = time.Now()
+	gorev.Status = durum
+	gorev.UpdatedAt = time.Now()
 
 	return iy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{
-		"durum":            durum,
-		"guncelleme_tarih": time.Now(),
+		"status":     durum,
+		"updated_at": time.Now(),
 	})
 }
 
 func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 	proje := &Proje{
-		ID:              uuid.New().String(),
-		Isim:            isim,
-		Tanim:           tanim,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:         uuid.New().String(),
+		Name:       isim,
+		Definition: tanim,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	if err := iy.veriYonetici.ProjeKaydet(proje); err != nil {
@@ -222,13 +222,13 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 
 	// Sadece belirtilen alanları güncelle
 	if baslikVar && baslik != "" {
-		gorev.Baslik = baslik
+		gorev.Title = baslik
 	}
 	if aciklamaVar {
-		gorev.Aciklama = aciklama
+		gorev.Description = aciklama
 	}
 	if oncelikVar && oncelik != "" {
-		gorev.Oncelik = oncelik
+		gorev.Priority = oncelik
 	}
 	if projeVar {
 		// Proje değiştiriliyorsa, tüm alt görevleri de taşı
@@ -241,8 +241,8 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 			// Tüm alt görevlerin projesini güncelle
 			for _, altGorev := range altGorevler {
 				if err := iy.veriYonetici.GorevGuncelle(altGorev.ID, map[string]interface{}{
-					"proje_id":         projeID,
-					"guncelleme_tarih": time.Now(),
+					"project_id": projeID,
+					"updated_at": time.Now(),
 				}); err != nil {
 					return fmt.Errorf(i18n.T("error.subtaskUpdateFailed", map[string]interface{}{"Error": err}))
 				}
@@ -252,38 +252,38 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 	}
 	if sonTarihVar {
 		if sonTarihStr == "" {
-			gorev.SonTarih = nil
+			gorev.DueDate = nil
 		} else {
 			t, err := time.Parse("2006-01-02", sonTarihStr)
 			if err != nil {
 				return fmt.Errorf(i18n.T("error.invalidDateFormat", map[string]interface{}{"Error": err}))
 			}
-			gorev.SonTarih = &t
+			gorev.DueDate = &t
 		}
 	}
 
 	updateParams := map[string]interface{}{
-		"guncelleme_tarih": time.Now(),
+		"updated_at": time.Now(),
 	}
 
 	if baslikVar && baslik != "" {
-		updateParams["baslik"] = baslik
+		updateParams["title"] = baslik
 	}
 	if aciklamaVar {
-		updateParams["aciklama"] = aciklama
+		updateParams["description"] = aciklama
 	}
 	if oncelikVar && oncelik != "" {
-		updateParams["oncelik"] = oncelik
+		updateParams["priority"] = oncelik
 	}
 	if projeVar {
-		updateParams["proje_id"] = projeID
+		updateParams["project_id"] = projeID
 	}
 	if sonTarihVar {
 		if sonTarihStr == "" {
-			updateParams["son_tarih"] = nil
+			updateParams["due_date"] = nil
 		} else {
 			t, _ := time.Parse("2006-01-02", sonTarihStr)
-			updateParams["son_tarih"] = t
+			updateParams["due_date"] = t
 		}
 	}
 
@@ -325,17 +325,17 @@ func (iy *IsYonetici) ProjeGorevleri(projeID string) ([]*Gorev, error) {
 		// Bu görevin bağımlılıklarını al (bu görev başka görevlere bağımlı)
 		baglantilar, err := iy.veriYonetici.BaglantilariGetir(gorev.ID)
 		if err == nil && len(baglantilar) > 0 {
-			gorev.BagimliGorevSayisi = len(baglantilar)
+			gorev.DependencyCount = len(baglantilar)
 
 			// Tamamlanmamış bağımlılıkları say
 			tamamlanmamisSayisi := 0
 			for _, baglanti := range baglantilar {
-				hedefGorev, err := iy.veriYonetici.GorevGetir(baglanti.HedefID)
-				if err == nil && hedefGorev.Durum != constants.TaskStatusCompleted {
+				hedefGorev, err := iy.veriYonetici.GorevGetir(baglanti.TargetID)
+				if err == nil && hedefGorev.Status != constants.TaskStatusCompleted {
 					tamamlanmamisSayisi++
 				}
 			}
-			gorev.TamamlanmamisBagimlilikSayisi = tamamlanmamisSayisi
+			gorev.UncompletedDependencyCount = tamamlanmamisSayisi
 		}
 
 		// Bu göreve bağımlı olan görevleri bul
@@ -345,14 +345,14 @@ func (iy *IsYonetici) ProjeGorevleri(projeID string) ([]*Gorev, error) {
 			digerBaglantilar, err := iy.veriYonetici.BaglantilariGetir(digerGorev.ID)
 			if err == nil {
 				for _, baglanti := range digerBaglantilar {
-					if baglanti.HedefID == gorev.ID {
+					if baglanti.TargetID == gorev.ID {
 						buGoreveBagimliSayisi++
 						break
 					}
 				}
 			}
 		}
-		gorev.BuGoreveBagimliSayisi = buGoreveBagimliSayisi
+		gorev.DependentOnThisCount = buGoreveBagimliSayisi
 	}
 
 	return gorevler, nil
@@ -397,27 +397,27 @@ func (iy *IsYonetici) OzetAl() (*Ozet, error) {
 	}
 
 	ozet := &Ozet{
-		ToplamProje: len(projeler),
-		ToplamGorev: len(gorevler),
+		TotalProjects: len(projeler),
+		TotalTasks:    len(gorevler),
 	}
 
 	for _, gorev := range gorevler {
-		switch gorev.Durum {
+		switch gorev.Status {
 		case constants.TaskStatusPending:
-			ozet.BeklemedeGorev++
+			ozet.PendingTasks++
 		case constants.TaskStatusInProgress:
-			ozet.DevamEdenGorev++
+			ozet.InProgressTasks++
 		case constants.TaskStatusCompleted:
-			ozet.TamamlananGorev++
+			ozet.CompletedTasks++
 		}
 
-		switch gorev.Oncelik {
+		switch gorev.Priority {
 		case constants.PriorityHigh:
-			ozet.YuksekOncelik++
+			ozet.HighPriorityTasks++
 		case constants.PriorityMedium:
-			ozet.OrtaOncelik++
+			ozet.MediumPriorityTasks++
 		case constants.PriorityLow:
-			ozet.DusukOncelik++
+			ozet.LowPriorityTasks++
 		}
 	}
 
@@ -436,10 +436,10 @@ func (iy *IsYonetici) GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi string
 	}
 
 	baglanti := &Baglanti{
-		ID:          uuid.New().String(),
-		KaynakID:    kaynakID,
-		HedefID:     hedefID,
-		BaglantiTip: baglantiTipi,
+		ID:             uuid.New().String(),
+		SourceID:       kaynakID,
+		TargetID:       hedefID,
+		ConnectionType: baglantiTipi,
 	}
 
 	if err := iy.veriYonetici.BaglantiEkle(baglanti); err != nil {
@@ -464,16 +464,16 @@ func (iy *IsYonetici) GorevBagimliMi(gorevID string) (bool, []string, error) {
 
 	for _, baglanti := range baglantilar {
 		// Bu görev hedef konumundaysa ve bağlantı tipi "onceki" ise
-		if baglanti.HedefID == gorevID && baglanti.BaglantiTip == "onceki" {
+		if baglanti.TargetID == gorevID && baglanti.ConnectionType == "onceki" {
 			// Kaynak görevin durumunu kontrol et
-			kaynakGorev, err := iy.veriYonetici.GorevGetir(baglanti.KaynakID)
+			kaynakGorev, err := iy.veriYonetici.GorevGetir(baglanti.SourceID)
 			if err != nil {
 				return false, nil, fmt.Errorf(i18n.T("error.dependentTaskNotFound", map[string]interface{}{"Error": err}))
 			}
 
 			// Eğer bağımlı görev tamamlanmamışsa
-			if kaynakGorev.Durum != constants.TaskStatusCompleted {
-				tamamlanmamisBagimliliklar = append(tamamlanmamisBagimliliklar, kaynakGorev.Baslik)
+			if kaynakGorev.Status != constants.TaskStatusCompleted {
+				tamamlanmamisBagimliliklar = append(tamamlanmamisBagimliliklar, kaynakGorev.Title)
 			}
 		}
 	}
@@ -509,16 +509,16 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	}
 
 	gorev := &Gorev{
-		ID:              uuid.New().String(),
-		Baslik:          baslik,
-		Aciklama:        aciklama,
-		Oncelik:         oncelik,
-		Durum:           constants.TaskStatusPending,
-		ProjeID:         parent.ProjeID, // Alt görev aynı projede olmalı
-		ParentID:        parentID,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
-		SonTarih:        sonTarih,
+		ID:          uuid.New().String(),
+		Title:       baslik,
+		Description: aciklama,
+		Priority:    oncelik,
+		Status:      constants.TaskStatusPending,
+		ProjeID:     parent.ProjeID, // Alt görev aynı projede olmalı
+		ParentID:    parentID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		DueDate:     sonTarih,
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
@@ -533,7 +533,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
 			return nil, fmt.Errorf(i18n.T("error.tagsSetFailed", map[string]interface{}{"Error": err}))
 		}
-		gorev.Etiketler = etiketler
+		gorev.Tags = etiketler
 	}
 
 	return gorev, nil

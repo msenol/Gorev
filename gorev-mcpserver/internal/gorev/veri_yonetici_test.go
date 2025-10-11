@@ -60,53 +60,53 @@ func TestVeriYonetici_GorevKaydet(t *testing.T) {
 		{
 			name: "valid task",
 			gorev: &Gorev{
-				ID:              "test-1",
-				Baslik:          "Test Görevi",
-				Aciklama:        "Test açıklaması",
-				Durum:           "beklemede",
-				Oncelik:         "orta",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:          "test-1",
+				Title:       "Test Görevi",
+				Description: "Test açıklaması",
+				Status:      "beklemede",
+				Priority:    "orta",
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "task with project",
 			gorev: &Gorev{
-				ID:              "test-2",
-				Baslik:          "Proje Görevi",
-				Aciklama:        "Proje ile ilişkili görev",
-				Durum:           "devam-ediyor",
-				Oncelik:         "yuksek",
-				ProjeID:         "proje-1",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:          "test-2",
+				Title:       "Proje Görevi",
+				Description: "Proje ile ilişkili görev",
+				Status:      "devam-ediyor",
+				Priority:    "yuksek",
+				ProjeID:     "proje-1",
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "duplicate ID",
 			gorev: &Gorev{
-				ID:              "test-1",
-				Baslik:          "Duplicate",
-				Aciklama:        "Should fail",
-				Durum:           "beklemede",
-				Oncelik:         "orta",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:          "test-1",
+				Title:       "Duplicate",
+				Description: "Should fail",
+				Status:      "beklemede",
+				Priority:    "orta",
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
 			},
 			wantErr: true,
 		},
 		{
 			name: "empty ID",
 			gorev: &Gorev{
-				ID:              "",
-				Baslik:          "No ID",
-				Aciklama:        "Empty ID allowed in SQLite",
-				Durum:           "beklemede",
-				Oncelik:         "orta",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:          "",
+				Title:       "No ID",
+				Description: "Empty ID allowed in SQLite",
+				Status:      "beklemede",
+				Priority:    "orta",
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
 			},
 			wantErr: false,
 		},
@@ -137,13 +137,13 @@ func TestVeriYonetici_GorevGetir(t *testing.T) {
 
 	// Insert test data
 	testGorev := &Gorev{
-		ID:              "test-get-1",
-		Baslik:          "Test Getir",
-		Aciklama:        "Getir testi",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:          "test-get-1",
+		Title:       "Test Getir",
+		Description: "Getir testi",
+		Status:      "beklemede",
+		Priority:    "orta",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	if err := vy.GorevKaydet(testGorev); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
@@ -187,8 +187,8 @@ func TestVeriYonetici_GorevGetir(t *testing.T) {
 			if gorev.ID != tc.id {
 				t.Errorf("expected ID %s, got %s", tc.id, gorev.ID)
 			}
-			if gorev.Baslik != testGorev.Baslik {
-				t.Errorf("expected Baslik %s, got %s", testGorev.Baslik, gorev.Baslik)
+			if gorev.Title != testGorev.Title {
+				t.Errorf("expected Baslik %s, got %s", testGorev.Title, gorev.Title)
 			}
 		})
 	}
@@ -204,28 +204,28 @@ func TestVeriYonetici_GorevleriGetir(t *testing.T) {
 	// Insert test data
 	testGorevler := []*Gorev{
 		{
-			ID:              "test-list-1",
-			Baslik:          "Bekleyen Görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			OlusturmaTarih:  time.Now().Add(-2 * time.Hour),
-			GuncellemeTarih: time.Now(),
+			ID:        "test-list-1",
+			Title:     "Bekleyen Görev",
+			Status:    "beklemede",
+			Priority:  "orta",
+			CreatedAt: time.Now().Add(-2 * time.Hour),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "test-list-2",
-			Baslik:          "Devam Eden Görev",
-			Durum:           "devam-ediyor",
-			Oncelik:         "yuksek",
-			OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
-			GuncellemeTarih: time.Now(),
+			ID:        "test-list-2",
+			Title:     "Devam Eden Görev",
+			Status:    "devam-ediyor",
+			Priority:  "yuksek",
+			CreatedAt: time.Now().Add(-1 * time.Hour),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "test-list-3",
-			Baslik:          "Tamamlanan Görev",
-			Durum:           "tamamlandi",
-			Oncelik:         "dusuk",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "test-list-3",
+			Title:     "Tamamlanan Görev",
+			Status:    "tamamlandi",
+			Priority:  "dusuk",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 	}
 
@@ -280,7 +280,7 @@ func TestVeriYonetici_GorevleriGetir(t *testing.T) {
 			// Verify order (newest first)
 			if len(gorevler) > 1 {
 				for i := 0; i < len(gorevler)-1; i++ {
-					if gorevler[i].OlusturmaTarih.Before(gorevler[i+1].OlusturmaTarih) {
+					if gorevler[i].CreatedAt.Before(gorevler[i+1].CreatedAt) {
 						t.Error("tasks not ordered by creation date (newest first)")
 					}
 				}
@@ -298,13 +298,13 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 
 	// Insert test data
 	originalGorev := &Gorev{
-		ID:              "test-update-1",
-		Baslik:          "Original Title",
-		Aciklama:        "Original Description",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-1 * time.Hour),
+		ID:          "test-update-1",
+		Title:       "Original Title",
+		Description: "Original Description",
+		Status:      "beklemede",
+		Priority:    "orta",
+		CreatedAt:   time.Now().Add(-1 * time.Hour),
+		UpdatedAt:   time.Now().Add(-1 * time.Hour),
 	}
 	if err := vy.GorevKaydet(originalGorev); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
@@ -318,24 +318,24 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 		{
 			name: "update all fields",
 			gorev: &Gorev{
-				ID:              "test-update-1",
-				Baslik:          "Updated Title",
-				Aciklama:        "Updated Description",
-				Durum:           "devam-ediyor",
-				Oncelik:         "yuksek",
-				ProjeID:         "proje-1",
-				GuncellemeTarih: time.Now(),
+				ID:          "test-update-1",
+				Title:       "Updated Title",
+				Description: "Updated Description",
+				Status:      "devam-ediyor",
+				Priority:    "yuksek",
+				ProjeID:     "proje-1",
+				UpdatedAt:   time.Now(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "update non-existing task",
 			gorev: &Gorev{
-				ID:              "non-existing",
-				Baslik:          "Should not update",
-				Durum:           "beklemede",
-				Oncelik:         "orta",
-				GuncellemeTarih: time.Now(),
+				ID:        "non-existing",
+				Title:     "Should not update",
+				Status:    "beklemede",
+				Priority:  "orta",
+				UpdatedAt: time.Now(),
 			},
 			wantErr: false, // SQL UPDATE doesn't error on non-existing rows
 		},
@@ -345,12 +345,12 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Convert gorev struct to map for GorevGuncelle
 			params := map[string]interface{}{
-				"baslik":           tc.gorev.Baslik,
-				"aciklama":         tc.gorev.Aciklama,
-				"durum":            tc.gorev.Durum,
-				"oncelik":          tc.gorev.Oncelik,
-				"proje_id":         tc.gorev.ProjeID,
-				"guncelleme_tarih": tc.gorev.GuncellemeTarih,
+				"baslik":     tc.gorev.Title,
+				"aciklama":   tc.gorev.Description,
+				"durum":      tc.gorev.Status,
+				"oncelik":    tc.gorev.Priority,
+				"proje_id":   tc.gorev.ProjeID,
+				"updated_at": tc.gorev.UpdatedAt,
 			}
 
 			err := vy.GorevGuncelle(tc.gorev.ID, params)
@@ -371,11 +371,11 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to get updated task: %v", err)
 				}
-				if updated.Baslik != tc.gorev.Baslik {
-					t.Errorf("expected Baslik %s, got %s", tc.gorev.Baslik, updated.Baslik)
+				if updated.Title != tc.gorev.Title {
+					t.Errorf("expected Baslik %s, got %s", tc.gorev.Title, updated.Title)
 				}
-				if updated.Durum != tc.gorev.Durum {
-					t.Errorf("expected Durum %s, got %s", tc.gorev.Durum, updated.Durum)
+				if updated.Status != tc.gorev.Status {
+					t.Errorf("expected Durum %s, got %s", tc.gorev.Status, updated.Status)
 				}
 			}
 		})
@@ -391,12 +391,12 @@ func TestVeriYonetici_GorevSil(t *testing.T) {
 
 	// Insert test data
 	testGorev := &Gorev{
-		ID:              "test-delete-1",
-		Baslik:          "To be deleted",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:        "test-delete-1",
+		Title:     "To be deleted",
+		Status:    "beklemede",
+		Priority:  "orta",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	if err := vy.GorevKaydet(testGorev); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
@@ -462,31 +462,31 @@ func TestVeriYonetici_ProjeKaydet(t *testing.T) {
 		{
 			name: "valid project",
 			proje: &Proje{
-				ID:              "proje-1",
-				Isim:            "Test Projesi",
-				Tanim:           "Test projesi açıklaması",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:         "proje-1",
+				Name:       "Test Projesi",
+				Definition: "Test projesi açıklaması",
+				CreatedAt:  time.Now(),
+				UpdatedAt:  time.Now(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "duplicate project ID",
 			proje: &Proje{
-				ID:              "proje-1",
-				Isim:            "Duplicate",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:        "proje-1",
+				Name:      "Duplicate",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			},
 			wantErr: true,
 		},
 		{
 			name: "empty project ID",
 			proje: &Proje{
-				ID:              "",
-				Isim:            "No ID",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:        "",
+				Name:      "No ID",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			},
 			wantErr: false,
 		},
@@ -517,11 +517,11 @@ func TestVeriYonetici_ProjeGetir(t *testing.T) {
 
 	// Insert test data
 	testProje := &Proje{
-		ID:              "proje-get-1",
-		Isim:            "Test Projesi",
-		Tanim:           "Test açıklaması",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:         "proje-get-1",
+		Name:       "Test Projesi",
+		Definition: "Test açıklaması",
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	if err := vy.ProjeKaydet(testProje); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
@@ -565,8 +565,8 @@ func TestVeriYonetici_ProjeGetir(t *testing.T) {
 			if proje.ID != tc.id {
 				t.Errorf("expected ID %s, got %s", tc.id, proje.ID)
 			}
-			if proje.Isim != testProje.Isim {
-				t.Errorf("expected Isim %s, got %s", testProje.Isim, proje.Isim)
+			if proje.Name != testProje.Name {
+				t.Errorf("expected Isim %s, got %s", testProje.Name, proje.Name)
 			}
 		})
 	}
@@ -582,25 +582,25 @@ func TestVeriYonetici_ProjeleriGetir(t *testing.T) {
 	// Insert test data
 	testProjeler := []*Proje{
 		{
-			ID:              "proje-list-1",
-			Isim:            "Proje 1",
-			Tanim:           "İlk proje",
-			OlusturmaTarih:  time.Now().Add(-2 * time.Hour),
-			GuncellemeTarih: time.Now(),
+			ID:         "proje-list-1",
+			Name:       "Proje 1",
+			Definition: "İlk proje",
+			CreatedAt:  time.Now().Add(-2 * time.Hour),
+			UpdatedAt:  time.Now(),
 		},
 		{
-			ID:              "proje-list-2",
-			Isim:            "Proje 2",
-			Tanim:           "İkinci proje",
-			OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
-			GuncellemeTarih: time.Now(),
+			ID:         "proje-list-2",
+			Name:       "Proje 2",
+			Definition: "İkinci proje",
+			CreatedAt:  time.Now().Add(-1 * time.Hour),
+			UpdatedAt:  time.Now(),
 		},
 		{
-			ID:              "proje-list-3",
-			Isim:            "Proje 3",
-			Tanim:           "Üçüncü proje",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:         "proje-list-3",
+			Name:       "Proje 3",
+			Definition: "Üçüncü proje",
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		},
 	}
 
@@ -621,7 +621,7 @@ func TestVeriYonetici_ProjeleriGetir(t *testing.T) {
 
 	// Verify order (newest first)
 	for i := 0; i < len(projeler)-1; i++ {
-		if projeler[i].OlusturmaTarih.Before(projeler[i+1].OlusturmaTarih) {
+		if projeler[i].CreatedAt.Before(projeler[i+1].CreatedAt) {
 			t.Error("projects not ordered by creation date (newest first)")
 		}
 	}
@@ -636,10 +636,10 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 
 	// Insert test project
 	testProje := &Proje{
-		ID:              "proje-tasks-1",
-		Isim:            "Test Projesi",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:        "proje-tasks-1",
+		Name:      "Test Projesi",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	if err := vy.ProjeKaydet(testProje); err != nil {
 		t.Fatalf("failed to insert test project: %v", err)
@@ -648,40 +648,40 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 	// Insert tasks for the project
 	testGorevler := []*Gorev{
 		{
-			ID:              "task-1",
-			Baslik:          "Proje Görevi 1",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         "proje-tasks-1",
-			OlusturmaTarih:  time.Now().Add(-2 * time.Hour),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-1",
+			Title:     "Proje Görevi 1",
+			Status:    "beklemede",
+			Priority:  "orta",
+			ProjeID:   "proje-tasks-1",
+			CreatedAt: time.Now().Add(-2 * time.Hour),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "task-2",
-			Baslik:          "Proje Görevi 2",
-			Durum:           "devam-ediyor",
-			Oncelik:         "yuksek",
-			ProjeID:         "proje-tasks-1",
-			OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-2",
+			Title:     "Proje Görevi 2",
+			Status:    "devam-ediyor",
+			Priority:  "yuksek",
+			ProjeID:   "proje-tasks-1",
+			CreatedAt: time.Now().Add(-1 * time.Hour),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "task-3",
-			Baslik:          "Başka Proje Görevi",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         "other-project",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-3",
+			Title:     "Başka Proje Görevi",
+			Status:    "beklemede",
+			Priority:  "orta",
+			ProjeID:   "other-project",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "task-4",
-			Baslik:          "Projesi Olmayan Görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         "",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-4",
+			Title:     "Projesi Olmayan Görev",
+			Status:    "beklemede",
+			Priority:  "orta",
+			ProjeID:   "",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 	}
 
@@ -734,7 +734,7 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 			// Verify order (newest first)
 			if len(gorevler) > 1 {
 				for i := 0; i < len(gorevler)-1; i++ {
-					if gorevler[i].OlusturmaTarih.Before(gorevler[i+1].OlusturmaTarih) {
+					if gorevler[i].CreatedAt.Before(gorevler[i+1].CreatedAt) {
 						t.Error("tasks not ordered by creation date (newest first)")
 					}
 				}
@@ -782,12 +782,12 @@ func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func(id int) {
 			gorev := &Gorev{
-				ID:              fmt.Sprintf("concurrent-%d", id),
-				Baslik:          fmt.Sprintf("Concurrent Task %d", id),
-				Durum:           "beklemede",
-				Oncelik:         "orta",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:        fmt.Sprintf("concurrent-%d", id),
+				Title:     fmt.Sprintf("Concurrent Task %d", id),
+				Status:    "beklemede",
+				Priority:  "orta",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			}
 			done <- vy.GorevKaydet(gorev)
 		}(i)
@@ -828,13 +828,13 @@ func TestVeriYonetici_SQLInjection(t *testing.T) {
 
 	// Try SQL injection in various fields
 	maliciousGorev := &Gorev{
-		ID:              "test-injection",
-		Baslik:          "'; DROP TABLE gorevler; --",
-		Aciklama:        "' OR '1'='1",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:          "test-injection",
+		Title:       "'; DROP TABLE gorevler; --",
+		Description: "' OR '1'='1",
+		Status:      "beklemede",
+		Priority:    "orta",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	// Should save without executing the injection
@@ -855,7 +855,7 @@ func TestVeriYonetici_SQLInjection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to retrieve task: %v", err)
 	}
-	if retrieved.Baslik != maliciousGorev.Baslik {
+	if retrieved.Title != maliciousGorev.Title {
 		t.Error("malicious string was not stored correctly")
 	}
 
@@ -881,14 +881,14 @@ func TestVeriYonetici_NullHandling(t *testing.T) {
 
 	// Insert task without project (NULL proje_id)
 	gorevWithoutProject := &Gorev{
-		ID:              "no-project",
-		Baslik:          "Task without project",
-		Aciklama:        "", // Empty description
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		ProjeID:         "", // Should be stored as NULL
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:          "no-project",
+		Title:       "Task without project",
+		Description: "", // Empty description
+		Status:      "beklemede",
+		Priority:    "orta",
+		ProjeID:     "", // Should be stored as NULL
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	err = vy.GorevKaydet(gorevWithoutProject)
@@ -939,8 +939,8 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 
 	// Görev oluştur
 	gorev := &Gorev{
-		ID:     "etiket-test-gorev",
-		Baslik: "Etiket Testi",
+		ID:    "etiket-test-gorev",
+		Title: "Etiket Testi",
 	}
 	err = vy.GorevKaydet(gorev)
 	require.NoError(t, err)
@@ -950,9 +950,9 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 	etiketler, err := vy.EtiketleriGetirVeyaOlustur(isimler)
 	require.NoError(t, err)
 	require.Len(t, etiketler, 3)
-	assert.Equal(t, "bug", etiketler[0].Isim)
-	assert.Equal(t, "acil", etiketler[1].Isim)
-	assert.Equal(t, "yeni-ozellik", etiketler[2].Isim) // Boşlukların temizlendiğini doğrula
+	assert.Equal(t, "bug", etiketler[0].Name)
+	assert.Equal(t, "acil", etiketler[1].Name)
+	assert.Equal(t, "yeni-ozellik", etiketler[2].Name) // Boşlukların temizlendiğini doğrula
 
 	// 2. Göreve etiketleri ata
 	err = vy.GorevEtiketleriniAyarla(gorev.ID, etiketler)
@@ -962,12 +962,12 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 	getirilenGorev, err := vy.GorevGetir(gorev.ID)
 	require.NoError(t, err)
 	require.NotNil(t, getirilenGorev)
-	require.Len(t, getirilenGorev.Etiketler, 3)
+	require.Len(t, getirilenGorev.Tags, 3)
 
 	// Etiket isimlerini bir map'e koyarak kontrol et
 	etiketMap := make(map[string]bool)
-	for _, e := range getirilenGorev.Etiketler {
-		etiketMap[e.Isim] = true
+	for _, e := range getirilenGorev.Tags {
+		etiketMap[e.Name] = true
 	}
 	assert.True(t, etiketMap["bug"])
 	assert.True(t, etiketMap["acil"])
@@ -984,11 +984,11 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 	getirilenGorev, err = vy.GorevGetir(gorev.ID)
 	require.NoError(t, err)
 	require.NotNil(t, getirilenGorev)
-	require.Len(t, getirilenGorev.Etiketler, 2)
+	require.Len(t, getirilenGorev.Tags, 2)
 
 	yeniEtiketMap := make(map[string]bool)
-	for _, e := range getirilenGorev.Etiketler {
-		yeniEtiketMap[e.Isim] = true
+	for _, e := range getirilenGorev.Tags {
+		yeniEtiketMap[e.Name] = true
 	}
 	assert.False(t, yeniEtiketMap["bug"])
 	assert.True(t, yeniEtiketMap["acil"])
@@ -1006,32 +1006,32 @@ func TestVeriYonetici_BulkDependencyCounts(t *testing.T) {
 	// Create test tasks
 	tasks := []*Gorev{
 		{
-			ID:              "task-1",
-			Baslik:          "Task 1",
-			Durum:           "beklemede",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-1",
+			Title:     "Task 1",
+			Status:    "beklemede",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "task-2",
-			Baslik:          "Task 2",
-			Durum:           "tamamlandi",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-2",
+			Title:     "Task 2",
+			Status:    "tamamlandi",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "task-3",
-			Baslik:          "Task 3",
-			Durum:           "beklemede",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-3",
+			Title:     "Task 3",
+			Status:    "beklemede",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		{
-			ID:              "task-4",
-			Baslik:          "Task 4",
-			Durum:           "devam_ediyor",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "task-4",
+			Title:     "Task 4",
+			Status:    "devam_ediyor",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 	}
 
@@ -1047,28 +1047,28 @@ func TestVeriYonetici_BulkDependencyCounts(t *testing.T) {
 	// task-4 depends on task-2 (completed) and task-3 (not completed)
 	dependencies := []*Baglanti{
 		{
-			ID:          "dep-1",
-			KaynakID:    "task-2",
-			HedefID:     "task-1",
-			BaglantiTip: "onceki",
+			ID:             "dep-1",
+			SourceID:       "task-2",
+			TargetID:       "task-1",
+			ConnectionType: "onceki",
 		},
 		{
-			ID:          "dep-2",
-			KaynakID:    "task-1",
-			HedefID:     "task-3",
-			BaglantiTip: "onceki",
+			ID:             "dep-2",
+			SourceID:       "task-1",
+			TargetID:       "task-3",
+			ConnectionType: "onceki",
 		},
 		{
-			ID:          "dep-3",
-			KaynakID:    "task-2",
-			HedefID:     "task-4",
-			BaglantiTip: "onceki",
+			ID:             "dep-3",
+			SourceID:       "task-2",
+			TargetID:       "task-4",
+			ConnectionType: "onceki",
 		},
 		{
-			ID:          "dep-4",
-			KaynakID:    "task-3",
-			HedefID:     "task-4",
-			BaglantiTip: "onceki",
+			ID:             "dep-4",
+			SourceID:       "task-3",
+			TargetID:       "task-4",
+			ConnectionType: "onceki",
 		},
 	}
 
@@ -1180,13 +1180,13 @@ func BenchmarkVeriYonetici_GorevKaydet(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		gorev := &Gorev{
-			ID:              fmt.Sprintf("benchmark-%d", i),
-			Baslik:          fmt.Sprintf("Benchmark Task %d", i),
-			Aciklama:        "This is a benchmark task for performance testing",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          fmt.Sprintf("benchmark-%d", i),
+			Title:       fmt.Sprintf("Benchmark Task %d", i),
+			Description: "This is a benchmark task for performance testing",
+			Status:      "beklemede",
+			Priority:    "orta",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 		err = vy.GorevKaydet(gorev)
 		if err != nil {
@@ -1205,12 +1205,12 @@ func BenchmarkVeriYonetici_GorevleriGetir(b *testing.B) {
 	// Pre-populate with some tasks
 	for i := 0; i < 100; i++ {
 		gorev := &Gorev{
-			ID:              fmt.Sprintf("benchmark-%d", i),
-			Baslik:          fmt.Sprintf("Benchmark Task %d", i),
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        fmt.Sprintf("benchmark-%d", i),
+			Title:     fmt.Sprintf("Benchmark Task %d", i),
+			Status:    "beklemede",
+			Priority:  "orta",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		vy.GorevKaydet(gorev)
 	}
@@ -1234,11 +1234,11 @@ func BenchmarkVeriYonetici_ProjeKaydet(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		proje := &Proje{
-			ID:              fmt.Sprintf("benchmark-proje-%d", i),
-			Isim:            fmt.Sprintf("Benchmark Project %d", i),
-			Tanim:           fmt.Sprintf("Benchmark project description %d", i),
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:         fmt.Sprintf("benchmark-proje-%d", i),
+			Name:       fmt.Sprintf("Benchmark Project %d", i),
+			Definition: fmt.Sprintf("Benchmark project description %d", i),
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 		err = vy.ProjeKaydet(proje)
 		if err != nil {
@@ -1256,12 +1256,12 @@ func BenchmarkVeriYonetici_GorevGuncelle(b *testing.B) {
 
 	// Create a task to update
 	gorev := &Gorev{
-		ID:              "benchmark-update",
-		Baslik:          "Benchmark Update Task",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:        "benchmark-update",
+		Title:     "Benchmark Update Task",
+		Status:    "beklemede",
+		Priority:  "orta",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	err = vy.GorevKaydet(gorev)
 	if err != nil {
@@ -1272,12 +1272,12 @@ func BenchmarkVeriYonetici_GorevGuncelle(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		taskID := fmt.Sprintf("benchmark-update-%d", i)
 		gorev := &Gorev{
-			ID:              taskID,
-			Baslik:          "Benchmark Update Task",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        taskID,
+			Title:     "Benchmark Update Task",
+			Status:    "beklemede",
+			Priority:  "orta",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		// Create task first
 		err = vy.GorevKaydet(gorev)
@@ -1323,12 +1323,12 @@ func TestVeriYonetici_HighConcurrencyAccess(t *testing.T) {
 			if id%2 == 0 {
 				// Write operation
 				gorev := &Gorev{
-					ID:              fmt.Sprintf("high-concurrent-%d", id),
-					Baslik:          fmt.Sprintf("High Concurrent Task %d", id),
-					Durum:           "beklemede",
-					Oncelik:         "orta",
-					OlusturmaTarih:  time.Now(),
-					GuncellemeTarih: time.Now(),
+					ID:        fmt.Sprintf("high-concurrent-%d", id),
+					Title:     fmt.Sprintf("High Concurrent Task %d", id),
+					Status:    "beklemede",
+					Priority:  "orta",
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
 				}
 				done <- vy.GorevKaydet(gorev)
 			} else {
@@ -1391,10 +1391,10 @@ func TestVeriYonetici_MixedOperationsConcurrency(t *testing.T) {
 	// Create some initial data
 	for i := 0; i < 20; i++ {
 		proje := &Proje{
-			ID:              fmt.Sprintf("proje-%d", i),
-			Isim:            fmt.Sprintf("Proje %d", i),
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        fmt.Sprintf("proje-%d", i),
+			Name:      fmt.Sprintf("Proje %d", i),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		vy.ProjeKaydet(proje)
 	}
@@ -1412,13 +1412,13 @@ func TestVeriYonetici_MixedOperationsConcurrency(t *testing.T) {
 				switch op % 5 {
 				case 0: // Create task
 					gorev := &Gorev{
-						ID:              taskID,
-						Baslik:          fmt.Sprintf("Mixed Task %d-%d", wid, op),
-						Durum:           "beklemede",
-						Oncelik:         "orta",
-						ProjeID:         fmt.Sprintf("proje-%d", wid%20),
-						OlusturmaTarih:  time.Now(),
-						GuncellemeTarih: time.Now(),
+						ID:        taskID,
+						Title:     fmt.Sprintf("Mixed Task %d-%d", wid, op),
+						Status:    "beklemede",
+						Priority:  "orta",
+						ProjeID:   fmt.Sprintf("proje-%d", wid%20),
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
 					}
 					done <- vy.GorevKaydet(gorev)
 
@@ -1502,12 +1502,12 @@ func TestVeriYonetici_ConnectionPoolStress(t *testing.T) {
 		go func(id int) {
 			// Each goroutine performs a single create+read operation
 			gorev := &Gorev{
-				ID:              fmt.Sprintf("pool-stress-%d", id),
-				Baslik:          fmt.Sprintf("Pool Stress Task %d", id),
-				Durum:           "beklemede",
-				Oncelik:         "orta",
-				OlusturmaTarih:  time.Now(),
-				GuncellemeTarih: time.Now(),
+				ID:        fmt.Sprintf("pool-stress-%d", id),
+				Title:     fmt.Sprintf("Pool Stress Task %d", id),
+				Status:    "beklemede",
+				Priority:  "orta",
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			}
 
 			err := vy.GorevKaydet(gorev)
@@ -1607,12 +1607,12 @@ func TestVeriYonetici_LongRunningConcurrency(t *testing.T) {
 					// Perform random operation
 					taskID := fmt.Sprintf("long-running-%d-%d", workerID, opCount)
 					gorev := &Gorev{
-						ID:              taskID,
-						Baslik:          fmt.Sprintf("Long Running Task %d-%d", workerID, opCount),
-						Durum:           "beklemede",
-						Oncelik:         "orta",
-						OlusturmaTarih:  time.Now(),
-						GuncellemeTarih: time.Now(),
+						ID:        taskID,
+						Title:     fmt.Sprintf("Long Running Task %d-%d", workerID, opCount),
+						Status:    "beklemede",
+						Priority:  "orta",
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
 					}
 
 					err := vy.GorevKaydet(gorev)

@@ -9,23 +9,23 @@ export interface ApiResponse<T> {
 // Task Types
 export interface Task {
   id: string;
-  baslik: string;
-  aciklama: string;
-  durum: TaskStatus;
-  oncelik: TaskPriority;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
   proje_id?: string;
   proje_name?: string;
   parent_id?: string;
-  son_tarih?: string;
-  etiketler?: Array<{ id: string; isim: string }>;
-  olusturma_tarihi: string;
-  guncelleme_tarihi: string;
+  due_date?: string;
+  tags?: Array<{ id: string; name: string }>;
+  created_at: string;
+  updated_at: string;
   // Subtask and dependency info
-  alt_gorevler?: Task[];
+  subtasks?: Task[];
   has_subtasks?: boolean;
   subtask_count?: number;
-  bagimli_gorev_sayisi?: number;
-  tamamlanmamis_bagimlilik_sayisi?: number;
+  dependency_count?: number;
+  uncompleted_dependency_count?: number;
 }
 
 export type TaskStatus = 'beklemede' | 'devam_ediyor' | 'tamamlandi';
@@ -34,64 +34,64 @@ export type TaskPriority = 'dusuk' | 'orta' | 'yuksek';
 // Project Types
 export interface Project {
   id: string;
-  isim: string;
-  tanim: string;
-  olusturma_tarihi: string;
-  gorev_sayisi: number;
+  name: string;
+  definition: string;
+  created_at: string;
+  task_count: number;
   is_active: boolean;
 }
 
 // Template Types
 export interface Template {
   id: string;
-  isim: string;
-  tanim: string;
+  name: string;
+  definition: string;
   alias?: string;
-  varsayilan_baslik?: string;
-  aciklama_template?: string;
-  ornek_degerler?: Record<string, string> | null;
-  alanlar: TemplateField[];
-  kategori: string;
-  aktif: boolean;
+  default_title?: string;
+  description_template?: string;
+  sample_values?: Record<string, string> | null;
+  fields: TemplateField[];
+  category: string;
+  active: boolean;
 }
 
 export interface TemplateField {
-  isim: string;
-  tip: 'text' | 'select' | 'date';
-  zorunlu: boolean;
-  varsayilan?: string;
-  secenekler?: string[];
-  aciklama?: string;
+  name: string;
+  type: 'text' | 'select' | 'date';
+  required: boolean;
+  default?: string;
+  options?: string[];
+  description?: string;
 }
 
 // Form Types for API requests
 export interface CreateTaskFromTemplateRequest {
   template_id: string;
   proje_id: string;
-  degerler: Record<string, string>;
+  values: Record<string, string>;
 }
 
 export interface CreateProjectRequest {
-  isim: string;
-  tanim?: string;
+  name: string;
+  definition?: string;
 }
 
 export interface UpdateTaskRequest {
-  baslik?: string;
-  aciklama?: string;
-  durum?: TaskStatus;
-  oncelik?: TaskPriority;
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
   proje_id?: string;
-  son_tarih?: string;
-  etiketler?: string[];
+  due_date?: string;
+  tags?: string[];
 }
 
 // UI State Types
 export interface TaskFilter {
-  durum?: TaskStatus;
-  oncelik?: TaskPriority;
+  status?: TaskStatus;
+  priority?: TaskPriority;
   proje_id?: string;
-  etiket?: string;
+  tag?: string;
   search?: string;
 }
 

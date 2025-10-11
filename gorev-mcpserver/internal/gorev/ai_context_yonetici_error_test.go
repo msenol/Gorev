@@ -126,11 +126,11 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 
 	// Add test task for valid updates
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 
@@ -253,33 +253,33 @@ func TestAIContextYonetici_NLPQueryError(t *testing.T) {
 
 	// Create test tasks with various attributes
 	task1 := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Task with ąćęłńóśźż unicode",
-		Aciklama:       "Description with special chars: @#$%^&*()",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityHigh,
-		OlusturmaTarih: time.Now(),
-		Etiketler:      []*Etiket{{ID: "tag-1", Isim: "tag with spaces"}},
+		ID:          "task-1",
+		Title:       "Task with ąćęłńóśźż unicode",
+		Description: "Description with special chars: @#$%^&*()",
+		Status:      constants.TaskStatusPending,
+		Priority:    constants.PriorityHigh,
+		CreatedAt:   time.Now(),
+		Tags:        []*Etiket{{ID: "tag-1", Name: "tag with spaces"}},
 	}
 
 	task2 := &Gorev{
-		ID:             "task-2",
-		Baslik:         "UPPERCASE TITLE",
-		Aciklama:       "lowercase description",
-		Durum:          constants.TaskStatusCompleted,
-		Oncelik:        constants.PriorityLow,
-		OlusturmaTarih: time.Now(),
-		Etiketler:      []*Etiket{{ID: "tag-2", Isim: "MixedCase"}},
+		ID:          "task-2",
+		Title:       "UPPERCASE TITLE",
+		Description: "lowercase description",
+		Status:      constants.TaskStatusCompleted,
+		Priority:    constants.PriorityLow,
+		CreatedAt:   time.Now(),
+		Tags:        []*Etiket{{ID: "tag-2", Name: "MixedCase"}},
 	}
 
 	task3 := &Gorev{
-		ID:             "task-3",
-		Baslik:         "", // Empty title
-		Aciklama:       "", // Empty description
-		Durum:          constants.TaskStatusInProgress,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
-		Etiketler:      []*Etiket{}, // No tags
+		ID:          "task-3",
+		Title:       "", // Empty title
+		Description: "", // Empty description
+		Status:      constants.TaskStatusInProgress,
+		Priority:    constants.PriorityMedium,
+		CreatedAt:   time.Now(),
+		Tags:        []*Etiket{}, // No tags
 	}
 
 	// Add tasks to mock
@@ -429,10 +429,10 @@ func TestAIContextYonetici_GetActiveTask_EdgeCases(t *testing.T) {
 
 			// Add a test task to mock
 			testTask := &Gorev{
-				ID:             "task-1",
-				Baslik:         "Test Task",
-				Durum:          constants.TaskStatusPending,
-				OlusturmaTarih: time.Now(),
+				ID:        "task-1",
+				Title:     "Test Task",
+				Status:    constants.TaskStatusPending,
+				CreatedAt: time.Now(),
 			}
 			vy.gorevler["task-1"] = testTask
 

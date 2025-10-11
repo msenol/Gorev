@@ -33,7 +33,7 @@ func getTemplateIDByName(t *testing.T, handlers *Handlers, namePart string) stri
 	require.NotEmpty(t, templates)
 
 	for _, tmpl := range templates {
-		if strings.Contains(tmpl.Isim, namePart) {
+		if strings.Contains(tmpl.Name, namePart) {
 			return tmpl.ID
 		}
 	}
@@ -55,32 +55,32 @@ func TestGorevOzetYazdirTamamlandi(t *testing.T) {
 		{
 			name: "normal task",
 			gorev: &gorev.Gorev{
-				ID:     constants.TestTaskID,
-				Baslik: constants.TestTaskTitleEN,
+				ID:    constants.TestTaskID,
+				Title: constants.TestTaskTitleEN,
 			},
 			expected: "- ~~Test Task~~ | " + constants.TestTaskShortID + "\n",
 		},
 		{
 			name: "task with special characters",
 			gorev: &gorev.Gorev{
-				ID:     "task-abcdefgh",
-				Baslik: "Task with | special ~ chars",
+				ID:    "task-abcdefgh",
+				Title: "Task with | special ~ chars",
 			},
 			expected: "- ~~Task with | special ~ chars~~ | task-abc\n",
 		},
 		{
 			name: "empty title",
 			gorev: &gorev.Gorev{
-				ID:     "task-empty",
-				Baslik: "",
+				ID:    "task-empty",
+				Title: "",
 			},
 			expected: "- ~~~~ | task-emp\n",
 		},
 		{
 			name: "very long title",
 			gorev: &gorev.Gorev{
-				ID:     "task-long",
-				Baslik: strings.Repeat("A", constants.TestLongTitleLength),
+				ID:    "task-long",
+				Title: strings.Repeat("A", constants.TestLongTitleLength),
 			},
 			expected: fmt.Sprintf("- ~~%s~~ | task-lon\n", strings.Repeat("A", constants.TestLongTitleLength)),
 		},
@@ -101,20 +101,20 @@ func TestGorevHiyerarsiYazdir(t *testing.T) {
 
 	// Create test tasks
 	parentTask := &gorev.Gorev{
-		ID:                            constants.TestParentTaskID,
-		Baslik:                        "Parent Task",
-		Durum:                         constants.TaskStatusPending,
-		Oncelik:                       constants.PriorityHigh,
-		ProjeID:                       "proj-1",
-		BagimliGorevSayisi:            2,
-		TamamlanmamisBagimlilikSayisi: 1,
+		ID:                         constants.TestParentTaskID,
+		Title:                      "Parent Task",
+		Status:                     constants.TaskStatusPending,
+		Priority:                   constants.PriorityHigh,
+		ProjeID:                    "proj-1",
+		DependencyCount:            2,
+		UncompletedDependencyCount: 1,
 	}
 
 	childTask := &gorev.Gorev{
 		ID:       constants.TestChildTaskID,
-		Baslik:   "Child Task",
-		Durum:    constants.TaskStatusInProgress,
-		Oncelik:  constants.PriorityMedium,
+		Title:    "Child Task",
+		Status:   constants.TaskStatusInProgress,
+		Priority: constants.PriorityMedium,
 		ProjeID:  "proj-1",
 		ParentID: parentTask.ID,
 	}
@@ -167,7 +167,7 @@ func TestGorevHiyerarsiYazdir(t *testing.T) {
 			result := handlers.gorevHiyerarsiYazdir(tt.gorev, tt.gorevMap, tt.seviye, tt.projeGoster)
 
 			// Check for expected components
-			assert.Contains(t, result, tt.gorev.Baslik)
+			assert.Contains(t, result, tt.gorev.Title)
 			assert.Contains(t, result, tt.expectDurum)
 			if tt.seviye > 0 {
 				assert.Contains(t, result, tt.expectPrefix)
@@ -199,13 +199,13 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 
 	t.Logf("Available templates:")
 	for _, tmpl := range templates {
-		t.Logf("  - %s", tmpl.Isim)
+		t.Logf("  - %s", tmpl.Name)
 	}
 
 	// Get a simple template ID
 	var templateID string
 	for _, tmpl := range templates {
-		if strings.Contains(tmpl.Isim, "Araştırma") {
+		if strings.Contains(tmpl.Name, "Araştırma") {
 			templateID = tmpl.ID
 			break
 		}
@@ -227,7 +227,7 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 	// Create a parent task first
 	parentResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: templateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"konu":      "Parent Research",
 			"amac":      "Study parent-child relationships",
 			"sorular":   "How to implement hierarchy?",
@@ -380,7 +380,7 @@ func TestGorevUstDegistir(t *testing.T) {
 	// Create test tasks
 	parent1Result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: featureTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":       "Parent 1",
 			"aciklama":     "First parent",
 			"oncelik":      constants.PriorityMedium,
@@ -396,7 +396,7 @@ func TestGorevUstDegistir(t *testing.T) {
 
 	parent2Result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: featureTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":       "Parent 2",
 			"aciklama":     "Second parent",
 			"oncelik":      constants.PriorityMedium,
@@ -565,7 +565,7 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 	// Create a hierarchy of tasks
 	rootResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: featureTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":       "Root Feature",
 			"aciklama":     "Main feature",
 			"oncelik":      constants.PriorityHigh,
@@ -794,7 +794,7 @@ func TestCallTool(t *testing.T) {
 			toolName: "templateden_gorev_olustur",
 			params: map[string]interface{}{
 				constants.ParamTemplateID: bugTemplateID,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"baslik":   "Bug via CallTool",
 					"aciklama": "Test",
 					"oncelik":  constants.PriorityMedium,
@@ -917,8 +917,8 @@ func TestGorevBagimlilikBilgisi(t *testing.T) {
 		{
 			name: "no dependencies",
 			gorev: &gorev.Gorev{
-				BagimliGorevSayisi:            0,
-				TamamlanmamisBagimlilikSayisi: 0,
+				DependencyCount:            0,
+				UncompletedDependencyCount: 0,
 			},
 			indent:   "",
 			expected: "",
@@ -926,8 +926,8 @@ func TestGorevBagimlilikBilgisi(t *testing.T) {
 		{
 			name: "with dependencies all completed",
 			gorev: &gorev.Gorev{
-				BagimliGorevSayisi:            3,
-				TamamlanmamisBagimlilikSayisi: 0,
+				DependencyCount:            3,
+				UncompletedDependencyCount: 0,
 			},
 			indent:   "  ",
 			expected: "  Bağımlı görev sayısı: 3\n",
@@ -935,8 +935,8 @@ func TestGorevBagimlilikBilgisi(t *testing.T) {
 		{
 			name: "with incomplete dependencies",
 			gorev: &gorev.Gorev{
-				BagimliGorevSayisi:            5,
-				TamamlanmamisBagimlilikSayisi: 2,
+				DependencyCount:            5,
+				UncompletedDependencyCount: 2,
 			},
 			indent:   "\t",
 			expected: "\tBağımlı görev sayısı: 5\n\tTamamlanmamış bağımlılık sayısı: 2\n",
@@ -944,8 +944,8 @@ func TestGorevBagimlilikBilgisi(t *testing.T) {
 		{
 			name: "single incomplete dependency",
 			gorev: &gorev.Gorev{
-				BagimliGorevSayisi:            1,
-				TamamlanmamisBagimlilikSayisi: 1,
+				DependencyCount:            1,
+				UncompletedDependencyCount: 1,
 			},
 			indent:   "    ",
 			expected: "    Bağımlı görev sayısı: 1\n    Tamamlanmamış bağımlılık sayısı: 1\n",
@@ -1051,7 +1051,7 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 	// Create and set an active task
 	taskResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: researchTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":    "Active Bug",
 			"aciklama":  "Test research task for active testing",
 			"oncelik":   constants.PriorityHigh,
@@ -1121,7 +1121,7 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 	for i := 0; i < constants.TestIterationSmall; i++ {
 		taskResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 			constants.ParamTemplateID: featureTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":       fmt.Sprintf("Feature %d", i),
 				"aciklama":     "Test feature description",
 				"amac":         "Test purpose for feature",
@@ -1199,7 +1199,7 @@ func TestGorevContextSummary_EdgeCases(t *testing.T) {
 	// High priority task
 	highPrioResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: bugTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":   "Critical Bug",
 			"aciklama": "High priority issue",
 			"oncelik":  constants.PriorityHigh,
@@ -1215,7 +1215,7 @@ func TestGorevContextSummary_EdgeCases(t *testing.T) {
 	// Create blocked task with dependency
 	blockedResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":    "Blocked Feature",
 			"aciklama":  "Waiting for bug fix",
 			"oncelik":   constants.PriorityMedium,
@@ -1271,7 +1271,7 @@ func TestProjeGorevleri_EdgeCases(t *testing.T) {
 	for i := 0; i < constants.TestLargeIteration; i++ {
 		_, _ = handlers.TemplatedenGorevOlustur(map[string]interface{}{
 			constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":    fmt.Sprintf("Feature %d", i),
 				"aciklama":  "Test",
 				"oncelik":   constants.PriorityMedium,
@@ -1339,7 +1339,7 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 	// Create test tasks
 	task1Result, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: featureTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":       "Task 1",
 			"aciklama":     "First task",
 			"amac":         "Test purpose 1",
@@ -1354,7 +1354,7 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 
 	task2Result, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: featureTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":       "Task 2",
 			"aciklama":     "Second task",
 			"amac":         "Test purpose 2",
@@ -1478,7 +1478,7 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	// Create a task with all features
 	taskResult, err := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: bugTemplateID,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":             "Complex Bug",
 			"aciklama":           "Bug with all features",
 			"oncelik":            constants.PriorityHigh,
@@ -1513,7 +1513,7 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	// Create dependency
 	depResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":    "Dependency Task",
 			"aciklama":  "Must complete first",
 			"oncelik":   constants.PriorityMedium,
@@ -1536,8 +1536,8 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 
 	// Check all sections
 	assert.Contains(t, text, "Complex Bug")
-	assert.Contains(t, text, "**Öncelik:** yuksek")  // Bold format
-	assert.Contains(t, text, "**Durum:** beklemede") // Initial status
+	assert.Contains(t, text, "**Öncelik:** yuksek")   // Bold format
+	assert.Contains(t, text, "**Status:** beklemede") // Initial status
 	assert.Contains(t, text, "**Son Tarih:** 2025-12-31")
 	// Check tags are present (order may vary)
 	assert.Contains(t, text, "bug")
@@ -1580,14 +1580,14 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 		{
 			name: "completed task",
 			gorev: &gorev.Gorev{
-				ID:                 "task-completed",
-				Baslik:             "Completed Task",
-				Durum:              constants.TaskStatusCompleted,
-				Oncelik:            constants.PriorityHigh,
-				ProjeID:            projID,
-				SonTarih:           &now,
-				Etiketler:          []*gorev.Etiket{{Isim: "done"}, {Isim: "tested"}},
-				BagimliGorevSayisi: 0,
+				ID:              "task-completed",
+				Title:           "Completed Task",
+				Status:          constants.TaskStatusCompleted,
+				Priority:        constants.PriorityHigh,
+				ProjeID:         projID,
+				DueDate:         &now,
+				Tags:            []*gorev.Etiket{{Name: "done"}, {Name: "tested"}},
+				DependencyCount: 0,
 			},
 			projeGoster:    true,
 			expectContains: []string{"Completed Task", "(Y)"}, // Format changed
@@ -1595,11 +1595,11 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 		{
 			name: "task with very long description",
 			gorev: &gorev.Gorev{
-				ID:       "task-long",
-				Baslik:   "Long Task",
-				Aciklama: strings.Repeat("Very long description ", constants.TestDescriptionRepeat),
-				Durum:    constants.TaskStatusPending,
-				Oncelik:  constants.PriorityMedium,
+				ID:          "task-long",
+				Title:       "Long Task",
+				Description: strings.Repeat("Very long description ", constants.TestDescriptionRepeat),
+				Status:      constants.TaskStatusPending,
+				Priority:    constants.PriorityMedium,
 			},
 			projeGoster:    false,
 			expectContains: []string{"..."},
@@ -1607,16 +1607,16 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 		{
 			name: "task with all fields",
 			gorev: &gorev.Gorev{
-				ID:                            "task-full",
-				Baslik:                        "Full Task",
-				Aciklama:                      "Complete task",
-				Durum:                         constants.TaskStatusInProgress,
-				Oncelik:                       constants.PriorityLow,
-				ProjeID:                       projID,
-				SonTarih:                      &now,
-				Etiketler:                     []*gorev.Etiket{{Isim: "tag1"}, {Isim: "tag2"}, {Isim: "tag3"}},
-				BagimliGorevSayisi:            3,
-				TamamlanmamisBagimlilikSayisi: 1,
+				ID:                         "task-full",
+				Title:                      "Full Task",
+				Description:                "Complete task",
+				Status:                     constants.TaskStatusInProgress,
+				Priority:                   constants.PriorityLow,
+				ProjeID:                    projID,
+				DueDate:                    &now,
+				Tags:                       []*gorev.Etiket{{Name: "tag1"}, {Name: "tag2"}, {Name: "tag3"}},
+				DependencyCount:            3,
+				UncompletedDependencyCount: 1,
 			},
 			projeGoster: true,
 			expectContains: []string{
@@ -1630,10 +1630,10 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 			name: "overdue task",
 			gorev: &gorev.Gorev{
 				ID:       "task-overdue",
-				Baslik:   "Overdue Task",
-				Durum:    constants.TaskStatusPending,
-				Oncelik:  constants.PriorityHigh,
-				SonTarih: func() *time.Time { t := now.AddDate(0, 0, -7); return &t }(),
+				Title:    "Overdue Task",
+				Status:   constants.TaskStatusPending,
+				Priority: constants.PriorityHigh,
+				DueDate:  func() *time.Time { t := now.AddDate(0, 0, -7); return &t }(),
 			},
 			projeGoster:    false,
 			expectContains: []string{"Overdue Task"}, // Format may have changed

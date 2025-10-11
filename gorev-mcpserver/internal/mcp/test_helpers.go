@@ -275,7 +275,7 @@ func CreateTestProject(t *testing.T, env *TestEnvironment, name, description str
 func CreateTestTask(t *testing.T, env *TestEnvironment, templateID string, values map[string]interface{}) string {
 	params := map[string]interface{}{
 		constants.ParamTemplateID: templateID,
-		constants.ParamDegerler:   values,
+		constants.ParamValues:     values,
 	}
 
 	result, err := env.Handlers.TemplatedenGorevOlustur(params)

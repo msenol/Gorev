@@ -72,7 +72,7 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	// Bug Raporu template'ini bul
 	var firstBugTemplate *gorev.GorevTemplate
 	for _, tmpl := range templates {
-		if tmpl.Isim == "Bug Raporu" {
+		if tmpl.Name == "Bug Raporu" {
 			firstBugTemplate = tmpl
 			break
 		}
@@ -83,15 +83,15 @@ func TestGorevOlusturVeListele(t *testing.T) {
 
 	params := map[string]interface{}{
 		constants.ParamTemplateID: firstBugTemplate.ID,
-		constants.ParamDegerler: map[string]interface{}{
-			"baslik":   "Test Bug Görevi",
-			"aciklama": "Bu bir test bug raporu",
-			"modul":    "test-integration",
-			"ortam":    "development",
-			"adimlar":  "1. Test çalıştır",
-			"beklenen": "Başarı",
-			"mevcut":   "Hata",
-			"oncelik":  "yuksek",
+		constants.ParamValues: map[string]interface{}{
+			"title":       "Test Bug Görevi",
+			"description": "Bu bir test bug raporu",
+			"modul":       "test-integration",
+			"ortam":       "development",
+			"adimlar":     "1. Test çalıştır",
+			"beklenen":    "Başarı",
+			"mevcut":      "Hata",
+			"priority":    "yuksek",
 		},
 	}
 
@@ -145,7 +145,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	gorevler, err := isYonetici.GorevListele(map[string]interface{}{"durum": "devam_ediyor"})
 	require.NoError(t, err)
 	assert.Len(t, gorevler, 1)
-	assert.Equal(t, "devam_ediyor", gorevler[0].Durum)
+	assert.Equal(t, "devam_ediyor", gorevler[0].Status)
 }
 
 func TestProjeOlustur(t *testing.T) {
@@ -238,7 +238,7 @@ func TestHataYonetimi(t *testing.T) {
 	// Find the "Bug Raporu" template specifically (templates are sorted by category, name)
 	var bugTemplate *gorev.GorevTemplate
 	for _, tmpl := range templates {
-		if tmpl.Isim == "Bug Raporu" {
+		if tmpl.Name == "Bug Raporu" {
 			bugTemplate = tmpl
 			break
 		}
@@ -249,15 +249,15 @@ func TestHataYonetimi(t *testing.T) {
 
 	templateParams := map[string]interface{}{
 		constants.ParamTemplateID: bugTemplate.ID,
-		constants.ParamDegerler: map[string]interface{}{
-			"baslik":   "Integration Test Bug",
-			"aciklama": "Template ile oluşturulan test bug raporu",
-			"modul":    "integration-test",
-			"ortam":    "development",
-			"adimlar":  "1. Test çalıştır 2. Hatayı gözle",
-			"beklenen": "Test başarılı olması",
-			"mevcut":   "Test hata verdi",
-			"oncelik":  "orta",
+		constants.ParamValues: map[string]interface{}{
+			"title":       "Integration Test Bug",
+			"description": "Template ile oluşturulan test bug raporu",
+			"modul":       "integration-test",
+			"ortam":       "development",
+			"adimlar":     "1. Test çalıştır 2. Hatayı gözle",
+			"beklenen":    "Test başarılı olması",
+			"mevcut":      "Test hata verdi",
+			"priority":    "orta",
 		},
 	}
 
@@ -340,10 +340,10 @@ func TestGorevDuzenle(t *testing.T) {
 
 	// Başlık ve açıklama güncelle
 	params := map[string]interface{}{
-		"id":       gorevObj.ID,
-		"baslik":   "Yeni Başlık",
-		"aciklama": "## Yeni Açıklama\n\nMarkdown destekli",
-		"oncelik":  "yuksek",
+		"id":          gorevObj.ID,
+		"title":       "Yeni Başlık",
+		"description": "## Yeni Açıklama\n\nMarkdown destekli",
+		"priority":    "yuksek",
 	}
 
 	result, err := handlers.GorevDuzenle(params)
@@ -355,9 +355,9 @@ func TestGorevDuzenle(t *testing.T) {
 	// Değişiklikleri doğrula
 	guncelGorev, err := isYonetici.GorevGetir(gorevObj.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "Yeni Başlık", guncelGorev.Baslik)
-	assert.Equal(t, "## Yeni Açıklama\n\nMarkdown destekli", guncelGorev.Aciklama)
-	assert.Equal(t, "yuksek", guncelGorev.Oncelik)
+	assert.Equal(t, "Yeni Başlık", guncelGorev.Title)
+	assert.Equal(t, "## Yeni Açıklama\n\nMarkdown destekli", guncelGorev.Description)
+	assert.Equal(t, "yuksek", guncelGorev.Priority)
 }
 
 func TestGorevSil(t *testing.T) {
@@ -529,7 +529,7 @@ func TestGorevBagimlilikEkle(t *testing.T) {
 	baglantilar, err := isYonetici.GorevBaglantilariGetir(gorev1.ID)
 	require.NoError(t, err)
 	assert.Len(t, baglantilar, 1)
-	assert.Equal(t, gorev1.ID, baglantilar[0].KaynakID)
-	assert.Equal(t, gorev2.ID, baglantilar[0].HedefID)
-	assert.Equal(t, "engelliyor", baglantilar[0].BaglantiTip)
+	assert.Equal(t, gorev1.ID, baglantilar[0].SourceID)
+	assert.Equal(t, gorev2.ID, baglantilar[0].TargetID)
+	assert.Equal(t, "engelliyor", baglantilar[0].ConnectionType)
 }

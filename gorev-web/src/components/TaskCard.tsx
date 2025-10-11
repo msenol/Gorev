@@ -30,10 +30,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
     },
   });
 
-  const handleStatusChange = (durum: TaskStatus) => {
+  const handleStatusChange = (status: TaskStatus) => {
     updateMutation.mutate({
       id: task.id,
-      updates: { durum },
+      updates: { status },
     });
   };
 
@@ -90,13 +90,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
         <div className="flex-1">
           {/* Title */}
           <h4 className="text-lg font-medium text-gray-900 mb-2 line-clamp-2">
-            {task.baslik}
+            {task.title}
           </h4>
 
           {/* Description */}
-          {task.aciklama && (
+          {task.description && (
             <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-              {task.aciklama}
+              {task.description}
             </p>
           )}
 
@@ -104,13 +104,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
           <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
             <div className="flex items-center">
               <Clock className="h-3 w-3 mr-1" />
-              {formatDate(task.olusturma_tarihi)}
+              {formatDate(task.created_at)}
             </div>
 
-            {task.son_tarih && (
+            {task.due_date && (
               <div className="flex items-center">
                 <Calendar className="h-3 w-3 mr-1" />
-                {formatDate(task.son_tarih)}
+                {formatDate(task.due_date)}
               </div>
             )}
 
@@ -123,39 +123,39 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
           </div>
 
           {/* Tags */}
-          {task.etiketler && task.etiketler.length > 0 && (
+          {task.tags && task.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {task.etiketler.map((tag) => (
+              {task.tags.map((tag) => (
                 <span
                   key={tag.id}
                   className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700"
                 >
-                  {tag.isim}
+                  {tag.name}
                 </span>
               ))}
             </div>
           )}
 
           {/* Dependencies */}
-          {((task.bagimli_gorev_sayisi ?? 0) > 0 || (task.tamamlanmamis_bagimlilik_sayisi ?? 0) > 0) && (
+          {((task.dependency_count ?? 0) > 0 || (task.uncompleted_dependency_count ?? 0) > 0) && (
             <div className="flex items-center gap-2 mb-3 text-xs">
-              {(task.bagimli_gorev_sayisi ?? 0) > 0 && (
+              {(task.dependency_count ?? 0) > 0 && (
                 <div className="flex items-center text-gray-600">
                   <Link2 className="h-3 w-3 mr-1" />
-                  <span>{task.bagimli_gorev_sayisi} bağımlılık</span>
+                  <span>{task.dependency_count} bağımlılık</span>
                 </div>
               )}
-              {(task.tamamlanmamis_bagimlilik_sayisi ?? 0) > 0 && (
+              {(task.uncompleted_dependency_count ?? 0) > 0 && (
                 <div className="flex items-center text-orange-600">
                   <AlertCircle className="h-3 w-3 mr-1" />
-                  <span>{task.tamamlanmamis_bagimlilik_sayisi} bekliyor</span>
+                  <span>{task.uncompleted_dependency_count} bekliyor</span>
                 </div>
               )}
             </div>
           )}
 
           {/* Subtasks */}
-          {task.alt_gorevler && task.alt_gorevler.length > 0 && (
+          {task.subtasks && task.subtasks.length > 0 && (
             <div className="mb-3">
               <button
                 onClick={() => setShowSubtasks(!showSubtasks)}
@@ -166,23 +166,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                 ) : (
                   <ChevronRight className="h-4 w-4 mr-1" />
                 )}
-                <span>{task.alt_gorevler.length} alt görev</span>
+                <span>{task.subtasks.length} alt görev</span>
               </button>
 
               {showSubtasks && (
                 <div className="mt-2 ml-5 space-y-2 border-l-2 border-gray-200 pl-3">
-                  {task.alt_gorevler.map((subtask) => (
+                  {task.subtasks.map((subtask) => (
                     <div key={subtask.id} className="text-sm">
                       <div className="flex items-center gap-2">
                         <span className={`inline-block w-2 h-2 rounded-full ${
-                          subtask.durum === 'tamamlandi'
+                          subtask.status === 'tamamlandi'
                             ? 'bg-green-500'
-                            : subtask.durum === 'devam_ediyor'
+                            : subtask.status === 'devam_ediyor'
                             ? 'bg-blue-500'
                             : 'bg-gray-300'
                         }`}></span>
-                        <span className={subtask.durum === 'tamamlandi' ? 'line-through text-gray-500' : 'text-gray-700'}>
-                          {subtask.baslik}
+                        <span className={subtask.status === 'tamamlandi' ? 'line-through text-gray-500' : 'text-gray-700'}>
+                          {subtask.title}
                         </span>
                       </div>
                     </div>
@@ -195,10 +195,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
           {/* Status and Priority */}
           <div className="flex items-center space-x-2">
             <select
-              value={task.durum}
+              value={task.status}
               onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
               className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                task.durum
+                task.status
               )} focus:outline-none focus:ring-2 focus:ring-primary-500`}
               disabled={updateMutation.isPending}
             >
@@ -209,12 +209,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
 
             <span
               className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
-                task.oncelik
+                task.priority
               )}`}
             >
-              {task.oncelik === 'yuksek'
+              {task.priority === 'yuksek'
                 ? 'Yüksek'
-                : task.oncelik === 'orta'
+                : task.priority === 'orta'
                 ? 'Orta'
                 : 'Düşük'}
             </span>
@@ -266,12 +266,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                 </label>
                 <input
                   type="text"
-                  value={task.baslik}
+                  value={task.title}
                   onChange={(e) => {
                     // Basit başlık güncelleme
                     updateMutation.mutate({
                       id: task.id,
-                      updates: { baslik: e.target.value }
+                      updates: { title: e.target.value }
                     });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -282,7 +282,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                   Durum
                 </label>
                 <select
-                  value={task.durum}
+                  value={task.status}
                   onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >

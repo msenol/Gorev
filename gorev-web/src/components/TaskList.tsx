@@ -28,7 +28,7 @@ const TaskList: React.FC<TaskListProps> = ({
 
   // Group tasks by status
   const groupedTasks = tasks.reduce((acc, task) => {
-    const status = task.durum;
+    const status = task.status;
     if (!acc[status]) {
       acc[status] = [];
     }

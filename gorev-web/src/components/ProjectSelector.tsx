@@ -42,26 +42,26 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
                 <FolderOpen className="h-5 w-5 text-primary-500 mr-2" />
-                <h3 className="font-semibold text-gray-900">{project.isim}</h3>
+                <h3 className="font-semibold text-gray-900">{project.name}</h3>
               </div>
               {project.is_active && (
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
               )}
             </div>
 
-            {project.tanim && (
+            {project.definition && (
               <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                {project.tanim}
+                {project.definition}
               </p>
             )}
 
             <div className="flex items-center justify-between text-xs text-gray-500">
               <div className="flex items-center">
                 <Users className="h-3 w-3 mr-1" />
-                {project.gorev_sayisi || 0} görev
+                {project.task_count || 0} görev
               </div>
               <span>
-                {project.olusturma_tarihi ? new Date(project.olusturma_tarihi).toLocaleDateString('tr-TR') : ''}
+                {project.created_at ? new Date(project.created_at).toLocaleDateString('tr-TR') : ''}
               </span>
             </div>
           </button>

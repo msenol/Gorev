@@ -55,12 +55,12 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Aciklama:       "Test Description",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:          "task-1",
+		Title:       "Test Task",
+		Description: "Test Description",
+		Status:      constants.TaskStatusPending,
+		Priority:    constants.PriorityMedium,
+		CreatedAt:   time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 
@@ -241,11 +241,11 @@ func TestProcessBatchUpdate_DryRun(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 
@@ -315,11 +315,11 @@ func TestProcessBatchUpdate_WithWarnings(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 
@@ -413,11 +413,11 @@ func TestProcessBatchUpdate_WithAIContext(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 
@@ -462,11 +462,11 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 
 	// Create test task for validateUpdateRequest
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 
@@ -682,22 +682,22 @@ func TestBulkStatusTransition_Basic(t *testing.T) {
 
 	// Create test tasks with different statuses
 	task1 := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Task 1",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Task 1",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 	task2 := &Gorev{
-		ID:             "task-2",
-		Baslik:         "Task 2",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-2",
+		Title:     "Task 2",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 	task3 := &Gorev{
-		ID:             "task-3",
-		Baslik:         "Task 3",
-		Durum:          constants.TaskStatusCompleted, // Already completed
-		OlusturmaTarih: time.Now(),
+		ID:        "task-3",
+		Title:     "Task 3",
+		Status:    constants.TaskStatusCompleted, // Already completed
+		CreatedAt: time.Now(),
 	}
 
 	vy.gorevler["task-1"] = task1
@@ -785,9 +785,9 @@ func TestBulkStatusTransition_Basic(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset task states for each test
-			task1.Durum = constants.TaskStatusPending
-			task2.Durum = constants.TaskStatusPending
-			task3.Durum = constants.TaskStatusCompleted
+			task1.Status = constants.TaskStatusPending
+			task2.Status = constants.TaskStatusPending
+			task3.Status = constants.TaskStatusCompleted
 
 			result, err := bp.BulkStatusTransition(tc.request)
 
@@ -841,10 +841,10 @@ func TestBulkStatusTransition_DryRun(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 
@@ -932,10 +932,10 @@ func TestBulkStatusTransition_WithAIContext(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["task-1"] = testTask
 

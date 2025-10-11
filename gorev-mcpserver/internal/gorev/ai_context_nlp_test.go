@@ -19,55 +19,55 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 
 	// Create tasks with different statuses
 	pendingTask := &Gorev{
-		ID:              "pending-1",
-		Baslik:          "Fix urgent bug",
-		Aciklama:        "Critical bug needs immediate attention",
-		Durum:           constants.TaskStatusPending,
-		Oncelik:         constants.PriorityHigh,
-		OlusturmaTarih:  now.Add(-1 * time.Hour),
-		GuncellemeTarih: now.Add(-1 * time.Hour),
-		Etiketler: []*Etiket{
-			{ID: "urgent", Isim: "urgent"},
+		ID:          "pending-1",
+		Title:       "Fix urgent bug",
+		Description: "Critical bug needs immediate attention",
+		Status:      constants.TaskStatusPending,
+		Priority:    constants.PriorityHigh,
+		CreatedAt:   now.Add(-1 * time.Hour),
+		UpdatedAt:   now.Add(-1 * time.Hour),
+		Tags: []*Etiket{
+			{ID: "urgent", Name: "urgent"},
 		},
-		TamamlanmamisBagimlilikSayisi: 1, // Blocked task
+		UncompletedDependencyCount: 1, // Blocked task
 	}
 
 	inProgressTask := &Gorev{
-		ID:              "progress-1",
-		Baslik:          "Implement feature",
-		Aciklama:        "New feature implementation in progress",
-		Durum:           constants.TaskStatusInProgress,
-		Oncelik:         constants.PriorityMedium,
-		OlusturmaTarih:  now.Add(-2 * time.Hour),
-		GuncellemeTarih: now.Add(-30 * time.Minute),
-		Etiketler: []*Etiket{
-			{ID: "feature", Isim: "feature"},
+		ID:          "progress-1",
+		Title:       "Implement feature",
+		Description: "New feature implementation in progress",
+		Status:      constants.TaskStatusInProgress,
+		Priority:    constants.PriorityMedium,
+		CreatedAt:   now.Add(-2 * time.Hour),
+		UpdatedAt:   now.Add(-30 * time.Minute),
+		Tags: []*Etiket{
+			{ID: "feature", Name: "feature"},
 		},
 	}
 
 	completedTask := &Gorev{
-		ID:              "completed-1",
-		Baslik:          "Write documentation",
-		Aciklama:        "Documentation completed successfully",
-		Durum:           constants.TaskStatusCompleted,
-		Oncelik:         constants.PriorityLow,
-		OlusturmaTarih:  now.Add(-3 * time.Hour),
-		GuncellemeTarih: now.Add(-15 * time.Minute),
-		Etiketler: []*Etiket{
-			{ID: "docs", Isim: "docs"},
+		ID:          "completed-1",
+		Title:       "Write documentation",
+		Description: "Documentation completed successfully",
+		Status:      constants.TaskStatusCompleted,
+		Priority:    constants.PriorityLow,
+		CreatedAt:   now.Add(-3 * time.Hour),
+		UpdatedAt:   now.Add(-15 * time.Minute),
+		Tags: []*Etiket{
+			{ID: "docs", Name: "docs"},
 		},
 	}
 
 	recentTask := &Gorev{
-		ID:              "recent-1",
-		Baslik:          "Recent task",
-		Aciklama:        "This is a recently created task",
-		Durum:           constants.TaskStatusPending,
-		Oncelik:         constants.PriorityMedium,
-		OlusturmaTarih:  now, // Most recent
-		GuncellemeTarih: now,
-		Etiketler: []*Etiket{
-			{ID: "backend", Isim: "backend"},
+		ID:          "recent-1",
+		Title:       "Recent task",
+		Description: "This is a recently created task",
+		Status:      constants.TaskStatusPending,
+		Priority:    constants.PriorityMedium,
+		CreatedAt:   now, // Most recent
+		UpdatedAt:   now,
+		Tags: []*Etiket{
+			{ID: "backend", Name: "backend"},
 		},
 	}
 
@@ -143,7 +143,7 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 				}
 				// Should be sorted by creation date (newest first)
 				for i := 1; i < len(tasks); i++ {
-					if tasks[i-1].OlusturmaTarih.Before(tasks[i].OlusturmaTarih) {
+					if tasks[i-1].CreatedAt.Before(tasks[i].CreatedAt) {
 						t.Errorf("Tasks not sorted by creation date (newest first) for query '%s'", query)
 						break
 					}
@@ -172,8 +172,8 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			description:   "Should return tasks in progress",
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				for _, task := range tasks {
-					if task.Durum != constants.TaskStatusInProgress {
-						t.Errorf("Expected in-progress task, got status '%s' for query '%s'", task.Durum, query)
+					if task.Status != constants.TaskStatusInProgress {
+						t.Errorf("Expected in-progress task, got status '%s' for query '%s'", task.Status, query)
 					}
 				}
 			},
@@ -186,8 +186,8 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			description:   "Should return completed tasks",
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				for _, task := range tasks {
-					if task.Durum != constants.TaskStatusCompleted {
-						t.Errorf("Expected completed task, got status '%s' for query '%s'", task.Durum, query)
+					if task.Status != constants.TaskStatusCompleted {
+						t.Errorf("Expected completed task, got status '%s' for query '%s'", task.Status, query)
 					}
 				}
 			},
@@ -200,8 +200,8 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			description:   "Should return blocked tasks (tasks with incomplete dependencies)",
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				for _, task := range tasks {
-					if task.TamamlanmamisBagimlilikSayisi == 0 {
-						t.Errorf("Expected blocked task (with incomplete dependencies), got task with %d dependencies for query '%s'", task.TamamlanmamisBagimlilikSayisi, query)
+					if task.UncompletedDependencyCount == 0 {
+						t.Errorf("Expected blocked task (with incomplete dependencies), got task with %d dependencies for query '%s'", task.UncompletedDependencyCount, query)
 					}
 				}
 			},
@@ -229,8 +229,8 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				for _, task := range tasks {
 					found := false
-					for _, tag := range task.Etiketler {
-						if tag.Isim == "urgent" {
+					for _, tag := range task.Tags {
+						if tag.Name == "urgent" {
 							found = true
 							break
 						}
@@ -250,8 +250,8 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				for _, task := range tasks {
 					found := false
-					for _, tag := range task.Etiketler {
-						if tag.Isim == "feature" {
+					for _, tag := range task.Tags {
+						if tag.Name == "feature" {
 							found = true
 							break
 						}
@@ -315,7 +315,7 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 			description:   "Should match tasks containing all search terms",
 			validateResult: func(t *testing.T, tasks []*Gorev, query string) {
 				for _, task := range tasks {
-					taskText := task.Baslik + " " + task.Aciklama
+					taskText := task.Title + " " + task.Description
 					if !(containsText(taskText, "feature") && containsText(taskText, "implementation")) {
 						t.Errorf("Expected task to contain both 'feature' and 'implementation' for query '%s'", query)
 					}
@@ -393,13 +393,13 @@ func TestAIContextYonetici_NLPQueryWithAutoStateManager(t *testing.T) {
 
 	// Create a test task
 	testTask := &Gorev{
-		ID:              "auto-test-1",
-		Baslik:          "AutoStateManager test",
-		Aciklama:        "Test task for AutoStateManager integration",
-		Durum:           constants.TaskStatusPending,
-		Oncelik:         constants.PriorityMedium,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:          "auto-test-1",
+		Title:       "AutoStateManager test",
+		Description: "Test task for AutoStateManager integration",
+		Status:      constants.TaskStatusPending,
+		Priority:    constants.PriorityMedium,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	vy.gorevler["auto-test-1"] = testTask
 
@@ -430,13 +430,13 @@ func TestAIContextYonetici_BasicNLPQueryFallback(t *testing.T) {
 
 	// Create test tasks
 	task := &Gorev{
-		ID:              "fallback-1",
-		Baslik:          "Fallback test task",
-		Aciklama:        "Testing fallback functionality",
-		Durum:           constants.TaskStatusPending,
-		Oncelik:         constants.PriorityMedium,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:          "fallback-1",
+		Title:       "Fallback test task",
+		Description: "Testing fallback functionality",
+		Status:      constants.TaskStatusPending,
+		Priority:    constants.PriorityMedium,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	vy.gorevler["fallback-1"] = task
 

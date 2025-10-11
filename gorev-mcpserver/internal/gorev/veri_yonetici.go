@@ -303,13 +303,13 @@ func (vy *VeriYonetici) migrateDBWithFS(migrationsFS fs.FS) error {
 // GorevListele retrieves tasks based on filters
 func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
 	// Convert filters to old format for compatibility
-	durum := ""
+	status := ""
 	sirala := ""
 	filtre := ""
 
-	if v, ok := filters["durum"]; ok {
+	if v, ok := filters["status"]; ok {
 		if s, ok := v.(string); ok {
-			durum = s
+			status = s
 		}
 	}
 	if v, ok := filters["sirala"]; ok {
@@ -323,31 +323,31 @@ func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, 
 		}
 	}
 
-	return vy.GorevleriGetir(durum, sirala, filtre)
+	return vy.GorevleriGetir(status, sirala, filtre)
 }
 
 // GorevOlustur creates a new task
 func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, error) {
 	gorev := &Gorev{
-		ID:              uuid.New().String(),
-		Durum:           constants.TaskStatusPending,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:        uuid.New().String(),
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	if v, ok := params["baslik"]; ok {
+	if v, ok := params["title"]; ok {
 		if s, ok := v.(string); ok {
-			gorev.Baslik = s
+			gorev.Title = s
 		}
 	}
-	if v, ok := params["aciklama"]; ok {
+	if v, ok := params["description"]; ok {
 		if s, ok := v.(string); ok {
-			gorev.Aciklama = s
+			gorev.Description = s
 		}
 	}
-	if v, ok := params["oncelik"]; ok {
+	if v, ok := params["priority"]; ok {
 		if s, ok := v.(string); ok {
-			gorev.Oncelik = s
+			gorev.Priority = s
 		}
 	}
 	if v, ok := params["proje_id"]; ok {
@@ -383,9 +383,9 @@ func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
 
 	var bagimliGorevler []*Gorev
 	for _, baglanti := range baglantilari {
-		if baglanti.HedefID == taskID {
+		if baglanti.TargetID == taskID {
 			// This task depends on the source task
-			gorev, err := vy.GorevGetir(baglanti.KaynakID)
+			gorev, err := vy.GorevGetir(baglanti.SourceID)
 			if err == nil {
 				bagimliGorevler = append(bagimliGorevler, gorev)
 			}
@@ -396,7 +396,7 @@ func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
 }
 
 // AltGorevOlustur creates a subtask under a parent task
-func (vy *VeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+func (vy *VeriYonetici) AltGorevOlustur(parentID, title, description, priority, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
 	var sonTarih *time.Time
 	if sonTarihStr != "" {
 		t, err := time.Parse("2006-01-02", sonTarihStr)
@@ -407,15 +407,15 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, son
 	}
 
 	gorev := &Gorev{
-		ID:              uuid.New().String(),
-		Baslik:          baslik,
-		Aciklama:        aciklama,
-		Oncelik:         oncelik,
-		Durum:           constants.TaskStatusPending,
-		ParentID:        parentID,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
-		SonTarih:        sonTarih,
+		ID:          uuid.New().String(),
+		Title:       title,
+		Description: description,
+		Priority:    priority,
+		Status:      constants.TaskStatusPending,
+		ParentID:    parentID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		DueDate:     sonTarih,
 	}
 
 	if err := vy.GorevKaydet(gorev); err != nil {
@@ -430,7 +430,7 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, son
 		if err := vy.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
 			return nil, fmt.Errorf(i18n.TSetFailed("task_tags", err))
 		}
-		gorev.Etiketler = etiketler
+		gorev.Tags = etiketler
 	}
 
 	return gorev, nil
@@ -449,12 +449,12 @@ func (vy *VeriYonetici) GetDB() (*sql.DB, error) {
 }
 
 // ProjeOlustur creates a new project with minimal data for testing
-func (vy *VeriYonetici) ProjeOlustur(isim, aciklama string, etiketler ...string) (*Proje, error) {
+func (vy *VeriYonetici) ProjeOlustur(name, description string, etiketler ...string) (*Proje, error) {
 	proje := &Proje{
-		ID:             fmt.Sprintf("proj_%d", time.Now().UnixNano()),
-		Isim:           isim,
-		Tanim:          aciklama,
-		OlusturmaTarih: time.Now(),
+		ID:         fmt.Sprintf("proj_%d", time.Now().UnixNano()),
+		Name:       name,
+		Definition: description,
+		CreatedAt:  time.Now(),
 	}
 
 	err := vy.ProjeKaydet(proje)
@@ -466,21 +466,21 @@ func (vy *VeriYonetici) ProjeOlustur(isim, aciklama string, etiketler ...string)
 }
 
 // GorevOlusturBasit creates a task with individual parameters for testing
-func (vy *VeriYonetici) GorevOlusturBasit(baslik, aciklama, projeID, oncelik, sonTarih, parentID, etiketler string) (*Gorev, error) {
+func (vy *VeriYonetici) GorevOlusturBasit(title, description, projeID, priority, sonTarih, parentID, etiketler string) (*Gorev, error) {
 	gorev := &Gorev{
-		ID:              fmt.Sprintf("task_%d", time.Now().UnixNano()),
-		Baslik:          baslik,
-		Aciklama:        aciklama,
-		Durum:           "beklemede",
-		Oncelik:         oncelik,
-		ProjeID:         projeID,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:          fmt.Sprintf("task_%d", time.Now().UnixNano()),
+		Title:       title,
+		Description: description,
+		Status:      "beklemede",
+		Priority:    priority,
+		ProjeID:     projeID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	if sonTarih != "" {
 		if tarih, err := time.Parse("2006-01-02", sonTarih); err == nil {
-			gorev.SonTarih = &tarih
+			gorev.DueDate = &tarih
 		}
 	}
 
@@ -497,22 +497,22 @@ func (vy *VeriYonetici) GorevOlusturBasit(baslik, aciklama, projeID, oncelik, so
 }
 
 func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
-	sorgu := `INSERT INTO gorevler (id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih)
+	sorgu := `INSERT INTO gorevler (id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date)
 	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// Use retry logic for better concurrent write handling
 	err := retryOnBusy(func() error {
 		_, err := vy.db.Exec(sorgu,
 			gorev.ID,
-			gorev.Baslik,
-			gorev.Aciklama,
-			gorev.Durum,
-			gorev.Oncelik,
-			gorev.ProjeID,
+			gorev.Title,
+			gorev.Description,
+			gorev.Status,
+			gorev.Priority,
+			sql.NullString{String: gorev.ProjeID, Valid: gorev.ProjeID != ""},
 			sql.NullString{String: gorev.ParentID, Valid: gorev.ParentID != ""},
-			gorev.OlusturmaTarih,
-			gorev.GuncellemeTarih,
-			gorev.SonTarih,
+			gorev.CreatedAt,
+			gorev.UpdatedAt,
+			gorev.DueDate,
 		)
 		return err
 	}, 5) // Retry up to 5 times
@@ -520,9 +520,9 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 	// Emit task created event if operation succeeded
 	if err == nil && vy.eventEmitter != nil {
 		vy.eventEmitter.EmitTaskCreated(vy.workspaceID, gorev.ID, map[string]interface{}{
-			"baslik":  gorev.Baslik,
-			"durum":   gorev.Durum,
-			"oncelik": gorev.Oncelik,
+			"title":    gorev.Title,
+			"status":   gorev.Status,
+			"priority": gorev.Priority,
 		})
 	}
 
@@ -530,7 +530,7 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 }
 
 func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
+	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date
 	          FROM gorevler WHERE id = ?`
 
 	gorev := &Gorev{}
@@ -538,15 +538,15 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 
 	err := vy.db.QueryRow(sorgu, id).Scan(
 		&gorev.ID,
-		&gorev.Baslik,
-		&gorev.Aciklama,
-		&gorev.Durum,
-		&gorev.Oncelik,
+		&gorev.Title,
+		&gorev.Description,
+		&gorev.Status,
+		&gorev.Priority,
 		&projeID,
 		&parentID,
-		&gorev.OlusturmaTarih,
-		&gorev.GuncellemeTarih,
-		&gorev.SonTarih,
+		&gorev.CreatedAt,
+		&gorev.UpdatedAt,
+		&gorev.DueDate,
 	)
 
 	if err != nil {
@@ -566,37 +566,37 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 	if err != nil {
 		//log.Printf("görev etiketleri getirilemedi: %v", err)
 		// Etiket getirme başarısız olsa bile görevi döndür
-		gorev.Etiketler = []*Etiket{}
+		gorev.Tags = []*Etiket{}
 	} else {
-		gorev.Etiketler = etiketler
+		gorev.Tags = etiketler
 	}
 
 	// Proje adını getir (Web UI ve VS Code için)
 	if gorev.ProjeID != "" {
 		proje, err := vy.ProjeGetir(gorev.ProjeID)
 		if err == nil && proje != nil {
-			gorev.ProjeName = proje.Isim
+			gorev.ProjeName = proje.Name
 		}
 	}
 
 	return gorev, nil
 }
 
-func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
+func (vy *VeriYonetici) GorevleriGetir(status, sirala, filtre string) ([]*Gorev, error) {
+	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date
 	          FROM gorevler`
 	args := []interface{}{}
 	whereClauses := []string{}
 
-	if durum != "" {
-		whereClauses = append(whereClauses, "durum = ?")
-		args = append(args, durum)
+	if status != "" {
+		whereClauses = append(whereClauses, "status = ?")
+		args = append(args, status)
 	}
 
 	if filtre == "acil" {
-		whereClauses = append(whereClauses, "son_tarih IS NOT NULL AND son_tarih >= date('now') AND son_tarih < date('now', '+7 days')")
+		whereClauses = append(whereClauses, "due_date IS NOT NULL AND due_date >= date('now') AND due_date < date('now', '+7 days')")
 	} else if filtre == "gecmis" {
-		whereClauses = append(whereClauses, "son_tarih IS NOT NULL AND son_tarih < date('now')")
+		whereClauses = append(whereClauses, "due_date IS NOT NULL AND due_date < date('now')")
 	}
 
 	if len(whereClauses) > 0 {
@@ -605,11 +605,11 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 
 	switch sirala {
 	case "son_tarih_asc":
-		sorgu += " ORDER BY son_tarih ASC"
+		sorgu += " ORDER BY due_date ASC"
 	case "son_tarih_desc":
-		sorgu += " ORDER BY son_tarih DESC"
+		sorgu += " ORDER BY due_date DESC"
 	default:
-		sorgu += " ORDER BY olusturma_tarih DESC"
+		sorgu += " ORDER BY created_at DESC"
 	}
 
 	rows, err := vy.db.Query(sorgu, args...)
@@ -629,15 +629,15 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 
 		err := rows.Scan(
 			&gorev.ID,
-			&gorev.Baslik,
-			&gorev.Aciklama,
-			&gorev.Durum,
-			&gorev.Oncelik,
+			&gorev.Title,
+			&gorev.Description,
+			&gorev.Status,
+			&gorev.Priority,
 			&projeID,
 			&parentID,
-			&gorev.OlusturmaTarih,
-			&gorev.GuncellemeTarih,
-			&gorev.SonTarih,
+			&gorev.CreatedAt,
+			&gorev.UpdatedAt,
+			&gorev.DueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -657,13 +657,13 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 			// Hata durumunda logla ve devam et, görevi etiketsiz döndür
 			//log.Printf("görev etiketleri getirilemedi: %v", err)
 		}
-		gorev.Etiketler = etiketler
+		gorev.Tags = etiketler
 
 		// Proje adını getir (Web UI ve VS Code için)
 		if gorev.ProjeID != "" {
 			proje, err := vy.ProjeGetir(gorev.ProjeID)
 			if err == nil && proje != nil {
-				gorev.ProjeName = proje.Isim
+				gorev.ProjeName = proje.Name
 			}
 		}
 
@@ -674,9 +674,9 @@ func (vy *VeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, 
 }
 
 func (vy *VeriYonetici) gorevEtiketleriniGetir(gorevID string) ([]*Etiket, error) {
-	sorgu := `SELECT e.id, e.isim FROM etiketler e
-	          JOIN gorev_etiketleri ge ON e.id = ge.etiket_id
-	          WHERE ge.gorev_id = ?`
+	sorgu := `SELECT e.id, e.name FROM etiketler e
+	          JOIN gorev_etiketleri ge ON e.id = ge.tag_id
+	          WHERE ge.task_id = ?`
 	rows, err := vy.db.Query(sorgu, gorevID)
 	if err != nil {
 		// Muhtemelen tablo yok, boş dön
@@ -691,7 +691,7 @@ func (vy *VeriYonetici) gorevEtiketleriniGetir(gorevID string) ([]*Etiket, error
 	var etiketler []*Etiket
 	for rows.Next() {
 		e := &Etiket{}
-		if err := rows.Scan(&e.ID, &e.Isim); err != nil {
+		if err := rows.Scan(&e.ID, &e.Name); err != nil {
 			return nil, err
 		}
 		etiketler = append(etiketler, e)
@@ -707,32 +707,32 @@ func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket,
 	}
 	defer func() { _ = tx.Rollback() }() // Hata durumunda geri al
 
-	stmtSelect, err := tx.Prepare("SELECT id, isim FROM etiketler WHERE isim = ?")
+	stmtSelect, err := tx.Prepare("SELECT id, name FROM etiketler WHERE name = ?")
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.selectPrepFailed", map[string]interface{}{"Error": err}))
 	}
 	defer func() { _ = stmtSelect.Close() }()
 
-	stmtInsert, err := tx.Prepare("INSERT INTO etiketler (id, isim) VALUES (?, ?)")
+	stmtInsert, err := tx.Prepare("INSERT INTO etiketler (id, name) VALUES (?, ?)")
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
 	}
 	defer func() { _ = stmtInsert.Close() }()
 
-	for _, isim := range isimler {
-		if strings.TrimSpace(isim) == "" {
+	for _, name := range isimler {
+		if strings.TrimSpace(name) == "" {
 			continue
 		}
-		etiket := &Etiket{Isim: strings.TrimSpace(isim)}
-		err := stmtSelect.QueryRow(etiket.Isim).Scan(&etiket.ID, &etiket.Isim)
+		etiket := &Etiket{Name: strings.TrimSpace(name)}
+		err := stmtSelect.QueryRow(etiket.Name).Scan(&etiket.ID, &etiket.Name)
 		if err == sql.ErrNoRows {
 			// Etiket yok, oluştur
 			etiket.ID = uuid.New().String()
-			if _, err := stmtInsert.Exec(etiket.ID, etiket.Isim); err != nil {
-				return nil, fmt.Errorf(i18n.T("error.tagCreateFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
+			if _, err := stmtInsert.Exec(etiket.ID, etiket.Name); err != nil {
+				return nil, fmt.Errorf(i18n.T("error.tagCreateFailed", map[string]interface{}{"Tag": etiket.Name, "Error": err}))
 			}
 		} else if err != nil {
-			return nil, fmt.Errorf(i18n.T("error.tagQueryFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
+			return nil, fmt.Errorf(i18n.T("error.tagQueryFailed", map[string]interface{}{"Tag": etiket.Name, "Error": err}))
 		}
 		etiketler = append(etiketler, etiket)
 	}
@@ -753,12 +753,12 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 		}()
 
 		// Mevcut bağlantıları sil
-		if _, err := tx.Exec("DELETE FROM gorev_etiketleri WHERE gorev_id = ?", gorevID); err != nil {
+		if _, err := tx.Exec("DELETE FROM gorev_etiketleri WHERE task_id = ?", gorevID); err != nil {
 			return fmt.Errorf(i18n.T("error.currentTagsRemoveFailed", map[string]interface{}{"Error": err}))
 		}
 
 		// Yeni bağlantıları ekle
-		stmt, err := tx.Prepare("INSERT INTO gorev_etiketleri (gorev_id, etiket_id) VALUES (?, ?)")
+		stmt, err := tx.Prepare("INSERT INTO gorev_etiketleri (task_id, tag_id) VALUES (?, ?)")
 		if err != nil {
 			return fmt.Errorf(i18n.T("error.insertPrepFailed", map[string]interface{}{"Error": err}))
 		}
@@ -768,7 +768,7 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 
 		for _, etiket := range etiketler {
 			if _, err := stmt.Exec(gorevID, etiket.ID); err != nil {
-				return fmt.Errorf(i18n.T("error.taskTagAddFailed", map[string]interface{}{"Tag": etiket.Isim, "Error": err}))
+				return fmt.Errorf(i18n.T("error.taskTagAddFailed", map[string]interface{}{"Tag": etiket.Name, "Error": err}))
 			}
 		}
 
@@ -809,31 +809,31 @@ func (vy *VeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
 }
 
 func (vy *VeriYonetici) ProjeKaydet(proje *Proje) error {
-	sorgu := `INSERT INTO projeler (id, isim, tanim, olusturma_tarih, guncelleme_tarih)
+	sorgu := `INSERT INTO projeler (id, name, definition, created_at, updated_at)
 	          VALUES (?, ?, ?, ?, ?)`
 
 	_, err := vy.db.Exec(sorgu,
 		proje.ID,
-		proje.Isim,
-		proje.Tanim,
-		proje.OlusturmaTarih,
-		proje.GuncellemeTarih,
+		proje.Name,
+		proje.Definition,
+		proje.CreatedAt,
+		proje.UpdatedAt,
 	)
 
 	return err
 }
 
 func (vy *VeriYonetici) ProjeGetir(id string) (*Proje, error) {
-	sorgu := `SELECT id, isim, tanim, olusturma_tarih, guncelleme_tarih
+	sorgu := `SELECT id, name, definition, created_at, updated_at
 	          FROM projeler WHERE id = ?`
 
 	proje := &Proje{}
 	err := vy.db.QueryRow(sorgu, id).Scan(
 		&proje.ID,
-		&proje.Isim,
-		&proje.Tanim,
-		&proje.OlusturmaTarih,
-		&proje.GuncellemeTarih,
+		&proje.Name,
+		&proje.Definition,
+		&proje.CreatedAt,
+		&proje.UpdatedAt,
 	)
 
 	if err != nil {
@@ -844,12 +844,12 @@ func (vy *VeriYonetici) ProjeGetir(id string) (*Proje, error) {
 }
 
 func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
-	sorgu := `SELECT p.id, p.isim, p.tanim, p.olusturma_tarih, p.guncelleme_tarih,
+	sorgu := `SELECT p.id, p.name, p.definition, p.created_at, p.updated_at,
 	          COUNT(g.id) as gorev_sayisi
 	          FROM projeler p
-	          LEFT JOIN gorevler g ON p.id = g.proje_id
-	          GROUP BY p.id, p.isim, p.tanim, p.olusturma_tarih, p.guncelleme_tarih
-	          ORDER BY p.olusturma_tarih DESC`
+	          LEFT JOIN gorevler g ON p.id = g.project_id
+	          GROUP BY p.id, p.name, p.definition, p.created_at, p.updated_at
+	          ORDER BY p.created_at DESC`
 
 	rows, err := vy.db.Query(sorgu)
 	if err != nil {
@@ -864,11 +864,11 @@ func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
 		proje := &Proje{}
 		err := rows.Scan(
 			&proje.ID,
-			&proje.Isim,
-			&proje.Tanim,
-			&proje.OlusturmaTarih,
-			&proje.GuncellemeTarih,
-			&proje.GorevSayisi,
+			&proje.Name,
+			&proje.Definition,
+			&proje.CreatedAt,
+			&proje.UpdatedAt,
+			&proje.TaskCount,
 		)
 		if err != nil {
 			return nil, err
@@ -905,8 +905,8 @@ func (vy *VeriYonetici) GorevSil(id string) error {
 }
 
 func (vy *VeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, olusturma_tarih, guncelleme_tarih
-	          FROM gorevler WHERE proje_id = ? ORDER BY olusturma_tarih DESC`
+	sorgu := `SELECT id, title, description, status, priority, project_id, created_at, updated_at
+	          FROM gorevler WHERE project_id = ? ORDER BY created_at DESC`
 
 	rows, err := vy.db.Query(sorgu, projeID)
 	if err != nil {
@@ -923,13 +923,13 @@ func (vy *VeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
 
 		err := rows.Scan(
 			&gorev.ID,
-			&gorev.Baslik,
-			&gorev.Aciklama,
-			&gorev.Durum,
-			&gorev.Oncelik,
+			&gorev.Title,
+			&gorev.Description,
+			&gorev.Status,
+			&gorev.Priority,
 			&pID,
-			&gorev.OlusturmaTarih,
-			&gorev.GuncellemeTarih,
+			&gorev.CreatedAt,
+			&gorev.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -946,14 +946,14 @@ func (vy *VeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
 }
 
 func (vy *VeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
-	sorgu := `INSERT INTO baglantilar (id, kaynak_id, hedef_id, baglanti_tip) VALUES (?, ?, ?, ?)`
-	_, err := vy.db.Exec(sorgu, baglanti.ID, baglanti.KaynakID, baglanti.HedefID, baglanti.BaglantiTip)
+	sorgu := `INSERT INTO baglantilar (id, source_id, target_id, connection_type) VALUES (?, ?, ?, ?)`
+	_, err := vy.db.Exec(sorgu, baglanti.ID, baglanti.SourceID, baglanti.TargetID, baglanti.ConnectionType)
 	return err
 }
 
 // BaglantiSil removes a dependency relationship between two tasks
 func (vy *VeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
-	sorgu := `DELETE FROM baglantilar WHERE kaynak_id = ? AND hedef_id = ?`
+	sorgu := `DELETE FROM baglantilar WHERE source_id = ? AND target_id = ?`
 	result, err := vy.db.Exec(sorgu, kaynakID, hedefID)
 	if err != nil {
 		return err
@@ -973,7 +973,7 @@ func (vy *VeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
 }
 
 func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
-	sorgu := `SELECT id, kaynak_id, hedef_id, baglanti_tip FROM baglantilar WHERE kaynak_id = ? OR hedef_id = ?`
+	sorgu := `SELECT id, source_id, target_id, connection_type FROM baglantilar WHERE source_id = ? OR target_id = ?`
 	rows, err := vy.db.Query(sorgu, gorevID, gorevID)
 	if err != nil {
 		return nil, err
@@ -985,7 +985,7 @@ func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 	var baglantilar []*Baglanti
 	for rows.Next() {
 		b := &Baglanti{}
-		if err := rows.Scan(&b.ID, &b.KaynakID, &b.HedefID, &b.BaglantiTip); err != nil {
+		if err := rows.Scan(&b.ID, &b.SourceID, &b.TargetID, &b.ConnectionType); err != nil {
 			return nil, err
 		}
 		baglantilar = append(baglantilar, b)
@@ -995,8 +995,8 @@ func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 
 // AltGorevleriGetir belirtilen görevin doğrudan alt görevlerini getirir
 func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
-	sorgu := `SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, olusturma_tarih, guncelleme_tarih, son_tarih
-	          FROM gorevler WHERE parent_id = ? ORDER BY olusturma_tarih`
+	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date
+	          FROM gorevler WHERE parent_id = ? ORDER BY created_at`
 
 	rows, err := vy.db.Query(sorgu, parentID)
 	if err != nil {
@@ -1013,15 +1013,15 @@ func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
 
 		err := rows.Scan(
 			&gorev.ID,
-			&gorev.Baslik,
-			&gorev.Aciklama,
-			&gorev.Durum,
-			&gorev.Oncelik,
+			&gorev.Title,
+			&gorev.Description,
+			&gorev.Status,
+			&gorev.Priority,
 			&projeID,
 			&parentID,
-			&gorev.OlusturmaTarih,
-			&gorev.GuncellemeTarih,
-			&gorev.SonTarih,
+			&gorev.CreatedAt,
+			&gorev.UpdatedAt,
+			&gorev.DueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -1039,7 +1039,7 @@ func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			//log.Printf("Etiketler getirilemedi: %v", err)
 		}
-		gorev.Etiketler = etiketler
+		gorev.Tags = etiketler
 
 		gorevler = append(gorevler, gorev)
 	}
@@ -1051,19 +1051,19 @@ func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
 func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) {
 	sorgu := `
 		WITH RECURSIVE alt_gorevler AS (
-			SELECT id, baslik, aciklama, durum, oncelik, proje_id, parent_id, 
-			       olusturma_tarih, guncelleme_tarih, son_tarih, 1 as seviye
+			SELECT id, title, description, status, priority, project_id, parent_id, 
+			       created_at, updated_at, due_date, 1 as level
 			FROM gorevler
 			WHERE parent_id = ?
 			
 			UNION ALL
 			
-			SELECT g.id, g.baslik, g.aciklama, g.durum, g.oncelik, g.proje_id, g.parent_id,
-			       g.olusturma_tarih, g.guncelleme_tarih, g.son_tarih, ag.seviye + 1
+			SELECT g.id, g.title, g.description, g.status, g.priority, g.project_id, g.parent_id,
+			       g.created_at, g.updated_at, g.due_date, ag.level + 1
 			FROM gorevler g
 			INNER JOIN alt_gorevler ag ON g.parent_id = ag.id
 		)
-		SELECT * FROM alt_gorevler ORDER BY seviye, olusturma_tarih`
+		SELECT * FROM alt_gorevler ORDER BY level, created_at`
 
 	rows, err := vy.db.Query(sorgu, parentID)
 	if err != nil {
@@ -1080,16 +1080,16 @@ func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) 
 
 		err := rows.Scan(
 			&gorev.ID,
-			&gorev.Baslik,
-			&gorev.Aciklama,
-			&gorev.Durum,
-			&gorev.Oncelik,
+			&gorev.Title,
+			&gorev.Description,
+			&gorev.Status,
+			&gorev.Priority,
 			&projeID,
 			&parentID,
-			&gorev.OlusturmaTarih,
-			&gorev.GuncellemeTarih,
-			&gorev.SonTarih,
-			&gorev.Seviye,
+			&gorev.CreatedAt,
+			&gorev.UpdatedAt,
+			&gorev.DueDate,
+			&gorev.Level,
 		)
 		if err != nil {
 			return nil, err
@@ -1107,7 +1107,7 @@ func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			//log.Printf("Etiketler getirilemedi: %v", err)
 		}
-		gorev.Etiketler = etiketler
+		gorev.Tags = etiketler
 
 		gorevler = append(gorevler, gorev)
 	}
@@ -1119,16 +1119,16 @@ func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) 
 func (vy *VeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
 	sorgu := `
 		WITH RECURSIVE ust_gorevler AS (
-			SELECT g2.id, g2.baslik, g2.aciklama, g2.durum, g2.oncelik, g2.proje_id, g2.parent_id,
-			       g2.olusturma_tarih, g2.guncelleme_tarih, g2.son_tarih
+			SELECT g2.id, g2.title, g2.description, g2.status, g2.priority, g2.project_id, g2.parent_id,
+			       g2.created_at, g2.updated_at, g2.due_date
 			FROM gorevler g1
 			JOIN gorevler g2 ON g1.parent_id = g2.id
 			WHERE g1.id = ?
 			
 			UNION ALL
 			
-			SELECT g.id, g.baslik, g.aciklama, g.durum, g.oncelik, g.proje_id, g.parent_id,
-			       g.olusturma_tarih, g.guncelleme_tarih, g.son_tarih
+			SELECT g.id, g.title, g.description, g.status, g.priority, g.project_id, g.parent_id,
+			       g.created_at, g.updated_at, g.due_date
 			FROM gorevler g
 			INNER JOIN ust_gorevler ug ON ug.parent_id = g.id
 		)
@@ -1149,15 +1149,15 @@ func (vy *VeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
 
 		err := rows.Scan(
 			&gorev.ID,
-			&gorev.Baslik,
-			&gorev.Aciklama,
-			&gorev.Durum,
-			&gorev.Oncelik,
+			&gorev.Title,
+			&gorev.Description,
+			&gorev.Status,
+			&gorev.Priority,
 			&projeID,
 			&parentID,
-			&gorev.OlusturmaTarih,
-			&gorev.GuncellemeTarih,
-			&gorev.SonTarih,
+			&gorev.CreatedAt,
+			&gorev.UpdatedAt,
+			&gorev.DueDate,
 		)
 		if err != nil {
 			return nil, err
@@ -1193,21 +1193,21 @@ func (vy *VeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, er
 	// Alt görev istatistiklerini hesapla
 	sorgu := `
 		WITH RECURSIVE alt_gorevler AS (
-			SELECT id, durum
+			SELECT id, status
 			FROM gorevler
 			WHERE parent_id = ?
 			
 			UNION ALL
 			
-			SELECT g.id, g.durum
+			SELECT g.id, g.status
 			FROM gorevler g
 			INNER JOIN alt_gorevler ag ON g.parent_id = ag.id
 		)
 		SELECT 
 			COUNT(*) as toplam,
-			COALESCE(SUM(CASE WHEN durum = 'tamamlandi' THEN 1 ELSE 0 END), 0) as tamamlanan,
-			COALESCE(SUM(CASE WHEN durum = 'devam_ediyor' THEN 1 ELSE 0 END), 0) as devam_eden,
-			COALESCE(SUM(CASE WHEN durum = 'beklemede' THEN 1 ELSE 0 END), 0) as beklemede
+			COALESCE(SUM(CASE WHEN status = 'tamamlandi' THEN 1 ELSE 0 END), 0) as tamamlanan,
+			COALESCE(SUM(CASE WHEN status = 'devam_ediyor' THEN 1 ELSE 0 END), 0) as devam_eden,
+			COALESCE(SUM(CASE WHEN status = 'beklemede' THEN 1 ELSE 0 END), 0) as beklemede
 		FROM alt_gorevler`
 
 	var toplam, tamamlanan, devamEden, beklemede int
@@ -1220,18 +1220,18 @@ func (vy *VeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, er
 	var ilerlemeYuzdesi float64
 	if toplam > 0 {
 		ilerlemeYuzdesi = (float64(tamamlanan) / float64(toplam)) * 100
-	} else if gorev.Durum == constants.TaskStatusCompleted {
+	} else if gorev.Status == constants.TaskStatusCompleted {
 		ilerlemeYuzdesi = 100
 	}
 
 	return &GorevHiyerarsi{
-		Gorev:           gorev,
-		UstGorevler:     ustGorevler,
-		ToplamAltGorev:  toplam,
-		TamamlananAlt:   tamamlanan,
-		DevamEdenAlt:    devamEden,
-		BeklemedeAlt:    beklemede,
-		IlerlemeYuzdesi: ilerlemeYuzdesi,
+		Gorev:              gorev,
+		ParentTasks:        ustGorevler,
+		TotalSubtasks:      toplam,
+		CompletedSubtasks:  tamamlanan,
+		InProgressSubtasks: devamEden,
+		PendingSubtasks:    beklemede,
+		ProgressPercentage: ilerlemeYuzdesi,
 	}, nil
 }
 
@@ -1252,10 +1252,10 @@ func (vy *VeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error {
 	var err error
 
 	if yeniParentID == "" {
-		sorgu = `UPDATE gorevler SET parent_id = NULL, guncelleme_tarih = CURRENT_TIMESTAMP WHERE id = ?`
+		sorgu = `UPDATE gorevler SET parent_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 		_, err = vy.db.Exec(sorgu, gorevID)
 	} else {
-		sorgu = `UPDATE gorevler SET parent_id = ?, guncelleme_tarih = CURRENT_TIMESTAMP WHERE id = ?`
+		sorgu = `UPDATE gorevler SET parent_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
 		_, err = vy.db.Exec(sorgu, yeniParentID, gorevID)
 	}
 
@@ -1309,10 +1309,10 @@ func (vy *VeriYonetici) BulkBagimlilikSayilariGetir(gorevIDs []string) (map[stri
 	}
 
 	sorgu := fmt.Sprintf(`
-		SELECT hedef_id, COUNT(*) as bagli_sayi
+		SELECT target_id, COUNT(*) as bagli_sayi
 		FROM baglantilar 
-		WHERE hedef_id IN (%s)
-		GROUP BY hedef_id
+		WHERE target_id IN (%s)
+		GROUP BY target_id
 	`, strings.Join(placeholders, ","))
 
 	rows, err := vy.db.Query(sorgu, args...)
@@ -1351,11 +1351,11 @@ func (vy *VeriYonetici) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []stri
 	}
 
 	sorgu := fmt.Sprintf(`
-		SELECT b.hedef_id, COUNT(*) as tamamlanmamis_sayi
+		SELECT b.target_id, COUNT(*) as tamamlanmamis_sayi
 		FROM baglantilar b
-		INNER JOIN gorevler g ON b.kaynak_id = g.id
-		WHERE b.hedef_id IN (%s) AND g.durum != 'tamamlandi'
-		GROUP BY b.hedef_id
+		INNER JOIN gorevler g ON b.source_id = g.id
+		WHERE b.target_id IN (%s) AND g.status != 'tamamlandi'
+		GROUP BY b.target_id
 	`, strings.Join(placeholders, ","))
 
 	rows, err := vy.db.Query(sorgu, args...)
@@ -1393,10 +1393,10 @@ func (vy *VeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (map
 
 	// Bu göreve bağımlı olan görevleri say (bu görev kaynak olduğu bağlantılar)
 	sorgu := fmt.Sprintf(`
-		SELECT b.kaynak_id, COUNT(*) as bagimli_sayi
+		SELECT b.source_id, COUNT(*) as bagimli_sayi
 		FROM baglantilar b
-		WHERE b.kaynak_id IN (%s)
-		GROUP BY b.kaynak_id
+		WHERE b.source_id IN (%s)
+		GROUP BY b.source_id
 	`, strings.Join(placeholders, ","))
 
 	rows, err := vy.db.Query(sorgu, args...)
@@ -1509,7 +1509,7 @@ func (vy *VeriYonetici) AIInteractionKaydet(interaction *AIInteraction) error {
 	}
 
 	sorgu := `
-		INSERT INTO ai_interactions (gorev_id, action_type, context, timestamp)
+		INSERT INTO ai_interactions (task_id, action_type, context, timestamp)
 		VALUES (?, ?, ?, ?)`
 
 	_, err := vy.db.Exec(sorgu, interaction.GorevID, interaction.ActionType, contextJSON, time.Now())
@@ -1527,7 +1527,7 @@ func (vy *VeriYonetici) AIInteractionlariGetir(limit int) ([]*AIInteraction, err
 	}
 
 	sorgu := `
-		SELECT id, gorev_id, action_type, context, timestamp
+		SELECT id, task_id, action_type, context, timestamp
 		FROM ai_interactions
 		ORDER BY timestamp DESC
 		LIMIT ?`
@@ -1563,7 +1563,7 @@ func (vy *VeriYonetici) AITodayInteractionlariGetir() ([]*AIInteraction, error) 
 	tomorrow := today.Add(24 * time.Hour)
 
 	sorgu := `
-		SELECT id, gorev_id, action_type, context, timestamp
+		SELECT id, task_id, action_type, context, timestamp
 		FROM ai_interactions
 		WHERE timestamp >= ? AND timestamp < ?
 		ORDER BY timestamp DESC`

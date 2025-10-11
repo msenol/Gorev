@@ -23,7 +23,7 @@ type ExportFormat struct {
 	TaskTags     []TaskTagAssociation `json:"task_tags"`
 	Templates    []*GorevTemplate     `json:"templates"`
 	Dependencies []*Baglanti          `json:"dependencies"`
-	AIContext    []*AIEtkilemasim     `json:"ai_context,omitempty"`
+	AIContext    []*AIInteraction     `json:"ai_context,omitempty"`
 }
 
 // ExportMetadata contains metadata about the export
@@ -175,16 +175,16 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 		}
 
 		// Filter by completed status
-		if !options.IncludeCompleted && task.Durum == constants.TaskStatusCompleted {
+		if !options.IncludeCompleted && task.Status == constants.TaskStatusCompleted {
 			continue
 		}
 
 		// Filter by date range
 		if options.DateRange != nil {
-			if options.DateRange.From != nil && task.OlusturmaTarih.Before(*options.DateRange.From) {
+			if options.DateRange.From != nil && task.CreatedAt.Before(*options.DateRange.From) {
 				continue
 			}
-			if options.DateRange.To != nil && task.OlusturmaTarih.After(*options.DateRange.To) {
+			if options.DateRange.To != nil && task.CreatedAt.After(*options.DateRange.To) {
 				continue
 			}
 		}
@@ -198,8 +198,8 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 	// Export tags - collect unique tags from all filtered tasks
 	tagMap := make(map[string]*Etiket)
 	for _, task := range filteredTasks {
-		if task.Etiketler != nil {
-			for _, tag := range task.Etiketler {
+		if task.Tags != nil {
+			for _, tag := range task.Tags {
 				tagMap[tag.ID] = tag
 			}
 		}
@@ -243,7 +243,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 		if err != nil {
 			// Log warning but continue with export - AI context is optional
 			fmt.Printf("Warning: AI context export failed: %v\n", err)
-			exportData.AIContext = []*AIEtkilemasim{}
+			exportData.AIContext = []*AIInteraction{}
 		} else {
 			exportData.AIContext = aiContext
 		}
@@ -317,7 +317,7 @@ func (iy *IsYonetici) saveAsCSV(exportData *ExportFormat, outputPath string) err
 	// Create project name map
 	projectNames := make(map[string]string)
 	for _, project := range exportData.Projects {
-		projectNames[project.ID] = project.Isim
+		projectNames[project.ID] = project.Name
 	}
 
 	// Create task tag map
@@ -329,7 +329,7 @@ func (iy *IsYonetici) saveAsCSV(exportData *ExportFormat, outputPath string) err
 	// Create tag name map
 	tagNames := make(map[string]string)
 	for _, tag := range exportData.Tags {
-		tagNames[tag.ID] = tag.Isim
+		tagNames[tag.ID] = tag.Name
 	}
 
 	// Write task data
@@ -352,18 +352,18 @@ func (iy *IsYonetici) saveAsCSV(exportData *ExportFormat, outputPath string) err
 		}
 
 		// Escape CSV values
-		title := escapeCSVValue(task.Baslik)
-		description := escapeCSVValue(task.Aciklama)
+		title := escapeCSVValue(task.Title)
+		description := escapeCSVValue(task.Description)
 
 		line := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
 			task.ID,
 			title,
 			description,
-			task.Durum,
-			task.Oncelik,
+			task.Status,
+			task.Priority,
 			escapeCSVValue(projectName),
-			task.OlusturmaTarih.Format(time.RFC3339),
-			task.GuncellemeTarih.Format(time.RFC3339),
+			task.CreatedAt.Format(time.RFC3339),
+			task.UpdatedAt.Format(time.RFC3339),
 			tagsStr,
 		)
 
@@ -436,8 +436,8 @@ func (iy *IsYonetici) exportTaskTagAssociations(tasks []*Gorev) ([]TaskTagAssoci
 	taskTags := []TaskTagAssociation{}
 
 	for _, task := range tasks {
-		if task.Etiketler != nil {
-			for _, tag := range task.Etiketler {
+		if task.Tags != nil {
+			for _, tag := range task.Tags {
 				taskTags = append(taskTags, TaskTagAssociation{
 					TaskID: task.ID,
 					TagID:  tag.ID,
@@ -470,7 +470,7 @@ func (iy *IsYonetici) exportTaskDependencies(tasks []*Gorev) ([]*Baglanti, error
 	// Filter dependencies to only include those between exported tasks
 	filteredDependencies := []*Baglanti{}
 	for _, dep := range dependencies {
-		if taskIDMap[dep.KaynakID] && taskIDMap[dep.HedefID] {
+		if taskIDMap[dep.SourceID] && taskIDMap[dep.TargetID] {
 			filteredDependencies = append(filteredDependencies, dep)
 		}
 	}
@@ -479,7 +479,7 @@ func (iy *IsYonetici) exportTaskDependencies(tasks []*Gorev) ([]*Baglanti, error
 }
 
 // exportAIContext exports AI context data
-func (iy *IsYonetici) exportAIContext(tasks []*Gorev) ([]*AIEtkilemasim, error) {
+func (iy *IsYonetici) exportAIContext(tasks []*Gorev) ([]*AIInteraction, error) {
 	// Create a map of task IDs for filtering
 	taskIDMap := make(map[string]bool)
 	for _, task := range tasks {
@@ -488,7 +488,7 @@ func (iy *IsYonetici) exportAIContext(tasks []*Gorev) ([]*AIEtkilemasim, error) 
 
 	// This would require implementing GetAIInteractions in AIContextYonetici
 	// For now, return empty slice
-	return []*AIEtkilemasim{}, nil
+	return []*AIInteraction{}, nil
 }
 
 // ImportData imports data from a file according to the given options
@@ -688,13 +688,13 @@ func (iy *IsYonetici) validateImportData(importData *ExportFormat) error {
 
 	// Validate dependencies
 	for _, dep := range importData.Dependencies {
-		if !taskIDMap[dep.KaynakID] {
+		if !taskIDMap[dep.SourceID] {
 			return fmt.Errorf(i18n.T("error.invalidDependencySourceReference",
-				map[string]interface{}{"SourceID": dep.KaynakID}))
+				map[string]interface{}{"SourceID": dep.SourceID}))
 		}
-		if !taskIDMap[dep.HedefID] {
+		if !taskIDMap[dep.TargetID] {
 			return fmt.Errorf(i18n.T("error.invalidDependencyTargetReference",
-				map[string]interface{}{"TargetID": dep.HedefID}))
+				map[string]interface{}{"TargetID": dep.TargetID}))
 		}
 	}
 
@@ -809,7 +809,7 @@ func (iy *IsYonetici) importTags(tags []*Etiket, options ImportOptions) (int, []
 	for _, tag := range tags {
 		// Create or get existing tags using EtiketleriGetirVeyaOlustur
 		// This method already handles duplicates by name
-		tagNames := []string{tag.Isim}
+		tagNames := []string{tag.Name}
 		createdTags, err := iy.veriYonetici.EtiketleriGetirVeyaOlustur(tagNames)
 		if err != nil {
 			return imported, conflicts, err
@@ -923,12 +923,12 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 			case "overwrite":
 				task.ID = taskID
 				if err := iy.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{
-					"baslik":    task.Baslik,
-					"aciklama":  task.Aciklama,
-					"durum":     task.Durum,
-					"oncelik":   task.Oncelik,
-					"proje_id":  task.ProjeID,
-					"son_tarih": task.SonTarih,
+					"title":       task.Title,
+					"description": task.Description,
+					"status":      task.Status,
+					"priority":    task.Priority,
+					"project_id":  task.ProjeID,
+					"due_date":    task.DueDate,
 				}); err != nil {
 					return imported, conflicts, err
 				}
@@ -952,14 +952,14 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 			// No conflict, create new task using GorevOlustur with params map
 			task.ID = taskID
 			params := map[string]interface{}{
-				"id":        taskID,
-				"baslik":    task.Baslik,
-				"aciklama":  task.Aciklama,
-				"durum":     task.Durum,
-				"oncelik":   task.Oncelik,
-				"proje_id":  task.ProjeID,
-				"parent_id": task.ParentID,
-				"son_tarih": task.SonTarih,
+				"id":          taskID,
+				"title":       task.Title,
+				"description": task.Description,
+				"status":      task.Status,
+				"priority":    task.Priority,
+				"project_id":  task.ProjeID,
+				"parent_id":   task.ParentID,
+				"due_date":    task.DueDate,
 			}
 			if _, err := iy.veriYonetici.GorevOlustur(params); err != nil {
 				log.Printf("Import: Failed to create new task %s: %v", taskID, err)
@@ -996,26 +996,26 @@ func (iy *IsYonetici) importTaskTagAssociations(taskTags []TaskTagAssociation, o
 func (iy *IsYonetici) importDependencies(dependencies []*Baglanti, options ImportOptions) error {
 	for _, dep := range dependencies {
 		// Verify both tasks exist
-		source, err := iy.veriYonetici.GorevGetir(dep.KaynakID)
+		source, err := iy.veriYonetici.GorevGetir(dep.SourceID)
 		if err != nil || source == nil {
 			continue // Skip if source task doesn't exist
 		}
 
-		target, err := iy.veriYonetici.GorevGetir(dep.HedefID)
+		target, err := iy.veriYonetici.GorevGetir(dep.TargetID)
 		if err != nil || target == nil {
 			continue // Skip if target task doesn't exist
 		}
 
 		// Create dependency using BaglantiEkle
 		newDep := &Baglanti{
-			ID:          uuid.New().String(),
-			KaynakID:    dep.KaynakID,
-			HedefID:     dep.HedefID,
-			BaglantiTip: dep.BaglantiTip,
+			ID:             uuid.New().String(),
+			SourceID:       dep.SourceID,
+			TargetID:       dep.TargetID,
+			ConnectionType: dep.ConnectionType,
 		}
 		if err := iy.veriYonetici.BaglantiEkle(newDep); err != nil {
 			// Log warning but continue
-			log.Printf("Warning: Failed to create dependency from %s to %s: %v", dep.KaynakID, dep.HedefID, err)
+			log.Printf("Warning: Failed to create dependency from %s to %s: %v", dep.SourceID, dep.TargetID, err)
 		}
 	}
 

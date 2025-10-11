@@ -128,19 +128,19 @@ func TestAIContextYonetici_getTasksFromInteractions(t *testing.T) {
 
 	// Create test tasks
 	task1 := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task 1",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Test Task 1",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now(),
 	}
 
 	task2 := &Gorev{
-		ID:             "task-2",
-		Baslik:         "Test Task 2",
-		Durum:          constants.TaskStatusInProgress,
-		Oncelik:        constants.PriorityHigh,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-2",
+		Title:     "Test Task 2",
+		Status:    constants.TaskStatusInProgress,
+		Priority:  constants.PriorityHigh,
+		CreatedAt: time.Now(),
 	}
 
 	// Add tasks to mock
@@ -205,27 +205,27 @@ func TestAIContextYonetici_getLastCreatedTasks(t *testing.T) {
 	baseTime := time.Now()
 
 	task1 := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Oldest Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: baseTime.Add(-2 * time.Hour),
+		ID:        "task-1",
+		Title:     "Oldest Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: baseTime.Add(-2 * time.Hour),
 	}
 
 	task2 := &Gorev{
-		ID:             "task-2",
-		Baslik:         "Middle Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: baseTime.Add(-1 * time.Hour),
+		ID:        "task-2",
+		Title:     "Middle Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: baseTime.Add(-1 * time.Hour),
 	}
 
 	task3 := &Gorev{
-		ID:             "task-3",
-		Baslik:         "Newest Task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: baseTime,
+		ID:        "task-3",
+		Title:     "Newest Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: baseTime,
 	}
 
 	// Add tasks to mock
@@ -286,7 +286,7 @@ func TestAIContextYonetici_getLastCreatedTasks(t *testing.T) {
 			// Verify sorting (newest first)
 			if len(tasks) > 1 {
 				for i := 1; i < len(tasks); i++ {
-					if tasks[i-1].OlusturmaTarih.Before(tasks[i].OlusturmaTarih) {
+					if tasks[i-1].CreatedAt.Before(tasks[i].CreatedAt) {
 						t.Error("Tasks are not sorted by creation date (newest first)")
 					}
 				}
@@ -302,23 +302,23 @@ func TestAIContextYonetici_NLPQueryBasic(t *testing.T) {
 
 	// Create test tasks
 	task1 := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Test Task 1",
-		Aciklama:       "This is a test task",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityHigh,
-		OlusturmaTarih: time.Now(),
-		Etiketler:      []*Etiket{{ID: "tag-1", Isim: "urgent"}},
+		ID:          "task-1",
+		Title:       "Test Task 1",
+		Description: "This is a test task",
+		Status:      constants.TaskStatusPending,
+		Priority:    constants.PriorityHigh,
+		CreatedAt:   time.Now(),
+		Tags:        []*Etiket{{ID: "tag-1", Name: "urgent"}},
 	}
 
 	task2 := &Gorev{
-		ID:             "task-2",
-		Baslik:         "Another Task",
-		Aciklama:       "Different task description",
-		Durum:          constants.TaskStatusCompleted,
-		Oncelik:        constants.PriorityLow,
-		OlusturmaTarih: time.Now(),
-		Etiketler:      []*Etiket{{ID: "tag-2", Isim: "normal"}},
+		ID:          "task-2",
+		Title:       "Another Task",
+		Description: "Different task description",
+		Status:      constants.TaskStatusCompleted,
+		Priority:    constants.PriorityLow,
+		CreatedAt:   time.Now(),
+		Tags:        []*Etiket{{ID: "tag-2", Name: "normal"}},
 	}
 
 	// Add tasks to mock

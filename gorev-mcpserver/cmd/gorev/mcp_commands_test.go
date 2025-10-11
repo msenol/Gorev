@@ -117,14 +117,14 @@ func TestParameterParsingLogic(t *testing.T) {
 		{
 			name:        "Valid JSON degerler parameter",
 			paramString: `degerler={"baslik":"Test","aciklama":"Description"}`,
-			expectedKey: constants.ParamDegerler,
+			expectedKey: constants.ParamValues,
 			expectedVal: map[string]interface{}{"baslik": "Test", "aciklama": "Description"},
 			expectError: false,
 		},
 		{
 			name:        "Invalid JSON degerler parameter",
 			paramString: `degerler={"baslik":"Test","aciklama":invalid}`,
-			expectedKey: constants.ParamDegerler,
+			expectedKey: constants.ParamValues,
 			expectedVal: nil,
 			expectError: true,
 		},
@@ -153,7 +153,7 @@ func TestParameterParsingLogic(t *testing.T) {
 			params := make(map[string]interface{})
 
 			// Special handling for degerler parameter (JSON object)
-			if key == constants.ParamDegerler {
+			if key == constants.ParamValues {
 				var degerlerMap map[string]interface{}
 				if err := json.Unmarshal([]byte(value), &degerlerMap); err != nil {
 					if !tt.expectError {

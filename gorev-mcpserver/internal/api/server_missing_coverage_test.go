@@ -279,10 +279,10 @@ func TestRemoveDependency(t *testing.T) {
 
 	// First add a dependency using VeriYonetici
 	baglanti := &gorev.Baglanti{
-		ID:          uuid.New().String(),
-		KaynakID:    taskID,
-		HedefID:     depResult.ID,
-		BaglantiTip: "depends_on",
+		ID:             uuid.New().String(),
+		SourceID:       taskID,
+		TargetID:       depResult.ID,
+		ConnectionType: "depends_on",
 	}
 	err = server.isYonetici.VeriYonetici().BaglantiEkle(baglanti)
 	require.NoError(t, err)

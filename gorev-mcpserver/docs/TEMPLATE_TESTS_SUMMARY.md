@@ -98,7 +98,7 @@ Created unit tests for template management functions:
 
 ## Key Findings
 
-1. **Default Value Limitation**: The current implementation doesn't apply default values from template fields automatically. If a field has a default value but isn't provided in the `degerler` map, the placeholder remains in the template (e.g., `{{tags}}`).
+1. **Default Value Limitation**: The current implementation doesn't apply default values from template fields automatically. If a field has a default value but isn't provided in the `values` map, the placeholder remains in the template (e.g., `{{tags}}`).
 
 2. **Template Categories**: The system properly supports categorization with 3 default categories:
    - Teknik (Bug Report, Technical Debt)

@@ -410,8 +410,8 @@ func TestSetActiveTask(t *testing.T) {
 			taskID: "task-1",
 			mockTask: &Gorev{
 				ID:     "task-1",
-				Baslik: "Test Task",
-				Durum:  "beklemede",
+				Title:  "Test Task",
+				Status: "beklemede",
 			},
 			expectError:   false,
 			expectedState: "devam_ediyor",
@@ -421,8 +421,8 @@ func TestSetActiveTask(t *testing.T) {
 			taskID: "task-2",
 			mockTask: &Gorev{
 				ID:     "task-2",
-				Baslik: "Test Task 2",
-				Durum:  "devam_ediyor",
+				Title:  "Test Task 2",
+				Status: "devam_ediyor",
 			},
 			expectError:   false,
 			expectedState: "devam_ediyor",
@@ -447,7 +447,7 @@ func TestSetActiveTask(t *testing.T) {
 			// Setup mock expectations
 			mockVeriYonetici.On("GorevGetir", tt.taskID).Return(tt.mockTask, tt.mockError)
 
-			if tt.mockTask != nil && tt.mockTask.Durum == "beklemede" {
+			if tt.mockTask != nil && tt.mockTask.Status == "beklemede" {
 				// The task will be updated with new status
 				mockVeriYonetici.On("GorevGuncelle", tt.taskID, map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
 			}
@@ -510,8 +510,8 @@ func TestRecordTaskView(t *testing.T) {
 			taskID: "task-1",
 			mockTask: &Gorev{
 				ID:     "task-1",
-				Baslik: "Test Task",
-				Durum:  "beklemede",
+				Title:  "Test Task",
+				Status: "beklemede",
 			},
 			expectError:  false,
 			shouldUpdate: true,
@@ -521,8 +521,8 @@ func TestRecordTaskView(t *testing.T) {
 			taskID: "task-2",
 			mockTask: &Gorev{
 				ID:     "task-2",
-				Baslik: "Test Task 2",
-				Durum:  "devam_ediyor",
+				Title:  "Test Task 2",
+				Status: "devam_ediyor",
 			},
 			expectError:  false,
 			shouldUpdate: false,
@@ -596,10 +596,10 @@ func TestBatchUpdate(t *testing.T) {
 	}
 
 	// Setup mock expectations
-	mockVeriYonetici.On("GorevGetir", "task-1").Return(&Gorev{ID: "task-1", Durum: "beklemede"}, nil)
+	mockVeriYonetici.On("GorevGetir", "task-1").Return(&Gorev{ID: "task-1", Status: "beklemede"}, nil)
 	mockVeriYonetici.On("GorevGuncelle", "task-1", map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
 
-	mockVeriYonetici.On("GorevGetir", "task-2").Return(&Gorev{ID: "task-2", Durum: "beklemede"}, nil)
+	mockVeriYonetici.On("GorevGetir", "task-2").Return(&Gorev{ID: "task-2", Status: "beklemede"}, nil)
 	mockVeriYonetici.On("GorevGuncelle", "task-2", map[string]interface{}{"durum": "tamamlandi"}).Return(nil)
 
 	mockVeriYonetici.On("GorevGetir", "task-not-found").Return(nil, assert.AnError)
@@ -633,8 +633,8 @@ func TestNLPQuery(t *testing.T) {
 			name:  "Query for high priority tasks",
 			query: "yüksek öncelikli görevler",
 			mockTasks: []*Gorev{
-				{ID: "1", Baslik: "Task 1", Oncelik: "yuksek"},
-				{ID: "2", Baslik: "Task 2", Oncelik: "yuksek"},
+				{ID: "1", Title: "Task 1", Priority: "yuksek"},
+				{ID: "2", Title: "Task 2", Priority: "yuksek"},
 			},
 			expectedLen: 2,
 		},
@@ -642,8 +642,8 @@ func TestNLPQuery(t *testing.T) {
 			name:  "Query for incomplete tasks",
 			query: "tamamlanmamış görevler",
 			mockTasks: []*Gorev{
-				{ID: "1", Baslik: "Task 1", Durum: "beklemede"},
-				{ID: "2", Baslik: "Task 2", Durum: "beklemede"},
+				{ID: "1", Title: "Task 1", Status: "beklemede"},
+				{ID: "2", Title: "Task 2", Status: "beklemede"},
 			},
 			expectedLen: 2,
 		},
@@ -651,7 +651,7 @@ func TestNLPQuery(t *testing.T) {
 			name:  "Query for urgent tasks",
 			query: "acil görevler",
 			mockTasks: []*Gorev{
-				{ID: "1", Baslik: "Urgent Task", SonTarih: &time.Time{}},
+				{ID: "1", Title: "Urgent Task", DueDate: &time.Time{}},
 			},
 			expectedLen:  1,
 			expectFilter: "acil",
@@ -660,7 +660,7 @@ func TestNLPQuery(t *testing.T) {
 			name:  "Query with tag filter",
 			query: "etiket:bug",
 			mockTasks: []*Gorev{
-				{ID: "1", Baslik: "Bug Fix", Etiketler: []*Etiket{{Isim: "bug"}}},
+				{ID: "1", Title: "Bug Fix", Tags: []*Etiket{{Name: "bug"}}},
 			},
 			expectedLen: 1,
 		},
@@ -668,9 +668,9 @@ func TestNLPQuery(t *testing.T) {
 			name:  "General text search",
 			query: "test",
 			mockTasks: []*Gorev{
-				{ID: "1", Baslik: "Test görevi için", Aciklama: "Test açıklaması"},
-				{ID: "2", Baslik: "Başka görev", Aciklama: "Test içerik"},
-				{ID: "3", Baslik: "Unrelated", Aciklama: "Unrelated"},
+				{ID: "1", Title: "Test görevi için", Description: "Test açıklaması"},
+				{ID: "2", Title: "Başka görev", Description: "Test içerik"},
+				{ID: "3", Title: "Unrelated", Description: "Unrelated"},
 			},
 			expectedLen: 2,
 		},
@@ -721,9 +721,9 @@ func TestGetContextSummary(t *testing.T) {
 
 	// Setup mock data
 	allTasks := []*Gorev{
-		{ID: "1", Baslik: "High Priority", Oncelik: "yuksek", Durum: "beklemede"},
-		{ID: "2", Baslik: "Blocked Task", Durum: "beklemede", TamamlanmamisBagimlilikSayisi: 2},
-		{ID: "3", Baslik: "Normal Task", Oncelik: "orta", Durum: "beklemede"},
+		{ID: "1", Title: "High Priority", Priority: "yuksek", Status: "beklemede"},
+		{ID: "2", Title: "Blocked Task", Status: "beklemede", UncompletedDependencyCount: 2},
+		{ID: "3", Title: "Normal Task", Priority: "orta", Status: "beklemede"},
 	}
 
 	mockVeriYonetici.On("GorevleriGetir", "beklemede", "", "").Return(allTasks, nil)
@@ -735,9 +735,9 @@ func TestGetContextSummary(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, summary)
 	assert.Len(t, summary.NextPriorities, 1)
-	assert.Equal(t, "High Priority", summary.NextPriorities[0].Baslik)
+	assert.Equal(t, "High Priority", summary.NextPriorities[0].Title)
 	assert.Len(t, summary.Blockers, 1)
-	assert.Equal(t, "Blocked Task", summary.Blockers[0].Baslik)
+	assert.Equal(t, "Blocked Task", summary.Blockers[0].Title)
 
 	mockVeriYonetici.AssertExpectations(t)
 }
@@ -882,7 +882,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				if update.ID == "nonexistent" {
 					mockVeriYonetici.On("GorevGetir", update.ID).Return(nil, fmt.Errorf("task not found"))
 				} else {
-					testTask := &Gorev{ID: update.ID, Baslik: "Test Task"}
+					testTask := &Gorev{ID: update.ID, Title: "Test Task"}
 					mockVeriYonetici.On("GorevGetir", update.ID).Return(testTask, nil)
 
 					// Only expect GorevGuncelle if we expect success
@@ -950,8 +950,8 @@ func TestAIContextRaceCondition(t *testing.T) {
 	// Mock a valid task
 	mockGorev := &Gorev{
 		ID:      "test-task-id",
-		Baslik:  "Test Task",
-		Durum:   "beklemede",
+		Title:   "Test Task",
+		Status:  "beklemede",
 		ProjeID: "test-project-id",
 	}
 	mockVeriYonetici.On("GorevGetir", "test-task-id").Return(mockGorev, nil)

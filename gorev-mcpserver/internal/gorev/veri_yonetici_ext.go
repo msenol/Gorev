@@ -18,7 +18,7 @@ func (vy *VeriYonetici) AktifProjeAyarla(projeID string) error {
 	}
 
 	// Aktif proje tablosunu güncelle (INSERT OR REPLACE)
-	sorgu := `INSERT OR REPLACE INTO aktif_proje (id, proje_id) VALUES (1, ?)`
+	sorgu := `INSERT OR REPLACE INTO aktif_proje (id, project_id) VALUES (1, ?)`
 	_, err = vy.db.Exec(sorgu, projeID)
 	if err != nil {
 		return fmt.Errorf("aktif proje ayarlanamadı: %w", err)
@@ -30,7 +30,7 @@ func (vy *VeriYonetici) AktifProjeAyarla(projeID string) error {
 // AktifProjeGetir aktif projeyi getirir
 func (vy *VeriYonetici) AktifProjeGetir() (string, error) {
 	var projeID string
-	err := vy.db.QueryRow("SELECT proje_id FROM aktif_proje WHERE id = 1").Scan(&projeID)
+	err := vy.db.QueryRow("SELECT project_id FROM aktif_proje WHERE id = 1").Scan(&projeID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil // Aktif proje yok

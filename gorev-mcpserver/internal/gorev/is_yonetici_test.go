@@ -131,11 +131,11 @@ func TestIsYonetici_GorevOlustur_DateParsing(t *testing.T) {
 			}
 
 			if tt.expectDate {
-				if gorev.SonTarih == nil {
+				if gorev.DueDate == nil {
 					t.Error("Expected SonTarih to be set")
 				}
 			} else {
-				if gorev.SonTarih != nil {
+				if gorev.DueDate != nil {
 					t.Error("Expected SonTarih to be nil")
 				}
 			}
@@ -161,8 +161,8 @@ func TestIsYonetici_GorevOlustur_WithTags(t *testing.T) {
 		return
 	}
 
-	if len(gorev.Etiketler) != len(etiketIsimleri) {
-		t.Errorf("Expected %d tags, got %d", len(etiketIsimleri), len(gorev.Etiketler))
+	if len(gorev.Tags) != len(etiketIsimleri) {
+		t.Errorf("Expected %d tags, got %d", len(etiketIsimleri), len(gorev.Tags))
 	}
 }
 
@@ -207,8 +207,8 @@ func TestIsYonetici_GorevListele_WithBulkDependencies(t *testing.T) {
 	setupTestI18n()
 
 	// Create test tasks
-	task1 := &Gorev{ID: "task1", Baslik: "Task 1"}
-	task2 := &Gorev{ID: "task2", Baslik: "Task 2"}
+	task1 := &Gorev{ID: "task1", Title: "Task 1"}
+	task2 := &Gorev{ID: "task2", Title: "Task 2"}
 
 	mockVeri := &MockVeriYonetici{
 		gorevler: map[string]*Gorev{
@@ -236,7 +236,7 @@ func TestIsYonetici_GorevListele_WithBulkDependencies(t *testing.T) {
 
 	// Check that bulk dependency counts were set
 	for _, gorev := range gorevler {
-		if gorev.BagimliGorevSayisi == 0 && gorev.TamamlanmamisBagimlilikSayisi == 0 && gorev.BuGoreveBagimliSayisi == 0 {
+		if gorev.DependencyCount == 0 && gorev.UncompletedDependencyCount == 0 && gorev.DependentOnThisCount == 0 {
 			// This is expected when mock doesn't return counts, but the function should still work
 		}
 	}
@@ -249,8 +249,8 @@ func TestIsYonetici_GorevGetir(t *testing.T) {
 
 	task := &Gorev{
 		ID:     "test-id",
-		Baslik: "Test Task",
-		Durum:  "beklemede",
+		Title:  "Test Task",
+		Status: "beklemede",
 	}
 
 	mockVeri := &MockVeriYonetici{
@@ -280,9 +280,9 @@ func TestIsYonetici_ProjeGetir(t *testing.T) {
 	setupTestI18n()
 
 	proje := &Proje{
-		ID:    "test-proje",
-		Isim:  "Test Project",
-		Tanim: "Test Description",
+		ID:         "test-proje",
+		Name:       "Test Project",
+		Definition: "Test Description",
 	}
 
 	mockVeri := &MockVeriYonetici{
@@ -313,7 +313,7 @@ func TestIsYonetici_AktifProjeAyarla(t *testing.T) {
 
 	proje := &Proje{
 		ID:   "test-proje",
-		Isim: "Test Project",
+		Name: "Test Project",
 	}
 
 	mockVeri := &MockVeriYonetici{
@@ -341,7 +341,7 @@ func TestIsYonetici_AktifProjeGetir(t *testing.T) {
 
 	proje := &Proje{
 		ID:   "test-proje",
-		Isim: "Test Project",
+		Name: "Test Project",
 	}
 
 	mockVeri := &MockVeriYonetici{
@@ -391,17 +391,17 @@ func TestIsYonetici_ProjeGorevleri(t *testing.T) {
 
 	task1 := &Gorev{
 		ID:      "task1",
-		Baslik:  "Task 1",
+		Title:   "Task 1",
 		ProjeID: "proje1",
 	}
 	task2 := &Gorev{
 		ID:      "task2",
-		Baslik:  "Task 2",
+		Title:   "Task 2",
 		ProjeID: "proje1",
 	}
 	task3 := &Gorev{
 		ID:      "task3",
-		Baslik:  "Task 3",
+		Title:   "Task 3",
 		ProjeID: "proje2",
 	}
 
@@ -545,7 +545,7 @@ func (m *MockVeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gore
 	// Otherwise, use the map
 	var result []*Gorev
 	for _, gorev := range m.gorevler {
-		if durum == "" || gorev.Durum == durum {
+		if durum == "" || gorev.Status == durum {
 			result = append(result, gorev)
 		}
 	}
@@ -567,19 +567,19 @@ func (m *MockVeriYonetici) GorevGuncelle(taskID string, params interface{}) erro
 			switch key {
 			case "baslik":
 				if val, ok := value.(string); ok {
-					gorev.Baslik = val
+					gorev.Title = val
 				}
 			case "aciklama":
 				if val, ok := value.(string); ok {
-					gorev.Aciklama = val
+					gorev.Description = val
 				}
 			case "durum":
 				if val, ok := value.(string); ok {
-					gorev.Durum = val
+					gorev.Status = val
 				}
 			case "oncelik":
 				if val, ok := value.(string); ok {
-					gorev.Oncelik = val
+					gorev.Priority = val
 				}
 			case "proje_id":
 				if val, ok := value.(string); ok {
@@ -589,9 +589,9 @@ func (m *MockVeriYonetici) GorevGuncelle(taskID string, params interface{}) erro
 				if val, ok := value.(string); ok {
 					gorev.ParentID = val
 				}
-			case "guncelleme_tarih":
+			case "updated_at":
 				if val, ok := value.(time.Time); ok {
-					gorev.GuncellemeTarih = val
+					gorev.UpdatedAt = val
 				}
 			}
 		}
@@ -657,7 +657,7 @@ func (m *MockVeriYonetici) BulkBagimlilikSayilariGetir(gorevIDs []string) (map[s
 		// Count total dependencies - tasks that this task depends on
 		count := 0
 		for _, b := range m.baglantilar {
-			if b.HedefID == id && b.BaglantiTip == "onceki" { // This task depends on the source task
+			if b.TargetID == id && b.ConnectionType == "onceki" { // This task depends on the source task
 				count++
 			}
 		}
@@ -673,9 +673,9 @@ func (m *MockVeriYonetici) BulkTamamlanmamiaBagimlilikSayilariGetir(gorevIDs []s
 		// Count uncompleted dependencies - tasks that this task depends on
 		count := 0
 		for _, b := range m.baglantilar {
-			if b.HedefID == id && b.BaglantiTip == "onceki" { // This task depends on the source task
-				if kaynakGorev, exists := m.gorevler[b.KaynakID]; exists {
-					if kaynakGorev.Durum != "tamamlandi" {
+			if b.TargetID == id && b.ConnectionType == "onceki" { // This task depends on the source task
+				if kaynakGorev, exists := m.gorevler[b.SourceID]; exists {
+					if kaynakGorev.Status != "tamamlandi" {
 						count++
 					}
 				}
@@ -705,7 +705,7 @@ func (m *MockVeriYonetici) EtiketOlustur(isim string) (*Etiket, error) {
 	if m.shouldReturnError {
 		return nil, m.errorToReturn
 	}
-	tag := &Etiket{ID: "tag-" + isim, Isim: isim}
+	tag := &Etiket{ID: "tag-" + isim, Name: isim}
 	m.tags[tag.ID] = tag
 	return tag, nil
 }
@@ -719,7 +719,7 @@ func (m *MockVeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etik
 		// Try to find existing tag
 		var found *Etiket
 		for _, tag := range m.tags {
-			if tag.Isim == isim {
+			if tag.Name == isim {
 				found = tag
 				break
 			}
@@ -743,7 +743,7 @@ func (m *MockVeriYonetici) GorevEtiketleriniGetir(gorevID string) ([]*Etiket, er
 	if !exists {
 		return nil, errors.New("task not found")
 	}
-	return gorev.Etiketler, nil
+	return gorev.Tags, nil
 }
 
 func (m *MockVeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
@@ -754,7 +754,7 @@ func (m *MockVeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*
 	if !exists {
 		return errors.New("task not found")
 	}
-	gorev.Etiketler = etiketler
+	gorev.Tags = etiketler
 	return nil
 }
 
@@ -768,7 +768,7 @@ func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
 
 func (m *MockVeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
 	for i, b := range m.baglantilar {
-		if b.KaynakID == kaynakID && b.HedefID == hedefID {
+		if b.SourceID == kaynakID && b.TargetID == hedefID {
 			m.baglantilar = append(m.baglantilar[:i], m.baglantilar[i+1:]...)
 			return nil
 		}
@@ -779,7 +779,7 @@ func (m *MockVeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
 func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 	var result []*Baglanti
 	for _, b := range m.baglantilar {
-		if b.KaynakID == gorevID || b.HedefID == gorevID {
+		if b.SourceID == gorevID || b.TargetID == gorevID {
 			result = append(result, b)
 		}
 	}
@@ -851,13 +851,13 @@ func (m *MockVeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi,
 	}
 
 	return &GorevHiyerarsi{
-		Gorev:           gorev,
-		UstGorevler:     []*Gorev{},
-		ToplamAltGorev:  0,
-		TamamlananAlt:   0,
-		DevamEdenAlt:    0,
-		BeklemedeAlt:    0,
-		IlerlemeYuzdesi: 0,
+		Gorev:              gorev,
+		ParentTasks:        []*Gorev{},
+		TotalSubtasks:      0,
+		CompletedSubtasks:  0,
+		InProgressSubtasks: 0,
+		PendingSubtasks:    0,
+		ProgressPercentage: 0,
 	}, nil
 }
 
@@ -967,7 +967,7 @@ func (m *MockVeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gore
 
 	for _, gorev := range m.gorevler {
 		// Apply durum filter if specified
-		if durum == "" || gorev.Durum == durum {
+		if durum == "" || gorev.Status == durum {
 			result = append(result, gorev)
 		}
 	}
@@ -988,7 +988,7 @@ func (m *MockVeriYonetici) BulkBuGoreveBagimliSayilariGetir(gorevIDs []string) (
 		// Count how many tasks depend on this task (this task as source)
 		count := 0
 		for _, b := range m.baglantilar {
-			if b.KaynakID == id && b.BaglantiTip == "onceki" { // Other tasks depend on this task
+			if b.SourceID == id && b.ConnectionType == "onceki" { // Other tasks depend on this task
 				count++
 			}
 		}
@@ -1073,17 +1073,17 @@ func TestIsYonetici_GorevOlustur(t *testing.T) {
 			}
 
 			// Verify the created task
-			if gorev.Baslik != tc.baslik {
-				t.Errorf("expected Baslik %s, got %s", tc.baslik, gorev.Baslik)
+			if gorev.Title != tc.baslik {
+				t.Errorf("expected Baslik %s, got %s", tc.baslik, gorev.Title)
 			}
-			if gorev.Aciklama != tc.aciklama {
-				t.Errorf("expected Aciklama %s, got %s", tc.aciklama, gorev.Aciklama)
+			if gorev.Description != tc.aciklama {
+				t.Errorf("expected Aciklama %s, got %s", tc.aciklama, gorev.Description)
 			}
-			if gorev.Oncelik != tc.oncelik {
-				t.Errorf("expected Oncelik %s, got %s", tc.oncelik, gorev.Oncelik)
+			if gorev.Priority != tc.oncelik {
+				t.Errorf("expected Oncelik %s, got %s", tc.oncelik, gorev.Priority)
 			}
-			if gorev.Durum != "beklemede" {
-				t.Errorf("expected Durum 'beklemede', got %s", gorev.Durum)
+			if gorev.Status != "beklemede" {
+				t.Errorf("expected Durum 'beklemede', got %s", gorev.Status)
 			}
 			if gorev.ID == "" {
 				t.Error("ID should not be empty")
@@ -1103,10 +1103,10 @@ func TestIsYonetici_GorevListele(t *testing.T) {
 
 	// Add test data
 	testGorevler := []*Gorev{
-		{ID: "1", Baslik: "Görev 1", Durum: "beklemede"},
-		{ID: "2", Baslik: "Görev 2", Durum: "devam-ediyor"},
-		{ID: "3", Baslik: "Görev 3", Durum: "tamamlandi"},
-		{ID: "4", Baslik: "Görev 4", Durum: "beklemede"},
+		{ID: "1", Title: "Görev 1", Status: "beklemede"},
+		{ID: "2", Title: "Görev 2", Status: "devam-ediyor"},
+		{ID: "3", Title: "Görev 3", Status: "tamamlandi"},
+		{ID: "4", Title: "Görev 4", Status: "beklemede"},
 	}
 	for _, g := range testGorevler {
 		mockVY.gorevler[g.ID] = g
@@ -1213,10 +1213,10 @@ func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
 			// Add test task
 			if tc.gorevID == "existing-task" {
 				mockVY.gorevler["existing-task"] = &Gorev{
-					ID:      "existing-task",
-					Baslik:  "Test Task",
-					Durum:   "beklemede",
-					Oncelik: "orta",
+					ID:       "existing-task",
+					Title:    "Test Task",
+					Status:   "beklemede",
+					Priority: "orta",
 				}
 			}
 
@@ -1242,8 +1242,8 @@ func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
 
 			// Verify update
 			gorev := mockVY.gorevler["existing-task"]
-			if gorev.Durum != tc.yeniDurum {
-				t.Errorf("expected Durum %s, got %s", tc.yeniDurum, gorev.Durum)
+			if gorev.Status != tc.yeniDurum {
+				t.Errorf("expected Durum %s, got %s", tc.yeniDurum, gorev.Status)
 			}
 		})
 	}
@@ -1297,11 +1297,11 @@ func TestIsYonetici_ProjeOlustur(t *testing.T) {
 			}
 
 			// Verify the created project
-			if proje.Isim != tc.isim {
-				t.Errorf("expected Isim %s, got %s", tc.isim, proje.Isim)
+			if proje.Name != tc.isim {
+				t.Errorf("expected Isim %s, got %s", tc.isim, proje.Name)
 			}
-			if proje.Tanim != tc.tanim {
-				t.Errorf("expected Tanim %s, got %s", tc.tanim, proje.Tanim)
+			if proje.Definition != tc.tanim {
+				t.Errorf("expected Tanim %s, got %s", tc.tanim, proje.Definition)
 			}
 			if proje.ID == "" {
 				t.Error("ID should not be empty")
@@ -1390,12 +1390,12 @@ func TestIsYonetici_GorevDuzenle(t *testing.T) {
 
 			// Add test task
 			originalTask := &Gorev{
-				ID:       "existing-task",
-				Baslik:   "Original Title",
-				Aciklama: "Original Description",
-				Durum:    "beklemede",
-				Oncelik:  "orta",
-				ProjeID:  "",
+				ID:          "existing-task",
+				Title:       "Original Title",
+				Description: "Original Description",
+				Status:      "beklemede",
+				Priority:    "orta",
+				ProjeID:     "",
 			}
 			mockVY.gorevler["existing-task"] = originalTask
 
@@ -1419,21 +1419,21 @@ func TestIsYonetici_GorevDuzenle(t *testing.T) {
 			// Verify updates
 			gorev := mockVY.gorevler["existing-task"]
 			if tc.baslikVar && tc.baslik != "" {
-				if gorev.Baslik != tc.baslik {
-					t.Errorf("expected Baslik %s, got %s", tc.baslik, gorev.Baslik)
+				if gorev.Title != tc.baslik {
+					t.Errorf("expected Baslik %s, got %s", tc.baslik, gorev.Title)
 				}
 			} else {
-				if gorev.Baslik != originalTask.Baslik {
+				if gorev.Title != originalTask.Title {
 					t.Error("Baslik should not have changed")
 				}
 			}
 
 			if tc.aciklamaVar {
-				if gorev.Aciklama != tc.aciklama {
-					t.Errorf("expected Aciklama %s, got %s", tc.aciklama, gorev.Aciklama)
+				if gorev.Description != tc.aciklama {
+					t.Errorf("expected Aciklama %s, got %s", tc.aciklama, gorev.Description)
 				}
 			} else {
-				if gorev.Aciklama != originalTask.Aciklama {
+				if gorev.Description != originalTask.Description {
 					t.Error("Aciklama should not have changed")
 				}
 			}
@@ -1481,8 +1481,8 @@ func TestIsYonetici_GorevSil(t *testing.T) {
 			// Add test task
 			if tc.gorevID == "existing-task" {
 				mockVY.gorevler["existing-task"] = &Gorev{
-					ID:     "existing-task",
-					Baslik: "Test Task",
+					ID:    "existing-task",
+					Title: "Test Task",
 				}
 			}
 
@@ -1522,25 +1522,25 @@ func TestIsYonetici_OzetAl(t *testing.T) {
 		{
 			name: "calculate summary correctly",
 			gorevler: []*Gorev{
-				{ID: "1", Durum: "beklemede", Oncelik: "yuksek"},
-				{ID: "2", Durum: "beklemede", Oncelik: "orta"},
-				{ID: "3", Durum: "devam_ediyor", Oncelik: "orta"},
-				{ID: "4", Durum: "tamamlandi", Oncelik: "dusuk"},
-				{ID: "5", Durum: "tamamlandi", Oncelik: "yuksek"},
+				{ID: "1", Status: "beklemede", Priority: "yuksek"},
+				{ID: "2", Status: "beklemede", Priority: "orta"},
+				{ID: "3", Status: "devam_ediyor", Priority: "orta"},
+				{ID: "4", Status: "tamamlandi", Priority: "dusuk"},
+				{ID: "5", Status: "tamamlandi", Priority: "yuksek"},
 			},
 			projeler: []*Proje{
-				{ID: "p1", Isim: "Proje 1"},
-				{ID: "p2", Isim: "Proje 2"},
+				{ID: "p1", Name: "Proje 1"},
+				{ID: "p2", Name: "Proje 2"},
 			},
 			expectedOzet: &Ozet{
-				ToplamProje:     2,
-				ToplamGorev:     5,
-				BeklemedeGorev:  2,
-				DevamEdenGorev:  1,
-				TamamlananGorev: 2,
-				YuksekOncelik:   2,
-				OrtaOncelik:     2,
-				DusukOncelik:    1,
+				TotalProjects:       2,
+				TotalTasks:          5,
+				PendingTasks:        2,
+				InProgressTasks:     1,
+				CompletedTasks:      2,
+				HighPriorityTasks:   2,
+				MediumPriorityTasks: 2,
+				LowPriorityTasks:    1,
 			},
 		},
 		{
@@ -1586,29 +1586,29 @@ func TestIsYonetici_OzetAl(t *testing.T) {
 
 			// Verify summary
 			if tc.expectedOzet != nil {
-				if ozet.ToplamProje != tc.expectedOzet.ToplamProje {
-					t.Errorf("expected ToplamProje %d, got %d", tc.expectedOzet.ToplamProje, ozet.ToplamProje)
+				if ozet.TotalProjects != tc.expectedOzet.TotalProjects {
+					t.Errorf("expected ToplamProje %d, got %d", tc.expectedOzet.TotalProjects, ozet.TotalProjects)
 				}
-				if ozet.ToplamGorev != tc.expectedOzet.ToplamGorev {
-					t.Errorf("expected ToplamGorev %d, got %d", tc.expectedOzet.ToplamGorev, ozet.ToplamGorev)
+				if ozet.TotalTasks != tc.expectedOzet.TotalTasks {
+					t.Errorf("expected ToplamGorev %d, got %d", tc.expectedOzet.TotalTasks, ozet.TotalTasks)
 				}
-				if ozet.BeklemedeGorev != tc.expectedOzet.BeklemedeGorev {
-					t.Errorf("expected BeklemedeGorev %d, got %d", tc.expectedOzet.BeklemedeGorev, ozet.BeklemedeGorev)
+				if ozet.PendingTasks != tc.expectedOzet.PendingTasks {
+					t.Errorf("expected BeklemedeGorev %d, got %d", tc.expectedOzet.PendingTasks, ozet.PendingTasks)
 				}
-				if ozet.DevamEdenGorev != tc.expectedOzet.DevamEdenGorev {
-					t.Errorf("expected DevamEdenGorev %d, got %d", tc.expectedOzet.DevamEdenGorev, ozet.DevamEdenGorev)
+				if ozet.InProgressTasks != tc.expectedOzet.InProgressTasks {
+					t.Errorf("expected DevamEdenGorev %d, got %d", tc.expectedOzet.InProgressTasks, ozet.InProgressTasks)
 				}
-				if ozet.TamamlananGorev != tc.expectedOzet.TamamlananGorev {
-					t.Errorf("expected TamamlananGorev %d, got %d", tc.expectedOzet.TamamlananGorev, ozet.TamamlananGorev)
+				if ozet.CompletedTasks != tc.expectedOzet.CompletedTasks {
+					t.Errorf("expected TamamlananGorev %d, got %d", tc.expectedOzet.CompletedTasks, ozet.CompletedTasks)
 				}
-				if ozet.YuksekOncelik != tc.expectedOzet.YuksekOncelik {
-					t.Errorf("expected YuksekOncelik %d, got %d", tc.expectedOzet.YuksekOncelik, ozet.YuksekOncelik)
+				if ozet.HighPriorityTasks != tc.expectedOzet.HighPriorityTasks {
+					t.Errorf("expected YuksekOncelik %d, got %d", tc.expectedOzet.HighPriorityTasks, ozet.HighPriorityTasks)
 				}
-				if ozet.OrtaOncelik != tc.expectedOzet.OrtaOncelik {
-					t.Errorf("expected OrtaOncelik %d, got %d", tc.expectedOzet.OrtaOncelik, ozet.OrtaOncelik)
+				if ozet.MediumPriorityTasks != tc.expectedOzet.MediumPriorityTasks {
+					t.Errorf("expected OrtaOncelik %d, got %d", tc.expectedOzet.MediumPriorityTasks, ozet.MediumPriorityTasks)
 				}
-				if ozet.DusukOncelik != tc.expectedOzet.DusukOncelik {
-					t.Errorf("expected DusukOncelik %d, got %d", tc.expectedOzet.DusukOncelik, ozet.DusukOncelik)
+				if ozet.LowPriorityTasks != tc.expectedOzet.LowPriorityTasks {
+					t.Errorf("expected DusukOncelik %d, got %d", tc.expectedOzet.LowPriorityTasks, ozet.LowPriorityTasks)
 				}
 			}
 		})
@@ -1620,15 +1620,15 @@ func TestIsYonetici_GorevBagimliMi(t *testing.T) {
 	iy := YeniIsYonetici(mockVY)
 
 	// Test görevleri ekle
-	mockVY.gorevler["gorev1"] = &Gorev{ID: "gorev1", Baslik: "Görev 1", Durum: "tamamlandi"}
-	mockVY.gorevler["gorev2"] = &Gorev{ID: "gorev2", Baslik: "Görev 2", Durum: "beklemede"}
-	mockVY.gorevler["gorev3"] = &Gorev{ID: "gorev3", Baslik: "Görev 3", Durum: "devam_ediyor"}
-	mockVY.gorevler["gorev4"] = &Gorev{ID: "gorev4", Baslik: "Görev 4", Durum: "beklemede"}
+	mockVY.gorevler["gorev1"] = &Gorev{ID: "gorev1", Title: "Görev 1", Status: "tamamlandi"}
+	mockVY.gorevler["gorev2"] = &Gorev{ID: "gorev2", Title: "Görev 2", Status: "beklemede"}
+	mockVY.gorevler["gorev3"] = &Gorev{ID: "gorev3", Title: "Görev 3", Status: "devam_ediyor"}
+	mockVY.gorevler["gorev4"] = &Gorev{ID: "gorev4", Title: "Görev 4", Status: "beklemede"}
 
 	// Bağımlılıklar: gorev4, gorev1 ve gorev2'ye bağımlı
 	mockVY.baglantilar = []*Baglanti{
-		{ID: "b1", KaynakID: "gorev1", HedefID: "gorev4", BaglantiTip: "onceki"},
-		{ID: "b2", KaynakID: "gorev2", HedefID: "gorev4", BaglantiTip: "onceki"},
+		{ID: "b1", SourceID: "gorev1", TargetID: "gorev4", ConnectionType: "onceki"},
+		{ID: "b2", SourceID: "gorev2", TargetID: "gorev4", ConnectionType: "onceki"},
 	}
 
 	testCases := []struct {
@@ -1688,12 +1688,12 @@ func TestIsYonetici_GorevDurumGuncelle_WithDependencies(t *testing.T) {
 	iy := YeniIsYonetici(mockVY)
 
 	// Test görevleri ekle
-	mockVY.gorevler["gorev1"] = &Gorev{ID: "gorev1", Baslik: "Görev 1", Durum: "beklemede"}
-	mockVY.gorevler["gorev2"] = &Gorev{ID: "gorev2", Baslik: "Görev 2", Durum: "beklemede"}
+	mockVY.gorevler["gorev1"] = &Gorev{ID: "gorev1", Title: "Görev 1", Status: "beklemede"}
+	mockVY.gorevler["gorev2"] = &Gorev{ID: "gorev2", Title: "Görev 2", Status: "beklemede"}
 
 	// gorev2, gorev1'e bağımlı
 	mockVY.baglantilar = []*Baglanti{
-		{ID: "b1", KaynakID: "gorev1", HedefID: "gorev2", BaglantiTip: "onceki"},
+		{ID: "b1", SourceID: "gorev1", TargetID: "gorev2", ConnectionType: "onceki"},
 	}
 
 	// gorev2'yi devam_ediyor yapmaya çalış (gorev1 henüz tamamlanmadı)

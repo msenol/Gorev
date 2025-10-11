@@ -19,41 +19,41 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 
 	// Create test tasks
 	task1 := &Gorev{
-		ID:              "task-1",
-		Baslik:          "Task 1",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-1 * time.Hour),
-		Etiketler:       []*Etiket{},
+		ID:        "task-1",
+		Title:     "Task 1",
+		Status:    "beklemede",
+		Priority:  "orta",
+		CreatedAt: time.Now().Add(-1 * time.Hour),
+		UpdatedAt: time.Now().Add(-1 * time.Hour),
+		Tags:      []*Etiket{},
 	}
 
 	task2 := &Gorev{
-		ID:              "task-2",
-		Baslik:          "Task 2",
-		Durum:           "devam_ediyor",
-		Oncelik:         "yuksek",
-		OlusturmaTarih:  time.Now().Add(-2 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-2 * time.Hour),
-		Etiketler:       []*Etiket{},
+		ID:        "task-2",
+		Title:     "Task 2",
+		Status:    "devam_ediyor",
+		Priority:  "yuksek",
+		CreatedAt: time.Now().Add(-2 * time.Hour),
+		UpdatedAt: time.Now().Add(-2 * time.Hour),
+		Tags:      []*Etiket{},
 	}
 
 	task3 := &Gorev{
-		ID:              "task-3",
-		Baslik:          "Task 3",
-		Durum:           "tamamlandi",
-		Oncelik:         "dusuk",
-		OlusturmaTarih:  time.Now().Add(-3 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-3 * time.Hour),
-		Etiketler:       []*Etiket{},
+		ID:        "task-3",
+		Title:     "Task 3",
+		Status:    "tamamlandi",
+		Priority:  "dusuk",
+		CreatedAt: time.Now().Add(-3 * time.Hour),
+		UpdatedAt: time.Now().Add(-3 * time.Hour),
+		Tags:      []*Etiket{},
 	}
 
 	// Add existing tag to task3
 	existingTag := &Etiket{
 		ID:   "tag-existing",
-		Isim: "existing",
+		Name: "existing",
 	}
-	task3.Etiketler = []*Etiket{existingTag}
+	task3.Tags = []*Etiket{existingTag}
 	vy.tags["existing"] = existingTag
 
 	// Add tasks to mock
@@ -221,10 +221,10 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 			// Reset task tags for consistent test state
 			if tc.name != "No changes needed" {
 				// Reset task1 and task2 tags
-				task1.Etiketler = []*Etiket{}
-				task2.Etiketler = []*Etiket{}
+				task1.Tags = []*Etiket{}
+				task2.Tags = []*Etiket{}
 				// Ensure task3 has the existing tag
-				task3.Etiketler = []*Etiket{existingTag}
+				task3.Tags = []*Etiket{existingTag}
 			}
 
 			result, err := bp.BulkTagOperation(tc.request)
@@ -266,8 +266,8 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 						task := vy.gorevler[taskID]
 						for _, tagName := range tc.request.Tags {
 							found := false
-							for _, tag := range task.Etiketler {
-								if tag.Isim == tagName {
+							for _, tag := range task.Tags {
+								if tag.Name == tagName {
 									found = true
 									break
 								}
@@ -284,8 +284,8 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 					for _, taskID := range result.Successful {
 						task := vy.gorevler[taskID]
 						for _, tagName := range tc.request.Tags {
-							for _, tag := range task.Etiketler {
-								if tag.Isim == tagName {
+							for _, tag := range task.Tags {
+								if tag.Name == tagName {
 									t.Errorf("Tag %s was not removed from task %s for %s",
 										tagName, taskID, tc.description)
 								}
@@ -299,16 +299,16 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 						task := vy.gorevler[taskID]
 
 						// Check tag count matches
-						if len(task.Etiketler) != len(tc.request.Tags) {
+						if len(task.Tags) != len(tc.request.Tags) {
 							t.Errorf("Expected %d tags, got %d for task %s in %s",
-								len(tc.request.Tags), len(task.Etiketler), taskID, tc.description)
+								len(tc.request.Tags), len(task.Tags), taskID, tc.description)
 						}
 
 						// Check each tag exists
 						for _, tagName := range tc.request.Tags {
 							found := false
-							for _, tag := range task.Etiketler {
-								if tag.Isim == tagName {
+							for _, tag := range task.Tags {
+								if tag.Name == tagName {
 									found = true
 									break
 								}
@@ -339,42 +339,42 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 
 	// Create test tasks
 	task1 := &Gorev{
-		ID:              "task-1",
-		Baslik:          "Task 1",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-1 * time.Hour),
+		ID:        "task-1",
+		Title:     "Task 1",
+		Status:    "beklemede",
+		Priority:  "orta",
+		CreatedAt: time.Now().Add(-1 * time.Hour),
+		UpdatedAt: time.Now().Add(-1 * time.Hour),
 	}
 
 	task2 := &Gorev{
-		ID:              "task-2",
-		Baslik:          "Task 2",
-		Durum:           "devam_ediyor",
-		Oncelik:         "yuksek",
-		OlusturmaTarih:  time.Now().Add(-2 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-2 * time.Hour),
+		ID:        "task-2",
+		Title:     "Task 2",
+		Status:    "devam_ediyor",
+		Priority:  "yuksek",
+		CreatedAt: time.Now().Add(-2 * time.Hour),
+		UpdatedAt: time.Now().Add(-2 * time.Hour),
 	}
 
 	// Parent task with subtasks
 	parentTask := &Gorev{
-		ID:              "parent-task",
-		Baslik:          "Parent Task",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		OlusturmaTarih:  time.Now().Add(-3 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-3 * time.Hour),
+		ID:        "parent-task",
+		Title:     "Parent Task",
+		Status:    "beklemede",
+		Priority:  "orta",
+		CreatedAt: time.Now().Add(-3 * time.Hour),
+		UpdatedAt: time.Now().Add(-3 * time.Hour),
 	}
 
 	// Child task
 	childTask := &Gorev{
-		ID:              "child-task",
-		Baslik:          "Child Task",
-		Durum:           "beklemede",
-		Oncelik:         "orta",
-		ParentID:        "parent-task",
-		OlusturmaTarih:  time.Now().Add(-3 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-3 * time.Hour),
+		ID:        "child-task",
+		Title:     "Child Task",
+		Status:    "beklemede",
+		Priority:  "orta",
+		ParentID:  "parent-task",
+		CreatedAt: time.Now().Add(-3 * time.Hour),
+		UpdatedAt: time.Now().Add(-3 * time.Hour),
 	}
 
 	// Add tasks to mock

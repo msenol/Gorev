@@ -43,7 +43,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     createMutation.mutate({
       template_id: selectedTemplate.id,
       proje_id: selectedProject.id,
-      degerler: formData,
+      values: formData,
     });
   };
 
@@ -85,14 +85,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium text-gray-900">
-                          {template.isim}
+                          {template.name}
                         </h4>
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                          {template.kategori}
+                          {template.category}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
-                        {template.tanim}
+                        {template.definition}
                       </p>
                     </button>
                   ))}
@@ -109,59 +109,59 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     ← Şablon değiştir
                   </button>
                   <h3 className="text-lg font-medium text-gray-900 mt-2">
-                    {selectedTemplate.isim}
+                    {selectedTemplate.name}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {selectedTemplate.tanim}
+                    {selectedTemplate.definition}
                   </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {selectedTemplate.alanlar.map((field) => (
-                    <div key={field.isim}>
+                  {selectedTemplate.fields.map((field) => (
+                    <div key={field.name}>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {field.isim}
-                        {field.zorunlu && (
+                        {field.name}
+                        {field.required && (
                           <span className="text-red-500 ml-1">*</span>
                         )}
                       </label>
 
-                      {field.tip === 'select' ? (
+                      {field.type === 'select' ? (
                         <select
-                          value={formData[field.isim] || field.varsayilan || ''}
+                          value={formData[field.name] || field.default || ''}
                           onChange={(e) =>
-                            setFormData({ ...formData, [field.isim]: e.target.value })
+                            setFormData({ ...formData, [field.name]: e.target.value })
                           }
-                          required={field.zorunlu}
+                          required={field.required}
                           className="input-field"
                         >
                           <option value="">Seçiniz...</option>
-                          {field.secenekler?.map((option) => (
+                          {field.options?.map((option) => (
                             <option key={option} value={option}>
                               {option}
                             </option>
                           ))}
                         </select>
-                      ) : field.tip === 'date' ? (
+                      ) : field.type === 'date' ? (
                         <input
                           type="date"
-                          value={formData[field.isim] || field.varsayilan || ''}
+                          value={formData[field.name] || field.default || ''}
                           onChange={(e) =>
-                            setFormData({ ...formData, [field.isim]: e.target.value })
+                            setFormData({ ...formData, [field.name]: e.target.value })
                           }
-                          required={field.zorunlu}
+                          required={field.required}
                           className="input-field"
                         />
                       ) : (
                         <textarea
-                          value={formData[field.isim] || field.varsayilan || ''}
+                          value={formData[field.name] || field.default || ''}
                           onChange={(e) =>
-                            setFormData({ ...formData, [field.isim]: e.target.value })
+                            setFormData({ ...formData, [field.name]: e.target.value })
                           }
-                          required={field.zorunlu}
-                          rows={field.isim === 'aciklama' ? 4 : 2}
+                          required={field.required}
+                          rows={field.name === 'aciklama' ? 4 : 2}
                           className="input-field"
-                          placeholder={field.aciklama}
+                          placeholder={field.description}
                         />
                       )}
                     </div>
@@ -170,7 +170,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   {selectedProject && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-sm text-blue-800">
-                        📁 Bu görev <strong>{selectedProject.isim}</strong> projesine eklenecek.
+                        📁 Bu görev <strong>{selectedProject.name}</strong> projesine eklenecek.
                       </p>
                     </div>
                   )}

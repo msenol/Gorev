@@ -424,23 +424,23 @@ func (s *APIServer) getProject(c *fiber.Ctx) error {
 // createProject creates a new project
 func (s *APIServer) createProject(c *fiber.Ctx) error {
 	var req struct {
-		Isim  string `json:"isim"`
-		Tanim string `json:"tanim"`
+		Name       string `json:"isim"`
+		Definition string `json:"tanim"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	if req.Isim == "" {
+	if req.Name == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "Isim is required")
 	}
 
 	iy := s.getIsYoneticiFromContext(c)
 
 	// Create project using business logic
-	proje, err := iy.ProjeOlustur(req.Isim, req.Tanim)
+	proje, err := iy.ProjeOlustur(req.Name, req.Definition)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create project '%s': %v", req.Isim, err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create project '%s': %v", req.Name, err))
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -586,32 +586,32 @@ func (s *APIServer) createSubtask(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Baslik    string `json:"baslik"`
-		Aciklama  string `json:"aciklama"`
-		Oncelik   string `json:"oncelik"`
-		SonTarih  string `json:"son_tarih"`
-		Etiketler string `json:"etiketler"`
+		Title       string `json:"baslik"`
+		Description string `json:"aciklama"`
+		Priority    string `json:"oncelik"`
+		DueDate     string `json:"son_tarih"`
+		Tags        string `json:"etiketler"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	if req.Baslik == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Baslik is required")
+	if req.Title == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Title is required")
 	}
 
 	// Parse etiketler string to []string
 	var etiketler []string
-	if req.Etiketler != "" {
+	if req.Tags != "" {
 		// Simple split by comma
-		for _, e := range strings.Split(req.Etiketler, ",") {
+		for _, e := range strings.Split(req.Tags, ",") {
 			etiketler = append(etiketler, strings.TrimSpace(e))
 		}
 	}
 
 	// Create subtask using business logic with workspace context
 	iy := s.getIsYoneticiFromContext(c)
-	gorev, err := iy.AltGorevOlustur(parentID, req.Baslik, req.Aciklama, req.Oncelik, req.SonTarih, etiketler)
+	gorev, err := iy.AltGorevOlustur(parentID, req.Title, req.Description, req.Priority, req.DueDate, etiketler)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to create subtask under parent %s: %v", parentID, err))
 	}

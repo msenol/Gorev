@@ -17,24 +17,24 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 	template.ID = uuid.New().String()
 
 	// Alanları JSON'a çevir
-	alanlarJSON, err := json.Marshal(template.Alanlar)
+	alanlarJSON, err := json.Marshal(template.Fields)
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.fieldsJsonFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Örnek değerleri JSON'a çevir
-	ornekDegerlerJSON, err := json.Marshal(template.OrnekDegerler)
+	ornekDegerlerJSON, err := json.Marshal(template.SampleValues)
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.exampleValuesJsonFailed", map[string]interface{}{"Error": err}))
 	}
 
 	sorgu := `INSERT INTO gorev_templateleri 
-		(id, isim, tanim, alias, varsayilan_baslik, aciklama_template, alanlar, ornek_degerler, kategori, aktif)
+		(id, name, definition, alias, default_title, description_template, fields, sample_values, category, active)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err = vy.db.Exec(sorgu, template.ID, template.Isim, template.Tanim, template.Alias,
-		template.VarsayilanBaslik, template.AciklamaTemplate,
-		string(alanlarJSON), string(ornekDegerlerJSON), template.Kategori, template.Aktif)
+	_, err = vy.db.Exec(sorgu, template.ID, template.Name, template.Definition, template.Alias,
+		template.DefaultTitle, template.DescriptionTemplate,
+		string(alanlarJSON), string(ornekDegerlerJSON), template.Category, template.Active)
 
 	if err != nil {
 		return fmt.Errorf(i18n.TCreateFailed("template", err))
@@ -43,20 +43,20 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 	return nil
 }
 
-// TemplateListele tüm aktif template'leri listeler
-func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, error) {
+// TemplateListele tüm active template'leri listeler
+func (vy *VeriYonetici) TemplateListele(category string) ([]*GorevTemplate, error) {
 	var sorgu string
 	var args []interface{}
 
-	if kategori != "" {
-		sorgu = `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
-				alanlar, ornek_degerler, kategori, aktif 
-				FROM gorev_templateleri WHERE aktif = 1 AND kategori = ? ORDER BY isim`
-		args = append(args, kategori)
+	if category != "" {
+		sorgu = `SELECT id, name, definition, alias, default_title, description_template, 
+				fields, sample_values, category, active 
+				FROM gorev_templateleri WHERE active = 1 AND category = ? ORDER BY name`
+		args = append(args, category)
 	} else {
-		sorgu = `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
-				alanlar, ornek_degerler, kategori, aktif 
-				FROM gorev_templateleri WHERE aktif = 1 ORDER BY kategori, isim`
+		sorgu = `SELECT id, name, definition, alias, default_title, description_template, 
+				fields, sample_values, category, active 
+				FROM gorev_templateleri WHERE active = 1 ORDER BY category, name`
 	}
 
 	rows, err := vy.db.Query(sorgu, args...)
@@ -74,20 +74,20 @@ func (vy *VeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, erro
 		template := &GorevTemplate{}
 		var alanlarJSON, ornekDegerlerJSON string
 
-		err := rows.Scan(&template.ID, &template.Isim, &template.Tanim, &template.Alias,
-			&template.VarsayilanBaslik, &template.AciklamaTemplate,
-			&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
+		err := rows.Scan(&template.ID, &template.Name, &template.Definition, &template.Alias,
+			&template.DefaultTitle, &template.DescriptionTemplate,
+			&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.templateReadFailed", map[string]interface{}{"Error": err}))
 		}
 
 		// Alanları parse et
-		if err := json.Unmarshal([]byte(alanlarJSON), &template.Alanlar); err != nil {
-			return nil, fmt.Errorf("alanlar parse edilemedi: %w", err)
+		if err := json.Unmarshal([]byte(alanlarJSON), &template.Fields); err != nil {
+			return nil, fmt.Errorf("fields parse edilemedi: %w", err)
 		}
 
 		// Örnek değerleri parse et
-		if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
+		if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.SampleValues); err != nil {
 			return nil, fmt.Errorf(i18n.T("error.exampleValuesParseFailed", map[string]interface{}{"Error": err}))
 		}
 
@@ -102,14 +102,14 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
 
-	sorgu := `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
-			alanlar, ornek_degerler, kategori, aktif 
+	sorgu := `SELECT id, name, definition, alias, default_title, description_template, 
+			fields, sample_values, category, active 
 			FROM gorev_templateleri WHERE id = ?`
 
 	err := vy.db.QueryRow(sorgu, templateID).Scan(
-		&template.ID, &template.Isim, &template.Tanim, &template.Alias,
-		&template.VarsayilanBaslik, &template.AciklamaTemplate,
-		&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
+		&template.ID, &template.Name, &template.Definition, &template.Alias,
+		&template.DefaultTitle, &template.DescriptionTemplate,
+		&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -119,12 +119,12 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 	}
 
 	// Alanları parse et
-	if err := json.Unmarshal([]byte(alanlarJSON), &template.Alanlar); err != nil {
-		return nil, fmt.Errorf("alanlar parse edilemedi: %w", err)
+	if err := json.Unmarshal([]byte(alanlarJSON), &template.Fields); err != nil {
+		return nil, fmt.Errorf("fields parse edilemedi: %w", err)
 	}
 
 	// Örnek değerleri parse et
-	if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
+	if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.SampleValues); err != nil {
 		return nil, fmt.Errorf(i18n.T("error.exampleValuesParseFailed", map[string]interface{}{"Error": err}))
 	}
 
@@ -136,14 +136,14 @@ func (vy *VeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, err
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
 
-	sorgu := `SELECT id, isim, tanim, alias, varsayilan_baslik, aciklama_template, 
-			alanlar, ornek_degerler, kategori, aktif 
-			FROM gorev_templateleri WHERE alias = ? AND aktif = 1`
+	sorgu := `SELECT id, name, definition, alias, default_title, description_template, 
+			fields, sample_values, category, active 
+			FROM gorev_templateleri WHERE alias = ? AND active = 1`
 
 	err := vy.db.QueryRow(sorgu, alias).Scan(
-		&template.ID, &template.Isim, &template.Tanim, &template.Alias,
-		&template.VarsayilanBaslik, &template.AciklamaTemplate,
-		&alanlarJSON, &ornekDegerlerJSON, &template.Kategori, &template.Aktif)
+		&template.ID, &template.Name, &template.Definition, &template.Alias,
+		&template.DefaultTitle, &template.DescriptionTemplate,
+		&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -153,12 +153,12 @@ func (vy *VeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, err
 	}
 
 	// Alanları parse et
-	if err := json.Unmarshal([]byte(alanlarJSON), &template.Alanlar); err != nil {
-		return nil, fmt.Errorf("alanlar parse edilemedi: %w", err)
+	if err := json.Unmarshal([]byte(alanlarJSON), &template.Fields); err != nil {
+		return nil, fmt.Errorf("fields parse edilemedi: %w", err)
 	}
 
 	// Örnek değerleri parse et
-	if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.OrnekDegerler); err != nil {
+	if err := json.Unmarshal([]byte(ornekDegerlerJSON), &template.SampleValues); err != nil {
 		return nil, fmt.Errorf(i18n.T("error.exampleValuesParseFailed", map[string]interface{}{"Error": err}))
 	}
 
@@ -186,34 +186,34 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 	}
 
 	// Zorunlu alanları kontrol et
-	for _, alan := range template.Alanlar {
-		if alan.Zorunlu {
-			if _, ok := degerler[alan.Isim]; !ok {
-				return nil, fmt.Errorf(i18n.T("error.requiredFieldMissing", map[string]interface{}{"Field": alan.Isim}))
+	for _, alan := range template.Fields {
+		if alan.Required {
+			if _, ok := degerler[alan.Name]; !ok {
+				return nil, fmt.Errorf(i18n.T("error.requiredFieldMissing", map[string]interface{}{"Field": alan.Name}))
 			}
 		}
 	}
 
 	// Başlık oluştur
-	baslik := template.VarsayilanBaslik
+	baslik := template.DefaultTitle
 	for key, value := range degerler {
 		baslik = strings.ReplaceAll(baslik, "{{"+key+"}}", value)
 	}
 
 	// Açıklama oluştur
-	aciklama := template.AciklamaTemplate
+	aciklama := template.DescriptionTemplate
 	for key, value := range degerler {
 		aciklama = strings.ReplaceAll(aciklama, "{{"+key+"}}", value)
 	}
 
 	// Varsayılan değerleri uygula
 	oncelik := constants.PriorityMedium
-	if val, ok := degerler["oncelik"]; ok {
+	if val, ok := degerler["priority"]; ok {
 		oncelik = val
 	}
 
 	var sonTarih *time.Time
-	if val, ok := degerler["son_tarih"]; ok {
+	if val, ok := degerler["due_date"]; ok {
 		if t, err := time.Parse(constants.DateFormatISO, val); err == nil {
 			sonTarih = &t
 		}
@@ -230,10 +230,10 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 
 	// Görev oluştur
 	gorev := &Gorev{
-		Baslik:   baslik,
-		Aciklama: aciklama,
-		Oncelik:  oncelik,
-		Durum:    constants.TaskStatusPending,
+		Title:       baslik,
+		Description: aciklama,
+		Priority:    oncelik,
+		Status:      constants.TaskStatusPending,
 	}
 
 	// ProjeID'yi ayarla
@@ -243,19 +243,19 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 		// Aktif projeyi kullan
 		aktifProjeID, err := vy.AktifProjeGetir()
 		if err != nil {
-			return nil, fmt.Errorf("aktif proje alınamadı: %w", err)
+			return nil, fmt.Errorf("active proje alınamadı: %w", err)
 		}
 		if aktifProjeID == "" {
-			return nil, fmt.Errorf("proje_id belirtilmedi ve aktif proje ayarlanmamış")
+			return nil, fmt.Errorf("proje_id belirtilmedi ve active proje ayarlanmamış")
 		}
 		gorev.ProjeID = aktifProjeID
 	}
 
 	// ID ve tarihler ayarla
 	gorev.ID = uuid.New().String()
-	gorev.OlusturmaTarih = time.Now()
-	gorev.GuncellemeTarih = time.Now()
-	gorev.SonTarih = sonTarih
+	gorev.CreatedAt = time.Now()
+	gorev.UpdatedAt = time.Now()
+	gorev.DueDate = sonTarih
 
 	// Görevi kaydet
 	err = vy.GorevKaydet(gorev)
@@ -275,7 +275,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 			return nil, fmt.Errorf(i18n.T("error.taskTagsSetFromTemplateFailed", map[string]interface{}{"Error": err}))
 		}
 
-		gorev.Etiketler = etiketNesneleri
+		gorev.Tags = etiketNesneleri
 	}
 
 	return gorev, nil
@@ -285,12 +285,12 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 	templates := []*GorevTemplate{
 		{
-			Isim:             "Bug Raporu",
-			Tanim:            "Yazılım hatası bildirimi için detaylı template",
-			Alias:            "bug",
-			VarsayilanBaslik: "🐛 [{{modul}}] {{baslik}}",
-			AciklamaTemplate: `## 🐛 Hata Açıklaması
-{{aciklama}}
+			Name:         "Bug Raporu",
+			Definition:   "Yazılım hatası bildirimi için detaylı template",
+			Alias:        "bug",
+			DefaultTitle: "🐛 [{{modul}}] {{title}}",
+			DescriptionTemplate: `## 🐛 Hata Açıklaması
+{{description}}
 
 ## 📍 Nerede Oluşuyor?
 **Modül/Bileşen:** {{modul}}
@@ -311,31 +311,31 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 ## 🔧 Olası Çözüm
 {{cozum}}
 
-## 📊 Öncelik: {{oncelik}}
+## 📊 Öncelik: {{priority}}
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "baslik", Tip: "text", Zorunlu: true},
-				{Isim: "aciklama", Tip: "text", Zorunlu: true},
-				{Isim: "modul", Tip: "text", Zorunlu: true},
-				{Isim: "ortam", Tip: "select", Zorunlu: true, Secenekler: constants.ValidEnvironments},
-				{Isim: "adimlar", Tip: "text", Zorunlu: true},
-				{Isim: "beklenen", Tip: "text", Zorunlu: true},
-				{Isim: "mevcut", Tip: "text", Zorunlu: true},
-				{Isim: "ekler", Tip: "text", Zorunlu: false},
-				{Isim: "cozum", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "bug"},
+			Fields: []TemplateAlan{
+				{Name: "title", Type: "text", Required: true},
+				{Name: "description", Type: "text", Required: true},
+				{Name: "modul", Type: "text", Required: true},
+				{Name: "ortam", Type: "select", Required: true, Options: constants.ValidEnvironments},
+				{Name: "adimlar", Type: "text", Required: true},
+				{Name: "beklenen", Type: "text", Required: true},
+				{Name: "mevcut", Type: "text", Required: true},
+				{Name: "ekler", Type: "text", Required: false},
+				{Name: "cozum", Type: "text", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "bug"},
 			},
-			Kategori: "Teknik",
-			Aktif:    true,
+			Category: "Teknik",
+			Active:   true,
 		},
 		{
-			Isim:             "Özellik İsteği",
-			Tanim:            "Yeni özellik veya geliştirme isteği için template",
-			Alias:            "feature",
-			VarsayilanBaslik: "✨ {{baslik}}",
-			AciklamaTemplate: `## ✨ Özellik Açıklaması
-{{aciklama}}
+			Name:         "Özellik İsteği",
+			Definition:   "Yeni özellik veya geliştirme isteği için template",
+			Alias:        "feature",
+			DefaultTitle: "✨ {{title}}",
+			DescriptionTemplate: `## ✨ Özellik Açıklaması
+{{description}}
 
 ## 🎯 Amaç ve Faydalar
 {{amac}}
@@ -356,29 +356,29 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 {{efor}}
 
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "baslik", Tip: "text", Zorunlu: true},
-				{Isim: "aciklama", Tip: "text", Zorunlu: true},
-				{Isim: "amac", Tip: "text", Zorunlu: true},
-				{Isim: "kullanicilar", Tip: "text", Zorunlu: true},
-				{Isim: "kriterler", Tip: "text", Zorunlu: true},
-				{Isim: "ui_ux", Tip: "text", Zorunlu: false},
-				{Isim: "ilgili", Tip: "text", Zorunlu: false},
-				{Isim: "efor", Tip: "select", Zorunlu: false, Secenekler: constants.ValidEffortLevels},
-				{Isim: "son_tarih", Tip: "date", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "özellik"},
+			Fields: []TemplateAlan{
+				{Name: "title", Type: "text", Required: true},
+				{Name: "description", Type: "text", Required: true},
+				{Name: "amac", Type: "text", Required: true},
+				{Name: "kullanicilar", Type: "text", Required: true},
+				{Name: "kriterler", Type: "text", Required: true},
+				{Name: "ui_ux", Type: "text", Required: false},
+				{Name: "ilgili", Type: "text", Required: false},
+				{Name: "efor", Type: "select", Required: false, Options: constants.ValidEffortLevels},
+				{Name: "due_date", Type: "date", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "özellik"},
 			},
-			Kategori: "Özellik",
-			Aktif:    true,
+			Category: "Özellik",
+			Active:   true,
 		},
 		{
-			Isim:             "Teknik Borç",
-			Tanim:            "Refaktöring veya teknik iyileştirme için template",
-			Alias:            "debt",
-			VarsayilanBaslik: "🔧 [{{alan}}] {{baslik}}",
-			AciklamaTemplate: `## 🔧 Teknik Borç Açıklaması
-{{aciklama}}
+			Name:         "Teknik Borç",
+			Definition:   "Refaktöring veya teknik iyileştirme için template",
+			Alias:        "debt",
+			DefaultTitle: "🔧 [{{alan}}] {{title}}",
+			DescriptionTemplate: `## 🔧 Teknik Borç Açıklaması
+{{description}}
 
 ## 📍 Etkilenen Alan
 **Alan/Modül:** {{alan}}
@@ -401,29 +401,29 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 
 ## ⏱️ Tahmini Süre: {{sure}}
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "baslik", Tip: "text", Zorunlu: true},
-				{Isim: "aciklama", Tip: "text", Zorunlu: true},
-				{Isim: "alan", Tip: "text", Zorunlu: true},
-				{Isim: "dosyalar", Tip: "text", Zorunlu: false},
-				{Isim: "neden", Tip: "text", Zorunlu: true},
-				{Isim: "analiz", Tip: "text", Zorunlu: true},
-				{Isim: "cozum", Tip: "text", Zorunlu: true},
-				{Isim: "riskler", Tip: "text", Zorunlu: false},
-				{Isim: "iyilestirmeler", Tip: "text", Zorunlu: true},
-				{Isim: "sure", Tip: "select", Zorunlu: false, Secenekler: []string{"1 gün", "2-3 gün", "1 hafta", "2+ hafta"}},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "teknik-borç,refaktöring"},
+			Fields: []TemplateAlan{
+				{Name: "title", Type: "text", Required: true},
+				{Name: "description", Type: "text", Required: true},
+				{Name: "alan", Type: "text", Required: true},
+				{Name: "dosyalar", Type: "text", Required: false},
+				{Name: "neden", Type: "text", Required: true},
+				{Name: "analiz", Type: "text", Required: true},
+				{Name: "cozum", Type: "text", Required: true},
+				{Name: "riskler", Type: "text", Required: false},
+				{Name: "iyilestirmeler", Type: "text", Required: true},
+				{Name: "sure", Type: "select", Required: false, Options: []string{"1 gün", "2-3 gün", "1 hafta", "2+ hafta"}},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "teknik-borç,refaktöring"},
 			},
-			Kategori: "Teknik",
-			Aktif:    true,
+			Category: "Teknik",
+			Active:   true,
 		},
 		{
-			Isim:             "Araştırma Görevi",
-			Tanim:            "Teknoloji veya çözüm araştırması için template",
-			Alias:            "research",
-			VarsayilanBaslik: "🔍 {{konu}} Araştırması",
-			AciklamaTemplate: `## 🔍 Araştırma Konusu
+			Name:         "Araştırma Görevi",
+			Definition:   "Teknoloji veya çözüm araştırması için template",
+			Alias:        "research",
+			DefaultTitle: "🔍 {{konu}} Araştırması",
+			DescriptionTemplate: `## 🔍 Araştırma Konusu
 {{konu}}
 
 ## 🎯 Araştırma Amacı
@@ -443,28 +443,28 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 
 ## 📅 Bitiş Tarihi: {{son_tarih}}
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "konu", Tip: "text", Zorunlu: true},
-				{Isim: "amac", Tip: "text", Zorunlu: true},
-				{Isim: "sorular", Tip: "text", Zorunlu: true},
-				{Isim: "kaynaklar", Tip: "text", Zorunlu: false},
-				{Isim: "alternatifler", Tip: "text", Zorunlu: false},
-				{Isim: "kriterler", Tip: "text", Zorunlu: true},
-				{Isim: "son_tarih", Tip: "date", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "araştırma"},
+			Fields: []TemplateAlan{
+				{Name: "konu", Type: "text", Required: true},
+				{Name: "amac", Type: "text", Required: true},
+				{Name: "sorular", Type: "text", Required: true},
+				{Name: "kaynaklar", Type: "text", Required: false},
+				{Name: "alternatifler", Type: "text", Required: false},
+				{Name: "kriterler", Type: "text", Required: true},
+				{Name: "due_date", Type: "date", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "araştırma"},
 			},
-			Kategori: "Araştırma",
-			Aktif:    true,
+			Category: "Araştırma",
+			Active:   true,
 		},
 		// Yeni template'ler - Template zorunluluğu için eklendi
 		{
-			Isim:             "Bug Raporu v2",
-			Tanim:            "Gelişmiş bug raporu - detaylı adımlar ve environment bilgisi",
-			Alias:            "bug2",
-			VarsayilanBaslik: "🐛 [{{severity}}] {{modul}}: {{baslik}}",
-			AciklamaTemplate: `## 🐛 Hata Özeti
-{{aciklama}}
+			Name:         "Bug Raporu v2",
+			Definition:   "Gelişmiş bug raporu - detaylı adımlar ve environment bilgisi",
+			Alias:        "bug2",
+			DefaultTitle: "🐛 [{{severity}}] {{modul}}: {{title}}",
+			DescriptionTemplate: `## 🐛 Hata Özeti
+{{description}}
 
 ## 🔄 Tekrar Üretme Adımları
 {{steps_to_reproduce}}
@@ -490,33 +490,33 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 
 ## 🔧 Geçici Çözüm
 {{workaround}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "baslik", Tip: "text", Zorunlu: true},
-				{Isim: "aciklama", Tip: "text", Zorunlu: true},
-				{Isim: "modul", Tip: "text", Zorunlu: true},
-				{Isim: "steps_to_reproduce", Tip: "text", Zorunlu: true},
-				{Isim: "expected_behavior", Tip: "text", Zorunlu: true},
-				{Isim: "actual_behavior", Tip: "text", Zorunlu: true},
-				{Isim: "os_version", Tip: "text", Zorunlu: true},
-				{Isim: "client_info", Tip: "text", Zorunlu: true},
-				{Isim: "server_version", Tip: "text", Zorunlu: true},
-				{Isim: "db_info", Tip: "text", Zorunlu: false},
-				{Isim: "severity", Tip: "select", Zorunlu: true, Secenekler: []string{"critical", "high", "medium", "low"}},
-				{Isim: "affected_users", Tip: "text", Zorunlu: true},
-				{Isim: "attachments", Tip: "text", Zorunlu: false},
-				{Isim: "workaround", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "bug,production"},
+			Fields: []TemplateAlan{
+				{Name: "title", Type: "text", Required: true},
+				{Name: "description", Type: "text", Required: true},
+				{Name: "modul", Type: "text", Required: true},
+				{Name: "steps_to_reproduce", Type: "text", Required: true},
+				{Name: "expected_behavior", Type: "text", Required: true},
+				{Name: "actual_behavior", Type: "text", Required: true},
+				{Name: "os_version", Type: "text", Required: true},
+				{Name: "client_info", Type: "text", Required: true},
+				{Name: "server_version", Type: "text", Required: true},
+				{Name: "db_info", Type: "text", Required: false},
+				{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
+				{Name: "affected_users", Type: "text", Required: true},
+				{Name: "attachments", Type: "text", Required: false},
+				{Name: "workaround", Type: "text", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "bug,production"},
 			},
-			Kategori: "Bug",
-			Aktif:    true,
+			Category: "Bug",
+			Active:   true,
 		},
 		{
-			Isim:             "Spike Araştırma",
-			Tanim:            "Time-boxed teknik araştırma ve proof-of-concept çalışmaları",
-			Alias:            "spike",
-			VarsayilanBaslik: "🔬 [SPIKE] {{research_question}}",
-			AciklamaTemplate: `## 🔬 Araştırma Sorusu
+			Name:         "Spike Araştırma",
+			Definition:   "Time-boxed teknik araştırma ve proof-of-concept çalışmaları",
+			Alias:        "spike",
+			DefaultTitle: "🔬 [SPIKE] {{research_question}}",
+			DescriptionTemplate: `## 🔬 Araştırma Sorusu
 {{research_question}}
 
 ## 🎯 Başarı Kriterleri
@@ -536,27 +536,27 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 {{risks_assumptions}}
 
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "research_question", Tip: "text", Zorunlu: true},
-				{Isim: "success_criteria", Tip: "text", Zorunlu: true},
-				{Isim: "time_box", Tip: "select", Zorunlu: true, Secenekler: []string{"4 saat", "1 gün", "2 gün", "3 gün", "1 hafta"}},
-				{Isim: "decision_deadline", Tip: "date", Zorunlu: true},
-				{Isim: "research_plan", Tip: "text", Zorunlu: true},
-				{Isim: "expected_outputs", Tip: "text", Zorunlu: true},
-				{Isim: "risks_assumptions", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "spike,research,poc"},
+			Fields: []TemplateAlan{
+				{Name: "research_question", Type: "text", Required: true},
+				{Name: "success_criteria", Type: "text", Required: true},
+				{Name: "time_box", Type: "select", Required: true, Options: []string{"4 saat", "1 gün", "2 gün", "3 gün", "1 hafta"}},
+				{Name: "decision_deadline", Type: "date", Required: true},
+				{Name: "research_plan", Type: "text", Required: true},
+				{Name: "expected_outputs", Type: "text", Required: true},
+				{Name: "risks_assumptions", Type: "text", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "spike,research,poc"},
 			},
-			Kategori: "Araştırma",
-			Aktif:    true,
+			Category: "Araştırma",
+			Active:   true,
 		},
 		{
-			Isim:             "Performans Sorunu",
-			Tanim:            "Performans problemleri ve optimizasyon görevleri",
-			Alias:            "performance",
-			VarsayilanBaslik: "⚡ [PERF] {{metric_affected}}: {{baslik}}",
-			AciklamaTemplate: `## ⚡ Performans Sorunu
-{{aciklama}}
+			Name:         "Performans Sorunu",
+			Definition:   "Performans problemleri ve optimizasyon görevleri",
+			Alias:        "performance",
+			DefaultTitle: "⚡ [PERF] {{metric_affected}}: {{title}}",
+			DescriptionTemplate: `## ⚡ Performans Sorunu
+{{description}}
 
 ## 📊 Etkilenen Metrik
 **Metrik:** {{metric_affected}}
@@ -580,34 +580,34 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 {{tradeoffs}}
 
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "baslik", Tip: "text", Zorunlu: true},
-				{Isim: "aciklama", Tip: "text", Zorunlu: true},
-				{Isim: "metric_affected", Tip: "select", Zorunlu: true, Secenekler: []string{"response_time", "throughput", "cpu_usage", "memory_usage", "database_query", "page_load", "api_latency"}},
-				{Isim: "current_value", Tip: "text", Zorunlu: true},
-				{Isim: "target_value", Tip: "text", Zorunlu: true},
-				{Isim: "acceptable_value", Tip: "text", Zorunlu: false},
-				{Isim: "measurement_method", Tip: "text", Zorunlu: true},
-				{Isim: "user_impact", Tip: "text", Zorunlu: true},
-				{Isim: "root_cause", Tip: "text", Zorunlu: false},
-				{Isim: "proposed_solutions", Tip: "text", Zorunlu: true},
-				{Isim: "tradeoffs", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "performance,optimization"},
+			Fields: []TemplateAlan{
+				{Name: "title", Type: "text", Required: true},
+				{Name: "description", Type: "text", Required: true},
+				{Name: "metric_affected", Type: "select", Required: true, Options: []string{"response_time", "throughput", "cpu_usage", "memory_usage", "database_query", "page_load", "api_latency"}},
+				{Name: "current_value", Type: "text", Required: true},
+				{Name: "target_value", Type: "text", Required: true},
+				{Name: "acceptable_value", Type: "text", Required: false},
+				{Name: "measurement_method", Type: "text", Required: true},
+				{Name: "user_impact", Type: "text", Required: true},
+				{Name: "root_cause", Type: "text", Required: false},
+				{Name: "proposed_solutions", Type: "text", Required: true},
+				{Name: "tradeoffs", Type: "text", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "performance,optimization"},
 			},
-			Kategori: "Teknik",
-			Aktif:    true,
+			Category: "Teknik",
+			Active:   true,
 		},
 		{
-			Isim:             "Güvenlik Düzeltmesi",
-			Tanim:            "Güvenlik açıkları ve düzeltmeleri için özel template",
-			Alias:            "security",
-			VarsayilanBaslik: "🔒 [SEC-{{severity}}] {{vulnerability_type}}: {{baslik}}",
-			AciklamaTemplate: `## 🔒 Güvenlik Açığı
-{{aciklama}}
+			Name:         "Güvenlik Düzeltmesi",
+			Definition:   "Güvenlik açıkları ve düzeltmeleri için özel template",
+			Alias:        "security",
+			DefaultTitle: "🔒 [SEC-{{severity}}] {{vulnerability_type}}: {{title}}",
+			DescriptionTemplate: `## 🔒 Güvenlik Açığı
+{{description}}
 
 ## 🎯 Açık Tipi
-**Kategori:** {{vulnerability_type}}
+**Category:** {{vulnerability_type}}
 **CVSS Score:** {{cvss_score}}
 **Severity:** {{severity}}
 
@@ -633,30 +633,30 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 {{disclosure_timeline}}
 
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "baslik", Tip: "text", Zorunlu: true},
-				{Isim: "aciklama", Tip: "text", Zorunlu: true},
-				{Isim: "vulnerability_type", Tip: "select", Zorunlu: true, Secenekler: []string{"SQL Injection", "XSS", "CSRF", "Authentication", "Authorization", "Data Exposure", "Misconfiguration", "Dependency", "Other"}},
-				{Isim: "cvss_score", Tip: "text", Zorunlu: false},
-				{Isim: "severity", Tip: "select", Zorunlu: true, Secenekler: []string{"critical", "high", "medium", "low"}},
-				{Isim: "affected_components", Tip: "text", Zorunlu: true},
-				{Isim: "potential_impact", Tip: "text", Zorunlu: true},
-				{Isim: "mitigation_steps", Tip: "text", Zorunlu: true},
-				{Isim: "testing_requirements", Tip: "text", Zorunlu: true},
-				{Isim: "disclosure_timeline", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityHigh, Secenekler: []string{constants.PriorityHigh}}, // Güvenlik her zaman yüksek
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "security,vulnerability"},
+			Fields: []TemplateAlan{
+				{Name: "title", Type: "text", Required: true},
+				{Name: "description", Type: "text", Required: true},
+				{Name: "vulnerability_type", Type: "select", Required: true, Options: []string{"SQL Injection", "XSS", "CSRF", "Authentication", "Authorization", "Data Exposure", "Misconfiguration", "Dependency", "Other"}},
+				{Name: "cvss_score", Type: "text", Required: false},
+				{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
+				{Name: "affected_components", Type: "text", Required: true},
+				{Name: "potential_impact", Type: "text", Required: true},
+				{Name: "mitigation_steps", Type: "text", Required: true},
+				{Name: "testing_requirements", Type: "text", Required: true},
+				{Name: "disclosure_timeline", Type: "text", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: []string{constants.PriorityHigh}}, // Güvenlik her zaman yüksek
+				{Name: "etiketler", Type: "text", Required: false, Default: "security,vulnerability"},
 			},
-			Kategori: "Güvenlik",
-			Aktif:    true,
+			Category: "Güvenlik",
+			Active:   true,
 		},
 		{
-			Isim:             "Refactoring",
-			Tanim:            "Kod kalitesi ve mimari iyileştirmeler",
-			Alias:            "refactor",
-			VarsayilanBaslik: "♻️ [REFACTOR] {{code_smell}}: {{baslik}}",
-			AciklamaTemplate: `## ♻️ Refactoring Özeti
-{{aciklama}}
+			Name:         "Refactoring",
+			Definition:   "Kod kalitesi ve mimari iyileştirmeler",
+			Alias:        "refactor",
+			DefaultTitle: "♻️ [REFACTOR] {{code_smell}}: {{title}}",
+			DescriptionTemplate: `## ♻️ Refactoring Özeti
+{{description}}
 
 ## 🦨 Code Smell Tipi
 {{code_smell_type}}
@@ -686,24 +686,24 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 - **Mevcut Code Coverage:** {{current_coverage}}
 
 ## 🏷️ Etiketler: {{etiketler}}`,
-			Alanlar: []TemplateAlan{
-				{Isim: "baslik", Tip: "text", Zorunlu: true},
-				{Isim: "aciklama", Tip: "text", Zorunlu: true},
-				{Isim: "code_smell", Tip: "select", Zorunlu: true, Secenekler: []string{"Long Method", "Large Class", "Duplicate Code", "Dead Code", "Complex Conditionals", "Feature Envy", "Data Clumps", "Primitive Obsession", "Switch Statements", "Parallel Inheritance", "Lazy Class", "Speculative Generality", "Message Chains", "Middle Man", "Other"}},
-				{Isim: "code_smell_type", Tip: "text", Zorunlu: true},
-				{Isim: "affected_files", Tip: "text", Zorunlu: true},
-				{Isim: "refactoring_strategy", Tip: "text", Zorunlu: true},
-				{Isim: "risk_level", Tip: "select", Zorunlu: true, Secenekler: []string{"low", "medium", "high"}},
-				{Isim: "impact_scope", Tip: "text", Zorunlu: true},
-				{Isim: "rollback_plan", Tip: "text", Zorunlu: true},
-				{Isim: "current_complexity", Tip: "text", Zorunlu: false},
-				{Isim: "target_complexity", Tip: "text", Zorunlu: false},
-				{Isim: "current_coverage", Tip: "text", Zorunlu: false},
-				{Isim: "oncelik", Tip: "select", Zorunlu: true, Varsayilan: constants.PriorityMedium, Secenekler: constants.GetValidPriorities()},
-				{Isim: "etiketler", Tip: "text", Zorunlu: false, Varsayilan: "refactoring,code-quality"},
+			Fields: []TemplateAlan{
+				{Name: "title", Type: "text", Required: true},
+				{Name: "description", Type: "text", Required: true},
+				{Name: "code_smell", Type: "select", Required: true, Options: []string{"Long Method", "Large Class", "Duplicate Code", "Dead Code", "Complex Conditionals", "Feature Envy", "Data Clumps", "Primitive Obsession", "Switch Statements", "Parallel Inheritance", "Lazy Class", "Speculative Generality", "Message Chains", "Middle Man", "Other"}},
+				{Name: "code_smell_type", Type: "text", Required: true},
+				{Name: "affected_files", Type: "text", Required: true},
+				{Name: "refactoring_strategy", Type: "text", Required: true},
+				{Name: "risk_level", Type: "select", Required: true, Options: []string{"low", "medium", "high"}},
+				{Name: "impact_scope", Type: "text", Required: true},
+				{Name: "rollback_plan", Type: "text", Required: true},
+				{Name: "current_complexity", Type: "text", Required: false},
+				{Name: "target_complexity", Type: "text", Required: false},
+				{Name: "current_coverage", Type: "text", Required: false},
+				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+				{Name: "etiketler", Type: "text", Required: false, Default: "refactoring,code-quality"},
 			},
-			Kategori: "Teknik",
-			Aktif:    true,
+			Category: "Teknik",
+			Active:   true,
 		},
 	}
 
@@ -719,7 +719,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 
 		exists := false
 		for _, existing := range existingTemplates {
-			if existing.Isim == template.Isim {
+			if existing.Name == template.Name {
 				exists = true
 				break
 			}
@@ -731,7 +731,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		}
 
 		if err := vy.TemplateOlustur(template); err != nil {
-			return fmt.Errorf("varsayılan template oluşturulamadı (%s): %v", template.Isim, err)
+			return fmt.Errorf("varsayılan template oluşturulamadı (%s): %v", template.Name, err)
 		}
 	}
 

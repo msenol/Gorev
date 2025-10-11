@@ -97,13 +97,13 @@ Detaylı teknik özellikler için [Daemon Mimari Dokümantasyonu](docs/architect
 **gorev_bulk** - Tüm 3 operasyon artık tamamen çalışıyor:
 
 - **`update` operasyonu**: `{ids: [], data: {}}` → `{updates: [{id, ...alanlar}]}` dönüşümü düzgün çalışıyor
-- **`transition` operasyonu**: Hem `durum` hem `yeni_durum` parametrelerini kabul ediyor
+- **`transition` operasyonu**: Hem `status` hem `yeni_durum` parametrelerini kabul ediyor
 - **`tag` operasyonu**: Hem `operation` hem `tag_operation` parametrelerini kabul ediyor
 - **Test sonucu**: %100 başarı oranı (5/5 operasyon production'da test edildi)
 
 **gorev_guncelle** - Çoklu alan güncelleme desteği eklendi:
 
-- `durum` (durum), `oncelik` (öncelik) veya her ikisini birden güncelleyebilir
+- `status` (durum), `priority` (öncelik) veya her ikisini birden güncelleyebilir
 - En az bir parametre gerekli (validasyon)
 - Mevcut kodla geriye dönük uyumlu
 

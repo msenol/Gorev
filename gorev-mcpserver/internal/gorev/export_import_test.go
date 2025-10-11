@@ -69,7 +69,7 @@ func TestExportData(t *testing.T) {
 			validate: func(t *testing.T, data *ExportFormat) {
 				// Tamamlanmış görevlerin olmaması kontrol et
 				for _, task := range data.Tasks {
-					if task.Durum == constants.TaskStatusCompleted {
+					if task.Status == constants.TaskStatusCompleted {
 						t.Errorf("Found completed task when IncludeCompleted=false: %s", task.ID)
 					}
 				}
@@ -107,7 +107,7 @@ func TestExportData(t *testing.T) {
 			validate: func(t *testing.T, data *ExportFormat) {
 				// Tarih aralığı kontrolü
 				for _, task := range data.Tasks {
-					if task.OlusturmaTarih.Before(time.Now().AddDate(0, 0, -7)) {
+					if task.CreatedAt.Before(time.Now().AddDate(0, 0, -7)) {
 						t.Errorf("Found task outside date range: %s", task.ID)
 					}
 				}
@@ -532,11 +532,11 @@ func TestValidateImportOptions(t *testing.T) {
 func setupTestData(t *testing.T, vy *VeriYonetici) {
 	// Test projesi oluştur
 	proje := &Proje{
-		ID:              "test-project-1",
-		Isim:            "Test Project",
-		Tanim:           "Test project description",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:         "test-project-1",
+		Name:       "Test Project",
+		Definition: "Test project description",
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	err := vy.ProjeKaydet(proje)
 	if err != nil {
@@ -546,24 +546,24 @@ func setupTestData(t *testing.T, vy *VeriYonetici) {
 	// Test görevleri oluştur
 	tasks := []*Gorev{
 		{
-			ID:              "test-task-1",
-			Baslik:          "Test Task 1",
-			Aciklama:        "Test task description",
-			Durum:           constants.TaskStatusPending,
-			Oncelik:         constants.PriorityHigh,
-			ProjeID:         proje.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          "test-task-1",
+			Title:       "Test Task 1",
+			Description: "Test task description",
+			Status:      constants.TaskStatusPending,
+			Priority:    constants.PriorityHigh,
+			ProjeID:     proje.ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		},
 		{
-			ID:              "test-task-2",
-			Baslik:          "Test Task 2",
-			Aciklama:        "Another test task",
-			Durum:           constants.TaskStatusCompleted,
-			Oncelik:         constants.PriorityMedium,
-			ProjeID:         proje.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          "test-task-2",
+			Title:       "Test Task 2",
+			Description: "Another test task",
+			Status:      constants.TaskStatusCompleted,
+			Priority:    constants.PriorityMedium,
+			ProjeID:     proje.ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		},
 	}
 

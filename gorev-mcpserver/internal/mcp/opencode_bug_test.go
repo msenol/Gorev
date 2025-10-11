@@ -33,9 +33,9 @@ func TestOpenCodeAIIDSerializationBug(t *testing.T) {
 
 	// Test 1: Create a project without any tasks (this triggers the bug)
 	proje := &gorev.Proje{
-		ID:    "test-project-id",
-		Isim:  "Test Project",
-		Tanim: "Test project for OpenCode.ai bug reproduction",
+		ID:         "test-project-id",
+		Name:       "Test Project",
+		Definition: "Test project for OpenCode.ai bug reproduction",
 	}
 	err := isYonetici.VeriYonetici().ProjeKaydet(proje)
 	require.NoError(t, err)
@@ -123,9 +123,9 @@ func TestMCPResultTextSerialization(t *testing.T) {
 // TestProjectObjectSerialization tests serialization of Proje objects
 func TestProjectObjectSerialization(t *testing.T) {
 	proje := &gorev.Proje{
-		ID:    "test-project-123",
-		Isim:  "Test Project",
-		Tanim: "Test description",
+		ID:         "test-project-123",
+		Name:       "Test Project",
+		Definition: "Test description",
 	}
 
 	// Test direct JSON serialization of Proje object
@@ -163,9 +163,9 @@ func TestGorevListeleWithTasks(t *testing.T) {
 
 	// Create a project
 	proje := &gorev.Proje{
-		ID:    "test-project-with-tasks",
-		Isim:  "Project With Tasks",
-		Tanim: "Test project with tasks",
+		ID:         "test-project-with-tasks",
+		Name:       "Project With Tasks",
+		Definition: "Test project with tasks",
 	}
 	err := isYonetici.VeriYonetici().ProjeKaydet(proje)
 	require.NoError(t, err)
@@ -176,23 +176,23 @@ func TestGorevListeleWithTasks(t *testing.T) {
 
 	// Create some tasks
 	task1 := &gorev.Gorev{
-		ID:       "task-1",
-		Baslik:   "Task 1",
-		Aciklama: "First task",
-		Durum:    "beklemede",
-		Oncelik:  "yuksek",
-		ProjeID:  proje.ID,
+		ID:          "task-1",
+		Title:       "Task 1",
+		Description: "First task",
+		Status:      "beklemede",
+		Priority:    "yuksek",
+		ProjeID:     proje.ID,
 	}
 	err = isYonetici.VeriYonetici().GorevKaydet(task1)
 	require.NoError(t, err)
 
 	task2 := &gorev.Gorev{
-		ID:       "task-2",
-		Baslik:   "Task 2",
-		Aciklama: "Second task",
-		Durum:    "devam_ediyor",
-		Oncelik:  "orta",
-		ProjeID:  proje.ID,
+		ID:          "task-2",
+		Title:       "Task 2",
+		Description: "Second task",
+		Status:      "devam_ediyor",
+		Priority:    "orta",
+		ProjeID:     proje.ID,
 	}
 	err = isYonetici.VeriYonetici().GorevKaydet(task2)
 	require.NoError(t, err)

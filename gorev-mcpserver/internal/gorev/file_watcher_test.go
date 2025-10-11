@@ -590,12 +590,12 @@ func TestFileWatcher_UpdateTaskOnFileChange(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:              "test-task",
-		Baslik:          "Test Task",
-		Durum:           constants.TaskStatusPending,
-		Oncelik:         constants.PriorityMedium,
-		OlusturmaTarih:  time.Now().Add(-1 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-1 * time.Hour),
+		ID:        "test-task",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now().Add(-1 * time.Hour),
+		UpdatedAt: time.Now().Add(-1 * time.Hour),
 	}
 	vy.gorevler["test-task"] = testTask
 
@@ -615,8 +615,8 @@ func TestFileWatcher_UpdateTaskOnFileChange(t *testing.T) {
 
 	// Verify task status was updated to in-progress
 	updatedTask := vy.gorevler["test-task"]
-	if updatedTask.Durum != constants.TaskStatusInProgress {
-		t.Errorf("Expected task status to be in-progress, got: %s", updatedTask.Durum)
+	if updatedTask.Status != constants.TaskStatusInProgress {
+		t.Errorf("Expected task status to be in-progress, got: %s", updatedTask.Status)
 	}
 
 	// Test with task that doesn't exist
@@ -627,12 +627,12 @@ func TestFileWatcher_UpdateTaskOnFileChange(t *testing.T) {
 
 	// Test with task already in progress (should not change status again)
 	inProgressTask := &Gorev{
-		ID:              "progress-task",
-		Baslik:          "In Progress Task",
-		Durum:           constants.TaskStatusInProgress,
-		Oncelik:         constants.PriorityMedium,
-		OlusturmaTarih:  time.Now().Add(-2 * time.Hour),
-		GuncellemeTarih: time.Now().Add(-1 * time.Hour),
+		ID:        "progress-task",
+		Title:     "In Progress Task",
+		Status:    constants.TaskStatusInProgress,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now().Add(-2 * time.Hour),
+		UpdatedAt: time.Now().Add(-1 * time.Hour),
 	}
 	vy.gorevler["progress-task"] = inProgressTask
 
@@ -642,7 +642,7 @@ func TestFileWatcher_UpdateTaskOnFileChange(t *testing.T) {
 	}
 
 	// Should remain in progress
-	if vy.gorevler["progress-task"].Durum != constants.TaskStatusInProgress {
+	if vy.gorevler["progress-task"].Status != constants.TaskStatusInProgress {
 		t.Error("In-progress task status should remain unchanged")
 	}
 }

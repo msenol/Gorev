@@ -138,13 +138,13 @@ See [Daemon Architecture Documentation](docs/architecture/daemon-architecture.md
 **gorev_bulk** - All 3 operations now fully functional:
 
 - **`update` operation**: Properly transforms `{ids: [], data: {}}` → `{updates: [{id, ...fields}]}`
-- **`transition` operation**: Accepts both `durum` and `yeni_durum` parameter names for flexibility
+- **`transition` operation**: Accepts both `status` and `yeni_durum` parameter names for flexibility
 - **`tag` operation**: Accepts both `operation` and `tag_operation` parameter names
 - **Test result**: 100% success rate (5/5 operations passed in production)
 
 **gorev_guncelle** - Extended to support multiple field updates:
 
-- Can update `durum` (status), `oncelik` (priority), or both simultaneously
+- Can update `status` (status), `priority` (priority), or both simultaneously
 - At least one parameter required for validation
 - Backward compatible with existing code
 

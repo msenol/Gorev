@@ -32,19 +32,19 @@ func setupTestEnvironmentWithTemplate(t *testing.T) (*server.MCPServer, *Handler
 
 	// Create simple template for edge case testing
 	template := &gorev.GorevTemplate{
-		Isim:             "Simple Test Template",
-		Tanim:            "Basit template for edge case testing",
-		VarsayilanBaslik: "{{baslik}}",
-		AciklamaTemplate: "{{aciklama}}",
-		Alanlar: []gorev.TemplateAlan{
-			{Isim: "baslik", Tip: "text", Zorunlu: true},
-			{Isim: "aciklama", Tip: "text", Zorunlu: false, Varsayilan: "Test description"},
-			{Isim: "oncelik", Tip: "select", Zorunlu: false, Varsayilan: constants.PriorityMedium, Secenekler: []string{constants.PriorityLow, constants.PriorityMedium, constants.PriorityHigh}},
-			{Isim: "etiketler", Tip: "text", Zorunlu: false},
-			{Isim: "son_tarih", Tip: "date", Zorunlu: false},
+		Name:                "Simple Test Template",
+		Definition:          "Basit template for edge case testing",
+		DefaultTitle:        "{{baslik}}",
+		DescriptionTemplate: "{{aciklama}}",
+		Fields: []gorev.TemplateAlan{
+			{Name: "baslik", Type: "text", Required: true},
+			{Name: "aciklama", Type: "text", Required: false, Default: "Test description"},
+			{Name: "oncelik", Type: "select", Required: false, Default: constants.PriorityMedium, Options: []string{constants.PriorityLow, constants.PriorityMedium, constants.PriorityHigh}},
+			{Name: "etiketler", Type: "text", Required: false},
+			{Name: "son_tarih", Type: "date", Required: false},
 		},
-		Kategori: "Test",
-		Aktif:    true,
+		Category: "Test",
+		Active:   true,
 	}
 
 	err := veriYonetici.TemplateOlustur(template)
@@ -52,9 +52,9 @@ func setupTestEnvironmentWithTemplate(t *testing.T) (*server.MCPServer, *Handler
 
 	// Create and set active project
 	proje := &gorev.Proje{
-		ID:    constants.TestProjectIDEdge,
-		Isim:  "Test Edge Project",
-		Tanim: "Test project for edge cases",
+		ID:         constants.TestProjectIDEdge,
+		Name:       "Test Edge Project",
+		Definition: "Test project for edge cases",
 	}
 	err = veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 					constants.ParamTemplateID: templateID,
-					constants.ParamDegerler: map[string]interface{}{
+					constants.ParamValues: map[string]interface{}{
 						"baslik":  tc.baslik,
 						"oncelik": constants.PriorityMedium,
 					},
@@ -120,7 +120,7 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 		for _, injection := range injectionAttempts {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"baslik":   injection,
 					"aciklama": injection,
 					"oncelik":  constants.PriorityMedium,
@@ -164,7 +164,7 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 			t.Run(sc.name, func(t *testing.T) {
 				result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 					constants.ParamTemplateID: templateID,
-					constants.ParamDegerler: map[string]interface{}{
+					constants.ParamValues: map[string]interface{}{
 						"baslik":  sc.baslik,
 						"oncelik": constants.PriorityMedium,
 					},
@@ -190,7 +190,7 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 		longString := strings.Repeat("A", constants.TestStringVeryLong)
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: templateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":   "Task with long description",
 				"aciklama": longString,
 				"oncelik":  constants.PriorityMedium,
@@ -230,7 +230,7 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 		for _, priority := range invalidPriorities {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"baslik":  "Test task",
 					"oncelik": priority,
 				},
@@ -269,7 +269,7 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 		for _, date := range invalidDates {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"baslik":    "Test task",
 					"son_tarih": date,
 					"oncelik":   constants.PriorityMedium,
@@ -311,7 +311,7 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 					constants.ParamTemplateID: templateID,
-					constants.ParamDegerler: map[string]interface{}{
+					constants.ParamValues: map[string]interface{}{
 						"baslik":    "Task with tags: " + tc.name,
 						"oncelik":   constants.PriorityMedium,
 						"etiketler": tc.etiketler,
@@ -339,7 +339,7 @@ func TestGorevGuncelle_EdgeCases(t *testing.T) {
 		// Create a task
 		createResult := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: templateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":  "Test task for status",
 				"oncelik": constants.PriorityMedium,
 			},
@@ -456,7 +456,7 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 
 				result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 					constants.ParamTemplateID: templateID,
-					constants.ParamDegerler: map[string]interface{}{
+					constants.ParamValues: map[string]interface{}{
 						"baslik":  fmt.Sprintf("Concurrent task %d", index),
 						"oncelik": constants.PriorityMedium,
 					},
@@ -514,7 +514,7 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 		// Create a task
 		createResult := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: templateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":  "Task for concurrent updates",
 				"oncelik": constants.PriorityMedium,
 			},
@@ -627,9 +627,9 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 	// Create and set active project
 	proje := &gorev.Proje{
-		ID:    constants.TestProjectIDTemplate,
-		Isim:  "Test Template Edge Project",
-		Tanim: "Test project for template edge cases",
+		ID:         constants.TestProjectIDTemplate,
+		Name:       "Test Template Edge Project",
+		Definition: "Test project for template edge cases",
 	}
 	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
@@ -642,7 +642,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 	t.Run("Empty template ID", func(t *testing.T) {
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: "",
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik": "Test",
 			},
 		})
@@ -663,7 +663,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 			t.Run(fmt.Sprintf("Type %d", i), func(t *testing.T) {
 				result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 					constants.ParamTemplateID: constants.TestTemplateBugFix,
-					constants.ParamDegerler:   wrongType,
+					constants.ParamValues:     wrongType,
 				})
 				assert.True(t, result.IsError)
 				assert.Contains(t, getResultText(result), "degerler parametresi gerekli ve obje tipinde olmalı")
@@ -679,7 +679,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -699,7 +699,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler:   injectionValues,
+			constants.ParamValues:     injectionValues,
 		})
 
 		// Should either sanitize or create the task with escaped values
@@ -728,7 +728,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -738,7 +738,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 		largeString := strings.Repeat("A", constants.TestStringHuge)
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":   "Large content test",
 				"aciklama": largeString,
 				"modul":    "TestModule",
@@ -766,7 +766,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		var featureTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Özellik İsteği" {
+			if tmpl.Name == "Özellik İsteği" {
 				featureTemplateID = tmpl.ID
 				break
 			}
@@ -776,7 +776,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 		// Provide no fields at all
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: featureTemplateID,
-			constants.ParamDegerler:   map[string]interface{}{},
+			constants.ParamValues:     map[string]interface{}{},
 		})
 
 		assert.True(t, result.IsError)
@@ -791,7 +791,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -801,7 +801,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 		// Provide objects/arrays instead of strings
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":   map[string]string{"nested": "object"},
 				"aciklama": []string{"array", "of", "strings"},
 				"modul":    123,
@@ -833,7 +833,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -842,7 +842,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":    "Task with duplicate tags",
 				"aciklama":  "Bug description",
 				"modul":     "TestModule",
@@ -915,7 +915,7 @@ func TestErrorPropagation(t *testing.T) {
 		// Try operations that should fail
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: constants.TestTemplateSimple,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":  "This should fail",
 				"oncelik": constants.PriorityMedium,
 			},
@@ -943,7 +943,7 @@ func TestPerformance_EdgeCases(t *testing.T) {
 		for i := 0; i < taskCount; i++ {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"baslik":    fmt.Sprintf("Performance task %d", i),
 					"aciklama":  fmt.Sprintf("Description for task %d with some longer text to simulate real usage", i),
 					"oncelik":   []string{constants.PriorityHigh, constants.PriorityMedium, constants.PriorityLow}[i%3],

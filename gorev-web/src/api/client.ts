@@ -75,10 +75,10 @@ export const checkHealth = async () => {
 export const getTasks = async (filters?: TaskFilter): Promise<ApiResponse<Task[]>> => {
   const params = new URLSearchParams();
 
-  if (filters?.durum) params.append('durum', filters.durum);
-  if (filters?.oncelik) params.append('oncelik', filters.oncelik);
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.priority) params.append('priority', filters.priority);
   if (filters?.proje_id) params.append('proje_id', filters.proje_id);
-  if (filters?.etiket) params.append('etiket', filters.etiket);
+  if (filters?.tag) params.append('tag', filters.tag);
 
   const { data } = await api.get(`/tasks?${params.toString()}`);
   return data;
@@ -133,8 +133,8 @@ export const getProjectTasks = async (
 ): Promise<ApiResponse<Task[]>> => {
   const params = new URLSearchParams();
 
-  if (filters?.durum) params.append('durum', filters.durum);
-  if (filters?.oncelik) params.append('oncelik', filters.oncelik);
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.priority) params.append('priority', filters.priority);
 
   const { data } = await api.get(`/projects/${projectId}/tasks?${params.toString()}`);
   return data;
@@ -146,8 +146,8 @@ export const activateProject = async (id: string): Promise<ApiResponse<Project>>
 };
 
 // Templates API
-export const getTemplates = async (kategori?: string): Promise<ApiResponse<Template[]>> => {
-  const params = kategori ? `?kategori=${encodeURIComponent(kategori)}` : '';
+export const getTemplates = async (category?: string): Promise<ApiResponse<Template[]>> => {
+  const params = category ? `?category=${encodeURIComponent(category)}` : '';
   const { data } = await api.get(`/templates${params}`);
   return data;
 };

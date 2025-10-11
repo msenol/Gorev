@@ -70,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <span className="font-medium">Tüm Projeler</span>
               </div>
               <div className="text-xs text-gray-500 ml-6">
-                {projects.reduce((total, p) => total + (p.gorev_sayisi || 0), 0)} görev
+                {projects.reduce((total, p) => total + (p.task_count || 0), 0)} görev
               </div>
             </button>
 
@@ -88,14 +88,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-primary-500 mr-2"></div>
-                    <span className="font-medium truncate">{project.isim}</span>
+                    <span className="font-medium truncate">{project.name}</span>
                   </div>
                   {project.is_active && (
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   )}
                 </div>
                 <div className="text-xs text-gray-500 ml-5">
-                  {project.gorev_sayisi || 0} görev
+                  {project.task_count || 0} görev
                 </div>
               </button>
             ))}
@@ -123,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <div className="flex items-center">
                     <FileText className="h-3 w-3 mr-2" />
-                    <span className="truncate">{template.isim}</span>
+                    <span className="truncate">{template.name}</span>
                   </div>
                 </button>
               ))}

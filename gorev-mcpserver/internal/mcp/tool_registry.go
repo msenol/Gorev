@@ -291,12 +291,12 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 					"type":        "string",
 					"description": i18n.TTemplate("template_id"),
 				},
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"type":        "object",
 					"description": i18n.TTemplate("fields"),
 				},
 			},
-			Required: []string{constants.ParamTemplateID, constants.ParamDegerler},
+			Required: []string{constants.ParamTemplateID, constants.ParamValues},
 		},
 	}, tr.handlers.TemplatedenGorevOlustur)
 }

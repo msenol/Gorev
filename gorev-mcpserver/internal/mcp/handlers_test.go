@@ -209,7 +209,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		for i, params := range taskParams {
 			result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler:   params,
+				constants.ParamValues:     params,
 			})
 			if result.IsError {
 				t.Logf("Task %d creation failed: %v", i+1, getResultText(result))
@@ -404,7 +404,7 @@ func TestMCPHandlers_TemplateIntegration(t *testing.T) {
 			// Try to create a task from the Bug Fix template
 			result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: constants.TestTemplateBugFix,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"bug_tanim": "Test bug açıklaması",
 					"oncelik":   constants.PriorityHigh,
 				},
@@ -472,7 +472,7 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 		// Create tasks in the active project
 		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: templateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":    "Proje A Görevi",
 				"konu":      "Project A Research",
 				"amac":      "Test project A functionality",
@@ -529,9 +529,9 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 
 	// Create and set active project
 	proje := &gorev.Proje{
-		ID:    constants.TestProjectIDDep,
-		Isim:  "Test Dependency Project",
-		Tanim: "Test project for dependencies",
+		ID:         constants.TestProjectIDDep,
+		Name:       "Test Dependency Project",
+		Definition: "Test project for dependencies",
 	}
 	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
@@ -579,7 +579,7 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 		for _, taskData := range tasks {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler:   taskData,
+				constants.ParamValues:     taskData,
 			})
 			assert.False(t, result.IsError)
 
@@ -684,9 +684,9 @@ func TestMCPHandlers_Performance(t *testing.T) {
 
 	// Create and set active project
 	proje := &gorev.Proje{
-		ID:    constants.TestProjectIDPerf,
-		Isim:  "Test Performance Project",
-		Tanim: "Test project for performance testing",
+		ID:         constants.TestProjectIDPerf,
+		Name:       "Test Performance Project",
+		Definition: "Test project for performance testing",
 	}
 	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
@@ -709,7 +709,7 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		for i := 0; i < taskCount; i++ {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"baslik":    fmt.Sprintf("Performance Test Task %d", i),
 					"konu":      "Performance Testing",
 					"amac":      "Test system performance",
@@ -851,9 +851,9 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create and set active project
 		proje := &gorev.Proje{
-			ID:    constants.TestProjectIDBug,
-			Isim:  "Test Bug Project",
-			Tanim: "Test project for bug reports",
+			ID:         constants.TestProjectIDBug,
+			Name:       "Test Bug Project",
+			Definition: "Test project for bug reports",
 		}
 		err := veriYonetici.ProjeKaydet(proje)
 		require.NoError(t, err)
@@ -866,7 +866,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -878,7 +878,7 @@ func TestTemplateHandlers(t *testing.T) {
 		// Create task from bug report template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":    "Login button not working",
 				"aciklama":  "Users can't log in when clicking the login button",
 				"modul":     "Authentication",
@@ -924,7 +924,7 @@ func TestTemplateHandlers(t *testing.T) {
 		assert.Contains(t, detailText, "## 🔧 Olası Çözüm")
 		assert.Contains(t, detailText, "Check event handler binding")
 		assert.Contains(t, detailText, "## 📊 Öncelik: yuksek")
-		assert.Contains(t, detailText, "## 🏷️ Etiketler: bug,urgent,auth")
+		assert.Contains(t, detailText, "## 🏷️ Tags: bug,urgent,auth")
 		assert.Contains(t, detailText, "bug")
 		assert.Contains(t, detailText, "urgent")
 		assert.Contains(t, detailText, "auth")
@@ -951,7 +951,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -963,7 +963,7 @@ func TestTemplateHandlers(t *testing.T) {
 		// Try to create task without required fields
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik": "Test bug",
 				// Missing required fields: aciklama, modul, ortam, adimlar, beklenen, mevcut, oncelik
 			},
@@ -982,7 +982,7 @@ func TestTemplateHandlers(t *testing.T) {
 		// Try to create task with non-existent template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: constants.TestTemplateNonExistent,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik": "Test task",
 			},
 		})
@@ -1013,7 +1013,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		var featureTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Özellik İsteği" {
+			if tmpl.Name == "Özellik İsteği" {
 				featureTemplateID = tmpl.ID
 				break
 			}
@@ -1041,7 +1041,7 @@ func TestTemplateHandlers(t *testing.T) {
 		// Create task from feature request template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: featureTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":       "Dark mode support",
 				"aciklama":     "Add dark mode theme to the mobile app",
 				"amac":         "Improve user experience in low-light conditions and save battery",
@@ -1090,9 +1090,9 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create and set active project
 		proje := &gorev.Proje{
-			ID:    constants.TestProjectIDTechDebt,
-			Isim:  "Test Tech Debt Project",
-			Tanim: "Test project for technical debt",
+			ID:         constants.TestProjectIDTechDebt,
+			Name:       "Test Tech Debt Project",
+			Definition: "Test project for technical debt",
 		}
 		err := veriYonetici.ProjeKaydet(proje)
 		require.NoError(t, err)
@@ -1105,7 +1105,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		var techDebtTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Teknik Borç" {
+			if tmpl.Name == "Teknik Borç" {
 				techDebtTemplateID = tmpl.ID
 				break
 			}
@@ -1117,7 +1117,7 @@ func TestTemplateHandlers(t *testing.T) {
 		// Create task from technical debt template
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: techDebtTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":         "Database query optimization",
 				"aciklama":       "Optimize slow database queries in user listing",
 				"alan":           "Backend/Database",
@@ -1191,7 +1191,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Test missing template_id
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik": "Test",
 			},
 		})
@@ -1208,7 +1208,7 @@ func TestTemplateHandlers(t *testing.T) {
 		// Test wrong type for degerler
 		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: constants.TestTemplateSomeID,
-			constants.ParamDegerler:   "not-an-object",
+			constants.ParamValues:     "not-an-object",
 		})
 		assert.True(t, result.IsError)
 		assert.Contains(t, getResultText(result), "degerler parametresi gerekli ve obje tipinde olmalı")
@@ -1233,9 +1233,9 @@ func TestTemplateConcurrency(t *testing.T) {
 
 	// Create and set active project for template tests
 	proje := &gorev.Proje{
-		ID:    constants.TestProjectIDConcurrent,
-		Isim:  "Test Concurrent Project",
-		Tanim: "Test project for concurrent operations",
+		ID:         constants.TestProjectIDConcurrent,
+		Name:       "Test Concurrent Project",
+		Definition: "Test project for concurrent operations",
 	}
 	err := veriYonetici.ProjeKaydet(proje)
 	require.NoError(t, err)
@@ -1248,7 +1248,7 @@ func TestTemplateConcurrency(t *testing.T) {
 
 	var bugTemplateID string
 	for _, tmpl := range templates {
-		if tmpl.Isim == "Bug Raporu" {
+		if tmpl.Name == "Bug Raporu" {
 			bugTemplateID = tmpl.ID
 			break
 		}
@@ -1268,7 +1268,7 @@ func TestTemplateConcurrency(t *testing.T) {
 
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: bugTemplateID,
-				constants.ParamDegerler: map[string]interface{}{
+				constants.ParamValues: map[string]interface{}{
 					"baslik":    fmt.Sprintf("Concurrent Bug %d", index),
 					"aciklama":  fmt.Sprintf("Bug description %d", index),
 					"modul":     "TestModule",
@@ -1367,7 +1367,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -1387,7 +1387,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		// 2. Create task from bug report template
 		taskResult := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":    "Login API fails with 500 error",
 				"aciklama":  "Users cannot login due to server error",
 				"modul":     "Authentication",
@@ -1422,7 +1422,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 		var bugTemplateID string
 		for _, tmpl := range templates {
-			if tmpl.Isim == "Bug Raporu" {
+			if tmpl.Name == "Bug Raporu" {
 				bugTemplateID = tmpl.ID
 				break
 			}
@@ -1432,7 +1432,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		// Try to create task with missing required fields
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: bugTemplateID,
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik": "Incomplete bug report",
 				// Missing required fields like modul, ortam, adimlar, etc.
 			},

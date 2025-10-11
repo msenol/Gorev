@@ -2,104 +2,123 @@ package gorev
 
 import "time"
 
-// Gorev temel görev yapısı
+// Gorev temel görev yapısı (task structure)
 type Gorev struct {
-	ID              string     `json:"id"`
-	Baslik          string     `json:"baslik"`
-	Aciklama        string     `json:"aciklama"`
-	Durum           string     `json:"durum"`
-	Oncelik         string     `json:"oncelik"`
-	ProjeID         string     `json:"proje_id,omitempty"`
-	ProjeName       string     `json:"proje_name,omitempty"` // Project name for Web UI/VS Code
-	ParentID        string     `json:"parent_id,omitempty"`
-	OlusturmaTarih  time.Time  `json:"olusturma_tarih"`
-	GuncellemeTarih time.Time  `json:"guncelleme_tarih"`
-	SonTarih        *time.Time `json:"son_tarih,omitempty"`
-	Etiketler       []*Etiket  `json:"etiketler,omitempty"`
-	AltGorevler     []*Gorev   `json:"alt_gorevler,omitempty"`
-	Seviye          int        `json:"seviye,omitempty"`
-	// Bağımlılık sayaçları - TreeView gösterimi için (omitempty kaldırıldı - 0 değerleri de gönderilsin)
-	BagimliGorevSayisi            int `json:"bagimli_gorev_sayisi"`
-	TamamlanmamisBagimlilikSayisi int `json:"tamamlanmamis_bagimlilik_sayisi"`
-	BuGoreveBagimliSayisi         int `json:"bu_goreve_bagimli_sayisi"`
+	ID          string     `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Status      string     `json:"status"`
+	Priority    string     `json:"priority"`
+	ProjeID     string     `json:"proje_id,omitempty"`
+	ProjeName   string     `json:"proje_name,omitempty"` // Project name for Web UI/VS Code
+	ParentID    string     `json:"parent_id,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	DueDate     *time.Time `json:"due_date,omitempty"`
+	Tags        []*Etiket  `json:"tags,omitempty"`
+	Subtasks    []*Gorev   `json:"subtasks,omitempty"`
+	Level       int        `json:"level,omitempty"`
+	// Dependency counters - For TreeView display (omitempty removed - send 0 values too)
+	DependencyCount            int `json:"dependency_count"`
+	UncompletedDependencyCount int `json:"uncompleted_dependency_count"`
+	DependentOnThisCount       int `json:"dependent_on_this_count"`
 }
 
-// Etiket görevleri kategorize etmek için kullanılır
+// Etiket görevleri kategorize etmek için kullanılır (tag for categorizing tasks)
 type Etiket struct {
 	ID   string `json:"id"`
-	Isim string `json:"isim"`
+	Name string `json:"name"`
 }
 
-// Proje görevleri gruplamak için kullanılır
+// Proje görevleri gruplamak için kullanılır (project for grouping tasks)
 type Proje struct {
-	ID              string    `json:"id"`
-	Isim            string    `json:"isim"`
-	Tanim           string    `json:"tanim"`
-	OlusturmaTarih  time.Time `json:"olusturma_tarih"`
-	GuncellemeTarih time.Time `json:"guncelleme_tarih"`
-	GorevSayisi     int       `json:"gorev_sayisi"`
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	Definition string    `json:"definition"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	TaskCount  int       `json:"task_count"`
 }
 
-// Ozet sistem durumu özeti
+// Ozet sistem durumu özeti (summary of system status)
 type Ozet struct {
-	ToplamProje     int `json:"toplam_proje"`
-	ToplamGorev     int `json:"toplam_gorev"`
-	BeklemedeGorev  int `json:"beklemede_gorev"`
-	DevamEdenGorev  int `json:"devam_eden_gorev"`
-	TamamlananGorev int `json:"tamamlanan_gorev"`
-	YuksekOncelik   int `json:"yuksek_oncelik"`
-	OrtaOncelik     int `json:"orta_oncelik"`
-	DusukOncelik    int `json:"dusuk_oncelik"`
+	TotalProjects       int `json:"total_projects"`
+	TotalTasks          int `json:"total_tasks"`
+	PendingTasks        int `json:"pending_tasks"`
+	InProgressTasks     int `json:"in_progress_tasks"`
+	CompletedTasks      int `json:"completed_tasks"`
+	HighPriorityTasks   int `json:"high_priority_tasks"`
+	MediumPriorityTasks int `json:"medium_priority_tasks"`
+	LowPriorityTasks    int `json:"low_priority_tasks"`
 }
 
-// Baglanti görevler arası bağlantı
+// Baglanti görevler arası bağlantı (connection between tasks)
 type Baglanti struct {
-	ID          string `json:"id"`
-	KaynakID    string `json:"kaynak_id"`
-	HedefID     string `json:"hedef_id"`
-	BaglantiTip string `json:"baglanti_tip"`
+	ID             string `json:"id"`
+	SourceID       string `json:"source_id"`
+	TargetID       string `json:"target_id"`
+	ConnectionType string `json:"connection_type"`
 }
 
-// GorevTemplate görev oluşturma şablonu
+// GorevTemplate görev oluşturma şablonu (task creation template)
 type GorevTemplate struct {
-	ID               string            `json:"id"`
-	Isim             string            `json:"isim"`
-	Tanim            string            `json:"tanim"`
-	Alias            string            `json:"alias"` // Kısa takma ad (örn: bug, feature, research)
-	VarsayilanBaslik string            `json:"varsayilan_baslik"`
-	AciklamaTemplate string            `json:"aciklama_template"`
-	Alanlar          []TemplateAlan    `json:"alanlar"`
-	OrnekDegerler    map[string]string `json:"ornek_degerler"`
-	Kategori         string            `json:"kategori"`
-	Aktif            bool              `json:"aktif"`
+	ID                  string            `json:"id"`
+	Name                string            `json:"name"`
+	Definition          string            `json:"definition"`
+	Alias               string            `json:"alias"` // Short alias (e.g. bug, feature, research)
+	DefaultTitle        string            `json:"default_title"`
+	DescriptionTemplate string            `json:"description_template"`
+	Fields              []TemplateAlan    `json:"fields"`
+	SampleValues        map[string]string `json:"sample_values"`
+	Category            string            `json:"category"`
+	Active              bool              `json:"active"`
 }
 
-// TemplateAlan template'deki özelleştirilebilir alanlar
+// TemplateAlan template'deki özelleştirilebilir alanlar (customizable template fields)
 type TemplateAlan struct {
-	Isim       string   `json:"isim"`
-	Tip        string   `json:"tip"` // text, select, date, number
-	Zorunlu    bool     `json:"zorunlu"`
-	Varsayilan string   `json:"varsayilan"`
-	Secenekler []string `json:"secenekler,omitempty"`
+	Name     string   `json:"name"`
+	Type     string   `json:"type"` // text, select, date, number
+	Required bool     `json:"required"`
+	Default  string   `json:"default"`
+	Options  []string `json:"options,omitempty"`
 }
 
-// GorevHiyerarsi görev hiyerarşi bilgilerini tutar
+// GorevHiyerarsi görev hiyerarşi bilgilerini tutar (task hierarchy information)
 type GorevHiyerarsi struct {
-	Gorev           *Gorev   `json:"gorev"`
-	UstGorevler     []*Gorev `json:"ust_gorevler,omitempty"`
-	ToplamAltGorev  int      `json:"toplam_alt_gorev"`
-	TamamlananAlt   int      `json:"tamamlanan_alt"`
-	DevamEdenAlt    int      `json:"devam_eden_alt"`
-	BeklemedeAlt    int      `json:"beklemede_alt"`
-	IlerlemeYuzdesi float64  `json:"ilerleme_yuzdesi"`
+	Gorev              *Gorev   `json:"gorev"`
+	ParentTasks        []*Gorev `json:"parent_tasks,omitempty"`
+	TotalSubtasks      int      `json:"total_subtasks"`
+	CompletedSubtasks  int      `json:"completed_subtasks"`
+	InProgressSubtasks int      `json:"in_progress_subtasks"`
+	PendingSubtasks    int      `json:"pending_subtasks"`
+	ProgressPercentage float64  `json:"progress_percentage"`
 }
 
-// AIEtkilemasim AI etkileşim bilgilerini tutar
-type AIEtkilemasim struct {
-	ID             string                 `json:"id"`
-	GorevID        string                 `json:"gorev_id"`
-	EtkilemasimTip string                 `json:"etkilemasim_tip"`
-	Veri           map[string]interface{} `json:"veri"`
-	OturumID       string                 `json:"oturum_id"`
-	ZamanDamgasi   time.Time              `json:"zaman_damgasi"`
+// Note: AIInteraction, AIContext, and FilterProfile structs are defined in their respective manager files
+// to avoid circular dependencies and maintain clear ownership
+
+// SearchHistory arama geçmişi (search history)
+type SearchHistory struct {
+	ID        string    `json:"id"`
+	Query     string    `json:"query"`
+	Results   int       `json:"results"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// FileWatch dosya izleme kaydı (file watch record)
+type FileWatch struct {
+	ID        string    `json:"id"`
+	FilePath  string    `json:"file_path"`
+	TaskID    string    `json:"task_id"`
+	Active    bool      `json:"active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// FileChange dosya değişikliği kaydı (file change record)
+type FileChange struct {
+	ID         string    `json:"id"`
+	WatchID    string    `json:"watch_id"`
+	ChangeType string    `json:"change_type"` // created, modified, deleted
+	Timestamp  time.Time `json:"timestamp"`
 }

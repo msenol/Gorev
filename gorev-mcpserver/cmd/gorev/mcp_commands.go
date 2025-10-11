@@ -135,7 +135,7 @@ func createMCPCallCommand() *cobra.Command {
 						value := parts[1]
 
 						// Special handling for degerler parameter (JSON object)
-						if key == constants.ParamDegerler {
+						if key == constants.ParamValues {
 							var degerlerMap map[string]interface{}
 							if err := json.Unmarshal([]byte(value), &degerlerMap); err == nil {
 								params[key] = degerlerMap
@@ -289,7 +289,7 @@ func createMCPCreateTaskCommand() *cobra.Command {
 
 			params := map[string]interface{}{
 				constants.ParamTemplateID: templateID,
-				constants.ParamDegerler:   degerler,
+				constants.ParamValues:     degerler,
 			}
 
 			return callMCPTool("templateden_gorev_olustur", params)

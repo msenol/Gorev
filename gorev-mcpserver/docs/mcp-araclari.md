@@ -82,7 +82,7 @@ Görevleri filtrele ve listele. Hiyerarşik ağaç yapısında çıktı verir.
 
 **Parametreler:**
 
-- `durum` (string, opsiyonel): Durum filtresi
+- `status` (string, opsiyonel): Durum filtresi
   - Değerler: `beklemede`, `devam_ediyor`, `tamamlandi`
 - `tum_projeler` (boolean, opsiyonel): `true` ise tüm projeler, `false`/boş ise sadece aktif proje
 - `sirala` (string, opsiyonel): Sıralama düzeni
@@ -101,7 +101,7 @@ Görevleri filtrele ve listele. Hiyerarşik ağaç yapısında çıktı verir.
 
 ```json
 {
-  "durum": "devam_ediyor",
+  "status": "devam_ediyor",
   "tum_projeler": false,
   "sirala": "son_tarih_asc",
   "limit": 20
@@ -136,18 +136,18 @@ Görev durumunu ve/veya önceliğini günceller.
 
 **v0.16.3'te Yenilikler:**
 
-- Artık hem `durum` hem de `oncelik` parametrelerini destekliyor (önceden sadece durum)
+- Artık hem `status` hem de `priority` parametrelerini destekliyor (önceden sadece durum)
 - Durumu, önceliği veya her ikisini birden güncelleyebilir
 - En az bir parametre gereklidir
 
 **Parametreler:**
 
 - `id` (string, zorunlu): Görev ID'si
-- `durum` (string, opsiyonel): Yeni durum
+- `status` (string, opsiyonel): Yeni durum
   - `beklemede`: Görev henüz başlamadı
   - `devam_ediyor`: Aktif çalışılıyor
   - `tamamlandi`: Tamamlandı
-- `oncelik` (string, opsiyonel): Yeni öncelik ⭐ **YENİ**
+- `priority` (string, opsiyonel): Yeni öncelik ⭐ **YENİ**
   - `dusuk`: Düşük öncelik
   - `orta`: Normal öncelik
   - `yuksek`: Yüksek öncelik
@@ -163,20 +163,20 @@ Görev durumunu ve/veya önceliğini günceller.
 // Sadece durum güncelle
 {
   "id": "abc12345",
-  "durum": "devam_ediyor"
+  "status": "devam_ediyor"
 }
 
 // Sadece öncelik güncelle (YENİ v0.16.3'te)
 {
   "id": "abc12345",
-  "oncelik": "yuksek"
+  "priority": "yuksek"
 }
 
 // Her ikisini birden güncelle (YENİ v0.16.3'te)
 {
   "id": "abc12345",
-  "durum": "devam_ediyor",
-  "oncelik": "yuksek"
+  "status": "devam_ediyor",
+  "priority": "yuksek"
 }
 ```
 
@@ -189,9 +189,9 @@ Görev içeriğini ve özelliklerini düzenler.
 **Parametreler:**
 
 - `id` (string, zorunlu): Görev ID'si
-- `baslik` (string, opsiyonel): Yeni başlık
-- `aciklama` (string, opsiyonel): Yeni açıklama (markdown destekli)
-- `oncelik` (string, opsiyonel): Yeni öncelik (dusuk, orta, yuksek)
+- `title` (string, opsiyonel): Yeni başlık
+- `description` (string, opsiyonel): Yeni açıklama (markdown destekli)
+- `priority` (string, opsiyonel): Yeni öncelik (dusuk, orta, yuksek)
 - `proje_id` (string, opsiyonel): Yeni proje ID'si (alt görevler de taşınır)
 - `son_tarih` (string, opsiyonel): Yeni son tarih (YYYY-AA-GG formatı)
 
@@ -202,8 +202,8 @@ Görev içeriğini ve özelliklerini düzenler.
 ```json
 {
   "id": "abc12345",
-  "baslik": "API dokümantasyonu güncelle",
-  "oncelik": "yuksek",
+  "title": "API dokümantasyonu güncelle",
+  "priority": "yuksek",
   "son_tarih": "2025-10-15"
 }
 ```
@@ -291,7 +291,7 @@ Seçilen şablondan özelleştirilmiş görev oluşturur.
 **Parametreler:**
 
 - `template_id` (string, zorunlu): Şablon ID'si veya takma adı
-- `degerler` (object, zorunlu): Şablon alanları için key-value çiftleri
+- `values` (object, zorunlu): Şablon alanları için key-value çiftleri
 
 **Şablon Takma Adları Kullanımı:**
 
@@ -299,7 +299,7 @@ Seçilen şablondan özelleştirilmiş görev oluşturur.
 // UUID yerine takma ad kullanın
 {
   "template_id": "bug",
-  "degerler": {
+  "values": {
     "hatanin_adi": "Kullanıcı girişi başarısız",
     "sertlik": "kritik",
     "adimlar": "1. Giriş sayfasını aç\n2. Yanlış şifre gir\n3. 500 hatası al"
@@ -315,15 +315,15 @@ Yeni proje oluşturur.
 
 **Parametreler:**
 
-- `isim` (string, zorunlu): Proje adı
-- `tanim` (string, zorunlu): Proje açıklaması
+- `name` (string, zorunlu): Proje adı
+- `definition` (string, zorunlu): Proje açıklaması
 
 **Örnek:**
 
 ```json
 {
-  "isim": "Web Sitesi Yenileme",
-  "tanim": "Kurumsal web sitesini modern teknolojilerle yeniden inşa etme projesi"
+  "name": "Web Sitesi Yenileme",
+  "definition": "Kurumsal web sitesini modern teknolojilerle yeniden inşa etme projesi"
 }
 ```
 
@@ -406,7 +406,7 @@ Görev hiyerarşi işlemleri (action tabanlı birleşik araç).
   - `create_subtask`: Alt görev oluştur
 - `gorev_id` (string, zorunlu): Hedef görev ID'si
 - `yeni_parent_id` (string, action=move için): Yeni üst görev ID'si (boş string = kök)
-- `baslik`, `aciklama`, `oncelik`, `son_tarih`, `etiketler` (action=create_subtask için)
+- `title`, `description`, `priority`, `son_tarih`, `tags` (action=create_subtask için)
 
 **Örnekler:**
 
@@ -428,8 +428,8 @@ Görev hiyerarşi işlemleri (action tabanlı birleşik araç).
 {
   "action": "create_subtask",
   "gorev_id": "abc12345",
-  "baslik": "Alt görev başlığı",
-  "oncelik": "yuksek"
+  "title": "Alt görev başlığı",
+  "priority": "yuksek"
 }
 ```
 
@@ -463,8 +463,8 @@ Birden fazla görevi aynı değişikliklerle günceller.
 - `operation`: `"update"`
 - `ids` (array, zorunlu): Görev ID'leri dizisi
 - `data` (object, zorunlu): Uygulanacak değişiklikler
-  - `durum` (string, opsiyonel): Yeni durum
-  - `oncelik` (string, opsiyonel): Yeni öncelik
+  - `status` (string, opsiyonel): Yeni durum
+  - `priority` (string, opsiyonel): Yeni öncelik
   - `proje_id` (string, opsiyonel): Yeni proje ID'si
   - `son_tarih` (string, opsiyonel): Yeni son tarih
 
@@ -477,8 +477,8 @@ Birden fazla görevi aynı değişikliklerle günceller.
   "operation": "update",
   "ids": ["abc123", "def456", "ghi789"],
   "data": {
-    "oncelik": "yuksek",
-    "durum": "devam_ediyor"
+    "priority": "yuksek",
+    "status": "devam_ediyor"
   }
 }
 ```
@@ -495,7 +495,7 @@ Birden fazla görevi yeni duruma geçir.
 
 - `operation`: `"transition"`
 - `ids` (array, zorunlu): Görev ID'leri dizisi
-- `durum` veya `yeni_durum` (string, zorunlu): Hedef durum ⭐ **Her iki parametre adı da destekleniyor**
+- `status` veya `yeni_durum` (string, zorunlu): Hedef durum ⭐ **Her iki parametre adı da destekleniyor**
 - `force` (boolean, opsiyonel): Bağımlılık kontrollerini atla (varsayılan: false)
 - `check_dependencies` (boolean, opsiyonel): Bağımlılıkları kontrol et (varsayılan: true)
 - `dry_run` (boolean, opsiyonel): Deneme modu (değişiklik yapmadan simüle et)
@@ -506,7 +506,7 @@ Birden fazla görevi yeni duruma geçir.
 {
   "operation": "transition",
   "ids": ["abc123", "def456"],
-  "durum": "tamamlandi",
+  "status": "tamamlandi",
   "check_dependencies": true
 }
 ```
@@ -719,9 +719,9 @@ FTS5 tam metin arama + gelişmiş filtreler.
   "action": "advanced",
   "query": "veritabanı",
   "filters": {
-    "durum": ["beklemede", "devam_ediyor"],
-    "oncelik": ["yuksek"],
-    "etiketler": ["backend"],
+    "status": ["beklemede", "devam_ediyor"],
+    "priority": ["yuksek"],
+    "tags": ["backend"],
     "olusturulma_baslangic": "2025-10-01",
     "son_tarih_bitis": "2025-10-31"
   },
@@ -822,7 +822,7 @@ Görevleri çeşitli formatlarda dışa aktarır.
   - `csv`: CSV formatı
   - `markdown`: Markdown formatı
 - `proje_id` (string, opsiyonel): Proje ID'si (belirtilmezse tüm projeler)
-- `durum` (string, opsiyonel): Durum filtresi
+- `status` (string, opsiyonel): Durum filtresi
 - `include_subtasks` (boolean, opsiyonel): Alt görevleri dahil et (varsayılan: true)
 
 **Örnek:**
@@ -831,7 +831,7 @@ Görevleri çeşitli formatlarda dışa aktarır.
 {
   "format": "markdown",
   "proje_id": "xyz78901",
-  "durum": "tamamlandi",
+  "status": "tamamlandi",
   "include_subtasks": true
 }
 ```
@@ -868,8 +868,8 @@ AI önerileriyle görev oluşturur.
 
 **Parametreler:**
 
-- `baslik` (string, zorunlu): Görev başlığı
-- `aciklama` (string, opsiyonel): Görev açıklaması
+- `title` (string, zorunlu): Görev başlığı
+- `description` (string, opsiyonel): Görev açıklaması
 - `enable_ai_suggestions` (boolean, opsiyonel): AI önerilerini etkinleştir (varsayılan: true)
 
 **AI Önerileri:**
@@ -884,8 +884,8 @@ AI önerileriyle görev oluşturur.
 
 ```json
 {
-  "baslik": "Kullanıcı kimlik doğrulama API'si",
-  "aciklama": "JWT tabanlı kimlik doğrulama endpoint'leri oluştur",
+  "title": "Kullanıcı kimlik doğrulama API'si",
+  "description": "JWT tabanlı kimlik doğrulama endpoint'leri oluştur",
   "enable_ai_suggestions": true
 }
 ```
@@ -896,8 +896,8 @@ AI önerileriyle görev oluşturur.
 {
   "gorev_id": "abc12345",
   "ai_suggestions": {
-    "oncelik": "yuksek",
-    "etiketler": ["backend", "güvenlik", "API"],
+    "priority": "yuksek",
+    "tags": ["backend", "güvenlik", "API"],
     "sablonlar": ["feature"],
     "benzer_gorevler": ["xyz78901"],
     "tahmini_sure": "3-5 gün"
@@ -943,12 +943,12 @@ Doğal dil sorgularını işler ve çalıştırır.
 
 1. **gorev_bulk** ⭐ - Kapsamlı yeniden yazım
    - `update` işlemi: `{ids: [], data: {}}` → `{updates: [{id, ...fields}]}` dönüşümü
-   - `transition` işlemi: Hem `durum` hem de `yeni_durum` parametrelerini kabul eder
+   - `transition` işlemi: Hem `status` hem de `yeni_durum` parametrelerini kabul eder
    - `tag` işlemi: Hem `operation` hem de `tag_operation` parametrelerini kabul eder
    - Test sonucu: %100 başarı (2/2 update, 1/1 transition, 2/2 tag)
 
 2. **gorev_guncelle** ⭐ - Öncelik desteği eklendi
-   - Artık hem `durum` hem de `oncelik` güncellemelerini destekliyor
+   - Artık hem `status` hem de `priority` güncellemelerini destekliyor
    - Her ikisi de birlikte veya ayrı ayrı güncellenebilir
    - En az bir parametre gerekli
    - Test sonucu: %100 başarı (durum ✓, öncelik ✓, her ikisi ✓)

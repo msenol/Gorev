@@ -41,8 +41,8 @@ export class UnifiedServerManager extends EventEmitter {
   private healthCheckInterval?: NodeJS.Timeout;
   private serverProcess?: ChildProcess;
   private readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
-  private readonly SERVER_START_TIMEOUT = 15000; // 15 seconds
-  private readonly PORT_CHECK_RETRY_INTERVAL = 500; // 0.5 seconds
+  private readonly SERVER_START_TIMEOUT = 60000; // 60 seconds (increased for first-time setup)
+  private readonly PORT_CHECK_RETRY_INTERVAL = 1000; // 1 second
 
   constructor(
     private readonly apiHost: string = 'localhost',
@@ -266,9 +266,30 @@ export class UnifiedServerManager extends EventEmitter {
   }
 
   /**
-   * Check if server is running by testing if port is listening
+   * Check if server is running by testing both port and health endpoint
+   * Port check alone is unreliable (TIME_WAIT sockets, zombie processes)
    */
   private async isServerRunning(): Promise<boolean> {
+    // First check if port is listening
+    const portOpen = await this.checkPort();
+    if (!portOpen) {
+      return false;
+    }
+
+    // Then verify health endpoint responds correctly
+    try {
+      const response = await this.apiClient.checkHealth();
+      return response !== undefined;
+    } catch (error) {
+      Logger.debug('[UnifiedServerManager] Health check failed, server not running:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if port is listening (TCP connection test)
+   */
+  private async checkPort(): Promise<boolean> {
     return new Promise((resolve) => {
       const socket = new net.Socket();
 
@@ -300,6 +321,13 @@ export class UnifiedServerManager extends EventEmitter {
       try {
         Logger.info('[UnifiedServerManager] Starting Gorev server...');
 
+        // Show user notification
+        vscode.window.showInformationMessage('Gorev: Starting server...', 'Show Logs').then((selection) => {
+          if (selection === 'Show Logs') {
+            vscode.commands.executeCommand('workbench.action.output.show');
+          }
+        });
+
         // Use npx to run the server
         const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
         // Note: Not passing --api-port as it defaults to 5082 (matches apiPort setting)
@@ -329,6 +357,10 @@ export class UnifiedServerManager extends EventEmitter {
         Logger.info(`[UnifiedServerManager] Running command: ${command} ${args.join(' ')} (port: ${this.apiPort})`);
         Logger.info(`[UnifiedServerManager] Database path: ${dbPath}`);
 
+        // Track if we've seen any output (to detect package not found)
+        let hasOutput = false;
+        let errorOutput = '';
+
         this.serverProcess = spawn(command, args, {
           // Note: stdin must be 'pipe' (not 'ignore') to keep MCP server alive
           // We don't send any MCP commands, but the server needs stdin open
@@ -337,37 +369,96 @@ export class UnifiedServerManager extends EventEmitter {
           env: env
         });
 
-        // Log server output
+        // Log server output and detect errors
         if (this.serverProcess.stdout) {
           this.serverProcess.stdout.on('data', (data) => {
-            Logger.info(`[Gorev Server] ${data.toString().trim()}`);
+            hasOutput = true;
+            const output = data.toString().trim();
+            Logger.info(`[Gorev Server] ${output}`);
           });
         }
 
         if (this.serverProcess.stderr) {
           this.serverProcess.stderr.on('data', (data) => {
-            Logger.warn(`[Gorev Server] ${data.toString().trim()}`);
+            hasOutput = true;
+            const output = data.toString().trim();
+            errorOutput += output + '\n';
+
+            // Check for common errors
+            if (output.includes('command not found') || output.includes('not found')) {
+              Logger.error(`[UnifiedServerManager] npx command failed: ${output}`);
+            } else if (output.includes('ENOENT')) {
+              Logger.error(`[UnifiedServerManager] Package not found: ${output}`);
+            } else {
+              Logger.warn(`[Gorev Server] ${output}`);
+            }
           });
         }
 
         this.serverProcess.on('error', (error) => {
-          Logger.error('[UnifiedServerManager] Server process error:', error);
+          Logger.error('[UnifiedServerManager] Server process spawn error:', error);
+          vscode.window.showErrorMessage(
+            `Gorev: Failed to start server. ${error.message}. ` +
+            'Please ensure @mehmetsenol/gorev-mcp-server is installed.',
+            'Install Package',
+            'Show Logs'
+          ).then((selection) => {
+            if (selection === 'Install Package') {
+              vscode.window.showInformationMessage(
+                'Run in terminal: npm install -g @mehmetsenol/gorev-mcp-server'
+              );
+            } else if (selection === 'Show Logs') {
+              vscode.commands.executeCommand('workbench.action.output.show');
+            }
+          });
           reject(new Error(`Failed to start server: ${error.message}`));
         });
 
         this.serverProcess.on('exit', (code, signal) => {
           Logger.info(`[UnifiedServerManager] Server process exited with code ${code}, signal ${signal}`);
+
+          // If process exited immediately with error, show helpful message
+          if (code !== 0 && code !== null) {
+            const errorMsg = errorOutput || 'Unknown error';
+            Logger.error(`[UnifiedServerManager] Server startup failed: ${errorMsg}`);
+
+            if (errorMsg.includes('not found') || errorMsg.includes('ENOENT')) {
+              vscode.window.showErrorMessage(
+                'Gorev: Server package not found. Please install it first.',
+                'Install Instructions'
+              ).then((selection) => {
+                if (selection === 'Install Instructions') {
+                  vscode.window.showInformationMessage(
+                    'Run: npm install -g @mehmetsenol/gorev-mcp-server'
+                  );
+                }
+              });
+            }
+          }
+
           this.serverProcess = undefined;
         });
 
-        // Give server a moment to start
+        // Give server a moment to start and check for immediate failures
         setTimeout(() => {
-          Logger.info('[UnifiedServerManager] Server process spawned successfully');
-          resolve();
-        }, 1000);
+          if (this.serverProcess && !this.serverProcess.killed) {
+            Logger.info('[UnifiedServerManager] Server process spawned successfully');
+            resolve();
+          } else {
+            reject(new Error('Server process terminated immediately after spawn'));
+          }
+        }, 2000); // Increased from 1000ms to 2000ms for better reliability
 
       } catch (error) {
         Logger.error('[UnifiedServerManager] Failed to start server:', error);
+        vscode.window.showErrorMessage(
+          `Gorev: Failed to start server. ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'Show Logs'
+        ).then((selection) => {
+          if (selection === 'Show Logs') {
+            vscode.commands.executeCommand('workbench.action.output.show');
+          }
+        });
         reject(error);
       }
     });

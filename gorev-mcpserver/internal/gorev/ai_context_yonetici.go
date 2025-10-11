@@ -106,9 +106,9 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	}
 
 	// Auto-transition to constants.TaskStatusInProgress if task is in constants.TaskStatusPending
-	if gorev.Durum == constants.TaskStatusPending {
-		gorev.Durum = constants.TaskStatusInProgress
-		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": constants.TaskStatusInProgress}); err != nil {
+	if gorev.Status == constants.TaskStatusPending {
+		gorev.Status = constants.TaskStatusInProgress
+		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"status": constants.TaskStatusInProgress}); err != nil {
 			return errors.New(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
@@ -195,7 +195,7 @@ func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
 	// Get next priorities (high priority, not completed)
 	gorevler, _ := acy.veriYonetici.GorevleriGetir(constants.TaskStatusPending, "", "")
 	for _, g := range gorevler {
-		if g.Oncelik == constants.PriorityHigh {
+		if g.Priority == constants.PriorityHigh {
 			summary.NextPriorities = append(summary.NextPriorities, g)
 			if len(summary.NextPriorities) >= constants.MaxSummaryItems {
 				break
@@ -205,7 +205,7 @@ func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
 
 	// Get blockers (tasks with unfinished dependencies)
 	for _, g := range gorevler {
-		if g.TamamlanmamisBagimlilikSayisi > 0 {
+		if g.UncompletedDependencyCount > 0 {
 			summary.Blockers = append(summary.Blockers, g)
 			if len(summary.Blockers) >= constants.MaxSummaryItems {
 				break
@@ -230,9 +230,9 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 	}
 
 	// Auto-transition to constants.TaskStatusInProgress if in constants.TaskStatusPending
-	if gorev.Durum == constants.TaskStatusPending {
-		gorev.Durum = constants.TaskStatusInProgress
-		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"durum": constants.TaskStatusInProgress}); err != nil {
+	if gorev.Status == constants.TaskStatusPending {
+		gorev.Status = constants.TaskStatusInProgress
+		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"status": constants.TaskStatusInProgress}); err != nil {
 			return errors.New(i18n.T("error.autoStatusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 		// Record the state change
@@ -369,7 +369,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 		updateFields := make(map[string]interface{})
 
 		// Validate and collect all supported field updates
-		if durum, ok := update.Updates["durum"].(string); ok {
+		if durum, ok := update.Updates["status"].(string); ok {
 			// Validate status values
 			validStatuses := constants.GetValidTaskStatuses()
 			isValid := false
@@ -386,10 +386,10 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 				})
 				continue
 			}
-			updateFields["durum"] = durum
+			updateFields["status"] = durum
 		}
 
-		if oncelik, ok := update.Updates["oncelik"].(string); ok {
+		if oncelik, ok := update.Updates["priority"].(string); ok {
 			// Validate priority values
 			validPriorities := constants.GetValidPriorities()
 			isValid := false
@@ -406,10 +406,10 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 				})
 				continue
 			}
-			updateFields["oncelik"] = oncelik
+			updateFields["priority"] = oncelik
 		}
 
-		if baslik, ok := update.Updates["baslik"].(string); ok {
+		if baslik, ok := update.Updates["title"].(string); ok {
 			if strings.TrimSpace(baslik) == "" {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: update.ID,
@@ -417,14 +417,14 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 				})
 				continue
 			}
-			updateFields["baslik"] = baslik
+			updateFields["title"] = baslik
 		}
 
-		if aciklama, ok := update.Updates["aciklama"].(string); ok {
-			updateFields["aciklama"] = aciklama
+		if aciklama, ok := update.Updates["description"].(string); ok {
+			updateFields["description"] = aciklama
 		}
 
-		if sonTarih, ok := update.Updates["son_tarih"].(string); ok {
+		if sonTarih, ok := update.Updates["due_date"].(string); ok {
 			if sonTarih != "" {
 				// Validate date format (YYYY-MM-DD)
 				if _, err := time.Parse("2006-01-02", sonTarih); err != nil {
@@ -435,7 +435,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 					continue
 				}
 			}
-			updateFields["son_tarih"] = sonTarih
+			updateFields["due_date"] = sonTarih
 		}
 
 		// Apply all validated updates at once
@@ -530,7 +530,7 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 			gorevler, _ := acy.veriYonetici.GorevleriGetir("", "", "")
 			var blocked []*Gorev
 			for _, g := range gorevler {
-				if g.TamamlanmamisBagimlilikSayisi > 0 {
+				if g.UncompletedDependencyCount > 0 {
 					blocked = append(blocked, g)
 				}
 			}
@@ -566,8 +566,8 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 			}
 			var taggedTasks []*Gorev
 			for _, task := range allTasks {
-				for _, tag := range task.Etiketler {
-					if strings.EqualFold(tag.Isim, tagName) {
+				for _, tag := range task.Tags {
+					if strings.EqualFold(tag.Name, tagName) {
 						taggedTasks = append(taggedTasks, task)
 						break
 					}
@@ -594,7 +594,7 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 	searchTerms := strings.Fields(normalizedQuery)
 
 	for _, task := range allTasks {
-		taskText := strings.ToLower(task.Baslik + " " + task.Aciklama)
+		taskText := strings.ToLower(task.Title + " " + task.Description)
 		matched := true
 
 		// Check if all search terms are present
@@ -645,7 +645,7 @@ func (acy *AIContextYonetici) getLastCreatedTasks(limit int) ([]*Gorev, error) {
 
 	// Sort by creation date (newest first)
 	sort.Slice(allTasks, func(i, j int) bool {
-		return allTasks[i].OlusturmaTarih.After(allTasks[j].OlusturmaTarih)
+		return allTasks[i].CreatedAt.After(allTasks[j].CreatedAt)
 	})
 
 	// Return requested number of tasks

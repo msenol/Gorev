@@ -129,19 +129,19 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 		warnings := []string{}
 
 		// Update status
-		if newStatus, ok := request.Updates["durum"].(string); ok {
-			if bp.validateStatusTransition(task.Durum, newStatus) {
-				task.Durum = newStatus
+		if newStatus, ok := request.Updates["status"].(string); ok {
+			if bp.validateStatusTransition(task.Status, newStatus) {
+				task.Status = newStatus
 				updated = true
 			} else {
-				warnings = append(warnings, fmt.Sprintf("invalid status transition: %s -> %s", task.Durum, newStatus))
+				warnings = append(warnings, fmt.Sprintf("invalid status transition: %s -> %s", task.Status, newStatus))
 			}
 		}
 
 		// Update priority
-		if newPriority, ok := request.Updates["oncelik"].(string); ok {
+		if newPriority, ok := request.Updates["priority"].(string); ok {
 			if bp.validatePriority(newPriority) {
-				task.Oncelik = newPriority
+				task.Priority = newPriority
 				updated = true
 			} else {
 				warnings = append(warnings, fmt.Sprintf("invalid priority: %s", newPriority))
@@ -149,9 +149,9 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 		}
 
 		// Update title
-		if newTitle, ok := request.Updates["baslik"].(string); ok {
+		if newTitle, ok := request.Updates["title"].(string); ok {
 			if strings.TrimSpace(newTitle) != "" {
-				task.Baslik = strings.TrimSpace(newTitle)
+				task.Title = strings.TrimSpace(newTitle)
 				updated = true
 			} else {
 				warnings = append(warnings, "empty title not allowed")
@@ -159,18 +159,18 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 		}
 
 		// Update description
-		if newDesc, ok := request.Updates["aciklama"].(string); ok {
-			task.Aciklama = newDesc
+		if newDesc, ok := request.Updates["description"].(string); ok {
+			task.Description = newDesc
 			updated = true
 		}
 
 		// Update due date
-		if dueDateStr, ok := request.Updates["son_tarih"].(string); ok {
+		if dueDateStr, ok := request.Updates["due_date"].(string); ok {
 			if dueDateStr == "" {
-				task.SonTarih = nil
+				task.DueDate = nil
 				updated = true
 			} else if dueDate, err := time.Parse("2006-01-02", dueDateStr); err == nil {
-				task.SonTarih = &dueDate
+				task.DueDate = &dueDate
 				updated = true
 			} else {
 				warnings = append(warnings, fmt.Sprintf("invalid date format: %s", dueDateStr))
@@ -197,10 +197,10 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 		if updated {
 			updateParams := make(map[string]interface{})
 			if newStatus := request.Updates["status"]; newStatus != nil {
-				updateParams["durum"] = newStatus
+				updateParams["status"] = newStatus
 			}
 			if newPriority := request.Updates["priority"]; newPriority != nil {
-				updateParams["oncelik"] = newPriority
+				updateParams["priority"] = newPriority
 			}
 
 			if err := bp.veriYonetici.GorevGuncelle(request.TaskID, updateParams); err != nil {
@@ -265,10 +265,10 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 					TaskID: taskID,
 					Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
 				})
-			} else if !bp.validateStatusTransition(task.Durum, request.NewStatus) {
+			} else if !bp.validateStatusTransition(task.Status, request.NewStatus) {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
 					TaskID:  taskID,
-					Message: fmt.Sprintf("invalid transition: %s -> %s", task.Durum, request.NewStatus),
+					Message: fmt.Sprintf("invalid transition: %s -> %s", task.Status, request.NewStatus),
 				})
 			} else {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -290,7 +290,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		}
 
 		// Check current status
-		if task.Durum == request.NewStatus {
+		if task.Status == request.NewStatus {
 			result.Warnings = append(result.Warnings, BatchUpdateWarning{
 				TaskID:  taskID,
 				Message: fmt.Sprintf("already in status %s", request.NewStatus),
@@ -299,11 +299,11 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		}
 
 		// Validate transition
-		if !request.Force && !bp.validateStatusTransition(task.Durum, request.NewStatus) {
+		if !request.Force && !bp.validateStatusTransition(task.Status, request.NewStatus) {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
-				Error:  fmt.Sprintf("invalid status transition: %s -> %s", task.Durum, request.NewStatus),
-				Field:  "durum",
+				Error:  fmt.Sprintf("invalid status transition: %s -> %s", task.Status, request.NewStatus),
+				Field:  "status",
 			})
 			continue
 		}
@@ -329,7 +329,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		}
 
 		// Update status
-		if err := bp.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": request.NewStatus}); err != nil {
+		if err := bp.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": request.NewStatus}); err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
 				Error:  fmt.Sprintf("update failed: %v", err),
@@ -342,7 +342,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		// Record interaction
 		if bp.aiContextManager != nil {
 			if recErr := bp.aiContextManager.RecordInteraction(taskID, "bulk_status_change", map[string]interface{}{
-				"old_status": task.Durum,
+				"old_status": task.Status,
 				"new_status": request.NewStatus,
 			}); recErr != nil {
 				log.Printf("Failed to record AI interaction (bulk_status_change): taskID=%s, error=%v", taskID, recErr)
@@ -420,13 +420,13 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 		case "add":
 			// Add new tags to existing ones
 			existingTagMap := make(map[string]*Etiket)
-			for _, tag := range task.Etiketler {
-				existingTagMap[tag.Isim] = tag
+			for _, tag := range task.Tags {
+				existingTagMap[tag.Name] = tag
 			}
 
-			newTags = task.Etiketler
+			newTags = task.Tags
 			for _, tag := range tags {
-				if _, exists := existingTagMap[tag.Isim]; !exists {
+				if _, exists := existingTagMap[tag.Name]; !exists {
 					newTags = append(newTags, tag)
 					updated = true
 				}
@@ -439,8 +439,8 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 				removeMap[tagName] = true
 			}
 
-			for _, tag := range task.Etiketler {
-				if !removeMap[tag.Isim] {
+			for _, tag := range task.Tags {
+				if !removeMap[tag.Name] {
 					newTags = append(newTags, tag)
 				} else {
 					updated = true
@@ -450,15 +450,15 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 		case "replace":
 			// Replace all tags
 			newTags = tags
-			updated = len(task.Etiketler) != len(tags)
+			updated = len(task.Tags) != len(tags)
 			if !updated {
 				// Check if tags are actually different
 				existingNames := make(map[string]bool)
-				for _, tag := range task.Etiketler {
-					existingNames[tag.Isim] = true
+				for _, tag := range task.Tags {
+					existingNames[tag.Name] = true
 				}
 				for _, tag := range tags {
-					if !existingNames[tag.Isim] {
+					if !existingNames[tag.Name] {
 						updated = true
 						break
 					}
@@ -605,19 +605,19 @@ func (bp *BatchProcessor) validateUpdateRequest(request BatchUpdateRequest) erro
 	}
 
 	// Validate individual fields
-	if status, ok := request.Updates["durum"].(string); ok {
+	if status, ok := request.Updates["status"].(string); ok {
 		if !bp.validateStatus(status) {
 			return fmt.Errorf("invalid status: %s", status)
 		}
 	}
 
-	if priority, ok := request.Updates["oncelik"].(string); ok {
+	if priority, ok := request.Updates["priority"].(string); ok {
 		if !bp.validatePriority(priority) {
 			return fmt.Errorf("invalid priority: %s", priority)
 		}
 	}
 
-	if title, ok := request.Updates["baslik"].(string); ok {
+	if title, ok := request.Updates["title"].(string); ok {
 		if strings.TrimSpace(title) == "" {
 			return fmt.Errorf("title cannot be empty")
 		}
@@ -675,7 +675,7 @@ func (bp *BatchProcessor) checkDependenciesCompleted(taskID string) (bool, error
 	}
 
 	for _, dep := range dependencies {
-		if dep.Durum != constants.TaskStatusCompleted {
+		if dep.Status != constants.TaskStatusCompleted {
 			return false, nil
 		}
 	}

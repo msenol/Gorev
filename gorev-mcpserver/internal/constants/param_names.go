@@ -3,40 +3,41 @@ package constants
 // MCP tool parameter names to eliminate hardcoded strings throughout the codebase
 const (
 	// Core task parameters
-	ParamID        = "id"
-	ParamBaslik    = "baslik"
-	ParamAciklama  = "aciklama"
-	ParamOncelik   = "oncelik"
-	ParamDurum     = "durum"
-	ParamProjeID   = "proje_id"
-	ParamSonTarih  = "son_tarih"
-	ParamEtiketler = "etiketler"
-	ParamParentID  = "parent_id"
-	ParamGorevID   = "gorev_id"
+	ParamID          = "id"
+	ParamTitle       = "title"
+	ParamDescription = "description"
+	ParamPriority    = "priority"
+	ParamStatus      = "status"
+	ParamProjeID     = "proje_id"
+	ParamDueDate     = "due_date"
+	ParamTags        = "tags"
+	ParamParentID    = "parent_id"
+	ParamGorevID     = "gorev_id"
 
 	// Task management parameters
-	ParamTumProjeler = "tum_projeler"
-	ParamSirala      = "sirala"
-	ParamFiltre      = "filtre"
-	ParamEtiket      = "etiket"
+	ParamAllProjects = "all_projects"
+	ParamOrderBy     = "order_by"
+	ParamSort        = "sort"
+	ParamFilter      = "filter"
+	ParamTag         = "tag"
 	ParamLimit       = "limit"
 	ParamOffset      = "offset"
-	ParamOnay        = "onay"
+	ParamConfirm     = "confirm"
 
 	// Dependency parameters
-	ParamKaynakID     = "kaynak_id"
-	ParamHedefID      = "hedef_id"
-	ParamBaglantiTipi = "baglanti_tipi"
-	ParamYeniParentID = "yeni_parent_id"
+	ParamSourceID       = "source_id"
+	ParamTargetID       = "target_id"
+	ParamConnectionType = "connection_type"
+	ParamNewParentID    = "new_parent_id"
 
 	// Project parameters
-	ParamIsim  = "isim"
-	ParamTanim = "tanim"
+	ParamName       = "name"
+	ParamDefinition = "definition"
 
 	// Template parameters
 	ParamTemplateID = "template_id"
-	ParamDegerler   = "degerler"
-	ParamKategori   = "kategori"
+	ParamValues     = "values"
+	ParamCategory   = "category"
 
 	// AI context parameters
 	ParamTaskID  = "task_id"
@@ -80,11 +81,11 @@ const (
 const (
 	ResponseGorevler    = "gorevler"
 	ResponseProjeler    = "projeler"
-	ResponseTemplateler = "templateler"
-	ResponseOzet        = "ozet"
-	ResponseSayi        = "sayi"
-	ResponseToplam      = "toplam"
-	ResponseSayfa       = "sayfa"
+	ResponseTemplates   = "templates"
+	ResponseSummary     = "summary"
+	ResponseCount       = "count"
+	ResponseTotal       = "total"
+	ResponsePage        = "page"
 	ResponseHasNextPage = "has_next_page"
 	ResponseHasPrevPage = "has_prev_page"
 	ResponseSuccess     = "success"
@@ -95,33 +96,35 @@ const (
 
 // Database field names to eliminate hardcoded strings
 const (
-	DBFieldID              = "id"
-	DBFieldBaslik          = "baslik"
-	DBFieldAciklama        = "aciklama"
-	DBFieldDurum           = "durum"
-	DBFieldOncelik         = "oncelik"
-	DBFieldProjeID         = "proje_id"
-	DBFieldParentID        = "parent_id"
-	DBFieldSonTarih        = "son_tarih"
-	DBFieldOlusturmaTarih  = "olusturma_tarih"
-	DBFieldGuncellemeTarih = "guncelleme_tarih"
-	DBFieldIsim            = "isim"
-	DBFieldTanim           = "tanim"
-	DBFieldAktif           = "aktif"
+	DBFieldID          = "id"
+	DBFieldTitle       = "title"
+	DBFieldDescription = "description"
+	DBFieldStatus      = "status"
+	DBFieldPriority    = "priority"
+	DBFieldProjeID     = "proje_id"
+	DBFieldParentID    = "parent_id"
+	DBFieldDueDate     = "due_date"
+	DBFieldCreatedAt   = "created_at"
+	DBFieldUpdatedAt   = "updated_at"
+	DBFieldName        = "name"
+	DBFieldDefinition  = "definition"
+	DBFieldActive      = "active"
 )
 
 // Sort parameter values
 const (
-	SortSonTarihAsc  = "son_tarih_asc"
-	SortSonTarihDesc = "son_tarih_desc"
-	SortOncelikAsc   = "oncelik_asc"
-	SortOncelikDesc  = "oncelik_desc"
+	SortDueDateAsc    = "due_date_asc"
+	SortDueDateDesc   = "due_date_desc"
+	SortPriorityAsc   = "priority_asc"
+	SortPriorityDesc  = "priority_desc"
+	SortCreatedAtAsc  = "created_at_asc"
+	SortCreatedAtDesc = "created_at_desc"
 )
 
 // Filter parameter values
 const (
-	FilterAcil    = "acil"
-	FilterGecmis  = "gecmis"
-	FilterBuggun  = "buggun"
-	FilterBuHafta = "bu_hafta"
+	FilterUrgent   = "urgent"
+	FilterOverdue  = "overdue"
+	FilterToday    = "today"
+	FilterThisWeek = "this_week"
 )

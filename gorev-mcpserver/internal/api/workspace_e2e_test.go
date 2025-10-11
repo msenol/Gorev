@@ -434,7 +434,7 @@ func setupTestServer(manager *WorkspaceManager) *fiber.App {
 		// Find a feature template or use any available template
 		var templateID string
 		for _, tmpl := range templates {
-			if tmpl.Alias == "feature" || tmpl.Kategori == "Özellik" {
+			if tmpl.Alias == "feature" || tmpl.Category == "Özellik" {
 				templateID = tmpl.ID
 				break
 			}

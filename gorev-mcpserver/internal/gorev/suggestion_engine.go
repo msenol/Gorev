@@ -138,7 +138,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	var suggestions []Suggestion
 
 	// Get high priority pending tasks
-	gorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": constants.TaskStatusPending})
+	gorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"status": constants.TaskStatusPending})
 	if err != nil {
 		return suggestions, err
 	}
@@ -146,7 +146,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	// Filter for high priority tasks
 	var highPriorityTasks []*Gorev
 	for _, gorev := range gorevler {
-		if gorev.Oncelik == constants.PriorityHigh {
+		if gorev.Priority == constants.PriorityHigh {
 			highPriorityTasks = append(highPriorityTasks, gorev)
 		}
 	}
@@ -168,11 +168,11 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 				Type:        "next_action",
 				Priority:    "high",
 				Title:       "Yüksek öncelikli görevi başlat",
-				Description: fmt.Sprintf("'%s' görevi yüksek öncelikli ve başlamaya hazır", gorev.Baslik),
+				Description: fmt.Sprintf("'%s' görevi yüksek öncelikli ve başlamaya hazır", gorev.Title),
 				Action:      fmt.Sprintf("gorev_guncelle id='%s' durum='devam_ediyor'", gorev.ID),
 				Context: map[string]interface{}{
-					"task_title":    gorev.Baslik,
-					"task_priority": gorev.Oncelik,
+					"task_title":    gorev.Title,
+					"task_priority": gorev.Priority,
 					"task_id":       gorev.ID,
 				},
 				Confidence: constants.ConfidenceVeryHigh,
@@ -182,7 +182,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	}
 
 	// Suggest completing tasks in progress
-	devamEdenGorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"durum": constants.TaskStatusInProgress})
+	devamEdenGorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"status": constants.TaskStatusInProgress})
 	if err == nil {
 		for i, gorev := range devamEdenGorevler {
 			if i >= 2 { // Limit to top 2
@@ -193,10 +193,10 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 				Type:        "next_action",
 				Priority:    "medium",
 				Title:       "Devam eden görevi tamamla",
-				Description: fmt.Sprintf("'%s' görevi devam ediyor, tamamlamayı düşünün", gorev.Baslik),
+				Description: fmt.Sprintf("'%s' görevi devam ediyor, tamamlamayı düşünün", gorev.Title),
 				Action:      fmt.Sprintf("gorev_guncelle id='%s' durum='tamamlandi'", gorev.ID),
 				Context: map[string]interface{}{
-					"task_title": gorev.Baslik,
+					"task_title": gorev.Title,
 					"task_id":    gorev.ID,
 				},
 				Confidence: constants.ConfidenceMedium,
@@ -229,14 +229,14 @@ func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionReq
 	}
 
 	var similarTasks []*Gorev
-	activeWords := extractKeywords(activeTask.Baslik + " " + activeTask.Aciklama)
+	activeWords := extractKeywords(activeTask.Title + " " + activeTask.Description)
 
 	for _, task := range allTasks {
 		if task.ID == activeTask.ID {
 			continue
 		}
 
-		taskWords := extractKeywords(task.Baslik + " " + task.Aciklama)
+		taskWords := extractKeywords(task.Title + " " + task.Description)
 		similarity := calculateSimilarity(activeWords, taskWords)
 
 		if similarity > constants.SimilarityThreshold { // Similarity threshold
@@ -250,15 +250,15 @@ func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionReq
 			break
 		}
 
-		if task.Durum == constants.TaskStatusCompleted {
+		if task.Status == constants.TaskStatusCompleted {
 			suggestions = append(suggestions, Suggestion{
 				Type:        "similar_task",
 				Priority:    "medium",
 				Title:       "Benzer tamamlanmış görev bulundu",
-				Description: fmt.Sprintf("'%s' görevi mevcut görevinize benziyor ve tamamlanmış", task.Baslik),
+				Description: fmt.Sprintf("'%s' görevi mevcut görevinize benziyor ve tamamlanmış", task.Title),
 				Action:      fmt.Sprintf("gorev_detay id='%s'", task.ID),
 				Context: map[string]interface{}{
-					"similar_task_title": task.Baslik,
+					"similar_task_title": task.Title,
 					"similar_task_id":    task.ID,
 					"active_task_id":     request.ActiveTaskID,
 				},
@@ -290,7 +290,7 @@ func (se *SuggestionEngine) generateTemplateSuggestions(request SuggestionReques
 	// Simple keyword-based template matching
 	keywordCounts := make(map[string]int)
 	for _, task := range recentTasks {
-		words := extractKeywords(task.Baslik + " " + task.Aciklama)
+		words := extractKeywords(task.Title + " " + task.Description)
 		for _, word := range words {
 			keywordCounts[word]++
 		}
@@ -298,7 +298,7 @@ func (se *SuggestionEngine) generateTemplateSuggestions(request SuggestionReques
 
 	// Suggest templates based on frequent keywords
 	for _, template := range templates {
-		templateWords := extractKeywords(template.Isim + " " + template.Tanim)
+		templateWords := extractKeywords(template.Name + " " + template.Definition)
 		score := 0
 		for _, word := range templateWords {
 			score += keywordCounts[word]
@@ -309,12 +309,12 @@ func (se *SuggestionEngine) generateTemplateSuggestions(request SuggestionReques
 				Type:        "template",
 				Priority:    "low",
 				Title:       "İlgili template önerisi",
-				Description: fmt.Sprintf("'%s' template'i son görevlerinize uygun görünüyor", template.Isim),
-				Action:      fmt.Sprintf("template_listele kategori='%s'", template.Kategori),
+				Description: fmt.Sprintf("'%s' template'i son görevlerinize uygun görünüyor", template.Name),
+				Action:      fmt.Sprintf("template_listele kategori='%s'", template.Category),
 				Context: map[string]interface{}{
 					constants.ParamTemplateID: template.ID,
-					"template_name":           template.Isim,
-					"template_category":       template.Kategori,
+					"template_name":           template.Name,
+					"template_category":       template.Category,
 					"relevance_score":         score,
 				},
 				Confidence: float64(score) / constants.ConfidenceNormalizer, // Normalize score
@@ -340,11 +340,11 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 	var riskyTasks []*Gorev
 
 	for _, task := range allTasks {
-		if task.SonTarih == nil || task.Durum == constants.TaskStatusCompleted {
+		if task.DueDate == nil || task.Status == constants.TaskStatusCompleted {
 			continue
 		}
 
-		daysUntilDeadline := task.SonTarih.Sub(now).Hours() / 24
+		daysUntilDeadline := task.DueDate.Sub(now).Hours() / 24
 
 		// Tasks due within 3 days are high risk
 		if daysUntilDeadline <= 3 && daysUntilDeadline > 0 {
@@ -357,13 +357,13 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 				Type:        "deadline_risk",
 				Priority:    "high",
 				Title:       "Gecikmiş görev!",
-				Description: fmt.Sprintf("'%s' görevi %d gün gecikmiş", task.Baslik, int(-daysUntilDeadline)),
+				Description: fmt.Sprintf("'%s' görevi %d gün gecikmiş", task.Title, int(-daysUntilDeadline)),
 				Action:      fmt.Sprintf("gorev_detay id='%s'", task.ID),
 				Context: map[string]interface{}{
-					"task_title":   task.Baslik,
+					"task_title":   task.Title,
 					"task_id":      task.ID,
 					"days_overdue": int(-daysUntilDeadline),
-					"deadline":     task.SonTarih.Format(constants.DateFormatISO),
+					"deadline":     task.DueDate.Format(constants.DateFormatISO),
 				},
 				Confidence: constants.ConfidenceVeryHigh,
 				TaskID:     task.ID,
@@ -373,7 +373,7 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 
 	// Sort risky tasks by deadline proximity
 	sort.Slice(riskyTasks, func(i, j int) bool {
-		return riskyTasks[i].SonTarih.Before(*riskyTasks[j].SonTarih)
+		return riskyTasks[i].DueDate.Before(*riskyTasks[j].DueDate)
 	})
 
 	// Add deadline risk suggestions
@@ -382,18 +382,18 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 			break
 		}
 
-		daysUntil := int(task.SonTarih.Sub(now).Hours() / 24)
+		daysUntil := int(task.DueDate.Sub(now).Hours() / 24)
 		suggestions = append(suggestions, Suggestion{
 			Type:        "deadline_risk",
 			Priority:    "high",
 			Title:       "Yaklaşan son tarih",
-			Description: fmt.Sprintf("'%s' görevi %d gün içinde bitiyor", task.Baslik, daysUntil),
+			Description: fmt.Sprintf("'%s' görevi %d gün içinde bitiyor", task.Title, daysUntil),
 			Action:      fmt.Sprintf("gorev_guncelle id='%s' durum='devam_ediyor'", task.ID),
 			Context: map[string]interface{}{
-				"task_title": task.Baslik,
+				"task_title": task.Title,
 				"task_id":    task.ID,
 				"days_until": daysUntil,
-				"deadline":   task.SonTarih.Format(constants.DateFormatISO),
+				"deadline":   task.DueDate.Format(constants.DateFormatISO),
 			},
 			Confidence: constants.ConfidenceHigh,
 			TaskID:     task.ID,
@@ -414,7 +414,7 @@ func (se *SuggestionEngine) checkCanStartTask(taskID string) (bool, error) {
 	}
 
 	for _, dep := range dependencies {
-		if dep.Durum != constants.TaskStatusCompleted {
+		if dep.Status != constants.TaskStatusCompleted {
 			return false, nil
 		}
 	}

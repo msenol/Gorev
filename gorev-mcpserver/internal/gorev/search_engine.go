@@ -90,10 +90,10 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 
 	// Build the SQL query based on filters
 	sqlQuery := `
-		SELECT g.id, g.baslik, g.aciklama, g.durum, g.oncelik, g.proje_id,
-		       g.parent_id, g.olusturma_tarih, g.guncelleme_tarih, g.son_tarih
+		SELECT g.id, g.title, g.description, g.status, g.priority, g.project_id,
+		       g.parent_id, g.created_at, g.updated_at, g.due_date
 		FROM gorevler g
-		LEFT JOIN projeler p ON g.proje_id = p.id
+		LEFT JOIN projeler p ON g.project_id = p.id
 		WHERE 1=1
 	`
 
@@ -102,7 +102,7 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 
 	// Add text search if query provided
 	if query != "" {
-		sqlQuery += " AND (g.baslik LIKE ? OR g.aciklama LIKE ?)"
+		sqlQuery += " AND (g.title LIKE ? OR g.description LIKE ?)"
 		likeQuery := "%" + query + "%"
 		args = append(args, likeQuery, likeQuery)
 		argIndex += 2
@@ -115,7 +115,7 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 			placeholders[i] = "?"
 			args = append(args, status)
 		}
-		sqlQuery += " AND g.durum IN (" + strings.Join(placeholders, ",") + ")"
+		sqlQuery += " AND g.status IN (" + strings.Join(placeholders, ",") + ")"
 	}
 
 	// Add priority filter
@@ -125,7 +125,7 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 			placeholders[i] = "?"
 			args = append(args, priority)
 		}
-		sqlQuery += " AND g.oncelik IN (" + strings.Join(placeholders, ",") + ")"
+		sqlQuery += " AND g.priority IN (" + strings.Join(placeholders, ",") + ")"
 	}
 
 	// Add project filter
@@ -135,27 +135,27 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 			placeholders[i] = "?"
 			args = append(args, projectID)
 		}
-		sqlQuery += " AND g.proje_id IN (" + strings.Join(placeholders, ",") + ")"
+		sqlQuery += " AND g.project_id IN (" + strings.Join(placeholders, ",") + ")"
 	}
 
 	// Add date filters
 	if filters.CreatedAfter != "" {
-		sqlQuery += " AND g.olusturma_tarih >= ?"
+		sqlQuery += " AND g.created_at >= ?"
 		args = append(args, filters.CreatedAfter)
 	}
 
 	if filters.CreatedBefore != "" {
-		sqlQuery += " AND g.olusturma_tarih <= ?"
+		sqlQuery += " AND g.created_at <= ?"
 		args = append(args, filters.CreatedBefore)
 	}
 
 	if filters.DueAfter != "" {
-		sqlQuery += " AND g.son_tarih >= ?"
+		sqlQuery += " AND g.due_date >= ?"
 		args = append(args, filters.DueAfter)
 	}
 
 	if filters.DueBefore != "" {
-		sqlQuery += " AND g.son_tarih <= ?"
+		sqlQuery += " AND g.due_date <= ?"
 		args = append(args, filters.DueBefore)
 	}
 
@@ -163,14 +163,14 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 	if query != "" {
 		sqlQuery += ` ORDER BY
 			CASE
-				WHEN g.baslik LIKE ? THEN 1
-				WHEN g.aciklama LIKE ? THEN 2
+				WHEN g.title LIKE ? THEN 1
+				WHEN g.description LIKE ? THEN 2
 				ELSE 3
-			END, g.guncelleme_tarih DESC`
+			END, g.updated_at DESC`
 		likeQuery := "%" + query + "%"
 		args = append(args, likeQuery, likeQuery)
 	} else {
-		sqlQuery += " ORDER BY g.guncelleme_tarih DESC"
+		sqlQuery += " ORDER BY g.updated_at DESC"
 	}
 
 	// Execute query
@@ -189,14 +189,14 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 
 		err := rows.Scan(
 			&gorev.ID,
-			&gorev.Baslik,
-			&gorev.Aciklama,
-			&gorev.Durum,
-			&gorev.Oncelik,
+			&gorev.Title,
+			&gorev.Description,
+			&gorev.Status,
+			&gorev.Priority,
 			&projeID,
 			&parentID,
-			&gorev.OlusturmaTarih,
-			&gorev.GuncellemeTarih,
+			&gorev.CreatedAt,
+			&gorev.UpdatedAt,
 			&sonTarih,
 		)
 		if err != nil {
@@ -212,7 +212,7 @@ func (se *SearchEngine) PerformSearch(query string, filters SearchFilters) (*Sea
 		}
 
 		if sonTarih.Valid {
-			gorev.SonTarih = &sonTarih.Time
+			gorev.DueDate = &sonTarih.Time
 		}
 
 		tasks = append(tasks, gorev)
@@ -359,13 +359,13 @@ func (se *SearchEngine) performFTSSearch(options SearchOptions) ([]SearchResult,
 	}
 
 	sqlQuery := `
-		SELECT g.id, g.baslik, g.aciklama, g.durum, g.oncelik, g.son_tarih,
-		       g.olusturma_tarih, g.guncelleme_tarih, g.proje_id, g.parent_id,
-		       COALESCE(p.ad, '') as proje_adi,
+		SELECT g.id, g.title, g.description, g.status, g.priority, g.due_date,
+		       g.created_at, g.updated_at, g.project_id, g.parent_id,
+		       COALESCE(p.name, '') as proje_adi,
 		       fts.rank
 		FROM gorevler_fts fts
-		JOIN gorevler g ON fts.id = g.id
-		LEFT JOIN projeler p ON g.proje_id = p.id
+		JOIN gorevler g ON fts.rowid = g.rowid
+		LEFT JOIN projeler p ON g.project_id = p.id
 		WHERE fts MATCH ?
 		ORDER BY fts.rank
 		LIMIT ?
@@ -384,8 +384,8 @@ func (se *SearchEngine) performFTSSearch(options SearchOptions) ([]SearchResult,
 		var rank float64
 
 		err := rows.Scan(
-			&task.ID, &task.Baslik, &task.Aciklama, &task.Durum, &task.Oncelik,
-			&task.SonTarih, &task.OlusturmaTarih, &task.GuncellemeTarih,
+			&task.ID, &task.Title, &task.Description, &task.Status, &task.Priority,
+			&task.DueDate, &task.CreatedAt, &task.UpdatedAt,
 			&task.ProjeID, &task.ParentID, &projeAdi, &rank,
 		)
 		if err != nil {
@@ -396,7 +396,7 @@ func (se *SearchEngine) performFTSSearch(options SearchOptions) ([]SearchResult,
 		// Load tags - first get the task details which includes tags
 		taskDetail, err := se.veriYonetici.GorevDetay(task.ID)
 		if err == nil && taskDetail != nil {
-			task.Etiketler = taskDetail.Etiketler
+			task.Tags = taskDetail.Tags
 		}
 
 		// Calculate relevance score based on FTS rank
@@ -431,17 +431,17 @@ func (se *SearchEngine) performFuzzySearch(options SearchOptions) ([]SearchResul
 
 	for _, task := range allTasks {
 		// Calculate fuzzy scores for different fields
-		titleScore := se.calculateLevenshteinSimilarity(query, strings.ToLower(task.Baslik))
-		descScore := se.calculateLevenshteinSimilarity(query, strings.ToLower(task.Aciklama))
+		titleScore := se.calculateLevenshteinSimilarity(query, strings.ToLower(task.Title))
+		descScore := se.calculateLevenshteinSimilarity(query, strings.ToLower(task.Description))
 
 		// Get tag names for fuzzy matching
 		taskDetail, _ := se.veriYonetici.GorevDetay(task.ID)
 		var tagNames []string
-		if taskDetail != nil && taskDetail.Etiketler != nil {
-			for _, etiket := range taskDetail.Etiketler {
-				tagNames = append(tagNames, etiket.Isim)
+		if taskDetail != nil && taskDetail.Tags != nil {
+			for _, etiket := range taskDetail.Tags {
+				tagNames = append(tagNames, etiket.Name)
 			}
-			task.Etiketler = taskDetail.Etiketler
+			task.Tags = taskDetail.Tags
 		}
 		tagText := strings.ToLower(strings.Join(tagNames, " "))
 		tagScore := se.calculateLevenshteinSimilarity(query, tagText)
@@ -461,7 +461,7 @@ func (se *SearchEngine) performFuzzySearch(options SearchOptions) ([]SearchResul
 
 		// Only include if above threshold
 		if maxScore >= options.FuzzyThreshold {
-			// task.Etiketler already set above
+			// task.Tags already set above
 
 			results = append(results, SearchResult{
 				Task:           task,
@@ -588,19 +588,19 @@ func (se *SearchEngine) calculateFTSRelevance(rank float64, query string, task *
 
 	// Boost score for exact matches in title
 	queryLower := strings.ToLower(query)
-	titleLower := strings.ToLower(task.Baslik)
+	titleLower := strings.ToLower(task.Title)
 
 	if strings.Contains(titleLower, queryLower) {
 		baseScore *= 1.5
 	}
 
 	// Boost for high priority tasks
-	if task.Oncelik == "yuksek" {
+	if task.Priority == "yuksek" {
 		baseScore *= 1.2
 	}
 
 	// Boost for in-progress tasks
-	if task.Durum == "devam_ediyor" {
+	if task.Status == "devam_ediyor" {
 		baseScore *= 1.3
 	}
 
@@ -612,16 +612,16 @@ func (se *SearchEngine) getMatchedFields(query string, task *Gorev) []string {
 	var matched []string
 	queryLower := strings.ToLower(query)
 
-	if strings.Contains(strings.ToLower(task.Baslik), queryLower) {
+	if strings.Contains(strings.ToLower(task.Title), queryLower) {
 		matched = append(matched, "baslik")
 	}
-	if strings.Contains(strings.ToLower(task.Aciklama), queryLower) {
+	if strings.Contains(strings.ToLower(task.Description), queryLower) {
 		matched = append(matched, "aciklama")
 	}
 
 	// Check tags
-	for _, tag := range task.Etiketler {
-		if strings.Contains(strings.ToLower(tag.Isim), queryLower) {
+	for _, tag := range task.Tags {
+		if strings.Contains(strings.ToLower(tag.Name), queryLower) {
 			matched = append(matched, "etiketler")
 			break
 		}
@@ -648,11 +648,11 @@ func (se *SearchEngine) matchesFilters(task *Gorev, filters map[string]interface
 	for key, value := range filters {
 		switch key {
 		case "durum":
-			if valueStr, ok := value.(string); ok && task.Durum != valueStr {
+			if valueStr, ok := value.(string); ok && task.Status != valueStr {
 				return false
 			}
 		case "oncelik":
-			if valueStr, ok := value.(string); ok && task.Oncelik != valueStr {
+			if valueStr, ok := value.(string); ok && task.Priority != valueStr {
 				return false
 			}
 		case "proje_id":
@@ -666,15 +666,15 @@ func (se *SearchEngine) matchesFilters(task *Gorev, filters map[string]interface
 			}
 		case "son_tarih":
 			if valueStr, ok := value.(string); ok {
-				if !se.matchesDateFilter(task.SonTarih, valueStr) {
+				if !se.matchesDateFilter(task.DueDate, valueStr) {
 					return false
 				}
 			}
 		case "etiket":
 			if valueStr, ok := value.(string); ok {
 				found := false
-				for _, tag := range task.Etiketler {
-					if tag.Isim == valueStr {
+				for _, tag := range task.Tags {
+					if tag.Name == valueStr {
 						found = true
 						break
 					}
@@ -733,18 +733,18 @@ func (se *SearchEngine) sortResults(results []SearchResult, sortBy, direction st
 		case "relevance":
 			less = results[i].RelevanceScore < results[j].RelevanceScore
 		case "created":
-			less = results[i].Task.OlusturmaTarih.Before(results[j].Task.OlusturmaTarih)
+			less = results[i].Task.CreatedAt.Before(results[j].Task.CreatedAt)
 		case "updated":
-			less = results[i].Task.GuncellemeTarih.Before(results[j].Task.GuncellemeTarih)
+			less = results[i].Task.UpdatedAt.Before(results[j].Task.UpdatedAt)
 		case "due_date":
-			if results[i].Task.SonTarih == nil && results[j].Task.SonTarih == nil {
+			if results[i].Task.DueDate == nil && results[j].Task.DueDate == nil {
 				less = false
-			} else if results[i].Task.SonTarih == nil {
+			} else if results[i].Task.DueDate == nil {
 				less = false
-			} else if results[j].Task.SonTarih == nil {
+			} else if results[j].Task.DueDate == nil {
 				less = true
 			} else {
-				less = results[i].Task.SonTarih.Before(*results[j].Task.SonTarih)
+				less = results[i].Task.DueDate.Before(*results[j].Task.DueDate)
 			}
 		case "priority":
 			priOrder := map[string]int{
@@ -752,7 +752,7 @@ func (se *SearchEngine) sortResults(results []SearchResult, sortBy, direction st
 				"orta":   2,
 				"dusuk":  1,
 			}
-			less = priOrder[results[i].Task.Oncelik] < priOrder[results[j].Task.Oncelik]
+			less = priOrder[results[i].Task.Priority] < priOrder[results[j].Task.Priority]
 		default:
 			less = results[i].RelevanceScore < results[j].RelevanceScore
 		}

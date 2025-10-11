@@ -17,40 +17,40 @@ func TestAltGorevOperations(t *testing.T) {
 
 	// Proje oluştur
 	proje := &Proje{
-		ID:              uuid.New().String(),
-		Isim:            "Test Projesi",
-		Tanim:           "Test açıklaması",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:         uuid.New().String(),
+		Name:       "Test Projesi",
+		Definition: "Test açıklaması",
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	err = vy.ProjeKaydet(proje)
 	require.NoError(t, err)
 
 	// Ana görev oluştur
 	anaGorev := &Gorev{
-		ID:              uuid.New().String(),
-		Baslik:          "Ana Görev",
-		Aciklama:        "Ana görev açıklaması",
-		Durum:           "beklemede",
-		Oncelik:         "yuksek",
-		ProjeID:         proje.ID,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:          uuid.New().String(),
+		Title:       "Ana Görev",
+		Description: "Ana görev açıklaması",
+		Status:      "beklemede",
+		Priority:    "yuksek",
+		ProjeID:     proje.ID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	err = vy.GorevKaydet(anaGorev)
 	require.NoError(t, err)
 
 	t.Run("Create Subtask", func(t *testing.T) {
 		altGorev := &Gorev{
-			ID:              uuid.New().String(),
-			Baslik:          "Alt Görev 1",
-			Aciklama:        "Alt görev açıklaması",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			ParentID:        anaGorev.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          uuid.New().String(),
+			Title:       "Alt Görev 1",
+			Description: "Alt görev açıklaması",
+			Status:      "beklemede",
+			Priority:    "orta",
+			ProjeID:     proje.ID,
+			ParentID:    anaGorev.ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 		err = vy.GorevKaydet(altGorev)
 		assert.NoError(t, err)
@@ -64,15 +64,15 @@ func TestAltGorevOperations(t *testing.T) {
 	t.Run("Get Direct Subtasks", func(t *testing.T) {
 		// İkinci alt görev oluştur
 		altGorev2 := &Gorev{
-			ID:              uuid.New().String(),
-			Baslik:          "Alt Görev 2",
-			Aciklama:        "İkinci alt görev",
-			Durum:           "beklemede",
-			Oncelik:         "dusuk",
-			ProjeID:         proje.ID,
-			ParentID:        anaGorev.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          uuid.New().String(),
+			Title:       "Alt Görev 2",
+			Description: "İkinci alt görev",
+			Status:      "beklemede",
+			Priority:    "dusuk",
+			ProjeID:     proje.ID,
+			ParentID:    anaGorev.ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 		err = vy.GorevKaydet(altGorev2)
 		require.NoError(t, err)
@@ -87,15 +87,15 @@ func TestAltGorevOperations(t *testing.T) {
 		// Alt görevin alt görevi oluştur (3. seviye)
 		altGorevler, _ := vy.AltGorevleriGetir(anaGorev.ID)
 		altAltGorev := &Gorev{
-			ID:              uuid.New().String(),
-			Baslik:          "Alt Alt Görev",
-			Aciklama:        "3. seviye görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			ParentID:        altGorevler[0].ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          uuid.New().String(),
+			Title:       "Alt Alt Görev",
+			Description: "3. seviye görev",
+			Status:      "beklemede",
+			Priority:    "orta",
+			ProjeID:     proje.ID,
+			ParentID:    altGorevler[0].ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 		err = vy.GorevKaydet(altAltGorev)
 		require.NoError(t, err)
@@ -109,14 +109,14 @@ func TestAltGorevOperations(t *testing.T) {
 	t.Run("Update Parent ID", func(t *testing.T) {
 		// Yeni ana görev oluştur
 		yeniAnaGorev := &Gorev{
-			ID:              uuid.New().String(),
-			Baslik:          "Yeni Ana Görev",
-			Aciklama:        "Taşıma için yeni ana görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          uuid.New().String(),
+			Title:       "Yeni Ana Görev",
+			Description: "Taşıma için yeni ana görev",
+			Status:      "beklemede",
+			Priority:    "orta",
+			ProjeID:     proje.ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 		err = vy.GorevKaydet(yeniAnaGorev)
 		require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestAltGorevOperations(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, hiyerarsi)
 		assert.Equal(t, anaGorev.ID, hiyerarsi.Gorev.ID)
-		assert.GreaterOrEqual(t, hiyerarsi.ToplamAltGorev, 1)
+		assert.GreaterOrEqual(t, hiyerarsi.TotalSubtasks, 1)
 	})
 }
 
@@ -162,22 +162,22 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 
 	// Test projesi ekle
 	proje := &Proje{
-		ID:              "proje-1",
-		Isim:            "Test Projesi",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:        "proje-1",
+		Name:      "Test Projesi",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	mockVY.projeler[proje.ID] = proje
 
 	// Ana görev ekle
 	anaGorev := &Gorev{
-		ID:              "gorev-1",
-		Baslik:          "Ana Görev",
-		Durum:           "beklemede",
-		Oncelik:         "yuksek",
-		ProjeID:         proje.ID,
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:        "gorev-1",
+		Title:     "Ana Görev",
+		Status:    "beklemede",
+		Priority:  "yuksek",
+		ProjeID:   proje.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	mockVY.gorevler[anaGorev.ID] = anaGorev
 
@@ -195,7 +195,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 		assert.NotNil(t, altGorev)
 		assert.Equal(t, anaGorev.ID, altGorev.ParentID)
 		assert.Equal(t, proje.ID, altGorev.ProjeID)
-		assert.Equal(t, "Alt Görev", altGorev.Baslik)
+		assert.Equal(t, "Alt Görev", altGorev.Title)
 	})
 
 	t.Run("Create Subtask - Parent Not Found", func(t *testing.T) {
@@ -216,26 +216,26 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 	t.Run("Change Parent Task", func(t *testing.T) {
 		// Yeni ana görev ekle
 		yeniAnaGorev := &Gorev{
-			ID:              "gorev-2",
-			Baslik:          "Yeni Ana Görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "gorev-2",
+			Title:     "Yeni Ana Görev",
+			Status:    "beklemede",
+			Priority:  "orta",
+			ProjeID:   proje.ID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		mockVY.gorevler[yeniAnaGorev.ID] = yeniAnaGorev
 
 		// Alt görev ekle
 		altGorev := &Gorev{
-			ID:              "altgorev-1",
-			Baslik:          "Alt Görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			ParentID:        anaGorev.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "altgorev-1",
+			Title:     "Alt Görev",
+			Status:    "beklemede",
+			Priority:  "orta",
+			ProjeID:   proje.ID,
+			ParentID:  anaGorev.ID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		mockVY.gorevler[altGorev.ID] = altGorev
 
@@ -247,14 +247,14 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 	t.Run("Delete Task with Subtasks Should Fail", func(t *testing.T) {
 		// Alt görev ekle
 		altGorev := &Gorev{
-			ID:              "altgorev-2",
-			Baslik:          "Silinmeyi engelleyen alt görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			ParentID:        anaGorev.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "altgorev-2",
+			Title:     "Silinmeyi engelleyen alt görev",
+			Status:    "beklemede",
+			Priority:  "orta",
+			ProjeID:   proje.ID,
+			ParentID:  anaGorev.ID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		mockVY.gorevler[altGorev.ID] = altGorev
 
@@ -270,14 +270,14 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 	t.Run("Complete Task with Incomplete Subtasks Should Fail", func(t *testing.T) {
 		// Alt görevi beklemede durumunda ekle
 		altGorev := &Gorev{
-			ID:              "altgorev-3",
-			Baslik:          "Tamamlanmamış alt görev",
-			Durum:           "beklemede",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			ParentID:        anaGorev.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:        "altgorev-3",
+			Title:     "Tamamlanmamış alt görev",
+			Status:    "beklemede",
+			Priority:  "orta",
+			ProjeID:   proje.ID,
+			ParentID:  anaGorev.ID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		mockVY.gorevler[altGorev.ID] = altGorev
 

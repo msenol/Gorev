@@ -362,7 +362,7 @@ func TestAutoStateTransition(t *testing.T) {
 
 	// Verify initial state
 	gorev, _ := h.isYonetici.GorevGetir(gorevTest.ID)
-	assert.Equal(t, constants.TaskStatusPending, gorev.Durum)
+	assert.Equal(t, constants.TaskStatusPending, gorev.Status)
 
 	// Call GorevDetay which should trigger auto-state transition
 	result, _ := h.GorevDetay(map[string]interface{}{"id": gorevTest.ID})
@@ -373,5 +373,5 @@ func TestAutoStateTransition(t *testing.T) {
 	// Check if task state was auto-transitioned
 	// Note: Since we're using mocks, the actual transition won't happen
 	// but we verify the handler was called successfully
-	assert.Contains(t, getResultText(result), gorevTest.Baslik)
+	assert.Contains(t, getResultText(result), gorevTest.Title)
 }

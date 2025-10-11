@@ -2,23 +2,25 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** October 6, 2025 | **Version:** v0.16.3
+**Last Updated:** October 11, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
 ## 🚀 Recent Major Update
 
-**v0.16.3 - MCP Tool Parameter Transformation Fixes (October 6, 2025)**
+**v0.17.0 - English Field Names Migration (October 11, 2025)** ⚠️ **BREAKING CHANGES**
 
-- **gorev_bulk**: All 3 operations (update/transition/tag) now working with proper parameter transformation
-- **gorev_guncelle**: Extended to support both `durum` and `oncelik` updates simultaneously
-- **gorev_search**: Advanced mode now supports query parsing (`durum:X oncelik:Y` → filters)
-- **VS Code Tree View**: Dependency counters (🔒/🔓/🔗) now display correctly (JSON `omitempty` fix)
-- **Backward Compatibility**: Unified handlers accept multiple parameter formats for flexibility
+- **Database Schema**: All column names migrated from Turkish to English (automatic migration 000011)
+- **Go Backend**: 55+ files updated - all struct JSON tags now use English field names
+- **TypeScript Frontend**: 20 files updated - API types and components use English fields
+- **VS Code Extension**: Server auto-start improvements - reliable health checks, comprehensive error handling, 60s timeout
+- **Template Placeholders**: `{{baslik}}` → `{{title}}`, `{{aciklama}}` → `{{description}}`
+- **Backward Compatibility**: Domain terms (`gorevler`, `projeler`) remain Turkish
+- See `docs/MIGRATION_GUIDE_v0.17.md` for upgrade instructions
 
-**Previous (v0.16.2 - October 5, 2025):**
+**Previous (v0.16.3 - October 6, 2025):**
 
-- NPM Binary Update Fix, VS Code Auto-Start, Embedded Web UI, Multi-Workspace, Template Aliases
+- MCP Tool Parameter Transformation Fixes, Bulk Operations, VS Code Dependency Counters
 
 ## 📋 Project Overview
 

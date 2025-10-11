@@ -18,36 +18,36 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 
 	// Create test tasks
 	parentTask := &gorev.Gorev{
-		ID:      "parent-123",
-		Baslik:  "Parent Task",
-		Durum:   "beklemede",
-		Oncelik: constants.PriorityHigh,
-		ProjeID: "proj-1",
+		ID:       "parent-123",
+		Title:    "Parent Task",
+		Status:   "beklemede",
+		Priority: constants.PriorityHigh,
+		ProjeID:  "proj-1",
 	}
 
 	childTask1 := &gorev.Gorev{
 		ID:       "child-1",
-		Baslik:   "Child 1",
-		Durum:    "devam_ediyor",
-		Oncelik:  constants.PriorityMedium,
+		Title:    "Child 1",
+		Status:   "devam_ediyor",
+		Priority: constants.PriorityMedium,
 		ProjeID:  "proj-1",
 		ParentID: parentTask.ID,
 	}
 
 	childTask2 := &gorev.Gorev{
 		ID:       "child-2",
-		Baslik:   "Child 2",
-		Durum:    "tamamlandi",
-		Oncelik:  constants.PriorityLow,
+		Title:    "Child 2",
+		Status:   "tamamlandi",
+		Priority: constants.PriorityLow,
 		ProjeID:  "proj-1",
 		ParentID: parentTask.ID,
 	}
 
 	grandchildTask := &gorev.Gorev{
 		ID:       "grandchild-1",
-		Baslik:   "Grandchild",
-		Durum:    "beklemede",
-		Oncelik:  constants.PriorityMedium,
+		Title:    "Grandchild",
+		Status:   "beklemede",
+		Priority: constants.PriorityMedium,
 		ProjeID:  "proj-1",
 		ParentID: childTask1.ID,
 	}
@@ -132,7 +132,7 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 			)
 
 			// Check that output contains task information
-			assert.Contains(t, result, tt.gorev.Baslik)
+			assert.Contains(t, result, tt.gorev.Title)
 
 			// Verify shown IDs
 			for _, id := range tt.expectShownIDs {
@@ -154,42 +154,42 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 
 	// Create a complex hierarchy
 	rootTask := &gorev.Gorev{
-		ID:                            "root-task",
-		Baslik:                        "Root Task with Dependencies",
-		Durum:                         "devam_ediyor",
-		Oncelik:                       constants.PriorityHigh,
-		ProjeID:                       "proj-main",
-		BagimliGorevSayisi:            3,
-		TamamlanmamisBagimlilikSayisi: 2,
-		Etiketler:                     []*gorev.Etiket{{Isim: "important"}, {Isim: "milestone"}},
+		ID:                         "root-task",
+		Title:                      "Root Task with Dependencies",
+		Status:                     "devam_ediyor",
+		Priority:                   constants.PriorityHigh,
+		ProjeID:                    "proj-main",
+		DependencyCount:            3,
+		UncompletedDependencyCount: 2,
+		Tags:                       []*gorev.Etiket{{Name: "important"}, {Name: "milestone"}},
 	}
 
 	completedChild := &gorev.Gorev{
-		ID:        "completed-child",
-		Baslik:    "Completed Subtask",
-		Durum:     "tamamlandi",
-		Oncelik:   constants.PriorityMedium,
-		ProjeID:   "proj-main",
-		ParentID:  rootTask.ID,
-		Etiketler: []*gorev.Etiket{{Isim: "done"}},
+		ID:       "completed-child",
+		Title:    "Completed Subtask",
+		Status:   "tamamlandi",
+		Priority: constants.PriorityMedium,
+		ProjeID:  "proj-main",
+		ParentID: rootTask.ID,
+		Tags:     []*gorev.Etiket{{Name: "done"}},
 	}
 
 	inProgressChild := &gorev.Gorev{
-		ID:                            "progress-child",
-		Baslik:                        "In Progress Subtask",
-		Durum:                         "devam_ediyor",
-		Oncelik:                       constants.PriorityHigh,
-		ProjeID:                       "proj-main",
-		ParentID:                      rootTask.ID,
-		BagimliGorevSayisi:            1,
-		TamamlanmamisBagimlilikSayisi: 1,
+		ID:                         "progress-child",
+		Title:                      "In Progress Subtask",
+		Status:                     "devam_ediyor",
+		Priority:                   constants.PriorityHigh,
+		ProjeID:                    "proj-main",
+		ParentID:                   rootTask.ID,
+		DependencyCount:            1,
+		UncompletedDependencyCount: 1,
 	}
 
 	deepChild := &gorev.Gorev{
 		ID:       "deep-child",
-		Baslik:   "Deep Nested Task",
-		Durum:    "beklemede",
-		Oncelik:  constants.PriorityLow,
+		Title:    "Deep Nested Task",
+		Status:   "beklemede",
+		Priority: constants.PriorityLow,
 		ProjeID:  "proj-main",
 		ParentID: inProgressChild.ID,
 	}
@@ -289,21 +289,21 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 			}
 
 			// Check tags
-			if tt.expectTags && len(tt.gorev.Etiketler) > 0 {
-				for _, tag := range tt.gorev.Etiketler {
-					assert.Contains(t, result, tag.Isim) // Use tag name, not struct
+			if tt.expectTags && len(tt.gorev.Tags) > 0 {
+				for _, tag := range tt.gorev.Tags {
+					assert.Contains(t, result, tag.Name) // Use tag name, not struct
 				}
 			}
 
 			// Check dependencies (format may have changed)
-			if tt.expectDeps && tt.gorev.TamamlanmamisBagimlilikSayisi > 0 {
+			if tt.expectDeps && tt.gorev.UncompletedDependencyCount > 0 {
 				assert.Contains(t, result, "**Bekleyen:**") // Dependencies shown differently
 			}
 
 			// Check children count
 			childCount := 0
 			for _, line := range lines {
-				if strings.Contains(line, "└─") && !strings.Contains(line, tt.gorev.Baslik) {
+				if strings.Contains(line, "└─") && !strings.Contains(line, tt.gorev.Title) {
 					childCount++
 				}
 			}
@@ -339,7 +339,7 @@ func TestHierarchyWithPagination(t *testing.T) {
 	for i := 0; i < constants.TestIterationSmall; i++ {
 		rootResult, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 			constants.ParamTemplateID: "feature", // Try feature alias
-			constants.ParamDegerler: map[string]interface{}{
+			constants.ParamValues: map[string]interface{}{
 				"baslik":    fmt.Sprintf("Root Task %d", i),
 				"aciklama":  "Root task description",
 				"oncelik":   constants.PriorityMedium,
@@ -445,7 +445,7 @@ func TestCircularDependencyPrevention(t *testing.T) {
 	// Create a chain of tasks
 	task1Result, _ := handlers.TemplatedenGorevOlustur(map[string]interface{}{
 		constants.ParamTemplateID: constants.TestTemplateFeatureRequest,
-		constants.ParamDegerler: map[string]interface{}{
+		constants.ParamValues: map[string]interface{}{
 			"baslik":    "Task 1",
 			"aciklama":  "First",
 			"oncelik":   constants.PriorityMedium,

@@ -492,11 +492,11 @@ func TestExportImportWithLargeDataset(t *testing.T) {
 func setupExportTestData(t *testing.T, vy *gorev.VeriYonetici) {
 	// Test projesi oluştur
 	proje := &gorev.Proje{
-		ID:              "test-project-1",
-		Isim:            "Test Export Project",
-		Tanim:           "Project for export testing",
-		OlusturmaTarih:  time.Now(),
-		GuncellemeTarih: time.Now(),
+		ID:         "test-project-1",
+		Name:       "Test Export Project",
+		Definition: "Project for export testing",
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	err := vy.ProjeKaydet(proje)
 	if err != nil {
@@ -506,24 +506,24 @@ func setupExportTestData(t *testing.T, vy *gorev.VeriYonetici) {
 	// Test görevleri oluştur
 	tasks := []*gorev.Gorev{
 		{
-			ID:              "export-task-1",
-			Baslik:          "Export Test Task 1",
-			Aciklama:        "First test task for export",
-			Durum:           "beklemede",
-			Oncelik:         "yuksek",
-			ProjeID:         proje.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          "export-task-1",
+			Title:       "Export Test Task 1",
+			Description: "First test task for export",
+			Status:      "beklemede",
+			Priority:    "yuksek",
+			ProjeID:     proje.ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		},
 		{
-			ID:              "export-task-2",
-			Baslik:          "Export Test Task 2",
-			Aciklama:        "Second test task for export",
-			Durum:           "tamamlandi",
-			Oncelik:         "orta",
-			ProjeID:         proje.ID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          "export-task-2",
+			Title:       "Export Test Task 2",
+			Description: "Second test task for export",
+			Status:      "tamamlandi",
+			Priority:    "orta",
+			ProjeID:     proje.ID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		},
 	}
 
@@ -566,11 +566,11 @@ func setupLargeTestDataset(t *testing.T, vy *gorev.VeriYonetici, projectCount, t
 	// Projeler oluştur
 	for i := 0; i < projectCount; i++ {
 		proje := &gorev.Proje{
-			ID:              fmt.Sprintf("large-project-%d", i),
-			Isim:            fmt.Sprintf("Large Test Project %d", i),
-			Tanim:           fmt.Sprintf("Project %d for large dataset testing", i),
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:         fmt.Sprintf("large-project-%d", i),
+			Name:       fmt.Sprintf("Large Test Project %d", i),
+			Definition: fmt.Sprintf("Project %d for large dataset testing", i),
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 		err := vy.ProjeKaydet(proje)
 		if err != nil {
@@ -582,14 +582,14 @@ func setupLargeTestDataset(t *testing.T, vy *gorev.VeriYonetici, projectCount, t
 	for i := 0; i < taskCount; i++ {
 		projectID := fmt.Sprintf("large-project-%d", i%projectCount)
 		task := &gorev.Gorev{
-			ID:              fmt.Sprintf("large-task-%d", i),
-			Baslik:          fmt.Sprintf("Large Test Task %d", i),
-			Aciklama:        fmt.Sprintf("Task %d for large dataset testing", i),
-			Durum:           []string{"beklemede", "devam_ediyor", "tamamlandi"}[i%3],
-			Oncelik:         []string{"dusuk", "orta", "yuksek"}[i%3],
-			ProjeID:         projectID,
-			OlusturmaTarih:  time.Now(),
-			GuncellemeTarih: time.Now(),
+			ID:          fmt.Sprintf("large-task-%d", i),
+			Title:       fmt.Sprintf("Large Test Task %d", i),
+			Description: fmt.Sprintf("Task %d for large dataset testing", i),
+			Status:      []string{"beklemede", "devam_ediyor", "tamamlandi"}[i%3],
+			Priority:    []string{"dusuk", "orta", "yuksek"}[i%3],
+			ProjeID:     projectID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 		err := vy.GorevKaydet(task)
 		if err != nil {

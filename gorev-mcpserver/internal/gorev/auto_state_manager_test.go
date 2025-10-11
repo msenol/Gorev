@@ -73,24 +73,24 @@ func TestAutoStateManager_AutoTransitionToInProgress(t *testing.T) {
 
 	// Create test tasks with different statuses
 	pendingTask := &Gorev{
-		ID:             "pending-task",
-		Baslik:         "Pending Task",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "pending-task",
+		Title:     "Pending Task",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 
 	inProgressTask := &Gorev{
-		ID:             "inprogress-task",
-		Baslik:         "In Progress Task",
-		Durum:          constants.TaskStatusInProgress,
-		OlusturmaTarih: time.Now(),
+		ID:        "inprogress-task",
+		Title:     "In Progress Task",
+		Status:    constants.TaskStatusInProgress,
+		CreatedAt: time.Now(),
 	}
 
 	completedTask := &Gorev{
-		ID:             "completed-task",
-		Baslik:         "Completed Task",
-		Durum:          constants.TaskStatusCompleted,
-		OlusturmaTarih: time.Now(),
+		ID:        "completed-task",
+		Title:     "Completed Task",
+		Status:    constants.TaskStatusCompleted,
+		CreatedAt: time.Now(),
 	}
 
 	vy.gorevler["pending-task"] = pendingTask
@@ -144,7 +144,7 @@ func TestAutoStateManager_AutoTransitionToInProgress(t *testing.T) {
 
 			// Reset task states for each test
 			if tc.taskID == "pending-task" {
-				pendingTask.Durum = constants.TaskStatusPending
+				pendingTask.Status = constants.TaskStatusPending
 			}
 
 			err := asm.AutoTransitionToInProgress(tc.taskID)
@@ -169,8 +169,8 @@ func TestAutoStateManager_AutoTransitionToInProgress(t *testing.T) {
 					return
 				}
 
-				if task.Durum != tc.expectedStatus {
-					t.Errorf("Expected status %s, got %s for %s", tc.expectedStatus, task.Durum, tc.description)
+				if task.Status != tc.expectedStatus {
+					t.Errorf("Expected status %s, got %s for %s", tc.expectedStatus, task.Status, tc.description)
 				}
 			}
 
@@ -197,24 +197,24 @@ func TestAutoStateManager_AutoTransitionToPending(t *testing.T) {
 
 	// Create test tasks
 	inProgressTask := &Gorev{
-		ID:             "inprogress-task",
-		Baslik:         "In Progress Task",
-		Durum:          constants.TaskStatusInProgress,
-		OlusturmaTarih: time.Now(),
+		ID:        "inprogress-task",
+		Title:     "In Progress Task",
+		Status:    constants.TaskStatusInProgress,
+		CreatedAt: time.Now(),
 	}
 
 	pendingTask := &Gorev{
-		ID:             "pending-task",
-		Baslik:         "Pending Task",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "pending-task",
+		Title:     "Pending Task",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 
 	completedTask := &Gorev{
-		ID:             "completed-task",
-		Baslik:         "Completed Task",
-		Durum:          constants.TaskStatusCompleted,
-		OlusturmaTarih: time.Now(),
+		ID:        "completed-task",
+		Title:     "Completed Task",
+		Status:    constants.TaskStatusCompleted,
+		CreatedAt: time.Now(),
 	}
 
 	vy.gorevler["inprogress-task"] = inProgressTask
@@ -269,7 +269,7 @@ func TestAutoStateManager_AutoTransitionToPending(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset task states for each test
 			if tc.taskID == "inprogress-task" {
-				inProgressTask.Durum = constants.TaskStatusInProgress
+				inProgressTask.Status = constants.TaskStatusInProgress
 			}
 
 			err := asm.AutoTransitionToPending(tc.taskID)
@@ -294,8 +294,8 @@ func TestAutoStateManager_AutoTransitionToPending(t *testing.T) {
 					return
 				}
 
-				if task.Durum != tc.expectedStatus {
-					t.Errorf("Expected status %s, got %s for %s", tc.expectedStatus, task.Durum, tc.description)
+				if task.Status != tc.expectedStatus {
+					t.Errorf("Expected status %s, got %s for %s", tc.expectedStatus, task.Status, tc.description)
 				}
 			}
 
@@ -316,10 +316,10 @@ func TestAutoStateManager_OnTaskAccessed(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "test-task",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "test-task",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["test-task"] = testTask
 
@@ -330,8 +330,8 @@ func TestAutoStateManager_OnTaskAccessed(t *testing.T) {
 	}
 
 	// Verify task was transitioned to in-progress
-	if testTask.Durum != constants.TaskStatusInProgress {
-		t.Errorf("Expected task to be in progress, got %s", testTask.Durum)
+	if testTask.Status != constants.TaskStatusInProgress {
+		t.Errorf("Expected task to be in progress, got %s", testTask.Status)
 	}
 
 	// Verify timer was started
@@ -347,10 +347,10 @@ func TestAutoStateManager_OnTaskCompleted(t *testing.T) {
 
 	// Create test task
 	testTask := &Gorev{
-		ID:             "test-task",
-		Baslik:         "Test Task",
-		Durum:          constants.TaskStatusCompleted,
-		OlusturmaTarih: time.Now(),
+		ID:        "test-task",
+		Title:     "Test Task",
+		Status:    constants.TaskStatusCompleted,
+		CreatedAt: time.Now(),
 	}
 	vy.gorevler["test-task"] = testTask
 
@@ -470,27 +470,27 @@ func TestAutoStateManager_CheckParentCompletion(t *testing.T) {
 
 	// Create parent task
 	parentTask := &Gorev{
-		ID:             "parent-task",
-		Baslik:         "Parent Task",
-		Durum:          constants.TaskStatusInProgress,
-		OlusturmaTarih: time.Now(),
+		ID:        "parent-task",
+		Title:     "Parent Task",
+		Status:    constants.TaskStatusInProgress,
+		CreatedAt: time.Now(),
 	}
 
 	// Create child task
 	childTask := &Gorev{
-		ID:             "child-task",
-		Baslik:         "Child Task",
-		Durum:          constants.TaskStatusCompleted,
-		ParentID:       "parent-task",
-		OlusturmaTarih: time.Now(),
+		ID:        "child-task",
+		Title:     "Child Task",
+		Status:    constants.TaskStatusCompleted,
+		ParentID:  "parent-task",
+		CreatedAt: time.Now(),
 	}
 
 	// Create task without parent
 	orphanTask := &Gorev{
-		ID:             "orphan-task",
-		Baslik:         "Orphan Task",
-		Durum:          constants.TaskStatusCompleted,
-		OlusturmaTarih: time.Now(),
+		ID:        "orphan-task",
+		Title:     "Orphan Task",
+		Status:    constants.TaskStatusCompleted,
+		CreatedAt: time.Now(),
 	}
 
 	vy.gorevler["parent-task"] = parentTask
@@ -529,7 +529,7 @@ func TestAutoStateManager_CheckParentCompletion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset parent status for each test
 			if tc.taskID == "child-task" {
-				parentTask.Durum = constants.TaskStatusInProgress
+				parentTask.Status = constants.TaskStatusInProgress
 			}
 
 			err := asm.CheckParentCompletion(tc.taskID)
@@ -549,8 +549,8 @@ func TestAutoStateManager_CheckParentCompletion(t *testing.T) {
 			// Check parent status if expected
 			if tc.expectedParentStatus != "" {
 				parent := vy.gorevler["parent-task"]
-				if parent.Durum != tc.expectedParentStatus {
-					t.Errorf("Expected parent status %s, got %s for %s", tc.expectedParentStatus, parent.Durum, tc.description)
+				if parent.Status != tc.expectedParentStatus {
+					t.Errorf("Expected parent status %s, got %s for %s", tc.expectedParentStatus, parent.Status, tc.description)
 				}
 			}
 		})
@@ -564,24 +564,24 @@ func TestAutoStateManager_CheckDependenciesCompleted(t *testing.T) {
 
 	// Create dependency tasks
 	dep1 := &Gorev{
-		ID:             "dep-1",
-		Baslik:         "Dependency 1",
-		Durum:          constants.TaskStatusCompleted,
-		OlusturmaTarih: time.Now(),
+		ID:        "dep-1",
+		Title:     "Dependency 1",
+		Status:    constants.TaskStatusCompleted,
+		CreatedAt: time.Now(),
 	}
 
 	dep2 := &Gorev{
-		ID:             "dep-2",
-		Baslik:         "Dependency 2",
-		Durum:          constants.TaskStatusInProgress,
-		OlusturmaTarih: time.Now(),
+		ID:        "dep-2",
+		Title:     "Dependency 2",
+		Status:    constants.TaskStatusInProgress,
+		CreatedAt: time.Now(),
 	}
 
 	mainTask := &Gorev{
-		ID:             "main-task",
-		Baslik:         "Main Task",
-		Durum:          constants.TaskStatusPending,
-		OlusturmaTarih: time.Now(),
+		ID:        "main-task",
+		Title:     "Main Task",
+		Status:    constants.TaskStatusPending,
+		CreatedAt: time.Now(),
 	}
 
 	vy.gorevler["dep-1"] = dep1
@@ -611,19 +611,19 @@ func TestAutoStateManager_ProcessNaturalLanguageQuery(t *testing.T) {
 
 	// Add some test tasks for queries to work with
 	testTask1 := &Gorev{
-		ID:             "task-1",
-		Baslik:         "Complete project setup",
-		Durum:          constants.TaskStatusPending,
-		Oncelik:        constants.PriorityHigh,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-1",
+		Title:     "Complete project setup",
+		Status:    constants.TaskStatusPending,
+		Priority:  constants.PriorityHigh,
+		CreatedAt: time.Now(),
 	}
 
 	testTask2 := &Gorev{
-		ID:             "task-2",
-		Baslik:         "Write documentation",
-		Durum:          constants.TaskStatusInProgress,
-		Oncelik:        constants.PriorityMedium,
-		OlusturmaTarih: time.Now(),
+		ID:        "task-2",
+		Title:     "Write documentation",
+		Status:    constants.TaskStatusInProgress,
+		Priority:  constants.PriorityMedium,
+		CreatedAt: time.Now(),
 	}
 
 	vy.gorevler["task-1"] = testTask1

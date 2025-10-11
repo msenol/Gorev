@@ -120,11 +120,11 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 
 	// Create main task
 	mainTaskID, err := itc.veriYonetici.GorevOlustur(map[string]interface{}{
-		"baslik":    request.Title,
-		"aciklama":  request.Description,
-		"oncelik":   suggestedPriority,
-		"proje_id":  "", // project will be set by caller if needed
-		"son_tarih": "", // due date will be set by caller if needed
+		"title":       request.Title,
+		"description": request.Description,
+		"priority":    suggestedPriority,
+		"project_id":  "", // project will be set by caller if needed
+		"due_date":    "", // due date will be set by caller if needed
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ana görev oluşturulamadı: %v", err)
@@ -247,7 +247,7 @@ func (itc *IntelligentTaskCreator) estimateTaskTime(title, description string) (
 
 	for _, similar := range similarTasks {
 		// Use estimated duration as base, since Gorev struct doesn't have ActualHours
-		if estimatedDays := itc.extractDurationFromDescription(similar.Task.Aciklama); estimatedDays > 0 {
+		if estimatedDays := itc.extractDurationFromDescription(similar.Task.Description); estimatedDays > 0 {
 			// Weight by similarity score (convert days to hours)
 			totalHours += float64(estimatedDays) * 8.0 * similar.SimilarityScore
 			validSamples++
@@ -306,7 +306,7 @@ func (itc *IntelligentTaskCreator) findSimilarTasks(title, description string, l
 	var similarities []SimilarTaskInfo
 
 	for _, task := range allTasks {
-		taskWords := extractKeywords(task.Baslik + " " + task.Aciklama)
+		taskWords := extractKeywords(task.Title + " " + task.Description)
 		similarity := calculateSimilarity(targetWords, taskWords)
 
 		if similarity > 0.2 { // 20% similarity threshold

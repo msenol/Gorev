@@ -51,8 +51,8 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	}
 
 	// Only transition if currently pending
-	if task.Durum != constants.TaskStatusPending {
-		log.Printf("Task not in pending status, skipping auto-transition: taskID=%s, currentStatus=%s", taskID, task.Durum)
+	if task.Status != constants.TaskStatusPending {
+		log.Printf("Task not in pending status, skipping auto-transition: taskID=%s, currentStatus=%s", taskID, task.Status)
 		return nil
 	}
 
@@ -68,7 +68,7 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	}
 
 	// Transition to in-progress
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": constants.TaskStatusInProgress})
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": constants.TaskStatusInProgress})
 	if err != nil {
 		return err
 	}
@@ -104,13 +104,13 @@ func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 	}
 
 	// Only transition if currently in progress
-	if task.Durum != constants.TaskStatusInProgress {
-		log.Printf("Task not in progress, skipping auto-transition: taskID=%s, currentStatus=%s", taskID, task.Durum)
+	if task.Status != constants.TaskStatusInProgress {
+		log.Printf("Task not in progress, skipping auto-transition: taskID=%s, currentStatus=%s", taskID, task.Status)
 		return nil
 	}
 
 	// Transition back to pending
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": constants.TaskStatusPending})
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": constants.TaskStatusPending})
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 	// Check if all subtasks are completed
 	allCompleted := true
 	for _, subtask := range subtasks {
-		if subtask.Durum != constants.TaskStatusCompleted {
+		if subtask.Status != constants.TaskStatusCompleted {
 			allCompleted = false
 			break
 		}
@@ -176,8 +176,8 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 		}
 
 		// Auto-complete parent if not already completed
-		if parentTask.Durum != constants.TaskStatusCompleted {
-			err = asm.veriYonetici.GorevGuncelle(parentID, map[string]interface{}{"durum": constants.TaskStatusCompleted})
+		if parentTask.Status != constants.TaskStatusCompleted {
+			err = asm.veriYonetici.GorevGuncelle(parentID, map[string]interface{}{"status": constants.TaskStatusCompleted})
 			if err != nil {
 				return err
 			}
@@ -281,7 +281,7 @@ func (asm *AutoStateManager) checkDependenciesCompleted(taskID string) (bool, er
 	}
 
 	for _, dep := range dependencies {
-		if dep.Durum != constants.TaskStatusCompleted {
+		if dep.Status != constants.TaskStatusCompleted {
 			return false, nil
 		}
 	}
@@ -425,29 +425,29 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 
 	// Create task parameters
 	taskParams := map[string]interface{}{
-		"baslik":      title,
-		"durum":       constants.TaskStatusPending,
-		"olusturulma": time.Now(),
+		"title":      title,
+		"status":     constants.TaskStatusPending,
+		"created_at": time.Now(),
 	}
 
 	// Add optional fields
 	if desc, ok := content["description"].(string); ok && desc != "" {
-		taskParams["aciklama"] = desc
+		taskParams["description"] = desc
 	}
 
 	if dueDate, ok := content["due_date"].(string); ok && dueDate != "" {
-		taskParams["bitis_tarihi"] = dueDate
+		taskParams["due_date"] = dueDate
 	}
 
 	// Apply filters as task properties
 	for key, value := range intent.Filters {
 		switch key {
 		case "priority":
-			taskParams["oncelik"] = value
+			taskParams["priority"] = value
 		case "category":
-			taskParams["kategori"] = value
+			taskParams["category"] = value
 		case "tags":
-			taskParams["etiketler"] = value
+			taskParams["tags"] = value
 		}
 	}
 
@@ -496,22 +496,22 @@ func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface
 
 	// Apply updates
 	if title, ok := content["title"].(string); ok && title != "" {
-		updateParams["baslik"] = title
+		updateParams["title"] = title
 	}
 
 	if desc, ok := content["description"].(string); ok && desc != "" {
-		updateParams["aciklama"] = desc
+		updateParams["description"] = desc
 	}
 
 	// Apply filter changes as updates
 	for key, value := range intent.Filters {
 		switch key {
 		case "priority":
-			updateParams["oncelik"] = value
+			updateParams["priority"] = value
 		case "status":
-			updateParams["durum"] = value
+			updateParams["status"] = value
 		case "category":
-			updateParams["kategori"] = value
+			updateParams["category"] = value
 		}
 	}
 
@@ -521,7 +521,7 @@ func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface
 		return nil, err
 	}
 
-	return task.Baslik, nil
+	return task.Title, nil
 }
 
 // executeCompleteAction marks a task as completed
@@ -543,7 +543,7 @@ func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interfa
 	}
 
 	// Complete the task
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"durum": constants.TaskStatusCompleted})
+	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": constants.TaskStatusCompleted})
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +554,7 @@ func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interfa
 		log.Printf("Failed to check parent completion: taskID=%s, error=%v", taskID, err)
 	}
 
-	return task.Baslik, nil
+	return task.Title, nil
 }
 
 // executeDeleteAction deletes a task
@@ -584,7 +584,7 @@ func (asm *AutoStateManager) executeDeleteAction(intent *QueryIntent) (interface
 	// Clear any active timers
 	asm.clearInactivityTimer(taskID)
 
-	return task.Baslik, nil
+	return task.Title, nil
 }
 
 // executeSearchAction searches for tasks
@@ -608,7 +608,7 @@ func (asm *AutoStateManager) executeStatusAction(intent *QueryIntent) (interface
 
 		return map[string]interface{}{
 			"task":   task,
-			"status": task.Durum,
+			"status": task.Status,
 		}, nil
 	}
 

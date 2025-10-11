@@ -21,17 +21,17 @@ const Header: React.FC<HeaderProps> = ({
   totalTasks,
 }) => {
   const { t } = useLanguage();
-  const handleStatusFilter = (durum: TaskStatus | undefined) => {
+  const handleStatusFilter = (status: TaskStatus | undefined) => {
     onFilterChange({
       ...taskFilter,
-      durum,
+      status,
     });
   };
 
-  const handlePriorityFilter = (oncelik: TaskPriority | undefined) => {
+  const handlePriorityFilter = (priority: TaskPriority | undefined) => {
     onFilterChange({
       ...taskFilter,
-      oncelik,
+      priority,
     });
   };
 
@@ -61,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({
               </h1>
               {selectedProject && (
                 <p className="text-sm text-gray-500">
-                  {selectedProject.isim} • {totalTasks} {t('tasks')}
+                  {selectedProject.name} • {totalTasks} {t('tasks')}
                 </p>
               )}
             </div>
@@ -87,7 +87,7 @@ const Header: React.FC<HeaderProps> = ({
 
               {/* Status Filter */}
               <select
-                value={taskFilter.durum || ''}
+                value={taskFilter.status || ''}
                 onChange={(e) => handleStatusFilter(e.target.value as TaskStatus || undefined)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
@@ -99,7 +99,7 @@ const Header: React.FC<HeaderProps> = ({
 
               {/* Priority Filter */}
               <select
-                value={taskFilter.oncelik || ''}
+                value={taskFilter.priority || ''}
                 onChange={(e) => handlePriorityFilter(e.target.value as TaskPriority || undefined)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               >

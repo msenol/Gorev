@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	version     = "v0.16.4-dev"
+	version     = "v0.17.0"
 	buildTime   = "unknown"
 	gitCommit   = "unknown"
 	langFlag    string
@@ -604,7 +604,7 @@ func listTemplates(kategori string) error {
 	// Kategorilere göre grupla
 	kategoriMap := make(map[string][]*gorev.GorevTemplate)
 	for _, tmpl := range templates {
-		kategoriMap[tmpl.Kategori] = append(kategoriMap[tmpl.Kategori], tmpl)
+		kategoriMap[tmpl.Category] = append(kategoriMap[tmpl.Category], tmpl)
 	}
 
 	// Her kategoriyi göster
@@ -615,9 +615,9 @@ func listTemplates(kategori string) error {
 			if tmpl.Alias != "" {
 				aliasInfo = fmt.Sprintf(" [alias: %s]", tmpl.Alias)
 			}
-			fmt.Printf("\n%s%s\n", tmpl.Isim, aliasInfo)
-			fmt.Printf("  %s\n", tmpl.Tanim)
-			fmt.Printf("  Başlık: %s\n", tmpl.VarsayilanBaslik)
+			fmt.Printf("\n%s%s\n", tmpl.Name, aliasInfo)
+			fmt.Printf("  %s\n", tmpl.Definition)
+			fmt.Printf("  Başlık: %s\n", tmpl.DefaultTitle)
 			if tmpl.Alias != "" {
 				fmt.Printf("  Hızlı kullanım: gorev task create --template=%s\n", tmpl.Alias)
 			}
@@ -642,33 +642,33 @@ func showTemplate(templateID string) error {
 		return fmt.Errorf("template bulunamadı: %w", err)
 	}
 
-	fmt.Printf("\n=== %s ===\n", template.Isim)
+	fmt.Printf("\n=== %s ===\n", template.Name)
 	fmt.Printf("ID: %s\n", template.ID)
 	if template.Alias != "" {
 		fmt.Printf("Alias: %s\n", template.Alias)
 	}
-	fmt.Printf("Kategori: %s\n", template.Kategori)
-	fmt.Printf("Açıklama: %s\n", template.Tanim)
-	fmt.Printf("\nBaşlık Şablonu: %s\n", template.VarsayilanBaslik)
+	fmt.Printf("Kategori: %s\n", template.Category)
+	fmt.Printf("Açıklama: %s\n", template.Definition)
+	fmt.Printf("\nBaşlık Şablonu: %s\n", template.DefaultTitle)
 
 	fmt.Println("\nAlanlar:")
-	for _, alan := range template.Alanlar {
+	for _, alan := range template.Fields {
 		zorunlu := ""
-		if alan.Zorunlu {
+		if alan.Required {
 			zorunlu = " (zorunlu)"
 		}
-		fmt.Printf("  - %s (%s)%s", alan.Isim, alan.Tip, zorunlu)
-		if alan.Varsayilan != "" {
-			fmt.Printf(" [varsayılan: %s]", alan.Varsayilan)
+		fmt.Printf("  - %s (%s)%s", alan.Name, alan.Type, zorunlu)
+		if alan.Default != "" {
+			fmt.Printf(" [varsayılan: %s]", alan.Default)
 		}
-		if len(alan.Secenekler) > 0 {
-			fmt.Printf("\n    Seçenekler: %v", alan.Secenekler)
+		if len(alan.Options) > 0 {
+			fmt.Printf("\n    Seçenekler: %v", alan.Options)
 		}
 		fmt.Println()
 	}
 
 	fmt.Println("\nÖrnek Açıklama:")
-	fmt.Println(template.AciklamaTemplate)
+	fmt.Println(template.DescriptionTemplate)
 
 	return nil
 }
@@ -729,8 +729,8 @@ func listTemplateAliases() error {
 	// Alias'leri alfabetik sırala ve göster
 	for alias, tmpl := range aliases {
 		fmt.Printf("\n🏷️  %s\n", alias)
-		fmt.Printf("   → %s (%s)\n", tmpl.Isim, tmpl.Kategori)
-		fmt.Printf("   📝 %s\n", tmpl.Tanim)
+		fmt.Printf("   → %s (%s)\n", tmpl.Name, tmpl.Category)
+		fmt.Printf("   📝 %s\n", tmpl.Definition)
 		fmt.Printf("   💡 Kullanım: gorev mcp call templateden_gorev_olustur template_id=%s degerler='{...}'\n", alias)
 	}
 
