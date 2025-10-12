@@ -19,12 +19,15 @@ func initializeWithEmbedded(lang string) error {
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
 	loadSuccess := false
+	var lastErr error
 
 	// Try to load from filesystem first (for development)
 	trPath := getLocaleFilePath("tr.json")
 	if _, err := os.Stat(trPath); err == nil {
 		if _, err := bundle.LoadMessageFile(trPath); err == nil {
 			loadSuccess = true
+		} else {
+			lastErr = err
 		}
 	}
 
@@ -32,6 +35,8 @@ func initializeWithEmbedded(lang string) error {
 	if _, err := os.Stat(enPath); err == nil {
 		if _, err := bundle.LoadMessageFile(enPath); err == nil {
 			loadSuccess = true
+		} else {
+			lastErr = err
 		}
 	}
 
@@ -42,7 +47,11 @@ func initializeWithEmbedded(lang string) error {
 		if err == nil {
 			if _, err := bundle.ParseMessageFileBytes(trData, "tr.json"); err == nil {
 				loadSuccess = true
+			} else {
+				lastErr = err
 			}
+		} else {
+			lastErr = err
 		}
 
 		// Load English translations from embedded FS
@@ -50,26 +59,24 @@ func initializeWithEmbedded(lang string) error {
 		if err == nil {
 			if _, err := bundle.ParseMessageFileBytes(enData, "en.json"); err == nil {
 				loadSuccess = true
+			} else {
+				lastErr = err
 			}
+		} else {
+			lastErr = err
 		}
 	}
 
 	if !loadSuccess {
+		if lastErr != nil {
+			return fmt.Errorf("failed to load any locale files (neither filesystem nor embedded), last error: %w", lastErr)
+		}
 		return fmt.Errorf("failed to load any locale files (neither filesystem nor embedded)")
 	}
 
-	// Create localizer for the specified language with Turkish fallback
-	var localizer *i18n.Localizer
-	if lang == "en" {
-		localizer = i18n.NewLocalizer(bundle, "en", "tr")
-	} else {
-		// Default to Turkish for any other language or empty lang
-		localizer = i18n.NewLocalizer(bundle, "tr")
-	}
-
+	// Store bundle only (localizers created per-request)
 	globalManager = &Manager{
-		bundle:    bundle,
-		localizer: localizer,
+		bundle: bundle,
 	}
 
 	return nil

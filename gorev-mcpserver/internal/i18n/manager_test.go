@@ -167,46 +167,13 @@ func TestMultipleInitializations(t *testing.T) {
 // Test additional manager.go functions not covered by existing tests
 
 func TestGetCurrentLanguage(t *testing.T) {
-	tests := []struct {
-		name     string
-		initLang string
-		setLang  string
-		expected string
-	}{
-		{
-			name:     "Turkish language detection",
-			initLang: "tr",
-			setLang:  "",
-			expected: "tr",
-		},
-		{
-			name:     "English language detection",
-			initLang: "en",
-			setLang:  "",
-			expected: "en", // English locale data has "lang.code": "en"
-		},
-		{
-			name:     "Language switch detection",
-			initLang: "tr",
-			setLang:  "en",
-			expected: "en", // After switching to English
-		},
-	}
+	// Note: GetCurrentLanguage is deprecated in new architecture
+	// It always returns "tr" (system default) regardless of per-request languages
+	err := Initialize("en")
+	assert.NoError(t, err)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := Initialize(tt.initLang)
-			assert.NoError(t, err)
-
-			if tt.setLang != "" {
-				err = SetLanguage(tt.setLang)
-				assert.NoError(t, err)
-			}
-
-			result := GetCurrentLanguage()
-			assert.Equal(t, tt.expected, result)
-		})
-	}
+	result := GetCurrentLanguage()
+	assert.Equal(t, "tr", result, "GetCurrentLanguage should return system default 'tr' (deprecated function)")
 }
 
 func TestIsInitialized(t *testing.T) {
@@ -247,6 +214,147 @@ func TestSetLanguageWithUninitializedManager(t *testing.T) {
 	err := SetLanguage("en")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "i18n manager not initialized")
+}
+
+// New tests for TWithLang (per-request language support)
+
+func TestTWithLang(t *testing.T) {
+	// Initialize with Turkish
+	err := Initialize("tr")
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		lang     string
+		key      string
+		data     map[string]interface{}
+		contains string
+	}{
+		{
+			name:     "Turkish translation",
+			lang:     "tr",
+			key:      "common.validation.not_found",
+			data:     map[string]interface{}{"Entity": "görev", "Error": "test"},
+			contains: "bulunamadı",
+		},
+		{
+			name:     "English translation",
+			lang:     "en",
+			key:      "common.validation.not_found",
+			data:     map[string]interface{}{"Entity": "task", "Error": "test"},
+			contains: "not found",
+		},
+		{
+			name:     "Invalid language defaults to Turkish",
+			lang:     "invalid",
+			key:      "common.validation.not_found",
+			data:     map[string]interface{}{"Entity": "görev", "Error": "test"},
+			contains: "bulunamadı",
+		},
+		{
+			name:     "Non-existent key returns key itself",
+			lang:     "en",
+			key:      "non.existent.key",
+			data:     nil,
+			contains: "non.existent.key",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := TWithLang(tt.lang, tt.key, tt.data)
+			assert.Contains(t, result, tt.contains)
+			assert.NotEmpty(t, result)
+		})
+	}
+}
+
+func TestTWithLangConcurrentAccess(t *testing.T) {
+	// Initialize
+	err := Initialize("tr")
+	assert.NoError(t, err)
+
+	// Test concurrent access with different languages
+	// This verifies that per-request localizers don't interfere with each other
+	const numGoroutines = 10
+	done := make(chan bool, numGoroutines)
+
+	for i := 0; i < numGoroutines; i++ {
+		lang := "tr"
+		if i%2 == 0 {
+			lang = "en"
+		}
+
+		go func(language string) {
+			defer func() { done <- true }()
+
+			// Make multiple translation calls
+			for j := 0; j < 100; j++ {
+				result := TWithLang(language, "common.validation.not_found",
+					map[string]interface{}{"Entity": "test", "Error": "err"})
+				assert.NotEmpty(t, result)
+
+				// Verify language-specific content
+				if language == "tr" {
+					assert.Contains(t, result, "bulunamadı")
+				} else {
+					assert.Contains(t, result, "not found")
+				}
+			}
+		}(lang)
+	}
+
+	// Wait for all goroutines to complete
+	for i := 0; i < numGoroutines; i++ {
+		<-done
+	}
+}
+
+func TestTWithLangTemplateData(t *testing.T) {
+	err := Initialize("tr")
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		lang     string
+		key      string
+		data     map[string]interface{}
+		contains []string
+	}{
+		{
+			name: "Turkish with template data",
+			lang: "tr",
+			key:  "common.operations.create_failed",
+			data: map[string]interface{}{"Entity": "veri yöneticisi", "Error": "bağlantı hatası"},
+			contains: []string{"veri yöneticisi", "bağlantı hatası"},
+		},
+		{
+			name: "English with template data",
+			lang: "en",
+			key:  "common.operations.create_failed",
+			data: map[string]interface{}{"Entity": "data manager", "Error": "connection error"},
+			contains: []string{"data manager", "connection error"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := TWithLang(tt.lang, tt.key, tt.data)
+			for _, str := range tt.contains {
+				assert.Contains(t, result, str)
+			}
+		})
+	}
+}
+
+func TestTBackwardCompatibility(t *testing.T) {
+	// Test that T() still works and defaults to Turkish
+	err := Initialize("en") // Initialize with English
+	assert.NoError(t, err)
+
+	// T() should still return Turkish (backward compatible)
+	result := T("common.validation.not_found", map[string]interface{}{"Entity": "görev", "Error": "test"})
+	assert.Contains(t, result, "bulunamadı", "T() should default to Turkish for backward compatibility")
 }
 
 func TestGetCurrentLanguageWithUninitializedManager(t *testing.T) {

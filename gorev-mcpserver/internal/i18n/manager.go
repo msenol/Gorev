@@ -11,8 +11,8 @@ import (
 )
 
 type Manager struct {
-	bundle    *i18n.Bundle
-	localizer *i18n.Localizer
+	bundle *i18n.Bundle
+	// Note: localizer removed - we create per-request localizers for multi-client support
 }
 
 var globalManager *Manager
@@ -53,36 +53,31 @@ func Initialize(lang string) error {
 		return fmt.Errorf("failed to load any translations from filesystem and embedded fallback failed: %w", err)
 	}
 
-	// Create localizer for the specified language with Turkish fallback
-	var localizer *i18n.Localizer
-	if lang == "en" {
-		localizer = i18n.NewLocalizer(bundle, "en", "tr")
-	} else {
-		// Default to Turkish for any other language or empty lang
-		localizer = i18n.NewLocalizer(bundle, "tr")
-	}
-
+	// Store bundle only (localizers created per-request)
 	globalManager = &Manager{
-		bundle:    bundle,
-		localizer: localizer,
+		bundle: bundle,
 	}
 
 	return nil
 }
 
-// T translates a message key with optional template data
-func T(messageID string, templateData ...map[string]interface{}) string {
+// TWithLang translates a message key with specified language and optional template data
+// This is the primary translation function for multi-client support
+func TWithLang(lang string, messageID string, templateData ...map[string]interface{}) string {
 	if globalManager == nil {
 		// Fallback to messageID if i18n is not initialized
 		return messageID
 	}
+
+	// Create localizer for this specific language
+	localizer := createLocalizerForLanguage(globalManager.bundle, lang)
 
 	var data map[string]interface{}
 	if len(templateData) > 0 {
 		data = templateData[0]
 	}
 
-	msg, err := globalManager.localizer.Localize(&i18n.LocalizeConfig{
+	msg, err := localizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageID,
 		TemplateData: data,
 	})
@@ -95,39 +90,44 @@ func T(messageID string, templateData ...map[string]interface{}) string {
 	return msg
 }
 
+// T translates a message key with optional template data
+// Backward compatible function - uses default Turkish language
+// New code should prefer TWithLang() for explicit language control
+func T(messageID string, templateData ...map[string]interface{}) string {
+	return TWithLang("tr", messageID, templateData...)
+}
+
 // SetLanguage changes the current language
+// Deprecated: This function is kept for backward compatibility only
+// New code should use TWithLang() for per-request language control
 func SetLanguage(lang string) error {
 	if globalManager == nil {
 		return fmt.Errorf("i18n manager not initialized")
 	}
-
-	var localizer *i18n.Localizer
-	if lang == "en" {
-		localizer = i18n.NewLocalizer(globalManager.bundle, "en", "tr")
-	} else {
-		localizer = i18n.NewLocalizer(globalManager.bundle, "tr")
-	}
-
-	globalManager.localizer = localizer
+	// Note: No-op in new architecture (per-request localizers)
+	// Kept for backward compatibility
 	return nil
 }
 
-// GetCurrentLanguage returns the current language code
+// GetCurrentLanguage returns the default language code
+// Deprecated: In multi-client architecture, language is per-request
+// This returns the system default only
 func GetCurrentLanguage() string {
-	if globalManager == nil {
-		return "tr"
+	return "tr" // System default
+}
+
+// createLocalizerForLanguage creates a localizer for the specified language
+// This is a helper function used by TWithLang for per-request localization
+func createLocalizerForLanguage(bundle *i18n.Bundle, lang string) *i18n.Localizer {
+	// Validate and normalize language
+	if lang != "en" && lang != "tr" {
+		lang = "tr" // Default to Turkish for unsupported languages
 	}
 
-	// Check if we have English as primary language
-	msg, err := globalManager.localizer.Localize(&i18n.LocalizeConfig{
-		MessageID: "lang.code",
-	})
-
-	if err != nil || msg == "lang.code" {
-		return "tr" // Default fallback
+	if lang == "en" {
+		return i18n.NewLocalizer(bundle, "en", "tr") // English with Turkish fallback
 	}
-
-	return msg
+	return i18n.NewLocalizer(bundle, "tr") // Turkish
 }
 
 // getLocaleFilePath returns the absolute path to a locale file

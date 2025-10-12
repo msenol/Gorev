@@ -10,6 +10,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/msenol/gorev/internal/constants"
+	contextutil "github.com/msenol/gorev/internal/context"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	"golang.org/x/text/cases"
@@ -91,6 +92,15 @@ func (h *Handlers) Close() error {
 		return h.fileWatcher.Close()
 	}
 	return nil
+}
+
+// extractLanguage extracts language preference with fallback priority:
+// 1. Environment variable GOREV_LANG (set by MCP client)
+// 2. Default "tr"
+// Note: context.Context not available in MCP handler signatures, so we use env var
+func (h *Handlers) extractLanguage() string {
+	// Use context.Background() to trigger env var fallback in GetLanguage
+	return contextutil.GetLanguage(context.Background())
 }
 
 // gorevResponseSizeEstimate bir görev için tahmini response boyutunu hesaplar
@@ -346,7 +356,7 @@ func (h *Handlers) templateZorunluAlanlariListele(template *gorev.GorevTemplate)
 		if alan.Required {
 			tip := alan.Type
 			if alan.Type == "select" && len(alan.Options) > 0 {
-				tip = fmt.Sprintf("select [%s]", strings.Join(alan.Options, ", "))
+				tip = i18n.T("messages.fieldSelect", map[string]interface{}{"Options": strings.Join(alan.Options, ", ")})
 			}
 			alanlar = append(alanlar, fmt.Sprintf("- %s (%s)", alan.Name, tip))
 		}
@@ -368,7 +378,7 @@ func (h *Handlers) templateOrnekDegerler(template *gorev.GorevTemplate) string {
 			case "date":
 				ornek = time.Now().AddDate(0, 0, 7).Format(constants.DateFormatISO) // One week from now
 			case "text":
-				ornek = "örnek " + alan.Name
+				ornek = i18n.T("messages.exampleLabel", map[string]interface{}{"Field": alan.Name})
 			}
 			ornekler = append(ornekler, fmt.Sprintf("'%s': '%s'", alan.Name, ornek))
 		}
@@ -481,11 +491,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		// Check if offset is beyond available data
 		if offset >= toplamRootGorevSayisi {
 			// No data available at this offset - return empty result
-			mesaj := i18n.T("messages.noMoreTasks")
-			if mesaj == "messages.noMoreTasks" {
-				mesaj = "Daha fazla görev yok"
-			}
-			return mcp.NewToolResultText(mesaj), nil
+			return mcp.NewToolResultText(i18n.T("messages.noMoreTasks")), nil
 		}
 
 		// FIX: Pagination end calculation düzeltildi - root görev sayısına göre hesaplama
@@ -493,27 +499,17 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		if actualEnd > toplamRootGorevSayisi {
 			actualEnd = toplamRootGorevSayisi
 		}
-		metin = fmt.Sprintf("Görevler (%d-%d / %d)\n",
-			offset+1,
-			actualEnd,
-			toplamRootGorevSayisi) // FIX: Use root task count for correct pagination display
+		metin = i18n.T("messages.taskCount", map[string]interface{}{
+			"Start": offset + 1,
+			"End":   actualEnd,
+			"Total": toplamRootGorevSayisi,
+		}) + "\n"
 	} else {
-		// Use i18n with fallback to prevent raw key return
-		taskListMsg := i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi}) // FIX: Use root task count for correct display
-		if taskListMsg == "messages.taskListCount" {
-			// Fallback to hardcoded string if i18n fails
-			taskListMsg = fmt.Sprintf("Toplam %d görev", toplamRootGorevSayisi) // FIX: Use root task count for correct display
-		}
-		metin = taskListMsg + "\n"
+		metin = i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi}) + "\n"
 	}
 
 	if aktifProje != nil && !tumProjeler {
-		projectHeaderMsg := i18n.T("messages.projectHeader", map[string]interface{}{"Name": aktifProje.Name})
-		if projectHeaderMsg == "messages.projectHeader" {
-			// Fallback to hardcoded string if i18n fails
-			projectHeaderMsg = fmt.Sprintf("=== %s ===", aktifProje.Name)
-		}
-		metin += projectHeaderMsg + "\n"
+		metin += i18n.T("messages.projectHeader", map[string]interface{}{"Name": aktifProje.Name}) + "\n"
 	}
 	metin += "\n"
 
@@ -547,12 +543,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		if estimatedSize+gorevSize > maxResponseSize && len(gorevlerToShow) > 0 {
 			// Boyut aşılacak, daha fazla görev ekleme
 			remainingCount := len(paginatedKokGorevler) - len(gorevlerToShow)
-			sizeWarningMsg := i18n.T("messages.sizeWarning", map[string]interface{}{"Count": remainingCount})
-			if sizeWarningMsg == "messages.sizeWarning" {
-				// Fallback to hardcoded string if i18n fails
-				sizeWarningMsg = fmt.Sprintf("⚠️ %d görev daha var (sayfalama ile sınırlandı)", remainingCount)
-			}
-			metin += "\n" + sizeWarningMsg + "\n"
+			metin += "\n" + i18n.T("messages.sizeWarning", map[string]interface{}{"Count": remainingCount}) + "\n"
 			break
 		}
 		estimatedSize += gorevSize
@@ -583,7 +574,7 @@ func (h *Handlers) AktifProjeAyarla(params map[string]interface{}) (*mcp.CallToo
 	}
 
 	if err := h.isYonetici.AktifProjeAyarla(projeID); err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("aktif proje ayarlama başarısız", err), nil
+		return mcp.NewToolResultError(i18n.TSetFailed("active_project", err)), nil
 	}
 
 	proje, _ := h.isYonetici.ProjeGetir(projeID)
@@ -611,17 +602,11 @@ func (h *Handlers) AktifProjeGoster(params map[string]interface{}) (*mcp.CallToo
 	// Görev sayısını al
 	gorevSayisi, _ := h.isYonetici.ProjeGorevSayisi(proje.ID)
 
-	metin := fmt.Sprintf(`## Aktif Proje
-
-**Proje:** %s
-**ID:** %s
-**Açıklama:** %s
-**Görev Sayısı:** %d`,
-		proje.Name,
-		proje.ID,
-		proje.Definition,
-		gorevSayisi,
-	)
+	metin := i18n.T("headers.activeProject") + "\n\n"
+	metin += i18n.TListItem("proje", proje.Name) + "\n"
+	metin += i18n.TListItem("id_field", proje.ID) + "\n"
+	metin += i18n.TListItem("aciklama", proje.Definition) + "\n"
+	metin += i18n.TListItem("gorev_sayisi", fmt.Sprintf("%d", gorevSayisi))
 
 	return mcp.NewToolResultText(metin), nil
 }
@@ -629,10 +614,10 @@ func (h *Handlers) AktifProjeGoster(params map[string]interface{}) (*mcp.CallToo
 // AktifProjeKaldir aktif proje ayarını kaldırır
 func (h *Handlers) AktifProjeKaldir(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	if err := h.isYonetici.AktifProjeKaldir(); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("aktif proje kaldırılamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TRemoveFailed("active_project", err)), nil
 	}
 
-	return mcp.NewToolResultText(i18n.T("success.activeProjectRemoved")), nil
+	return mcp.NewToolResultText(i18n.TRemoved("active_project")), nil
 }
 
 // GorevGuncelle görev durumunu günceller
@@ -649,13 +634,15 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 
 	// If both are invalid/missing, return error
 	if durumResult != nil && oncelikResult != nil {
-		return mcp.NewToolResultError("durum veya oncelik parametresi gerekli"), nil
+		// Custom validation: at least one of durum or oncelik required
+		return mcp.NewToolResultError(i18n.T("common.validation.one_of_required",
+			map[string]interface{}{"Params": "durum, oncelik"})), nil
 	}
 
 	// Update status if provided
 	if durum != "" {
 		if err := h.isYonetici.GorevDurumGuncelle(id, durum); err != nil {
-			return h.toolHelpers.ErrorFormatter.FormatOperationError("görev durumu güncellenemedi", err), nil
+			return mcp.NewToolResultError(i18n.TUpdateFailed("task", err)), nil
 		}
 	}
 
@@ -665,21 +652,24 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 			"oncelik": oncelik,
 		}
 		if err := h.isYonetici.VeriYonetici().GorevGuncelle(id, updateParams); err != nil {
-			return h.toolHelpers.ErrorFormatter.FormatOperationError("görev önceliği güncellenemedi", err), nil
+			return mcp.NewToolResultError(i18n.TUpdateFailed("task", err)), nil
 		}
 	}
 
 	// Build success message
 	var updates []string
 	if durum != "" {
-		updates = append(updates, fmt.Sprintf("durum: %s", durum))
+		updates = append(updates, i18n.TLabel("durum")+": "+durum)
 	}
 	if oncelik != "" {
-		updates = append(updates, fmt.Sprintf("öncelik: %s", oncelik))
+		updates = append(updates, i18n.TLabel("oncelik")+": "+oncelik)
 	}
 
 	return mcp.NewToolResultText(
-		fmt.Sprintf("✅ Görev güncellendi (ID: %s)\n%s", id, strings.Join(updates, ", ")),
+		i18n.T("success.taskUpdatedWithChanges", map[string]interface{}{
+			"ID":      id,
+			"Changes": strings.Join(updates, ", "),
+		}),
 	), nil
 }
 
@@ -694,12 +684,10 @@ func (h *Handlers) ProjeOlustur(params map[string]interface{}) (*mcp.CallToolRes
 
 	proje, err := h.isYonetici.ProjeOlustur(isim, tanim)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("proje oluşturulamadı", err), nil
+		return mcp.NewToolResultError(i18n.TCreateFailed("project", err)), nil
 	}
 
-	return mcp.NewToolResultText(
-		h.toolHelpers.Formatter.FormatSuccessMessage("Proje oluşturuldu", proje.Name, proje.ID),
-	), nil
+	return mcp.NewToolResultText(i18n.TCreated("project", proje.Name, proje.ID)), nil
 }
 
 // GorevDetay tek bir görevin detaylı bilgisini markdown formatında döner
@@ -711,7 +699,7 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 
 	gorev, err := h.isYonetici.GorevGetir(id)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatNotFoundError("görev", id), nil
+		return mcp.NewToolResultError(i18n.TEntityNotFoundByID("task", id)), nil
 	}
 
 	// Bağımlılık sayılarını hesapla (VS Code extension için gerekli)
@@ -737,21 +725,13 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 	}
 
 	// Markdown formatında detaylı görev bilgisi
-	metin := fmt.Sprintf(`# %s
-
-## 📋 Genel Bilgiler
-- **ID:** %s
-- **Durum:** %s
-- **Öncelik:** %s
-- **Oluşturma Tarihi:** %s
-- **Son Güncelleme:** %s`,
-		gorev.Title,
-		gorev.ID,
-		gorev.Status,
-		gorev.Priority,
-		gorev.CreatedAt.Format(constants.DateTimeFormatFull),
-		gorev.UpdatedAt.Format(constants.DateTimeFormatFull),
-	)
+	metin := fmt.Sprintf("# %s\n\n", gorev.Title)
+	metin += i18n.T("headers.generalInfo") + "\n"
+	metin += i18n.TListItem("id_field", gorev.ID) + "\n"
+	metin += i18n.TListItem("durum", gorev.Status) + "\n"
+	metin += i18n.TListItem("oncelik", gorev.Priority) + "\n"
+	metin += i18n.TListItem("olusturulma_tarihi", gorev.CreatedAt.Format(constants.DateTimeFormatFull)) + "\n"
+	metin += i18n.TListItem("guncelleme_tarihi", gorev.UpdatedAt.Format(constants.DateTimeFormatFull))
 
 	if gorev.ProjeID != "" {
 		proje, err := h.isYonetici.ProjeGetir(gorev.ProjeID)
@@ -762,7 +742,7 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 	if gorev.ParentID != "" {
 		parent, err := h.isYonetici.GorevGetir(gorev.ParentID)
 		if err == nil {
-			metin += fmt.Sprintf("\n- **Üst Görev:** %s", parent.Title)
+			metin += "\n" + i18n.TListItem("ust_gorev", parent.Title)
 		}
 	}
 	if gorev.DueDate != nil {
@@ -782,22 +762,22 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		metin += "\n" + bagimlilikBilgisi
 	}
 
-	metin += "\n\n## 📝 Açıklama\n"
+	metin += "\n\n" + i18n.T("headers.taskDescription") + "\n"
 	if gorev.Description != "" {
 		// Açıklama zaten markdown formatında olabilir, direkt ekle
 		metin += gorev.Description
 	} else {
-		metin += "*Açıklama girilmemiş*"
+		metin += i18n.T("messages.noDescription")
 	}
 
 	// Bağımlılıkları ekle - Her zaman göster
-	metin += "\n\n## 🔗 Bağımlılıklar\n"
+	metin += "\n\n" + i18n.T("headers.dependencies") + "\n"
 
 	baglantilar, err := h.isYonetici.GorevBaglantilariGetir(id)
 	if err != nil {
-		metin += "*Bağımlılık bilgileri alınamadı*\n"
+		metin += i18n.T("messages.dependenciesNotAvailable") + "\n"
 	} else if len(baglantilar) == 0 {
-		metin += "*Bu görevin herhangi bir bağımlılığı bulunmuyor*\n"
+		metin += i18n.T("messages.noDependencies") + "\n"
 	} else {
 		var oncekiler []string
 		var sonrakiler []string
@@ -825,41 +805,45 @@ func (h *Handlers) GorevDetay(params map[string]interface{}) (*mcp.CallToolResul
 		}
 
 		if len(oncekiler) > 0 {
-			metin += "\n### 📋 Bu görev için beklenen görevler:\n"
+			metin += "\n" + i18n.T("headers.waitingTasks") + "\n"
 			for _, onceki := range oncekiler {
 				metin += fmt.Sprintf("- %s\n", onceki)
 			}
 		} else {
-			metin += "\n### 📋 Bu görev için beklenen görevler:\n*Hiçbir göreve bağımlı değil*\n"
+			metin += "\n" + i18n.T("headers.waitingTasks") + "\n" + i18n.T("messages.notDependentOnAny") + "\n"
 		}
 
 		if len(sonrakiler) > 0 {
-			metin += "\n### 🎯 Bu göreve bağımlı görevler:\n"
+			metin += "\n" + i18n.T("headers.dependentTasks") + "\n"
 			for _, sonraki := range sonrakiler {
 				metin += sonraki + "\n"
 			}
 		} else {
-			metin += "\n### 🎯 Bu göreve bağımlı görevler:\n*Hiçbir görev bu göreve bağımlı değil*\n"
+			metin += "\n" + i18n.T("headers.dependentTasks") + "\n" + i18n.T("messages.noDependentTasks") + "\n"
 		}
 
 		// Bağımlılık durumu kontrolü
 		bagimli, tamamlanmamislar, err := h.isYonetici.GorevBagimliMi(id)
 		if err == nil && !bagimli && gorev.Status == constants.TaskStatusPending {
-			metin += fmt.Sprintf("\n> ⚠️ **Uyarı:** Bu görev başlatılamaz! Önce şu görevler tamamlanmalı: %v\n", tamamlanmamislar)
+			metin += "\n" + i18n.T("messages.dependencyWarning", map[string]interface{}{
+				"Dependencies": tamamlanmamislar,
+			}) + "\n"
 		}
 	}
 
 	metin += "\n\n---\n"
-	metin += fmt.Sprintf("\n*Son güncelleme: %s*", gorev.UpdatedAt.Format(constants.DateFormatDisplay))
+	metin += "\n*" + i18n.T("messages.lastUpdate", map[string]interface{}{
+		"Date": gorev.UpdatedAt.Format(constants.DateFormatDisplay),
+	}) + "*"
 
 	return mcp.NewToolResultText(metin), nil
 }
 
 // GorevDuzenle görevi düzenler
 func (h *Handlers) GorevDuzenle(params map[string]interface{}) (*mcp.CallToolResult, error) {
-	id, ok := params[constants.ParamID].(string)
-	if !ok || id == "" {
-		return mcp.NewToolResultError("id parametresi gerekli"), nil
+	id, result := h.toolHelpers.Validator.ValidateTaskID(params)
+	if result != nil {
+		return result, nil
 	}
 
 	// En az bir düzenleme alanı olmalı
@@ -870,15 +854,25 @@ func (h *Handlers) GorevDuzenle(params map[string]interface{}) (*mcp.CallToolRes
 	sonTarih, sonTarihVar := params["son_tarih"].(string)
 
 	if !baslikVar && !aciklamaVar && !oncelikVar && !projeVar && !sonTarihVar {
-		return mcp.NewToolResultError("en az bir düzenleme alanı belirtilmeli (baslik, aciklama, oncelik, proje_id veya son_tarih)"), nil
+		return mcp.NewToolResultError(i18n.T("common.validation.at_least_one_field",
+			map[string]interface{}{
+				"Fields": "baslik, aciklama, oncelik, proje_id, son_tarih",
+			})), nil
 	}
 
 	err := h.isYonetici.GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTarih, baslikVar, aciklamaVar, oncelikVar, projeVar, sonTarihVar)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("görev düzenlenemedi: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TEditFailed("task", err)), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("✓ Görev düzenlendi: %s", id)), nil
+	// Fetch task to get title for success message
+	gorev, _ := h.isYonetici.GorevGetir(id)
+	title := id
+	if gorev != nil {
+		title = gorev.Title
+	}
+
+	return mcp.NewToolResultText(i18n.TEdited("task", title)), nil
 }
 
 // GorevSil görevi siler
@@ -891,22 +885,22 @@ func (h *Handlers) GorevSil(params map[string]interface{}) (*mcp.CallToolResult,
 	// Onay kontrolü
 	onay := h.toolHelpers.Validator.ValidateBool(params, "onay")
 	if !onay {
-		return mcp.NewToolResultError("görevi silmek için 'onay' parametresi true olmalıdır"), nil
+		return mcp.NewToolResultError(i18n.T("error.deleteConfirmationRequired")), nil
 	}
 
 	gorev, err := h.isYonetici.GorevGetir(id)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatNotFoundError("görev", id), nil
+		return h.toolHelpers.ErrorFormatter.FormatNotFoundError("task", id), nil
 	}
 
 	gorevBaslik := gorev.Title
 
 	err = h.isYonetici.GorevSil(id)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("görev silinemedi", err), nil
+		return mcp.NewToolResultError(i18n.TDeleteFailed("task", err)), nil
 	}
 
-	return mcp.NewToolResultText(h.toolHelpers.Formatter.FormatSuccessMessage("Görev silindi", gorevBaslik, id)), nil
+	return mcp.NewToolResultText(i18n.TDeleted("task", gorevBaslik, id)), nil
 }
 
 // GorevBulkTransition changes status for multiple tasks
@@ -914,12 +908,12 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 	// Validate task IDs
 	taskIDsRaw, ok := params["task_ids"]
 	if !ok {
-		return mcp.NewToolResultError("task_ids parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("task_ids")), nil
 	}
 
 	taskIDsInterface, ok := taskIDsRaw.([]interface{})
 	if !ok {
-		return mcp.NewToolResultError("task_ids array formatında olmalı"), nil
+		return mcp.NewToolResultError(i18n.TRequiredArray("task_ids")), nil
 	}
 
 	taskIDs := make([]string, len(taskIDsInterface))
@@ -927,7 +921,8 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 		if id, ok := idInterface.(string); ok && id != "" {
 			taskIDs[i] = id
 		} else {
-			return mcp.NewToolResultError(fmt.Sprintf("geçersiz task ID index %d", i)), nil
+			return mcp.NewToolResultError(i18n.T("error.invalidTaskIdIndex",
+				map[string]interface{}{"Index": i})), nil
 		}
 	}
 
@@ -959,27 +954,27 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 
 	result_batch, err := batchProcessor.BulkStatusTransition(request)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("toplu durum değişikliği başarısız", err), nil
+		return mcp.NewToolResultError(i18n.TProcessFailed("bulk_status_transition", err)), nil
 	}
 
 	// Format response
 	var response strings.Builder
 
 	if dryRun {
-		response.WriteString("🔍 **Kuru Çalıştırma Sonucu**\n\n")
+		response.WriteString(i18n.T("messages.dryRunResult") + "\n\n")
 	} else {
-		response.WriteString(constants.EmojiStatusCompleted + " **Toplu Durum Değişikliği Tamamlandı**\n\n")
+		response.WriteString(i18n.T("messages.bulkStatusComplete") + "\n\n")
 	}
 
 	response.WriteString(i18n.TMarkdownLabel("hedef_durum", newStatus) + "\n")
-	response.WriteString(i18n.TCount("islenen_gorev", result_batch.TotalProcessed) + "\n")
-	response.WriteString(i18n.TCount("basarili", len(result_batch.Successful)) + "\n")
-	response.WriteString(i18n.TCount("basarisiz", len(result_batch.Failed)) + "\n")
-	response.WriteString(i18n.TCount("uyari", len(result_batch.Warnings)) + "\n")
+	response.WriteString(i18n.T("messages.processedTasks", map[string]interface{}{"Count": result_batch.TotalProcessed}) + "\n")
+	response.WriteString(i18n.T("messages.successfulTasks", map[string]interface{}{"Count": len(result_batch.Successful)}) + "\n")
+	response.WriteString(i18n.T("messages.failedTasks", map[string]interface{}{"Count": len(result_batch.Failed)}) + "\n")
+	response.WriteString(i18n.T("messages.warningTasks", map[string]interface{}{"Count": len(result_batch.Warnings)}) + "\n")
 	response.WriteString(i18n.TDuration("sure", result_batch.ExecutionTime) + "\n\n")
 
 	if len(result_batch.Successful) > 0 {
-		response.WriteString("**" + constants.EmojiStatusCompleted + " Başarılı Görevler:**\n")
+		response.WriteString(i18n.T("messages.successfulTasksHeader") + "\n")
 		for _, taskID := range result_batch.Successful {
 			response.WriteString(fmt.Sprintf("- %s\n", TaskIDFormat.FormatShortID(taskID)))
 		}
@@ -987,7 +982,7 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 	}
 
 	if len(result_batch.Failed) > 0 {
-		response.WriteString("**" + constants.EmojiStatusCancelled + " Başarısız Görevler:**\n")
+		response.WriteString(i18n.T("messages.failedTasksHeader") + "\n")
 		for _, failure := range result_batch.Failed {
 			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(failure.TaskID), failure.Error))
 		}
@@ -995,7 +990,7 @@ func (h *Handlers) GorevBulkTransition(params map[string]interface{}) (*mcp.Call
 	}
 
 	if len(result_batch.Warnings) > 0 {
-		response.WriteString("**" + constants.EmojiPriorityAlert + " Uyarılar:**\n")
+		response.WriteString(i18n.T("messages.warningsHeader") + "\n")
 	}
 
 	return mcp.NewToolResultText(response.String()), nil
@@ -1006,12 +1001,12 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	// Validate task IDs
 	taskIDsRaw, ok := params["task_ids"]
 	if !ok {
-		return mcp.NewToolResultError("task_ids parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("task_ids")), nil
 	}
 
 	taskIDsInterface, ok := taskIDsRaw.([]interface{})
 	if !ok {
-		return mcp.NewToolResultError("task_ids array formatında olmalı"), nil
+		return mcp.NewToolResultError(i18n.TRequiredArray("task_ids")), nil
 	}
 
 	taskIDs := make([]string, len(taskIDsInterface))
@@ -1019,19 +1014,20 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 		if id, ok := idInterface.(string); ok && id != "" {
 			taskIDs[i] = id
 		} else {
-			return mcp.NewToolResultError(fmt.Sprintf("geçersiz task ID index %d", i)), nil
+			return mcp.NewToolResultError(i18n.T("error.invalidTaskIdIndex",
+				map[string]interface{}{"Index": i})), nil
 		}
 	}
 
 	// Validate tags
 	tagsRaw, ok := params["tags"]
 	if !ok {
-		return mcp.NewToolResultError("tags parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("tags")), nil
 	}
 
 	tagsInterface, ok := tagsRaw.([]interface{})
 	if !ok {
-		return mcp.NewToolResultError("tags array formatında olmalı"), nil
+		return mcp.NewToolResultError(i18n.TRequiredArray("tags")), nil
 	}
 
 	tags := make([]string, len(tagsInterface))
@@ -1039,7 +1035,8 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 		if tag, ok := tagInterface.(string); ok && tag != "" {
 			tags[i] = strings.TrimSpace(tag)
 		} else {
-			return mcp.NewToolResultError(fmt.Sprintf("geçersiz tag index %d", i)), nil
+			return mcp.NewToolResultError(i18n.T("error.invalidTagIndex",
+				map[string]interface{}{"Index": i})), nil
 		}
 	}
 
@@ -1068,28 +1065,28 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 
 	result_batch, err := batchProcessor.BulkTagOperation(request)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("toplu etiket işlemi başarısız", err), nil
+		return mcp.NewToolResultError(i18n.TProcessFailed("bulk_tag_operation", err)), nil
 	}
 
 	// Format response
 	var response strings.Builder
 
 	if dryRun {
-		response.WriteString("🔍 **Kuru Çalıştırma Sonucu**\n\n")
+		response.WriteString(i18n.T("messages.dryRunResult") + "\n\n")
 	} else {
-		response.WriteString(constants.EmojiStatusCompleted + " **Toplu Etiket İşlemi Tamamlandı**\n\n")
+		response.WriteString(i18n.T("messages.bulkTagComplete") + "\n\n")
 	}
 
-	response.WriteString(fmt.Sprintf("**İşlem:** %s\n", operation))
+	response.WriteString(i18n.TMarkdownLabel("islem", operation) + "\n")
 	response.WriteString(i18n.TMarkdownLabel("etiketler", strings.Join(tags, ", ")) + "\n")
-	response.WriteString(fmt.Sprintf("**İşlenen Görev:** %d\n", result_batch.TotalProcessed))
-	response.WriteString(fmt.Sprintf("**Başarılı:** %d\n", len(result_batch.Successful)))
-	response.WriteString(fmt.Sprintf("**Başarısız:** %d\n", len(result_batch.Failed)))
-	response.WriteString(fmt.Sprintf("**Uyarı:** %d\n", len(result_batch.Warnings)))
-	response.WriteString(fmt.Sprintf("**Süre:** %v\n\n", result_batch.ExecutionTime))
+	response.WriteString(i18n.T("messages.processedTasks", map[string]interface{}{"Count": result_batch.TotalProcessed}) + "\n")
+	response.WriteString(i18n.T("messages.successfulTasks", map[string]interface{}{"Count": len(result_batch.Successful)}) + "\n")
+	response.WriteString(i18n.T("messages.failedTasks", map[string]interface{}{"Count": len(result_batch.Failed)}) + "\n")
+	response.WriteString(i18n.T("messages.warningTasks", map[string]interface{}{"Count": len(result_batch.Warnings)}) + "\n")
+	response.WriteString(i18n.TDuration("sure", result_batch.ExecutionTime) + "\n\n")
 
 	if len(result_batch.Successful) > 0 {
-		response.WriteString("**" + constants.EmojiStatusCompleted + " Başarılı Görevler:**\n")
+		response.WriteString(i18n.T("messages.successfulTasksHeader") + "\n")
 		for _, taskID := range result_batch.Successful {
 			response.WriteString(fmt.Sprintf("- %s\n", TaskIDFormat.FormatShortID(taskID)))
 		}
@@ -1097,7 +1094,7 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	}
 
 	if len(result_batch.Failed) > 0 {
-		response.WriteString("**" + constants.EmojiStatusCancelled + " Başarısız Görevler:**\n")
+		response.WriteString(i18n.T("messages.failedTasksHeader") + "\n")
 		for _, failure := range result_batch.Failed {
 			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(failure.TaskID), failure.Error))
 		}
@@ -1105,7 +1102,7 @@ func (h *Handlers) GorevBulkTag(params map[string]interface{}) (*mcp.CallToolRes
 	}
 
 	if len(result_batch.Warnings) > 0 {
-		response.WriteString("**" + constants.EmojiPriorityAlert + " Uyarılar:**\n")
+		response.WriteString(i18n.T("messages.warningsHeader") + "\n")
 		for _, warning := range result_batch.Warnings {
 			response.WriteString(fmt.Sprintf("- %s: %s\n", TaskIDFormat.FormatShortID(warning.TaskID), warning.Message))
 		}
@@ -1155,18 +1152,18 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 
 	response, err := suggestionEngine.GetSuggestions(request)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("öneri oluşturma başarısız", err), nil
+		return mcp.NewToolResultError(i18n.TProcessFailed("suggestion", err)), nil
 	}
 
 	// Format response
 	var output strings.Builder
 
-	output.WriteString("🎯 **Akıllı Öneriler**\n\n")
-	output.WriteString(fmt.Sprintf("**Toplam:** %d öneri\n", response.TotalCount))
-	output.WriteString(fmt.Sprintf("**Süre:** %v\n\n", response.ExecutionTime))
+	output.WriteString(i18n.T("messages.smartSuggestions") + "\n\n")
+	output.WriteString(i18n.T("messages.totalSuggestions", map[string]interface{}{"Count": response.TotalCount}) + "\n")
+	output.WriteString(i18n.T("messages.performanceExecutionTime", map[string]interface{}{"Duration": response.ExecutionTime}) + "\n\n")
 
 	if len(response.Suggestions) == 0 {
-		output.WriteString("ℹ️ Şu anda öneri yok.\n")
+		output.WriteString(i18n.T("messages.noSuggestionsNow") + "\n")
 		return mcp.NewToolResultText(output.String()), nil
 	}
 
@@ -1178,10 +1175,10 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 
 	// Display suggestions by type
 	typeNames := map[string]string{
-		"next_action":   "🚀 Sonraki Aksiyonlar",
-		"similar_task":  "🔍 Benzer Görevler",
-		"template":      "📋 Template Önerileri",
-		"deadline_risk": "⚠️ Son Tarih Uyarıları",
+		"next_action":   i18n.T("messages.suggestionTypeNextAction"),
+		"similar_task":  i18n.T("messages.suggestionTypeSimilarTask"),
+		"template":      i18n.T("messages.suggestionTypeTemplate"),
+		"deadline_risk": i18n.T("messages.suggestionTypeDeadlineRisk"),
 	}
 
 	typeOrder := []string{"deadline_risk", "next_action", "similar_task", "template"}
@@ -1199,12 +1196,12 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 			priorityEmoji := constants.GetSuggestionPriorityEmoji(suggestion.Priority)
 
 			output.WriteString(fmt.Sprintf("### %d. %s %s\n", i+1, priorityEmoji, suggestion.Title))
-			output.WriteString(fmt.Sprintf("**Açıklama:** %s\n", suggestion.Description))
-			output.WriteString(fmt.Sprintf("**Önerilen Aksiyon:** `%s`\n", suggestion.Action))
-			output.WriteString(fmt.Sprintf("**Güven Skoru:** %.1f%%\n", suggestion.Confidence*100))
+			output.WriteString(i18n.T("messages.suggestionDescription", map[string]interface{}{"Description": suggestion.Description}) + "\n")
+			output.WriteString(i18n.T("messages.suggestionAction", map[string]interface{}{"Action": suggestion.Action}) + "\n")
+			output.WriteString(i18n.T("messages.suggestionConfidence", map[string]interface{}{"Confidence": suggestion.Confidence * 100}) + "\n")
 
 			if suggestion.TaskID != "" {
-				output.WriteString(fmt.Sprintf("**İlgili Görev:** %s\n", TaskIDFormat.FormatShortID(suggestion.TaskID)))
+				output.WriteString(i18n.T("messages.suggestionRelatedTask", map[string]interface{}{"TaskID": TaskIDFormat.FormatShortID(suggestion.TaskID)}) + "\n")
 			}
 
 			output.WriteString("\n")
@@ -1212,7 +1209,7 @@ func (h *Handlers) GorevSuggestions(params map[string]interface{}) (*mcp.CallToo
 	}
 
 	output.WriteString("---\n")
-	output.WriteString("💡 **İpucu:** Önerilen aksiyonları doğrudan kopyalayıp kullanabilirsiniz.\n")
+	output.WriteString(i18n.T("messages.suggestionActionTip") + "\n")
 
 	return mcp.NewToolResultText(output.String()), nil
 }
@@ -1258,7 +1255,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	// Create task with AI features
 	response, err := creator.CreateIntelligentTask(request)
 	if err != nil {
-		return h.toolHelpers.ErrorFormatter.FormatOperationError("akıllı görev oluşturma başarısız", err), nil
+		return mcp.NewToolResultError(i18n.TCreateFailed("task", err)), nil
 	}
 
 	// Set project if specified
@@ -1289,25 +1286,28 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	// Format response
 	var output strings.Builder
 
-	output.WriteString("🧠 **Akıllı Görev Oluşturuldu**\n\n")
+	output.WriteString(i18n.T("messages.intelligentTaskCreated") + "\n\n")
 
 	// Main task info
-	output.WriteString("### 📋 Ana Görev\n")
-	output.WriteString(fmt.Sprintf("**Başlık:** %s\n", response.MainTask.Title))
+	output.WriteString(i18n.T("messages.mainTask") + "\n")
+	output.WriteString(i18n.TMarkdownLabel("baslik", response.MainTask.Title) + "\n")
 	output.WriteString(fmt.Sprintf("**ID:** %s\n", response.MainTask.ID))
 
 	if response.SuggestedPriority != "" {
 		priorityEmoji := h.toolHelpers.Formatter.GetPriorityEmoji(response.SuggestedPriority)
-		output.WriteString(fmt.Sprintf("**Akıllı Öncelik:** %s %s\n", priorityEmoji, response.SuggestedPriority))
+		output.WriteString(i18n.T("messages.smartPriority", map[string]interface{}{
+			"Emoji":    priorityEmoji,
+			"Priority": response.SuggestedPriority,
+		}) + "\n")
 	}
 
 	if response.EstimatedHours > 0 {
-		output.WriteString(fmt.Sprintf("**Tahmini Süre:** %.1f saat\n", response.EstimatedHours))
+		output.WriteString(i18n.T("messages.estimatedTime", map[string]interface{}{"Hours": response.EstimatedHours}) + "\n")
 	}
 
 	if projeID != "" {
 		if proje, err := h.isYonetici.ProjeGetir(projeID); err == nil {
-			output.WriteString(fmt.Sprintf("**Proje:** %s\n", proje.Name))
+			output.WriteString(i18n.TMarkdownLabel("proje", proje.Name) + "\n")
 		}
 	}
 
@@ -1315,7 +1315,7 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 
 	// Subtasks
 	if len(response.Subtasks) > 0 {
-		output.WriteString(fmt.Sprintf("### 🌳 Otomatik Alt Görevler (%d)\n", len(response.Subtasks)))
+		output.WriteString(i18n.T("messages.autoSubtasks", map[string]interface{}{"Count": len(response.Subtasks)}) + "\n")
 		for i, subtask := range response.Subtasks {
 			output.WriteString(fmt.Sprintf("%d. %s (`%s`)\n", i+1, subtask.Title, TaskIDFormat.FormatShortID(subtask.ID)))
 		}
@@ -1324,28 +1324,34 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 
 	// Template recommendation
 	if response.RecommendedTemplate != "" {
-		output.WriteString("### 📋 Önerilen Template\n")
-		output.WriteString(fmt.Sprintf("**Template:** %s (güven: %.1f%%)\n",
-			response.RecommendedTemplate, response.Confidence.TemplateConfidence*100))
-		output.WriteString("**Kullanım:** `template_listele` ile detayları görün\n\n")
+		output.WriteString(i18n.T("messages.suggestedTemplate") + "\n")
+		output.WriteString(i18n.T("messages.templateConfidence", map[string]interface{}{
+			"Template":   response.RecommendedTemplate,
+			"Confidence": response.Confidence.TemplateConfidence * 100,
+		}) + "\n")
+		output.WriteString(i18n.T("messages.templateUsage") + "\n\n")
 	}
 
 	// Similar tasks
 	if len(response.SimilarTasks) > 0 {
-		output.WriteString(fmt.Sprintf("### 🔍 Benzer Görevler (%d)\n", len(response.SimilarTasks)))
+		output.WriteString(i18n.T("messages.similarTasks", map[string]interface{}{"Count": len(response.SimilarTasks)}) + "\n")
 		for i, similar := range response.SimilarTasks {
 			if i >= constants.MaxSuggestionsToShow { // Show top suggestions
 				break
 			}
-			output.WriteString(fmt.Sprintf("%d. %s (%.1f%% benzer - %s)\n",
-				i+1, similar.Task.Title, similar.SimilarityScore*100, similar.Reason))
+			output.WriteString(fmt.Sprintf("%d. %s (%s)\n",
+				i+1, similar.Task.Title,
+				i18n.T("messages.similarTasksMatch", map[string]interface{}{
+					"Similarity": similar.SimilarityScore * 100,
+					"Reason":     similar.Reason,
+				})))
 		}
 		output.WriteString("\n")
 	}
 
 	// AI Insights
 	if len(response.Insights) > 0 {
-		output.WriteString("### 🎯 AI Analiz Sonuçları\n")
+		output.WriteString(i18n.T("messages.aiAnalysisResults") + "\n")
 		for _, insight := range response.Insights {
 			output.WriteString(fmt.Sprintf("- %s\n", insight))
 		}
@@ -1353,21 +1359,21 @@ func (h *Handlers) GorevIntelligentCreate(params map[string]interface{}) (*mcp.C
 	}
 
 	// Performance info
-	output.WriteString("### 📊 Performans\n")
-	output.WriteString(fmt.Sprintf("**İşlem Süresi:** %v\n", response.ExecutionTime))
-	output.WriteString("**Güven Skorları:**\n")
+	output.WriteString(i18n.T("messages.performanceHeader") + "\n")
+	output.WriteString(i18n.T("messages.performanceExecutionTime", map[string]interface{}{"Duration": response.ExecutionTime}) + "\n")
+	output.WriteString(i18n.T("messages.confidenceScores") + "\n")
 	if response.SuggestedPriority != "" {
-		output.WriteString(fmt.Sprintf("  - Öncelik: %.1f%%\n", response.Confidence.PriorityConfidence*100))
+		output.WriteString(i18n.T("messages.priorityConfidence", map[string]interface{}{"Percent": response.Confidence.PriorityConfidence * 100}) + "\n")
 	}
 	if response.EstimatedHours > 0 {
-		output.WriteString(fmt.Sprintf("  - Süre tahmini: %.1f%%\n", response.Confidence.TimeConfidence*100))
+		output.WriteString(i18n.T("messages.timeConfidence", map[string]interface{}{"Percent": response.Confidence.TimeConfidence * 100}) + "\n")
 	}
 	if len(response.Subtasks) > 0 {
-		output.WriteString(fmt.Sprintf("  - Alt görev analizi: %.1f%%\n", response.Confidence.SubtaskConfidence*100))
+		output.WriteString(i18n.T("messages.subtaskConfidence", map[string]interface{}{"Percent": response.Confidence.SubtaskConfidence * 100}) + "\n")
 	}
 
 	output.WriteString("\n---\n")
-	output.WriteString("💡 **İpucu:** `gorev_detay id='" + response.MainTask.ID + "'` ile detayları görün\n")
+	output.WriteString(i18n.T("messages.taskDetailTip", map[string]interface{}{"Id": response.MainTask.ID}) + "\n")
 
 	return mcp.NewToolResultText(output.String()), nil
 }
@@ -1386,16 +1392,16 @@ func (h *Handlers) ProjeListele(params map[string]interface{}) (*mcp.CallToolRes
 	metin := i18n.T("headers.projectList") + "\n\n"
 	for _, proje := range projeler {
 		metin += fmt.Sprintf("### %s\n", proje.Name)
-		metin += fmt.Sprintf("- **ID:** %s\n", proje.ID)
+		metin += i18n.TListItem("id_field", proje.ID) + "\n"
 		if proje.Definition != "" {
-			metin += fmt.Sprintf("- **Tanım:** %s\n", proje.Definition)
+			metin += i18n.TListItem("tanim", proje.Definition) + "\n"
 		}
-		metin += fmt.Sprintf("- **Oluşturma:** %s\n", proje.CreatedAt.Format(constants.DateFormatDisplay))
+		metin += i18n.TListItem("olusturma", proje.CreatedAt.Format(constants.DateFormatDisplay)) + "\n"
 
 		// Her proje için görev sayısını göster
 		gorevSayisi, err := h.isYonetici.ProjeGorevSayisi(proje.ID)
 		if err == nil {
-			metin += fmt.Sprintf("- **Görev Sayısı:** %d\n", gorevSayisi)
+			metin += i18n.TListItem("gorev_sayisi", gorevSayisi) + "\n"
 		}
 	}
 
@@ -1406,13 +1412,19 @@ func (h *Handlers) ProjeListele(params map[string]interface{}) (*mcp.CallToolRes
 func (h *Handlers) gorevBagimlilikBilgisi(g *gorev.Gorev, indent string) string {
 	bilgi := ""
 	if g.DependencyCount > 0 {
-		bilgi += fmt.Sprintf("%sBağımlı görev sayısı: %d\n", indent, g.DependencyCount)
+		bilgi += indent + i18n.T("messages.dependentTaskCount", map[string]interface{}{
+			"Count": g.DependencyCount,
+		}) + "\n"
 		if g.UncompletedDependencyCount > 0 {
-			bilgi += fmt.Sprintf("%sTamamlanmamış bağımlılık sayısı: %d\n", indent, g.UncompletedDependencyCount)
+			bilgi += indent + i18n.T("messages.incompleteDependencyCount", map[string]interface{}{
+				"Count": g.UncompletedDependencyCount,
+			}) + "\n"
 		}
 	}
 	if g.DependentOnThisCount > 0 {
-		bilgi += fmt.Sprintf("%sBu göreve bağımlı sayısı: %d\n", indent, g.DependentOnThisCount)
+		bilgi += indent + i18n.T("messages.dependentOnThisCount", map[string]interface{}{
+			"Count": g.DependentOnThisCount,
+		}) + "\n"
 	}
 	return bilgi
 }
@@ -1421,7 +1433,7 @@ func (h *Handlers) gorevBagimlilikBilgisi(g *gorev.Gorev, indent string) string 
 func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	projeID, ok := params["proje_id"].(string)
 	if !ok || projeID == "" {
-		return mcp.NewToolResultError("proje_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("proje_id")), nil
 	}
 
 	// Pagination parametreleri
@@ -1437,12 +1449,12 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	// Önce projenin var olduğunu kontrol et
 	proje, err := h.isYonetici.ProjeGetir(projeID)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("proje bulunamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TEntityNotFound("project", err)), nil
 	}
 
 	gorevler, err := h.isYonetici.ProjeGorevleri(projeID)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("görevler alınamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TFetchFailed("task", err)), nil
 	}
 
 	// Toplam görev sayısı
@@ -1451,19 +1463,25 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	metin := ""
 
 	if toplamGorevSayisi == 0 {
-		metin = fmt.Sprintf("%s - Görev yok", proje.Name)
+		metin = i18n.T("messages.noTasksInThisProject", map[string]interface{}{
+			"Name": proje.Name,
+		})
 		return mcp.NewToolResultText(metin), nil
 	}
 
 	// Kompakt başlık
 	if toplamGorevSayisi > limit || offset > 0 {
-		metin = fmt.Sprintf("%s (%d-%d / %d)\n",
-			proje.Name,
-			offset+1,
-			min(offset+limit, toplamGorevSayisi),
-			toplamGorevSayisi)
+		metin = i18n.T("messages.projectTasksPage", map[string]interface{}{
+			"Name":  proje.Name,
+			"Start": offset + 1,
+			"End":   min(offset+limit, toplamGorevSayisi),
+			"Total": toplamGorevSayisi,
+		}) + "\n"
 	} else {
-		metin = fmt.Sprintf("%s (%d görev)\n", proje.Name, toplamGorevSayisi)
+		metin = i18n.T("messages.taskRangeCount", map[string]interface{}{
+			"Name":  proje.Name,
+			"Count": toplamGorevSayisi,
+		}) + "\n"
 	}
 
 	// Duruma göre grupla
@@ -1517,12 +1535,14 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	}
 
 	if devamEdiyorEnd > devamEdiyorStart {
-		metin += "\n🔵 Devam Ediyor\n"
+		metin += "\n🔵 " + i18n.TStatus(constants.TaskStatusInProgress) + "\n"
 		for i := devamEdiyorStart; i < devamEdiyorEnd; i++ {
 			g := devamEdiyor[i]
 			gorevSize := h.gorevResponseSizeEstimate(g)
 			if estimatedSize+gorevSize > maxResponseSize && gorevleriGoster > 0 {
-				metin += fmt.Sprintf("*... ve %d görev daha (boyut limiti)*\n", devamEdiyorEnd-i)
+				metin += i18n.T("messages.moreTasksLimit", map[string]interface{}{
+					"Count": devamEdiyorEnd - i,
+				}) + "\n"
 				break
 			}
 			metin += h.gorevOzetYazdir(g)
@@ -1553,12 +1573,14 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	}
 
 	if beklemedeEnd > beklemedeStart && estimatedSize < maxResponseSize {
-		metin += "\n⚪ Beklemede\n"
+		metin += "\n⚪ " + i18n.TStatus(constants.TaskStatusPending) + "\n"
 		for i := beklemedeStart; i < beklemedeEnd; i++ {
 			g := beklemede[i]
 			gorevSize := h.gorevResponseSizeEstimate(g)
 			if estimatedSize+gorevSize > maxResponseSize && gorevleriGoster > 0 {
-				metin += fmt.Sprintf("*... ve %d görev daha (boyut limiti)*\n", beklemedeEnd-i)
+				metin += i18n.T("messages.moreTasksLimit", map[string]interface{}{
+					"Count": beklemedeEnd - i,
+				}) + "\n"
 				break
 			}
 			metin += h.gorevOzetYazdir(g)
@@ -1582,12 +1604,14 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	}
 
 	if tamamlandiEnd > tamamlandiStart && estimatedSize < maxResponseSize {
-		metin += "\n" + constants.EmojiStatusCompleted + " Tamamlandı\n"
+		metin += "\n" + constants.EmojiStatusCompleted + " " + i18n.TStatus(constants.TaskStatusCompleted) + "\n"
 		for i := tamamlandiStart; i < tamamlandiEnd; i++ {
 			g := tamamlandi[i]
 			gorevSize := h.gorevResponseSizeEstimate(g)
 			if estimatedSize+gorevSize > maxResponseSize && gorevleriGoster > 0 {
-				metin += fmt.Sprintf("*... ve %d görev daha (boyut limiti)*\n", tamamlandiEnd-i)
+				metin += i18n.T("messages.moreTasksLimit", map[string]interface{}{
+					"Count": tamamlandiEnd - i,
+				}) + "\n"
 				break
 			}
 			metin += h.gorevOzetYazdirTamamlandi(g)
@@ -1603,58 +1627,53 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 func (h *Handlers) OzetGoster(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	ozet, err := h.isYonetici.OzetAl()
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("özet alınamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TFetchFailed("summary", err)), nil
 	}
 
-	metin := fmt.Sprintf(`## Özet Rapor
+	var metin strings.Builder
+	metin.WriteString(i18n.T("headers.summaryReport") + "\n\n")
+	metin.WriteString(i18n.TMarkdownLabel("toplam_proje", ozet.TotalProjects) + "\n")
+	metin.WriteString(i18n.TMarkdownLabel("toplam_gorev", ozet.TotalTasks) + "\n\n")
 
-**Toplam Proje:** %d
-**Toplam Görev:** %d
+	metin.WriteString(i18n.T("headers.statusDistribution") + "\n")
+	metin.WriteString(fmt.Sprintf("- %s: %d\n", i18n.TStatus(constants.TaskStatusPending), ozet.PendingTasks))
+	metin.WriteString(fmt.Sprintf("- %s: %d\n", i18n.TStatus(constants.TaskStatusInProgress), ozet.InProgressTasks))
+	metin.WriteString(fmt.Sprintf("- %s: %d\n\n", i18n.TStatus(constants.TaskStatusCompleted), ozet.CompletedTasks))
 
-### Durum Dağılımı
-- Beklemede: %d
-- Devam Ediyor: %d
-- Tamamlandı: %d
+	metin.WriteString(i18n.T("headers.priorityDistribution") + "\n")
+	metin.WriteString(fmt.Sprintf("- %s: %d\n", i18n.TPriority(constants.PriorityHigh), ozet.HighPriorityTasks))
+	metin.WriteString(fmt.Sprintf("- %s: %d\n", i18n.TPriority(constants.PriorityMedium), ozet.MediumPriorityTasks))
+	metin.WriteString(fmt.Sprintf("- %s: %d\n", i18n.TPriority(constants.PriorityLow), ozet.LowPriorityTasks))
 
-### Öncelik Dağılımı
-- Yüksek: %d
-- Orta: %d
-- Düşük: %d`,
-		ozet.TotalProjects,
-		ozet.TotalTasks,
-		ozet.PendingTasks,
-		ozet.InProgressTasks,
-		ozet.CompletedTasks,
-		ozet.HighPriorityTasks,
-		ozet.MediumPriorityTasks,
-		ozet.LowPriorityTasks,
-	)
-
-	return mcp.NewToolResultText(metin), nil
+	return mcp.NewToolResultText(metin.String()), nil
 }
 
 func (h *Handlers) GorevBagimlilikEkle(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	kaynakID, ok := params["kaynak_id"].(string)
 	if !ok || kaynakID == "" {
-		return mcp.NewToolResultError("kaynak_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("kaynak_id")), nil
 	}
 
 	hedefID, ok := params["hedef_id"].(string)
 	if !ok || hedefID == "" {
-		return mcp.NewToolResultError("hedef_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("hedef_id")), nil
 	}
 
 	baglantiTipi, ok := params["baglanti_tipi"].(string)
 	if !ok || baglantiTipi == "" {
-		return mcp.NewToolResultError("baglanti_tipi parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("baglanti_tipi")), nil
 	}
 
 	baglanti, err := h.isYonetici.GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("bağımlılık eklenemedi: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TAddFailed("dependency", err)), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("✓ Bağımlılık eklendi: %s -> %s (%s)", baglanti.SourceID, baglanti.TargetID, baglanti.ConnectionType)), nil
+	return mcp.NewToolResultText(i18n.T("success.dependencyAdded", map[string]interface{}{
+		"Source": baglanti.SourceID,
+		"Target": baglanti.TargetID,
+		"Type":   baglanti.ConnectionType,
+	})), nil
 }
 
 // TemplateListele kullanılabilir template'leri listeler
@@ -1670,7 +1689,7 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 		return mcp.NewToolResultText(i18n.T("messages.noTemplates")), nil
 	}
 
-	metin := "## 📋 Görev Template'leri\n\n"
+	metin := i18n.T("messages.templateListHeader") + "\n\n"
 
 	// Kategorilere göre grupla
 	kategoriMap := make(map[string][]*gorev.GorevTemplate)
@@ -1684,24 +1703,24 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 
 		for _, tmpl := range tmpls {
 			metin += fmt.Sprintf("#### %s\n", tmpl.Name)
-			metin += fmt.Sprintf("- **ID:** `%s`\n", tmpl.ID)
-			metin += fmt.Sprintf("- **Açıklama:** %s\n", tmpl.Definition)
-			metin += fmt.Sprintf("- **Başlık Şablonu:** `%s`\n", tmpl.DefaultTitle)
+			metin += i18n.TListItem("id_field", fmt.Sprintf("`%s`", tmpl.ID)) + "\n"
+			metin += i18n.TListItem("aciklama", tmpl.Definition) + "\n"
+			metin += i18n.TListItem("baslik_sablonu", fmt.Sprintf("`%s`", tmpl.DefaultTitle)) + "\n"
 
 			// Alanları göster
 			if len(tmpl.Fields) > 0 {
-				metin += "- **Alanlar:**\n"
+				metin += i18n.TListItem("alanlar", "") + "\n"
 				for _, alan := range tmpl.Fields {
 					zorunlu := ""
 					if alan.Required {
-						zorunlu = " *(zorunlu)*"
+						zorunlu = fmt.Sprintf(" *(%s)*", i18n.TLabel("zorunlu"))
 					}
 					metin += fmt.Sprintf("  - `%s` (%s)%s", alan.Name, alan.Type, zorunlu)
 					if alan.Default != "" {
-						metin += fmt.Sprintf(" - varsayılan: %s", alan.Default)
+						metin += fmt.Sprintf(" - %s: %s", i18n.TLabel("varsayilan"), alan.Default)
 					}
 					if len(alan.Options) > 0 {
-						metin += fmt.Sprintf(" - seçenekler: %s", strings.Join(alan.Options, ", "))
+						metin += fmt.Sprintf(" - %s: %s", i18n.TLabel("secenekler"), strings.Join(alan.Options, ", "))
 					}
 					metin += "\n"
 				}
@@ -1710,7 +1729,7 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 		}
 	}
 
-	metin += "\n💡 **Kullanım:** `templateden_gorev_olustur` komutunu template ID'si ve alan değerleriyle kullanın."
+	metin += "\n" + i18n.T("messages.templateUsageTip")
 
 	return mcp.NewToolResultText(metin), nil
 }
@@ -1719,18 +1738,20 @@ func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallTool
 func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	templateID, ok := params[constants.ParamTemplateID].(string)
 	if !ok || templateID == "" {
-		return mcp.NewToolResultError("template_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("template_id")), nil
 	}
 
 	degerlerRaw, ok := params[constants.ParamValues].(map[string]interface{})
 	if !ok {
-		return mcp.NewToolResultError("degerler parametresi gerekli ve obje tipinde olmalı"), nil
+		return mcp.NewToolResultError(i18n.T("common.validation.required_object", map[string]interface{}{
+			"Param": "degerler",
+		})), nil
 	}
 
 	// Önce template'i ID veya alias ile kontrol et
 	template, err := h.isYonetici.VeriYonetici().TemplateIDVeyaAliasIleGetir(templateID)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("template bulunamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TEntityNotFound("template", err)), nil
 	}
 
 	// Interface{} map'i string map'e çevir ve validation yap
@@ -1758,21 +1779,17 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 
 	// Eksik alanlar varsa detaylı hata ver
 	if len(eksikAlanlar) > 0 {
-		return mcp.NewToolResultError(fmt.Sprintf(`❌ Zorunlu alanlar eksik!
-
-Template: %s
-Eksik alanlar: %s
-
-Bu template için zorunlu alanlar:
-%s
-
-Örnek kullanım:
-templateden_gorev_olustur template_id='%s' degerler={%s}`,
-			template.Name,
-			strings.Join(eksikAlanlar, ", "),
-			h.templateZorunluAlanlariListele(template),
-			templateID,
-			h.templateOrnekDegerler(template))), nil
+		errorMsg := i18n.T("messages.requiredFieldsMissing") + "\n\n"
+		errorMsg += i18n.T("messages.templateLabel", map[string]interface{}{"Template": template.Name}) + "\n"
+		errorMsg += i18n.T("messages.missingFieldsLabel", map[string]interface{}{"Fields": strings.Join(eksikAlanlar, ", ")}) + "\n\n"
+		errorMsg += i18n.T("messages.requiredFieldsForTemplate") + "\n"
+		errorMsg += h.templateZorunluAlanlariListele(template) + "\n\n"
+		errorMsg += i18n.T("messages.exampleUsage") + "\n"
+		errorMsg += i18n.T("messages.templateUsageCommand", map[string]interface{}{
+			"TemplateID": templateID,
+			"Values":     "{" + h.templateOrnekDegerler(template) + "}",
+		})
+		return mcp.NewToolResultError(errorMsg), nil
 	}
 
 	// Select tipindeki alanların geçerli değerlerini kontrol et
@@ -1787,8 +1804,7 @@ templateden_gorev_olustur template_id='%s' degerler={%s}`,
 					}
 				}
 				if !gecerli {
-					return mcp.NewToolResultError(fmt.Sprintf("'%s' alanı için geçersiz değer: '%s'. Geçerli değerler: %s",
-						alan.Name, deger, strings.Join(alan.Options, ", "))), nil
+					return mcp.NewToolResultError(i18n.TInvalidValue(alan.Name, deger, alan.Options)), nil
 				}
 			}
 		}
@@ -1796,18 +1812,17 @@ templateden_gorev_olustur template_id='%s' degerler={%s}`,
 
 	gorev, err := h.isYonetici.TemplatedenGorevOlustur(templateID, degerler)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("template'den görev oluşturulamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TCreateFailed("task", err)), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf(`✓ Template kullanılarak görev oluşturuldu!
+	successMsg := i18n.T("messages.templateTaskCreated") + "\n\n"
+	successMsg += i18n.T("messages.templateLabel", map[string]interface{}{"Template": template.Name}) + "\n"
+	successMsg += i18n.TListItem("baslik", gorev.Title) + "\n"
+	successMsg += i18n.TListItem("id_field", gorev.ID) + "\n"
+	successMsg += i18n.TListItem("oncelik", gorev.Priority) + "\n\n"
+	successMsg += i18n.T("messages.detailsCommand", map[string]interface{}{"ID": gorev.ID})
 
-Template: %s
-Başlık: %s
-ID: %s
-Öncelik: %s
-
-Detaylar için: gorev_detay id='%s'`,
-		template.Name, gorev.Title, gorev.ID, gorev.Priority, gorev.ID)), nil
+	return mcp.NewToolResultText(successMsg), nil
 }
 
 // RegisterTools tüm araçları MCP sunucusuna kaydeder
@@ -1815,12 +1830,12 @@ Detaylar için: gorev_detay id='%s'`,
 func (h *Handlers) GorevAltGorevOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	parentID, ok := params["parent_id"].(string)
 	if !ok || parentID == "" {
-		return mcp.NewToolResultError("parent_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("parent_id")), nil
 	}
 
 	baslik, ok := params[constants.ParamTitle].(string)
 	if !ok || baslik == "" {
-		return mcp.NewToolResultError("başlık parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("baslik")), nil
 	}
 
 	aciklama, _ := params[constants.ParamDescription].(string)
@@ -1841,69 +1856,82 @@ func (h *Handlers) GorevAltGorevOlustur(params map[string]interface{}) (*mcp.Cal
 
 	gorev, err := h.isYonetici.AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarih, etiketler)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("alt görev oluşturulamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TCreateFailed("subtask", err)), nil
 	}
 
-	return mcp.NewToolResultText(fmt.Sprintf("✓ Alt görev oluşturuldu: %s (ID: %s)", gorev.Title, gorev.ID)), nil
+	return mcp.NewToolResultText(i18n.T("success.subtaskCreated", map[string]interface{}{
+		"Title": gorev.Title,
+		"Id":    gorev.ID,
+	})), nil
 }
 
 // GorevUstDegistir bir görevin üst görevini değiştirir
 func (h *Handlers) GorevUstDegistir(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	gorevID, ok := params["gorev_id"].(string)
 	if !ok || gorevID == "" {
-		return mcp.NewToolResultError("gorev_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("gorev_id")), nil
 	}
 
 	yeniParentID, _ := params["yeni_parent_id"].(string)
 
 	err := h.isYonetici.GorevUstDegistir(gorevID, yeniParentID)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("üst görev değiştirilemedi: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TUpdateFailed("task", err)), nil
 	}
 
 	if yeniParentID == "" {
-		return mcp.NewToolResultText("✓ Görev kök seviyeye taşındı"), nil
+		return mcp.NewToolResultText(i18n.T("success.taskMovedToRoot")), nil
 	}
-	return mcp.NewToolResultText("✓ Görev yeni üst göreve taşındı"), nil
+	return mcp.NewToolResultText(i18n.T("success.taskMovedToParent")), nil
 }
 
 // GorevHiyerarsiGoster bir görevin tam hiyerarşisini gösterir
 func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	gorevID, ok := params["gorev_id"].(string)
 	if !ok || gorevID == "" {
-		return mcp.NewToolResultError("gorev_id parametresi gerekli"), nil
+		return mcp.NewToolResultError(i18n.TRequiredParam("gorev_id")), nil
 	}
 
 	hiyerarsi, err := h.isYonetici.GorevHiyerarsiGetir(gorevID)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("hiyerarşi alınamadı: %v", err)), nil
+		return mcp.NewToolResultError(i18n.TFetchFailed("hierarchy", err)), nil
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("# 📊 Görev Hiyerarşisi: %s\n\n", hiyerarsi.Gorev.Title))
+	sb.WriteString(i18n.T("messages.hierarchyTitle", map[string]interface{}{
+		"Title": hiyerarsi.Gorev.Title,
+	}) + "\n\n")
 
 	// Üst görevler
 	if len(hiyerarsi.ParentTasks) > 0 {
-		sb.WriteString("## 📍 Üst Görevler\n")
+		sb.WriteString(i18n.T("messages.upperTaskHeader") + "\n")
 		for i := len(hiyerarsi.ParentTasks) - 1; i >= 0; i-- {
 			ust := hiyerarsi.ParentTasks[i]
 			sb.WriteString(fmt.Sprintf("%s└─ %s (%s)\n", strings.Repeat("  ", len(hiyerarsi.ParentTasks)-i-1), ust.Title, ust.Status))
 		}
-		sb.WriteString(fmt.Sprintf("%s└─ **%s** (Mevcut Görev)\n\n", strings.Repeat("  ", len(hiyerarsi.ParentTasks)), hiyerarsi.Gorev.Title))
+		sb.WriteString(fmt.Sprintf("%s", strings.Repeat("  ", len(hiyerarsi.ParentTasks))))
+		sb.WriteString(i18n.T("messages.currentTaskMarker", map[string]interface{}{
+			"Title": hiyerarsi.Gorev.Title,
+		}) + "\n\n")
 	}
 
 	// Alt görev istatistikleri
-	sb.WriteString("## 📈 Alt Görev İstatistikleri\n")
-	sb.WriteString(fmt.Sprintf("- **Toplam Alt Görev:** %d\n", hiyerarsi.TotalSubtasks))
-	sb.WriteString(fmt.Sprintf("- **Tamamlanan:** %d ✓\n", hiyerarsi.CompletedSubtasks))
-	sb.WriteString(fmt.Sprintf("- **Devam Eden:** %d 🔄\n", hiyerarsi.InProgressSubtasks))
-	sb.WriteString(fmt.Sprintf("- **Beklemede:** %d %s\n", hiyerarsi.PendingSubtasks, constants.EmojiStatusPending))
-	sb.WriteString(fmt.Sprintf("- **İlerleme:** %.1f%%\n\n", hiyerarsi.ProgressPercentage))
+	sb.WriteString(i18n.T("messages.subtaskStats") + "\n")
+	sb.WriteString(i18n.T("messages.totalSubtasks", map[string]interface{}{"Count": hiyerarsi.TotalSubtasks}) + "\n")
+	sb.WriteString(i18n.T("messages.completedSubtasks", map[string]interface{}{"Count": hiyerarsi.CompletedSubtasks}) + "\n")
+	sb.WriteString(i18n.T("messages.inProgressSubtasks", map[string]interface{}{"Count": hiyerarsi.InProgressSubtasks}) + "\n")
+	sb.WriteString(i18n.T("messages.pendingSubtasks", map[string]interface{}{
+		"Count": hiyerarsi.PendingSubtasks,
+		"Emoji": constants.EmojiStatusPending,
+	}) + "\n")
+	sb.WriteString(i18n.T("messages.progressPercent", map[string]interface{}{
+		"Percent": fmt.Sprintf("%.1f", hiyerarsi.ProgressPercentage),
+	}) + "\n\n")
 
 	// Doğrudan alt görevler
 	altGorevler, err := h.isYonetici.AltGorevleriGetir(gorevID)
 	if err == nil && len(altGorevler) > 0 {
-		sb.WriteString("## 🌳 Doğrudan Alt Görevler\n")
+		sb.WriteString(i18n.T("messages.directSubtasks") + "\n")
 		for _, alt := range altGorevler {
 			durum := h.toolHelpers.Formatter.GetStatusEmoji(alt.Status)
 			sb.WriteString(fmt.Sprintf("- %s %s (ID: %s)\n", durum, alt.Title, alt.ID))
@@ -2008,7 +2036,7 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 	case "gorev_ide_update":
 		return h.IDEUpdateExtension(params)
 	default:
-		return mcp.NewToolResultError(fmt.Sprintf("bilinmeyen araç: %s", toolName)), nil
+		return mcp.NewToolResultError(i18n.T("error.unknownTool", map[string]interface{}{"Tool": toolName})), nil
 	}
 }
 
