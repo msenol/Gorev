@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -225,7 +226,7 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 				tc.setupError(vy)
 			}
 
-			result, err := acy.BatchUpdate(tc.updates)
+			result, err := acy.BatchUpdate(context.Background(), tc.updates)
 
 			if tc.expectSuccess && err != nil {
 				t.Errorf("Expected success but got error: %v", err)
@@ -359,7 +360,7 @@ func TestAIContextYonetici_NLPQueryError(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tasks, err := acy.NLPQuery(tc.query)
+			tasks, err := acy.NLPQuery(context.Background(), tc.query)
 
 			if tc.expectError && err == nil {
 				t.Error("Expected error but got none")

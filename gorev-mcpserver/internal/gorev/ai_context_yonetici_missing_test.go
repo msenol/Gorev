@@ -390,7 +390,7 @@ func TestAIContextYonetici_NLPQueryBasic(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tasks, err := acy.NLPQuery(tc.query)
+			tasks, err := acy.NLPQuery(context.Background(), tc.query)
 
 			if tc.expectError && err == nil {
 				t.Error("Expected error but got none")
@@ -415,7 +415,7 @@ func TestAIContextYonetici_NLPQuery_DatabaseError(t *testing.T) {
 	vy.shouldReturnError = true
 	vy.errorToReturn = errors.New("database connection failed")
 
-	_, err := acy.NLPQuery("some query")
+	_, err := acy.NLPQuery(context.Background(), "some query")
 	if err == nil {
 		t.Error("Expected error but got none")
 	}

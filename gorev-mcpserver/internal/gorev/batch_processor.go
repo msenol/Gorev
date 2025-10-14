@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -86,7 +87,7 @@ type BulkDeleteRequest struct {
 }
 
 // ProcessBatchUpdate performs multiple task updates in a single transaction
-func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*BatchUpdateResult, error) {
+func (bp *BatchProcessor) ProcessBatchUpdate(ctx context.Context, requests []BatchUpdateRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
 
 	result := &BatchUpdateResult{
@@ -100,7 +101,7 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 	for _, request := range requests {
 		if request.DryRun {
 			// Validate without executing
-			if err := bp.validateUpdateRequest(request); err != nil {
+			if err := bp.validateUpdateRequest(ctx, request); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: request.TaskID,
 					Error:  fmt.Sprintf("validation failed: %v", err),
@@ -115,11 +116,11 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 		}
 
 		// Validate task exists
-		task, err := bp.veriYonetici.GorevDetay(request.TaskID)
+		task, err := bp.veriYonetici.GorevDetay(ctx, request.TaskID)
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: request.TaskID,
-				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
+				Error:  i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
@@ -180,11 +181,11 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 		// Update tags
 		if tagsRaw, ok := request.Updates["etiketler"]; ok {
 			if tagNames, ok := tagsRaw.([]string); ok {
-				tags, err := bp.veriYonetici.EtiketleriGetirVeyaOlustur(tagNames)
+				tags, err := bp.veriYonetici.EtiketleriGetirVeyaOlustur(ctx, tagNames)
 				if err != nil {
 					warnings = append(warnings, fmt.Sprintf("tag processing failed: %v", err))
 				} else {
-					if err := bp.veriYonetici.GorevEtiketleriniAyarla(request.TaskID, tags); err != nil {
+					if err := bp.veriYonetici.GorevEtiketleriniAyarla(ctx, request.TaskID, tags); err != nil {
 						warnings = append(warnings, fmt.Sprintf("tag assignment failed: %v", err))
 					} else {
 						updated = true
@@ -203,7 +204,7 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 				updateParams["priority"] = newPriority
 			}
 
-			if err := bp.veriYonetici.GorevGuncelle(request.TaskID, updateParams); err != nil {
+			if err := bp.veriYonetici.GorevGuncelle(ctx, request.TaskID, updateParams); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: request.TaskID,
 					Error:  fmt.Sprintf("update failed: %v", err),
@@ -215,7 +216,7 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 
 			// Record interaction
 			if bp.aiContextManager != nil {
-				if recErr := bp.aiContextManager.RecordInteraction(request.TaskID, "batch_update", request.Updates); recErr != nil {
+				if recErr := bp.aiContextManager.RecordInteraction(ctx, request.TaskID, "batch_update", request.Updates); recErr != nil {
 					log.Printf("Failed to record AI interaction (batch_update): taskID=%s, error=%v", request.TaskID, recErr)
 				}
 			}
@@ -241,7 +242,7 @@ func (bp *BatchProcessor) ProcessBatchUpdate(requests []BatchUpdateRequest) (*Ba
 }
 
 // BulkStatusTransition changes status for multiple tasks
-func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionRequest) (*BatchUpdateResult, error) {
+func (bp *BatchProcessor) BulkStatusTransition(ctx context.Context, request BulkStatusTransitionRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
 
 	result := &BatchUpdateResult{
@@ -254,16 +255,16 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 
 	// Validate new status
 	if !bp.validateStatus(request.NewStatus) {
-		return nil, fmt.Errorf(i18n.T("error.invalidStatusBatch", map[string]interface{}{"Status": request.NewStatus}))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.invalidStatusBatch", map[string]interface{}{"Status": request.NewStatus}))
 	}
 
 	for _, taskID := range request.TaskIDs {
 		if request.DryRun {
-			task, err := bp.veriYonetici.GorevDetay(taskID)
+			task, err := bp.veriYonetici.GorevDetay(ctx, taskID)
 			if err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
-					Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
+					Error:  i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}),
 				})
 			} else if !bp.validateStatusTransition(task.Status, request.NewStatus) {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -280,11 +281,11 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		}
 
 		// Get task
-		task, err := bp.veriYonetici.GorevDetay(taskID)
+		task, err := bp.veriYonetici.GorevDetay(ctx, taskID)
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
-				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
+				Error:  i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
@@ -310,7 +311,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 
 		// Check dependencies if required
 		if request.CheckDependencies && request.NewStatus == constants.TaskStatusInProgress {
-			canStart, err := bp.checkDependenciesCompleted(taskID)
+			canStart, err := bp.checkDependenciesCompleted(ctx, taskID)
 			if err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
@@ -329,7 +330,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 		}
 
 		// Update status
-		if err := bp.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": request.NewStatus}); err != nil {
+		if err := bp.veriYonetici.GorevGuncelle(ctx, taskID, map[string]interface{}{"status": request.NewStatus}); err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
 				Error:  fmt.Sprintf("update failed: %v", err),
@@ -341,7 +342,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 
 		// Record interaction
 		if bp.aiContextManager != nil {
-			if recErr := bp.aiContextManager.RecordInteraction(taskID, "bulk_status_change", map[string]interface{}{
+			if recErr := bp.aiContextManager.RecordInteraction(ctx, taskID, "bulk_status_change", map[string]interface{}{
 				"old_status": task.Status,
 				"new_status": request.NewStatus,
 			}); recErr != nil {
@@ -361,7 +362,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 }
 
 // BulkTagOperation adds, removes, or replaces tags for multiple tasks
-func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*BatchUpdateResult, error) {
+func (bp *BatchProcessor) BulkTagOperation(ctx context.Context, request BulkTagOperationRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
 
 	result := &BatchUpdateResult{
@@ -374,25 +375,25 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 
 	// Validate operation
 	if request.Operation != "add" && request.Operation != "remove" && request.Operation != "replace" {
-		return nil, fmt.Errorf(i18n.T("error.invalidOperationBatch", map[string]interface{}{"Operation": request.Operation}))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.invalidOperationBatch", map[string]interface{}{"Operation": request.Operation}))
 	}
 
 	// Get or create tags for add/replace operations
 	var tags []*Etiket
 	if request.Operation == "add" || request.Operation == "replace" {
 		var err error
-		tags, err = bp.veriYonetici.EtiketleriGetirVeyaOlustur(request.Tags)
+		tags, err = bp.veriYonetici.EtiketleriGetirVeyaOlustur(ctx, request.Tags)
 		if err != nil {
-			return nil, fmt.Errorf(i18n.T("error.tagsGetCreateFailed", map[string]interface{}{"Error": err}))
+			return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.tagsGetCreateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
 
 	for _, taskID := range request.TaskIDs {
 		if request.DryRun {
-			if _, err := bp.veriYonetici.GorevDetay(taskID); err != nil {
+			if _, err := bp.veriYonetici.GorevDetay(ctx, taskID); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
-					Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
+					Error:  i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}),
 				})
 			} else {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -404,11 +405,11 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 		}
 
 		// Get current task
-		task, err := bp.veriYonetici.GorevDetay(taskID)
+		task, err := bp.veriYonetici.GorevDetay(ctx, taskID)
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
-				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
+				Error:  i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
@@ -467,7 +468,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 		}
 
 		if updated {
-			if err := bp.veriYonetici.GorevEtiketleriniAyarla(taskID, newTags); err != nil {
+			if err := bp.veriYonetici.GorevEtiketleriniAyarla(ctx, taskID, newTags); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
 					Error:  fmt.Sprintf("tag operation failed: %v", err),
@@ -479,7 +480,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 
 			// Record interaction
 			if bp.aiContextManager != nil {
-				if recErr := bp.aiContextManager.RecordInteraction(taskID, "bulk_tag_operation", map[string]interface{}{
+				if recErr := bp.aiContextManager.RecordInteraction(ctx, taskID, "bulk_tag_operation", map[string]interface{}{
 					"operation": request.Operation,
 					"tags":      request.Tags,
 				}); recErr != nil {
@@ -505,7 +506,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 }
 
 // BulkDelete deletes multiple tasks with safety checks
-func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateResult, error) {
+func (bp *BatchProcessor) BulkDelete(ctx context.Context, request BulkDeleteRequest) (*BatchUpdateResult, error) {
 	startTime := time.Now()
 
 	result := &BatchUpdateResult{
@@ -519,15 +520,15 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 	// Safety check: require confirmation
 	expectedConfirmation := fmt.Sprintf("DELETE %d TASKS", len(request.TaskIDs))
 	if !request.Force && request.Confirmation != expectedConfirmation {
-		return nil, fmt.Errorf(i18n.T("error.bulkDeleteConfirmRequired", map[string]interface{}{"Confirmation": expectedConfirmation}))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.bulkDeleteConfirmRequired", map[string]interface{}{"Confirmation": expectedConfirmation}))
 	}
 
 	for _, taskID := range request.TaskIDs {
 		if request.DryRun {
-			if _, err := bp.veriYonetici.GorevDetay(taskID); err != nil {
+			if _, err := bp.veriYonetici.GorevDetay(ctx, taskID); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
-					Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
+					Error:  i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}),
 				})
 			} else {
 				result.Warnings = append(result.Warnings, BatchUpdateWarning{
@@ -539,18 +540,18 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 		}
 
 		// Check if task exists
-		_, err := bp.veriYonetici.GorevDetay(taskID)
+		_, err := bp.veriYonetici.GorevDetay(ctx, taskID)
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
-				Error:  i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}),
+				Error:  i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}),
 			})
 			continue
 		}
 
 		// Check for subtasks
 		if !request.DeleteSubtasks {
-			subtasks, err := bp.veriYonetici.AltGorevleriGetir(taskID)
+			subtasks, err := bp.veriYonetici.AltGorevleriGetir(ctx, taskID)
 			if err == nil && len(subtasks) > 0 {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: taskID,
@@ -564,7 +565,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 		// This would require a reverse dependency lookup - for now, we'll skip this check
 
 		// Delete the task
-		if err := bp.veriYonetici.GorevSil(taskID); err != nil {
+		if err := bp.veriYonetici.GorevSil(ctx, taskID); err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: taskID,
 				Error:  fmt.Sprintf("deletion failed: %v", err),
@@ -576,7 +577,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 
 		// Record interaction
 		if bp.aiContextManager != nil {
-			if err := bp.aiContextManager.RecordInteraction(taskID, "bulk_delete", map[string]interface{}{
+			if err := bp.aiContextManager.RecordInteraction(ctx, taskID, "bulk_delete", map[string]interface{}{
 				"batch_operation": true,
 				"deleted":         true,
 			}); err != nil {
@@ -598,28 +599,28 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 
 // Helper validation methods
 
-func (bp *BatchProcessor) validateUpdateRequest(request BatchUpdateRequest) error {
+func (bp *BatchProcessor) validateUpdateRequest(ctx context.Context, request BatchUpdateRequest) error {
 	// Check if task exists
-	if _, err := bp.veriYonetici.GorevDetay(request.TaskID); err != nil {
-		return fmt.Errorf(i18n.T("error.taskNotFound", map[string]interface{}{"Error": err}))
+	if _, err := bp.veriYonetici.GorevDetay(ctx, request.TaskID); err != nil {
+		return fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.taskNotFound", map[string]interface{}{"Error": err}))
 	}
 
 	// Validate individual fields
 	if status, ok := request.Updates["status"].(string); ok {
 		if !bp.validateStatus(status) {
-			return fmt.Errorf(i18n.T("error.invalidStatusBatch", map[string]interface{}{"Status": status}))
+			return fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.invalidStatusBatch", map[string]interface{}{"Status": status}))
 		}
 	}
 
 	if priority, ok := request.Updates["priority"].(string); ok {
 		if !bp.validatePriority(priority) {
-			return fmt.Errorf(i18n.T("error.invalidPriorityBatch", map[string]interface{}{"Priority": priority}))
+			return fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.invalidPriorityBatch", map[string]interface{}{"Priority": priority}))
 		}
 	}
 
 	if title, ok := request.Updates["title"].(string); ok {
 		if strings.TrimSpace(title) == "" {
-			return fmt.Errorf(i18n.T("error.titleCannotBeEmpty"))
+			return fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.titleCannotBeEmpty"))
 		}
 	}
 
@@ -668,8 +669,8 @@ func (bp *BatchProcessor) validateStatusTransition(from, to string) bool {
 	return false
 }
 
-func (bp *BatchProcessor) checkDependenciesCompleted(taskID string) (bool, error) {
-	dependencies, err := bp.veriYonetici.GorevBagimlilikGetir(taskID)
+func (bp *BatchProcessor) checkDependenciesCompleted(ctx context.Context, taskID string) (bool, error) {
+	dependencies, err := bp.veriYonetici.GorevBagimlilikGetir(ctx, taskID)
 	if err != nil {
 		return false, err
 	}

@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -103,17 +104,17 @@ func (m *MockVeriYoneticiAI) ProjeGorevleriGetir(projeID string) ([]*Gorev, erro
 	return args.Get(0).([]*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) AktifProjeAyarla(projeID string) error {
+func (m *MockVeriYoneticiAI) AktifProjeAyarla(ctx context.Context, projeID string) error {
 	args := m.Called(projeID)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) AktifProjeGetir() (string, error) {
+func (m *MockVeriYoneticiAI) AktifProjeGetir(ctx context.Context) (string, error) {
 	args := m.Called()
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) AktifProjeKaldir() error {
+func (m *MockVeriYoneticiAI) AktifProjeKaldir(ctx context.Context) error {
 	args := m.Called()
 	return args.Error(0)
 }
@@ -189,7 +190,7 @@ func (m *MockVeriYoneticiAI) TemplatedenGorevOlustur(templateID string, degerler
 	return args.Get(0).(*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
+func (m *MockVeriYoneticiAI) AltGorevleriGetir(ctx context.Context, parentID string) ([]*Gorev, error) {
 	args := m.Called(parentID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -197,7 +198,7 @@ func (m *MockVeriYoneticiAI) AltGorevleriGetir(parentID string) ([]*Gorev, error
 	return args.Get(0).([]*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) {
+func (m *MockVeriYoneticiAI) TumAltGorevleriGetir(ctx context.Context, parentID string) ([]*Gorev, error) {
 	args := m.Called(parentID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -205,7 +206,7 @@ func (m *MockVeriYoneticiAI) TumAltGorevleriGetir(parentID string) ([]*Gorev, er
 	return args.Get(0).([]*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
+func (m *MockVeriYoneticiAI) UstGorevleriGetir(ctx context.Context, gorevID string) ([]*Gorev, error) {
 	args := m.Called(gorevID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -213,7 +214,7 @@ func (m *MockVeriYoneticiAI) UstGorevleriGetir(gorevID string) ([]*Gorev, error)
 	return args.Get(0).([]*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error) {
+func (m *MockVeriYoneticiAI) GorevHiyerarsiGetir(ctx context.Context, gorevID string) (*GorevHiyerarsi, error) {
 	args := m.Called(gorevID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -221,12 +222,12 @@ func (m *MockVeriYoneticiAI) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerars
 	return args.Get(0).(*GorevHiyerarsi), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) ParentIDGuncelle(gorevID, yeniParentID string) error {
+func (m *MockVeriYoneticiAI) ParentIDGuncelle(ctx context.Context, gorevID, yeniParentID string) error {
 	args := m.Called(gorevID, yeniParentID)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error) {
+func (m *MockVeriYoneticiAI) DaireBagimliligiKontrolEt(ctx context.Context, gorevID, hedefParentID string) (bool, error) {
 	args := m.Called(gorevID, hedefParentID)
 	return args.Bool(0), args.Error(1)
 }
@@ -335,7 +336,7 @@ func (m *MockVeriYoneticiAI) Kapat() error {
 }
 
 // Missing interface methods
-func (m *MockVeriYoneticiAI) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+func (m *MockVeriYoneticiAI) AltGorevOlustur(ctx context.Context, parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
 	args := m.Called(parentID, baslik, aciklama, oncelik, sonTarihStr, etiketIsimleri)
 	return args.Get(0).(*Gorev), args.Error(1)
 }
@@ -370,7 +371,7 @@ func (m *MockVeriYoneticiAI) GorevSonAIEtkilesiminiGuncelle(taskID string, times
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) GorevDetay(taskID string) (*Gorev, error) {
+func (m *MockVeriYoneticiAI) GorevDetay(ctx context.Context, taskID string) (*Gorev, error) {
 	args := m.Called(taskID)
 	return args.Get(0).(*Gorev), args.Error(1)
 }
@@ -385,7 +386,7 @@ func (m *MockVeriYoneticiAI) GorevOlustur(params map[string]interface{}) (string
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
+func (m *MockVeriYoneticiAI) GorevBagimlilikGetir(ctx context.Context, taskID string) ([]*Gorev, error) {
 	args := m.Called(taskID)
 	return args.Get(0).([]*Gorev), args.Error(1)
 }
@@ -605,7 +606,7 @@ func TestBatchUpdate(t *testing.T) {
 	mockVeriYonetici.On("GorevGetir", "task-not-found").Return(nil, assert.AnError)
 
 	// Execute
-	result, err := acy.BatchUpdate(updates)
+	result, err := acy.BatchUpdate(context.Background(), updates)
 
 	// Assert
 	assert.NoError(t, err)
@@ -700,7 +701,7 @@ func TestNLPQuery(t *testing.T) {
 			}
 
 			// Execute
-			tasks, err := acy.NLPQuery(tt.query)
+			tasks, err := acy.NLPQuery(context.Background(), tt.query)
 
 			// Assert
 			assert.NoError(t, err)
@@ -893,7 +894,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 			}
 
 			// Execute
-			result, err := acy.BatchUpdate(tt.updates)
+			result, err := acy.BatchUpdate(context.Background(), tt.updates)
 
 			// Assert
 			if tt.expectError {

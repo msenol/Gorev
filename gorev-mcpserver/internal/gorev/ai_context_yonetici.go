@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"sort"
@@ -63,14 +64,14 @@ func (acy *AIContextYonetici) SetAutoStateManager(asm *AutoStateManager) {
 }
 
 // SetActiveTask sets the active task for the AI session
-func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
+func (acy *AIContextYonetici) SetActiveTask(ctx context.Context, taskID string) error {
 	acy.mu.Lock()
 	defer acy.mu.Unlock()
 
 	// Validate task exists
-	gorev, err := acy.veriYonetici.GorevGetir(taskID)
+	gorev, err := acy.veriYonetici.GorevGetir(ctx, taskID)
 	if err != nil {
-		return errors.New(i18n.TEntityNotFound("tr", "task", err))
+		return errors.New(i18n.TEntityNotFound(i18n.FromContext(ctx), "task", err))
 	}
 
 	// Get current context
@@ -101,14 +102,14 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	}
 
 	// Record interaction
-	if err := acy.recordInteraction(taskID, "set_active", nil); err != nil {
+	if err := acy.recordInteraction(ctx, taskID, "set_active", nil); err != nil {
 		return errors.New(i18n.T("error.interactionSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Auto-transition to constants.TaskStatusInProgress if task is in constants.TaskStatusPending
 	if gorev.Status == constants.TaskStatusPending {
 		gorev.Status = constants.TaskStatusInProgress
-		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"status": constants.TaskStatusInProgress}); err != nil {
+		if err := acy.veriYonetici.GorevGuncelle(ctx, gorev.ID, map[string]interface{}{"status": constants.TaskStatusInProgress}); err != nil {
 			return errors.New(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
@@ -117,7 +118,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 }
 
 // GetActiveTask returns the current active task
-func (acy *AIContextYonetici) GetActiveTask() (*Gorev, error) {
+func (acy *AIContextYonetici) GetActiveTask(ctx context.Context) (*Gorev, error) {
 	acy.mu.RLock()
 	defer acy.mu.RUnlock()
 
@@ -130,11 +131,11 @@ func (acy *AIContextYonetici) GetActiveTask() (*Gorev, error) {
 		return nil, nil
 	}
 
-	return acy.veriYonetici.GorevGetir(context.ActiveTaskID)
+	return acy.veriYonetici.GorevGetir(ctx, context.ActiveTaskID)
 }
 
 // GetRecentTasks returns the recent tasks interacted with
-func (acy *AIContextYonetici) GetRecentTasks(limit int) ([]*Gorev, error) {
+func (acy *AIContextYonetici) GetRecentTasks(ctx context.Context, limit int) ([]*Gorev, error) {
 	acy.mu.RLock()
 	defer acy.mu.RUnlock()
 
@@ -149,7 +150,7 @@ func (acy *AIContextYonetici) GetRecentTasks(limit int) ([]*Gorev, error) {
 
 	tasks := make([]*Gorev, 0, limit)
 	for i := 0; i < limit; i++ {
-		gorev, err := acy.veriYonetici.GorevGetir(context.RecentTasks[i])
+		gorev, err := acy.veriYonetici.GorevGetir(ctx, context.RecentTasks[i])
 		if err != nil {
 			continue // Skip if task not found
 		}
@@ -160,20 +161,20 @@ func (acy *AIContextYonetici) GetRecentTasks(limit int) ([]*Gorev, error) {
 }
 
 // GetContextSummary returns an AI-optimized summary of the current context
-func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
+func (acy *AIContextYonetici) GetContextSummary(ctx context.Context) (*AIContextSummary, error) {
 	summary := &AIContextSummary{}
 
 	// Get active task
-	activeTask, _ := acy.GetActiveTask()
+	activeTask, _ := acy.GetActiveTask(ctx)
 	summary.ActiveTask = activeTask
 
 	// Get recent tasks
-	recentTasks, _ := acy.GetRecentTasks(constants.DefaultRecentTaskLimit)
+	recentTasks, _ := acy.GetRecentTasks(ctx, constants.DefaultRecentTaskLimit)
 	summary.RecentTasks = recentTasks
 
 	// Get working project
 	if activeTask != nil && activeTask.ProjeID != "" {
-		proje, _ := acy.veriYonetici.ProjeGetir(activeTask.ProjeID)
+		proje, _ := acy.veriYonetici.ProjeGetir(ctx, activeTask.ProjeID)
 		summary.WorkingProject = proje
 	}
 
@@ -193,7 +194,7 @@ func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
 	}
 
 	// Get next priorities (high priority, not completed)
-	gorevler, _ := acy.veriYonetici.GorevleriGetir(constants.TaskStatusPending, "", "")
+	gorevler, _ := acy.veriYonetici.GorevleriGetir(ctx, constants.TaskStatusPending, "", "")
 	for _, g := range gorevler {
 		if g.Priority == constants.PriorityHigh {
 			summary.NextPriorities = append(summary.NextPriorities, g)
@@ -217,14 +218,14 @@ func (acy *AIContextYonetici) GetContextSummary() (*AIContextSummary, error) {
 }
 
 // RecordTaskView records when a task is viewed and auto-transitions state
-func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
+func (acy *AIContextYonetici) RecordTaskView(ctx context.Context, taskID string) error {
 	// Record interaction
-	if err := acy.recordInteraction(taskID, "viewed", nil); err != nil {
+	if err := acy.recordInteraction(ctx, taskID, "viewed", nil); err != nil {
 		return err
 	}
 
 	// Get task
-	gorev, err := acy.veriYonetici.GorevGetir(taskID)
+	gorev, err := acy.veriYonetici.GorevGetir(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -232,11 +233,11 @@ func (acy *AIContextYonetici) RecordTaskView(taskID string) error {
 	// Auto-transition to constants.TaskStatusInProgress if in constants.TaskStatusPending
 	if gorev.Status == constants.TaskStatusPending {
 		gorev.Status = constants.TaskStatusInProgress
-		if err := acy.veriYonetici.GorevGuncelle(gorev.ID, map[string]interface{}{"status": constants.TaskStatusInProgress}); err != nil {
+		if err := acy.veriYonetici.GorevGuncelle(ctx, gorev.ID, map[string]interface{}{"status": constants.TaskStatusInProgress}); err != nil {
 			return errors.New(i18n.T("error.autoStatusUpdateFailed", map[string]interface{}{"Error": err}))
 		}
 		// Record the state change
-		if err := acy.recordInteraction(taskID, "updated", map[string]interface{}{
+		if err := acy.recordInteraction(ctx, taskID, "updated", map[string]interface{}{
 			"auto_state_change": true,
 			"from":              constants.TaskStatusPending,
 			"to":                constants.TaskStatusInProgress,
@@ -278,12 +279,12 @@ func (acy *AIContextYonetici) saveContextUnsafe(context *AIContext) error {
 	return acy.veriYonetici.AIContextKaydet(context)
 }
 
-func (acy *AIContextYonetici) RecordInteraction(taskID, actionType string, context interface{}) error {
-	return acy.recordInteraction(taskID, actionType, context)
+func (acy *AIContextYonetici) RecordInteraction(ctx context.Context, taskID, actionType string, context interface{}) error {
+	return acy.recordInteraction(ctx, taskID, actionType, context)
 }
 
 // recordInteraction is the internal method for recording interactions
-func (acy *AIContextYonetici) recordInteraction(taskID, actionType string, context interface{}) error {
+func (acy *AIContextYonetici) recordInteraction(ctx context.Context, taskID, actionType string, context interface{}) error {
 	// Convert context to JSON string if provided
 	contextJSON := ""
 	if context != nil {
@@ -348,7 +349,7 @@ type BatchUpdate struct {
 }
 
 // BatchUpdate performs multiple task updates in a single operation
-func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateResult, error) {
+func (acy *AIContextYonetici) BatchUpdate(ctx context.Context, updates []BatchUpdate) (*BatchUpdateResult, error) {
 	result := &BatchUpdateResult{
 		Successful: []string{},
 		Failed:     []BatchUpdateError{},
@@ -356,11 +357,11 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 
 	for _, update := range updates {
 		// Validate task exists
-		_, err := acy.veriYonetici.GorevGetir(update.ID)
+		_, err := acy.veriYonetici.GorevGetir(ctx, update.ID)
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: update.ID,
-				Error:  i18n.TEntityNotFound("tr", "task", err),
+				Error:  i18n.TEntityNotFound(i18n.FromContext(ctx), "task", err),
 			})
 			continue
 		}
@@ -440,7 +441,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 
 		// Apply all validated updates at once
 		if len(updateFields) > 0 {
-			if err := acy.veriYonetici.GorevGuncelle(update.ID, updateFields); err != nil {
+			if err := acy.veriYonetici.GorevGuncelle(ctx, update.ID, updateFields); err != nil {
 				result.Failed = append(result.Failed, BatchUpdateError{
 					TaskID: update.ID,
 					Error:  i18n.T("error.taskUpdateError", map[string]interface{}{"Error": err}),
@@ -452,7 +453,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 		result.Successful = append(result.Successful, update.ID)
 
 		// Record batch operation
-		if err := acy.recordInteraction(update.ID, "bulk_operation", update.Updates); err != nil {
+		if err := acy.recordInteraction(ctx, update.ID, "bulk_operation", update.Updates); err != nil {
 			// Log but don't fail the operation
 			// fmt.Printf("interaction kaydetme hatası: %v\n", err)
 		}
@@ -463,13 +464,13 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 }
 
 // NLPQuery performs natural language query on tasks
-func (acy *AIContextYonetici) NLPQuery(query string) ([]*Gorev, error) {
+func (acy *AIContextYonetici) NLPQuery(ctx context.Context, query string) ([]*Gorev, error) {
 	// Use enhanced NLP processing if auto state manager is available
 	if acy.autoStateManager != nil {
-		result, err := acy.autoStateManager.ProcessNaturalLanguageQuery(query, "")
+		result, err := acy.autoStateManager.ProcessNaturalLanguageQuery(ctx, query, "")
 		if err != nil {
 			// Fallback to basic NLP processing
-			return acy.basicNLPQuery(query)
+			return acy.basicNLPQuery(ctx, query)
 		}
 
 		// Extract tasks from the structured result
@@ -483,11 +484,11 @@ func (acy *AIContextYonetici) NLPQuery(query string) ([]*Gorev, error) {
 	}
 
 	// Fallback to basic NLP processing
-	return acy.basicNLPQuery(query)
+	return acy.basicNLPQuery(ctx, query)
 }
 
 // basicNLPQuery performs basic natural language query processing
-func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
+func (acy *AIContextYonetici) basicNLPQuery(ctx context.Context, query string) ([]*Gorev, error) {
 	// Normalize the query to lowercase for easier matching
 	normalizedQuery := strings.ToLower(query)
 
@@ -499,35 +500,35 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 			if err != nil {
 				return nil, err
 			}
-			return acy.getTasksFromInteractions(interactions)
+			return acy.getTasksFromInteractions(ctx, interactions)
 		},
 		"son oluşturduğum": func() ([]*Gorev, error) {
 			// Last created task
-			return acy.getLastCreatedTasks(constants.LastCreatedCount)
+			return acy.getLastCreatedTasks(ctx, constants.LastCreatedCount)
 		},
 		"son oluşturulan": func() ([]*Gorev, error) {
 			// Recently created tasks
-			return acy.getLastCreatedTasks(constants.RecentlyCreatedCount)
+			return acy.getLastCreatedTasks(ctx, constants.RecentlyCreatedCount)
 		},
 		"yüksek öncelik": func() ([]*Gorev, error) {
 			// High priority tasks
-			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusPending, "", "")
+			return acy.veriYonetici.GorevleriGetir(ctx, constants.TaskStatusPending, "", "")
 		},
 		"tamamlanmamış": func() ([]*Gorev, error) {
 			// Incomplete tasks
-			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusPending, "", "")
+			return acy.veriYonetici.GorevleriGetir(ctx, constants.TaskStatusPending, "", "")
 		},
 		"devam eden": func() ([]*Gorev, error) {
 			// In progress tasks
-			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusInProgress, "", "")
+			return acy.veriYonetici.GorevleriGetir(ctx, constants.TaskStatusInProgress, "", "")
 		},
 		"tamamlanan": func() ([]*Gorev, error) {
 			// Completed tasks
-			return acy.veriYonetici.GorevleriGetir(constants.TaskStatusCompleted, "", "")
+			return acy.veriYonetici.GorevleriGetir(ctx, constants.TaskStatusCompleted, "", "")
 		},
 		"blokaj": func() ([]*Gorev, error) {
 			// Blocked tasks
-			gorevler, _ := acy.veriYonetici.GorevleriGetir("", "", "")
+			gorevler, _ := acy.veriYonetici.GorevleriGetir(ctx, "", "", "")
 			var blocked []*Gorev
 			for _, g := range gorevler {
 				if g.UncompletedDependencyCount > 0 {
@@ -538,11 +539,11 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 		},
 		"acil": func() ([]*Gorev, error) {
 			// Urgent tasks (due soon)
-			return acy.veriYonetici.GorevleriGetir("", "", "acil")
+			return acy.veriYonetici.GorevleriGetir(ctx, "", "", "acil")
 		},
 		"gecikmiş": func() ([]*Gorev, error) {
 			// Overdue tasks
-			return acy.veriYonetici.GorevleriGetir("", "", "gecmis")
+			return acy.veriYonetici.GorevleriGetir(ctx, "", "", "gecmis")
 		},
 	}
 
@@ -560,7 +561,7 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 		if len(parts) > 1 {
 			tagName := strings.TrimSpace(parts[1])
 			// Filter by tag - we need to filter the results manually
-			allTasks, err := acy.veriYonetici.GorevleriGetir("", "", "")
+			allTasks, err := acy.veriYonetici.GorevleriGetir(ctx, "", "", "")
 			if err != nil {
 				return nil, err
 			}
@@ -585,7 +586,7 @@ func (acy *AIContextYonetici) basicNLPQuery(query string) ([]*Gorev, error) {
 	}
 
 	// Default: search in task titles and descriptions
-	allTasks, err := acy.veriYonetici.GorevleriGetir("", "", "")
+	allTasks, err := acy.veriYonetici.GorevleriGetir(ctx, "", "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -619,13 +620,13 @@ func (acy *AIContextYonetici) getTodayInteractions() ([]*AIInteraction, error) {
 	return acy.veriYonetici.AITodayInteractionlariGetir()
 }
 
-func (acy *AIContextYonetici) getTasksFromInteractions(interactions []*AIInteraction) ([]*Gorev, error) {
+func (acy *AIContextYonetici) getTasksFromInteractions(ctx context.Context, interactions []*AIInteraction) ([]*Gorev, error) {
 	seen := make(map[string]bool)
 	var tasks []*Gorev
 
 	for _, interaction := range interactions {
 		if !seen[interaction.GorevID] {
-			task, err := acy.veriYonetici.GorevGetir(interaction.GorevID)
+			task, err := acy.veriYonetici.GorevGetir(ctx, interaction.GorevID)
 			if err == nil {
 				tasks = append(tasks, task)
 				seen[interaction.GorevID] = true
@@ -636,9 +637,9 @@ func (acy *AIContextYonetici) getTasksFromInteractions(interactions []*AIInterac
 	return tasks, nil
 }
 
-func (acy *AIContextYonetici) getLastCreatedTasks(limit int) ([]*Gorev, error) {
+func (acy *AIContextYonetici) getLastCreatedTasks(ctx context.Context, limit int) ([]*Gorev, error) {
 	// Get all tasks sorted by creation date
-	allTasks, err := acy.veriYonetici.GorevleriGetir("", "", "")
+	allTasks, err := acy.veriYonetici.GorevleriGetir(ctx, "", "", "")
 	if err != nil {
 		return nil, err
 	}

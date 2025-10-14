@@ -142,7 +142,7 @@ func TestSetupTestDatabase_NoTemplates(t *testing.T) {
 	// Verify database was created successfully (templates may or may not exist
 	// depending on previous test runs in the same session)
 	// The important thing is that CreateTemplates=false doesn't cause an error
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := veriYonetici.TemplateListele(context.Background(), "")
 	if err != nil {
 		t.Fatalf("Failed to list templates: %v", err)
 	}

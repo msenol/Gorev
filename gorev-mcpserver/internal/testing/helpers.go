@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"context"
 	"io/fs"
 	"os"
 	"strings"
@@ -81,7 +82,7 @@ func SetupTestDatabase(t *testing.T, config *TestDatabaseConfig) (*gorev.VeriYon
 
 	// Create default templates if requested
 	if config.CreateTemplates {
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		err = veriYonetici.VarsayilanTemplateleriOlustur(context.Background())
 		require.NoError(t, err)
 	}
 

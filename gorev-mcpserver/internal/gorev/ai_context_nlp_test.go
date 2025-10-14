@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -347,7 +348,7 @@ func TestAIContextYonetici_NLPQueryComprehensive(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := acy.NLPQuery(tc.query)
+			result, err := acy.NLPQuery(context.Background(), tc.query)
 
 			if err != nil {
 				t.Errorf("Unexpected error for query '%s': %v", tc.query, err)
@@ -404,7 +405,7 @@ func TestAIContextYonetici_NLPQueryWithAutoStateManager(t *testing.T) {
 	vy.gorevler["auto-test-1"] = testTask
 
 	// Test with AutoStateManager integration
-	result, err := acy.NLPQuery("show me all tasks")
+	result, err := acy.NLPQuery(context.Background(), "show me all tasks")
 
 	if err != nil {
 		t.Errorf("Unexpected error with AutoStateManager: %v", err)
@@ -440,7 +441,7 @@ func TestAIContextYonetici_BasicNLPQueryFallback(t *testing.T) {
 	}
 	vy.gorevler["fallback-1"] = task
 
-	result, err := acy.NLPQuery("fallback test")
+	result, err := acy.NLPQuery(context.Background(), "fallback test")
 
 	if err != nil {
 		t.Errorf("Unexpected error in fallback: %v", err)
@@ -503,7 +504,7 @@ func TestAIContextYonetici_NLPQueryEdgeCases(t *testing.T) {
 				vy.shouldReturnError = false
 			}
 
-			result, err := acy.NLPQuery(tc.query)
+			result, err := acy.NLPQuery(context.Background(), tc.query)
 
 			if tc.expectError {
 				if err == nil {

@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 )
 
 // TemplateOlustur yeni bir görev template'i oluşturur
-func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
+func (vy *VeriYonetici) TemplateOlustur(ctx context.Context, template *GorevTemplate) error {
 	template.ID = uuid.New().String()
 
 	// Alanları JSON'a çevir
@@ -37,14 +38,14 @@ func (vy *VeriYonetici) TemplateOlustur(template *GorevTemplate) error {
 		string(alanlarJSON), string(ornekDegerlerJSON), template.Category, template.Active)
 
 	if err != nil {
-		return fmt.Errorf(i18n.TCreateFailed("tr", "template", err))
+		return fmt.Errorf(i18n.TCreateFailed(i18n.FromContext(ctx), "template", err))
 	}
 
 	return nil
 }
 
 // TemplateListele tüm active template'leri listeler
-func (vy *VeriYonetici) TemplateListele(category string) ([]*GorevTemplate, error) {
+func (vy *VeriYonetici) TemplateListele(ctx context.Context, category string) ([]*GorevTemplate, error) {
 	var sorgu string
 	var args []interface{}
 
@@ -61,7 +62,7 @@ func (vy *VeriYonetici) TemplateListele(category string) ([]*GorevTemplate, erro
 
 	rows, err := vy.db.Query(sorgu, args...)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.TListFailed("tr", "template", err))
+		return nil, fmt.Errorf(i18n.TListFailed(i18n.FromContext(ctx), "template", err))
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
@@ -83,7 +84,7 @@ func (vy *VeriYonetici) TemplateListele(category string) ([]*GorevTemplate, erro
 
 		// Alanları parse et
 		if err := json.Unmarshal([]byte(alanlarJSON), &template.Fields); err != nil {
-			return nil, fmt.Errorf(i18n.TParseFailed("tr", "fields", err))
+			return nil, fmt.Errorf(i18n.TParseFailed(i18n.FromContext(ctx), "fields", err))
 		}
 
 		// Örnek değerleri parse et
@@ -98,7 +99,7 @@ func (vy *VeriYonetici) TemplateListele(category string) ([]*GorevTemplate, erro
 }
 
 // TemplateGetir belirli bir template'i getirir
-func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error) {
+func (vy *VeriYonetici) TemplateGetir(ctx context.Context, templateID string) (*GorevTemplate, error) {
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
 
@@ -115,12 +116,12 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf(i18n.T("error.templateNotFoundId", map[string]interface{}{"Id": templateID}))
 		}
-		return nil, fmt.Errorf(i18n.TFetchFailed("tr", "template", err))
+		return nil, fmt.Errorf(i18n.TFetchFailed(i18n.FromContext(ctx), "template", err))
 	}
 
 	// Alanları parse et
 	if err := json.Unmarshal([]byte(alanlarJSON), &template.Fields); err != nil {
-		return nil, fmt.Errorf(i18n.TParseFailed("tr", "fields", err))
+		return nil, fmt.Errorf(i18n.TParseFailed(i18n.FromContext(ctx), "fields", err))
 	}
 
 	// Örnek değerleri parse et
@@ -132,7 +133,7 @@ func (vy *VeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error)
 }
 
 // TemplateAliasIleGetir alias ile template getirir
-func (vy *VeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, error) {
+func (vy *VeriYonetici) TemplateAliasIleGetir(ctx context.Context, alias string) (*GorevTemplate, error) {
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
 
@@ -149,12 +150,12 @@ func (vy *VeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, err
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf(i18n.T("error.templateNotFoundAlias", map[string]interface{}{"Alias": alias}))
 		}
-		return nil, fmt.Errorf(i18n.TFetchFailed("tr", "template", err))
+		return nil, fmt.Errorf(i18n.TFetchFailed(i18n.FromContext(ctx), "template", err))
 	}
 
 	// Alanları parse et
 	if err := json.Unmarshal([]byte(alanlarJSON), &template.Fields); err != nil {
-		return nil, fmt.Errorf(i18n.TParseFailed("tr", "fields", err))
+		return nil, fmt.Errorf(i18n.TParseFailed(i18n.FromContext(ctx), "fields", err))
 	}
 
 	// Örnek değerleri parse et
@@ -166,21 +167,21 @@ func (vy *VeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, err
 }
 
 // TemplateIDVeyaAliasIleGetir ID veya alias ile template getirir
-func (vy *VeriYonetici) TemplateIDVeyaAliasIleGetir(idOrAlias string) (*GorevTemplate, error) {
+func (vy *VeriYonetici) TemplateIDVeyaAliasIleGetir(ctx context.Context, idOrAlias string) (*GorevTemplate, error) {
 	// Önce ID olarak dene
-	template, err := vy.TemplateGetir(idOrAlias)
+	template, err := vy.TemplateGetir(ctx, idOrAlias)
 	if err == nil {
 		return template, nil
 	}
 
 	// Sonra alias olarak dene
-	return vy.TemplateAliasIleGetir(idOrAlias)
+	return vy.TemplateAliasIleGetir(ctx, idOrAlias)
 }
 
 // TemplatedenGorevOlustur template kullanarak görev oluşturur
-func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
+func (vy *VeriYonetici) TemplatedenGorevOlustur(ctx context.Context, templateID string, degerler map[string]string) (*Gorev, error) {
 	// Template'i ID veya alias ile getir
-	template, err := vy.TemplateIDVeyaAliasIleGetir(templateID)
+	template, err := vy.TemplateIDVeyaAliasIleGetir(ctx, templateID)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +242,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 		gorev.ProjeID = val
 	} else {
 		// Aktif projeyi kullan
-		aktifProjeID, err := vy.AktifProjeGetir()
+		aktifProjeID, err := vy.AktifProjeGetir(ctx)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.activeProjectFetchFailed", map[string]interface{}{"Error": err}))
 		}
@@ -258,19 +259,19 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 	gorev.DueDate = sonTarih
 
 	// Görevi kaydet
-	err = vy.GorevKaydet(gorev)
+	err = vy.GorevKaydet(ctx, gorev)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.taskSaveFromTemplateFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Etiketleri ayarla
 	if len(etiketler) > 0 {
-		etiketNesneleri, err := vy.EtiketleriGetirVeyaOlustur(etiketler)
+		etiketNesneleri, err := vy.EtiketleriGetirVeyaOlustur(ctx, etiketler)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.tagsCreateFromTemplateFailed", map[string]interface{}{"Error": err}))
 		}
 
-		err = vy.GorevEtiketleriniAyarla(gorev.ID, etiketNesneleri)
+		err = vy.GorevEtiketleriniAyarla(ctx, gorev.ID, etiketNesneleri)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.taskTagsSetFromTemplateFailed", map[string]interface{}{"Error": err}))
 		}
@@ -282,7 +283,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[
 }
 
 // VarsayilanTemplateleriOlustur varsayılan template'leri oluşturur
-func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
+func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error {
 	templates := []*GorevTemplate{
 		{
 			Name:         "Bug Raporu",
@@ -712,9 +713,9 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 		template.ID = uuid.New().String()
 
 		// Check if template with this name already exists
-		existingTemplates, err := vy.TemplateListele("")
+		existingTemplates, err := vy.TemplateListele(ctx, "")
 		if err != nil {
-			return fmt.Errorf(i18n.TListFailed("tr", "template", err))
+			return fmt.Errorf(i18n.TListFailed(i18n.FromContext(ctx), "template", err))
 		}
 
 		exists := false
@@ -730,7 +731,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur() error {
 			continue
 		}
 
-		if err := vy.TemplateOlustur(template); err != nil {
+		if err := vy.TemplateOlustur(ctx, template); err != nil {
 			return fmt.Errorf(i18n.T("error.defaultTemplateCreateFailed", map[string]interface{}{"Template": template.Name, "Error": err}))
 		}
 	}

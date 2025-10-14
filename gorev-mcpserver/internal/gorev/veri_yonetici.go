@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -239,7 +240,7 @@ func (vy *VeriYonetici) migrateDB(migrationsYolu string) error {
 	log.Println("SUCCESS: Database migrated successfully")
 
 	// Varsayılan template'leri oluştur
-	if err := vy.VarsayilanTemplateleriOlustur(); err != nil {
+	if err := vy.VarsayilanTemplateleriOlustur(context.Background()); err != nil {
 		log.Printf("WARNING: Failed to create default templates: %v", err)
 		// Hata durumunda devam et, kritik değil
 	}
@@ -301,7 +302,7 @@ func (vy *VeriYonetici) migrateDBWithFS(migrationsFS fs.FS) error {
 }
 
 // GorevListele retrieves tasks based on filters
-func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+func (vy *VeriYonetici) GorevListele(ctx context.Context, filters map[string]interface{}) ([]*Gorev, error) {
 	// Convert filters to old format for compatibility
 	status := ""
 	sirala := ""
@@ -323,11 +324,11 @@ func (vy *VeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, 
 		}
 	}
 
-	return vy.GorevleriGetir(status, sirala, filtre)
+	return vy.GorevleriGetir(ctx, status, sirala, filtre)
 }
 
 // GorevOlustur creates a new task
-func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, error) {
+func (vy *VeriYonetici) GorevOlustur(ctx context.Context, params map[string]interface{}) (string, error) {
 	gorev := &Gorev{
 		ID:        uuid.New().String(),
 		Status:    constants.TaskStatusPending,
@@ -361,7 +362,7 @@ func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, err
 		}
 	}
 
-	if err := vy.GorevKaydet(gorev); err != nil {
+	if err := vy.GorevKaydet(ctx, gorev); err != nil {
 		return "", err
 	}
 
@@ -369,14 +370,14 @@ func (vy *VeriYonetici) GorevOlustur(params map[string]interface{}) (string, err
 }
 
 // GorevDetay retrieves detailed task information
-func (vy *VeriYonetici) GorevDetay(taskID string) (*Gorev, error) {
-	return vy.GorevGetir(taskID)
+func (vy *VeriYonetici) GorevDetay(ctx context.Context, taskID string) (*Gorev, error) {
+	return vy.GorevGetir(ctx, taskID)
 }
 
 // GorevBagimlilikGetir retrieves task dependencies
-func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
+func (vy *VeriYonetici) GorevBagimlilikGetir(ctx context.Context, taskID string) ([]*Gorev, error) {
 	// Get all dependencies for the task
-	baglantilari, err := vy.BaglantilariGetir(taskID)
+	baglantilari, err := vy.BaglantilariGetir(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +386,7 @@ func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
 	for _, baglanti := range baglantilari {
 		if baglanti.TargetID == taskID {
 			// This task depends on the source task
-			gorev, err := vy.GorevGetir(baglanti.SourceID)
+			gorev, err := vy.GorevGetir(ctx, baglanti.SourceID)
 			if err == nil {
 				bagimliGorevler = append(bagimliGorevler, gorev)
 			}
@@ -396,7 +397,7 @@ func (vy *VeriYonetici) GorevBagimlilikGetir(taskID string) ([]*Gorev, error) {
 }
 
 // AltGorevOlustur creates a subtask under a parent task
-func (vy *VeriYonetici) AltGorevOlustur(parentID, title, description, priority, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+func (vy *VeriYonetici) AltGorevOlustur(ctx context.Context, parentID, title, description, priority, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
 	var sonTarih *time.Time
 	if sonTarihStr != "" {
 		t, err := time.Parse("2006-01-02", sonTarihStr)
@@ -418,17 +419,17 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, title, description, priority, 
 		DueDate:     sonTarih,
 	}
 
-	if err := vy.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf(i18n.TSaveFailed("tr", "task", err))
+	if err := vy.GorevKaydet(ctx, gorev); err != nil {
+		return nil, fmt.Errorf(i18n.TSaveFailed(i18n.FromContext(ctx), "task", err))
 	}
 
 	if len(etiketIsimleri) > 0 {
-		etiketler, err := vy.EtiketleriGetirVeyaOlustur(etiketIsimleri)
+		etiketler, err := vy.EtiketleriGetirVeyaOlustur(ctx, etiketIsimleri)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
-		if err := vy.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
-			return nil, fmt.Errorf(i18n.TSetFailed("tr", "task_tags", err))
+		if err := vy.GorevEtiketleriniAyarla(ctx, gorev.ID, etiketler); err != nil {
+			return nil, fmt.Errorf(i18n.TSetFailed(i18n.FromContext(ctx), "task_tags", err))
 		}
 		gorev.Tags = etiketler
 	}
@@ -449,7 +450,7 @@ func (vy *VeriYonetici) GetDB() (*sql.DB, error) {
 }
 
 // ProjeOlustur creates a new project with minimal data for testing
-func (vy *VeriYonetici) ProjeOlustur(name, description string, etiketler ...string) (*Proje, error) {
+func (vy *VeriYonetici) ProjeOlustur(ctx context.Context, name, description string, etiketler ...string) (*Proje, error) {
 	proje := &Proje{
 		ID:         fmt.Sprintf("proj_%d", time.Now().UnixNano()),
 		Name:       name,
@@ -457,7 +458,7 @@ func (vy *VeriYonetici) ProjeOlustur(name, description string, etiketler ...stri
 		CreatedAt:  time.Now(),
 	}
 
-	err := vy.ProjeKaydet(proje)
+	err := vy.ProjeKaydet(ctx, proje)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +467,7 @@ func (vy *VeriYonetici) ProjeOlustur(name, description string, etiketler ...stri
 }
 
 // GorevOlusturBasit creates a task with individual parameters for testing
-func (vy *VeriYonetici) GorevOlusturBasit(title, description, projeID, priority, sonTarih, parentID, etiketler string) (*Gorev, error) {
+func (vy *VeriYonetici) GorevOlusturBasit(ctx context.Context, title, description, projeID, priority, sonTarih, parentID, etiketler string) (*Gorev, error) {
 	gorev := &Gorev{
 		ID:          fmt.Sprintf("task_%d", time.Now().UnixNano()),
 		Title:       title,
@@ -488,7 +489,7 @@ func (vy *VeriYonetici) GorevOlusturBasit(title, description, projeID, priority,
 		gorev.ParentID = parentID
 	}
 
-	err := vy.GorevKaydet(gorev)
+	err := vy.GorevKaydet(ctx, gorev)
 	if err != nil {
 		return nil, err
 	}
@@ -496,7 +497,7 @@ func (vy *VeriYonetici) GorevOlusturBasit(title, description, projeID, priority,
 	return gorev, nil
 }
 
-func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
+func (vy *VeriYonetici) GorevKaydet(ctx context.Context, gorev *Gorev) error {
 	sorgu := `INSERT INTO gorevler (id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date)
 	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
@@ -529,7 +530,7 @@ func (vy *VeriYonetici) GorevKaydet(gorev *Gorev) error {
 	return err
 }
 
-func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
+func (vy *VeriYonetici) GorevGetir(ctx context.Context, id string) (*Gorev, error) {
 	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date
 	          FROM gorevler WHERE id = ?`
 
@@ -573,7 +574,7 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 
 	// Proje adını getir (Web UI ve VS Code için)
 	if gorev.ProjeID != "" {
-		proje, err := vy.ProjeGetir(gorev.ProjeID)
+		proje, err := vy.ProjeGetir(ctx, gorev.ProjeID)
 		if err == nil && proje != nil {
 			gorev.ProjeName = proje.Name
 		}
@@ -582,7 +583,7 @@ func (vy *VeriYonetici) GorevGetir(id string) (*Gorev, error) {
 	return gorev, nil
 }
 
-func (vy *VeriYonetici) GorevleriGetir(status, sirala, filtre string) ([]*Gorev, error) {
+func (vy *VeriYonetici) GorevleriGetir(ctx context.Context, status, sirala, filtre string) ([]*Gorev, error) {
 	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date
 	          FROM gorevler`
 	args := []interface{}{}
@@ -661,7 +662,7 @@ func (vy *VeriYonetici) GorevleriGetir(status, sirala, filtre string) ([]*Gorev,
 
 		// Proje adını getir (Web UI ve VS Code için)
 		if gorev.ProjeID != "" {
-			proje, err := vy.ProjeGetir(gorev.ProjeID)
+			proje, err := vy.ProjeGetir(ctx, gorev.ProjeID)
 			if err == nil && proje != nil {
 				gorev.ProjeName = proje.Name
 			}
@@ -699,7 +700,7 @@ func (vy *VeriYonetici) gorevEtiketleriniGetir(gorevID string) ([]*Etiket, error
 	return etiketler, nil
 }
 
-func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error) {
+func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(ctx context.Context, isimler []string) ([]*Etiket, error) {
 	etiketler := make([]*Etiket, 0, len(isimler))
 	tx, err := vy.db.Begin()
 	if err != nil {
@@ -740,7 +741,7 @@ func (vy *VeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket,
 	return etiketler, tx.Commit()
 }
 
-func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
+func (vy *VeriYonetici) GorevEtiketleriniAyarla(ctx context.Context, gorevID string, etiketler []*Etiket) error {
 	// Use retry logic for the entire transaction
 	return retryOnBusy(func() error {
 		tx, err := vy.db.Begin()
@@ -776,7 +777,7 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 	}, 5) // Retry up to 5 times
 }
 
-func (vy *VeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
+func (vy *VeriYonetici) GorevGuncelle(ctx context.Context, taskID string, params interface{}) error {
 	paramsMap, ok := params.(map[string]interface{})
 	if !ok {
 		return fmt.Errorf(i18n.T("error.invalidParamsType"))
@@ -808,7 +809,7 @@ func (vy *VeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
 	return err
 }
 
-func (vy *VeriYonetici) ProjeKaydet(proje *Proje) error {
+func (vy *VeriYonetici) ProjeKaydet(ctx context.Context, proje *Proje) error {
 	sorgu := `INSERT INTO projeler (id, name, definition, created_at, updated_at)
 	          VALUES (?, ?, ?, ?, ?)`
 
@@ -823,7 +824,7 @@ func (vy *VeriYonetici) ProjeKaydet(proje *Proje) error {
 	return err
 }
 
-func (vy *VeriYonetici) ProjeGetir(id string) (*Proje, error) {
+func (vy *VeriYonetici) ProjeGetir(ctx context.Context, id string) (*Proje, error) {
 	sorgu := `SELECT id, name, definition, created_at, updated_at
 	          FROM projeler WHERE id = ?`
 
@@ -843,7 +844,7 @@ func (vy *VeriYonetici) ProjeGetir(id string) (*Proje, error) {
 	return proje, nil
 }
 
-func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
+func (vy *VeriYonetici) ProjeleriGetir(ctx context.Context) ([]*Proje, error) {
 	sorgu := `SELECT p.id, p.name, p.definition, p.created_at, p.updated_at,
 	          COUNT(g.id) as gorev_sayisi
 	          FROM projeler p
@@ -879,7 +880,7 @@ func (vy *VeriYonetici) ProjeleriGetir() ([]*Proje, error) {
 	return projeler, nil
 }
 
-func (vy *VeriYonetici) GorevSil(id string) error {
+func (vy *VeriYonetici) GorevSil(ctx context.Context, id string) error {
 	sorgu := `DELETE FROM gorevler WHERE id = ?`
 
 	result, err := vy.db.Exec(sorgu, id)
@@ -893,7 +894,7 @@ func (vy *VeriYonetici) GorevSil(id string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf(i18n.TEntityNotFound("tr", "task", errors.New("not found")))
+		return fmt.Errorf(i18n.TEntityNotFound(i18n.FromContext(ctx), "task", errors.New("not found")))
 	}
 
 	// Emit task deleted event if operation succeeded
@@ -904,7 +905,7 @@ func (vy *VeriYonetici) GorevSil(id string) error {
 	return nil
 }
 
-func (vy *VeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
+func (vy *VeriYonetici) ProjeGorevleriGetir(ctx context.Context, projeID string) ([]*Gorev, error) {
 	sorgu := `SELECT id, title, description, status, priority, project_id, created_at, updated_at
 	          FROM gorevler WHERE project_id = ? ORDER BY created_at DESC`
 
@@ -945,14 +946,14 @@ func (vy *VeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
 	return gorevler, nil
 }
 
-func (vy *VeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
+func (vy *VeriYonetici) BaglantiEkle(ctx context.Context, baglanti *Baglanti) error {
 	sorgu := `INSERT INTO baglantilar (id, source_id, target_id, connection_type) VALUES (?, ?, ?, ?)`
 	_, err := vy.db.Exec(sorgu, baglanti.ID, baglanti.SourceID, baglanti.TargetID, baglanti.ConnectionType)
 	return err
 }
 
 // BaglantiSil removes a dependency relationship between two tasks
-func (vy *VeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
+func (vy *VeriYonetici) BaglantiSil(ctx context.Context, kaynakID, hedefID string) error {
 	sorgu := `DELETE FROM baglantilar WHERE source_id = ? AND target_id = ?`
 	result, err := vy.db.Exec(sorgu, kaynakID, hedefID)
 	if err != nil {
@@ -972,7 +973,7 @@ func (vy *VeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
 	return nil
 }
 
-func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
+func (vy *VeriYonetici) BaglantilariGetir(ctx context.Context, gorevID string) ([]*Baglanti, error) {
 	sorgu := `SELECT id, source_id, target_id, connection_type FROM baglantilar WHERE source_id = ? OR target_id = ?`
 	rows, err := vy.db.Query(sorgu, gorevID, gorevID)
 	if err != nil {
@@ -994,7 +995,7 @@ func (vy *VeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
 }
 
 // AltGorevleriGetir belirtilen görevin doğrudan alt görevlerini getirir
-func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
+func (vy *VeriYonetici) AltGorevleriGetir(ctx context.Context, parentID string) ([]*Gorev, error) {
 	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date
 	          FROM gorevler WHERE parent_id = ? ORDER BY created_at`
 
@@ -1048,7 +1049,7 @@ func (vy *VeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
 }
 
 // TumAltGorevleriGetir belirtilen görevin tüm alt görev hiyerarşisini getirir (recursive)
-func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) {
+func (vy *VeriYonetici) TumAltGorevleriGetir(ctx context.Context, parentID string) ([]*Gorev, error) {
 	sorgu := `
 		WITH RECURSIVE alt_gorevler AS (
 			SELECT id, title, description, status, priority, project_id, parent_id, 
@@ -1116,7 +1117,7 @@ func (vy *VeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) 
 }
 
 // UstGorevleriGetir belirtilen görevin tüm üst görev hiyerarşisini getirir
-func (vy *VeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
+func (vy *VeriYonetici) UstGorevleriGetir(ctx context.Context, gorevID string) ([]*Gorev, error) {
 	sorgu := `
 		WITH RECURSIVE ust_gorevler AS (
 			SELECT g2.id, g2.title, g2.description, g2.status, g2.priority, g2.project_id, g2.parent_id,
@@ -1177,15 +1178,15 @@ func (vy *VeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
 }
 
 // GorevHiyerarsiGetir bir görevin tam hiyerarşi bilgilerini getirir
-func (vy *VeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error) {
+func (vy *VeriYonetici) GorevHiyerarsiGetir(ctx context.Context, gorevID string) (*GorevHiyerarsi, error) {
 	// Ana görevi getir
-	gorev, err := vy.GorevGetir(gorevID)
+	gorev, err := vy.GorevGetir(ctx, gorevID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Üst görevleri getir
-	ustGorevler, err := vy.UstGorevleriGetir(gorevID)
+	ustGorevler, err := vy.UstGorevleriGetir(ctx, gorevID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
@@ -1236,10 +1237,10 @@ func (vy *VeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, er
 }
 
 // ParentIDGuncelle bir görevin parent_id'sini günceller
-func (vy *VeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error {
+func (vy *VeriYonetici) ParentIDGuncelle(ctx context.Context, gorevID, yeniParentID string) error {
 	// Önce circular dependency kontrolü yap
 	if yeniParentID != "" {
-		daireVar, err := vy.DaireBagimliligiKontrolEt(gorevID, yeniParentID)
+		daireVar, err := vy.DaireBagimliligiKontrolEt(ctx, gorevID, yeniParentID)
 		if err != nil {
 			return err
 		}
@@ -1263,7 +1264,7 @@ func (vy *VeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error {
 }
 
 // DaireBagimliligiKontrolEt bir görevin belirtilen parent'a taşınması durumunda dairesel bağımlılık oluşup oluşmayacağını kontrol eder
-func (vy *VeriYonetici) DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error) {
+func (vy *VeriYonetici) DaireBagimliligiKontrolEt(ctx context.Context, gorevID, hedefParentID string) (bool, error) {
 	// Kendisine parent olamaz
 	if gorevID == hedefParentID {
 		return true, nil

@@ -591,7 +591,7 @@ func listTemplates(kategori string) error {
 	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Template'leri listele
-	templates, err := veriYonetici.TemplateListele(kategori)
+	templates, err := veriYonetici.TemplateListele(context.Background(), kategori)
 	if err != nil {
 		return fmt.Errorf("template'ler listelenemedi: %w", err)
 	}
@@ -637,7 +637,7 @@ func showTemplate(templateID string) error {
 	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Template'i ID veya alias ile getir
-	template, err := veriYonetici.TemplateIDVeyaAliasIleGetir(templateID)
+	template, err := veriYonetici.TemplateIDVeyaAliasIleGetir(context.Background(), templateID)
 	if err != nil {
 		return fmt.Errorf("template bulunamadı: %w", err)
 	}
@@ -682,7 +682,7 @@ func initTemplates() error {
 	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Varsayılan template'leri oluştur
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	err = veriYonetici.VarsayilanTemplateleriOlustur(context.Background())
 	if err != nil {
 		return fmt.Errorf("template'ler oluşturulamadı: %w", err)
 	}
@@ -700,7 +700,7 @@ func listTemplateAliases() error {
 	defer func() { _ = veriYonetici.Kapat() }()
 
 	// Template'leri listele
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := veriYonetici.TemplateListele(context.Background(), "")
 	if err != nil {
 		return fmt.Errorf("template'ler listelenemedi: %w", err)
 	}

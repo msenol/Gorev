@@ -340,16 +340,16 @@ func (fw *FileWatcher) handleFileEvent(event fsnotify.Event) {
 
 	// Update affected tasks
 	for _, taskID := range uniqueTasks {
-		if err := fw.updateTaskOnFileChange(taskID, changeEvent); err != nil {
+		if err := fw.updateTaskOnFileChange(fw.ctx, taskID, changeEvent); err != nil {
 			log.Printf("Error updating task %s for file change: %v", taskID, err)
 		}
 	}
 }
 
 // updateTaskOnFileChange updates a task based on file system changes
-func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEvent) error {
+func (fw *FileWatcher) updateTaskOnFileChange(ctx context.Context, taskID string, event FileChangeEvent) error {
 	// Get current task
-	gorev, err := fw.veriYonetici.GorevGetir(taskID)
+	gorev, err := fw.veriYonetici.GorevGetir(ctx, taskID)
 	if err != nil {
 		return fmt.Errorf(i18n.T("error.taskGetFailed", map[string]interface{}{"TaskID": taskID, "Error": err}))
 	}
@@ -376,7 +376,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 			updateParams := map[string]interface{}{
 				"status": constants.TaskStatusInProgress,
 			}
-			if err := fw.veriYonetici.GorevGuncelle(taskID, updateParams); err != nil {
+			if err := fw.veriYonetici.GorevGuncelle(ctx, taskID, updateParams); err != nil {
 				return fmt.Errorf(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 			}
 

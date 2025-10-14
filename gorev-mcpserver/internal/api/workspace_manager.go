@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"io/fs"
@@ -299,8 +300,9 @@ func findMigrationsPath() string {
 
 // getTaskCount gets the total task count for a workspace
 func (wm *WorkspaceManager) getTaskCount(isYonetici *gorev.IsYonetici) (int, error) {
+	ctx := context.Background()
 	filters := make(map[string]interface{})
-	gorevler, err := isYonetici.GorevListele(filters)
+	gorevler, err := isYonetici.GorevListele(ctx, filters)
 	if err != nil {
 		return 0, err
 	}

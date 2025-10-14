@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -66,7 +67,7 @@ type TaskAnalysisScore struct {
 }
 
 // CreateIntelligentTask creates a task with AI-enhanced features
-func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationRequest) (*TaskCreationResponse, error) {
+func (itc *IntelligentTaskCreator) CreateIntelligentTask(ctx context.Context, request TaskCreationRequest) (*TaskCreationResponse, error) {
 	startTime := time.Now()
 
 	log.Printf("Creating intelligent task: title=%s, autoSplit=%t", request.Title, request.AutoSplit)
@@ -89,7 +90,7 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 	estimatedHours := 0.0
 	timeConfidence := 0.0
 	if request.EstimateTime {
-		estimatedHours, timeConfidence = itc.estimateTaskTime(request.Title, request.Description)
+		estimatedHours, timeConfidence = itc.estimateTaskTime(ctx, request.Title, request.Description)
 		response.EstimatedHours = estimatedHours
 		if estimatedHours > 0 {
 			response.Insights = append(response.Insights,
@@ -99,7 +100,7 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 
 	// Find similar tasks
 	if len(request.Title) > 0 {
-		similarTasks := itc.findSimilarTasks(request.Title, request.Description, 5)
+		similarTasks := itc.findSimilarTasks(ctx, request.Title, request.Description, 5)
 		response.SimilarTasks = similarTasks
 		if len(similarTasks) > 0 {
 			response.Insights = append(response.Insights,
@@ -120,7 +121,7 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 	}
 
 	// Create main task
-	mainTaskID, err := itc.veriYonetici.GorevOlustur(map[string]interface{}{
+	mainTaskID, err := itc.veriYonetici.GorevOlustur(ctx, map[string]interface{}{
 		"title":       request.Title,
 		"description": request.Description,
 		"priority":    suggestedPriority,
@@ -132,7 +133,7 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 	}
 
 	// Get the created task for response
-	mainTask, err := itc.veriYonetici.GorevGetir(mainTaskID)
+	mainTask, err := itc.veriYonetici.GorevGetir(ctx, mainTaskID)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.createdTaskFetchFailed", map[string]interface{}{"Error": err}))
 	}
@@ -233,9 +234,9 @@ func (itc *IntelligentTaskCreator) determinePriority(title, description string) 
 }
 
 // estimateTaskTime estimates completion time based on similar tasks
-func (itc *IntelligentTaskCreator) estimateTaskTime(title, description string) (float64, float64) {
+func (itc *IntelligentTaskCreator) estimateTaskTime(ctx context.Context, title, description string) (float64, float64) {
 	// Find similar completed tasks
-	similarTasks := itc.findSimilarTasks(title, description, 10)
+	similarTasks := itc.findSimilarTasks(ctx, title, description, 10)
 
 	if len(similarTasks) == 0 {
 		// Fallback estimation based on content analysis
@@ -297,8 +298,8 @@ func (itc *IntelligentTaskCreator) estimateTimeFromContent(title, description st
 }
 
 // findSimilarTasks finds tasks similar to the given title and description
-func (itc *IntelligentTaskCreator) findSimilarTasks(title, description string, limit int) []SimilarTaskInfo {
-	allTasks, err := itc.veriYonetici.GorevListele(map[string]interface{}{})
+func (itc *IntelligentTaskCreator) findSimilarTasks(ctx context.Context, title, description string, limit int) []SimilarTaskInfo {
+	allTasks, err := itc.veriYonetici.GorevListele(ctx, map[string]interface{}{})
 	if err != nil {
 		return nil
 	}
@@ -426,7 +427,7 @@ func (itc *IntelligentTaskCreator) generateSubtasks(parentID, description string
 			break
 		}
 
-		subtask, err := itc.veriYonetici.AltGorevOlustur(
+		subtask, err := itc.veriYonetici.AltGorevOlustur(context.Background(), 
 			parentID,
 			item,
 			"",                       // No description for auto-generated subtasks

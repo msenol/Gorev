@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sort"
@@ -57,7 +58,7 @@ type SuggestionResponse struct {
 }
 
 // GetSuggestions returns intelligent suggestions based on context
-func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*SuggestionResponse, error) {
+func (se *SuggestionEngine) GetSuggestions(ctx context.Context, request SuggestionRequest) (*SuggestionResponse, error) {
 	startTime := time.Now()
 
 	log.Printf("Generating suggestions: sessionId=%s, activeTask=%s", request.SessionID, request.ActiveTaskID)
@@ -66,7 +67,7 @@ func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*Suggesti
 
 	// Generate different types of suggestions
 	if len(request.Types) == 0 || contains(request.Types, "next_action") {
-		nextActions, err := se.generateNextActionSuggestions(request)
+		nextActions, err := se.generateNextActionSuggestions(ctx, request)
 		if err != nil {
 			log.Printf("Failed to generate next action suggestions: error=%v", err)
 		} else {
@@ -75,7 +76,7 @@ func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*Suggesti
 	}
 
 	if len(request.Types) == 0 || contains(request.Types, "similar_task") {
-		similarTasks, err := se.generateSimilarTaskSuggestions(request)
+		similarTasks, err := se.generateSimilarTaskSuggestions(ctx, request)
 		if err != nil {
 			log.Printf("Failed to generate similar task suggestions: error=%v", err)
 		} else {
@@ -84,7 +85,7 @@ func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*Suggesti
 	}
 
 	if len(request.Types) == 0 || contains(request.Types, "template") {
-		templateSuggestions, err := se.generateTemplateSuggestions(request)
+		templateSuggestions, err := se.generateTemplateSuggestions(ctx, request)
 		if err != nil {
 			log.Printf("Failed to generate template suggestions: error=%v", err)
 		} else {
@@ -93,7 +94,7 @@ func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*Suggesti
 	}
 
 	if len(request.Types) == 0 || contains(request.Types, "deadline_risk") {
-		deadlineRisks, err := se.generateDeadlineRiskSuggestions(request)
+		deadlineRisks, err := se.generateDeadlineRiskSuggestions(ctx, request)
 		if err != nil {
 			log.Printf("Failed to generate deadline risk suggestions: error=%v", err)
 		} else {
@@ -134,11 +135,11 @@ func (se *SuggestionEngine) GetSuggestions(request SuggestionRequest) (*Suggesti
 }
 
 // generateNextActionSuggestions suggests next actions based on priorities and context
-func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequest) ([]Suggestion, error) {
+func (se *SuggestionEngine) generateNextActionSuggestions(ctx context.Context, request SuggestionRequest) ([]Suggestion, error) {
 	var suggestions []Suggestion
 
 	// Get high priority pending tasks
-	gorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"status": constants.TaskStatusPending})
+	gorevler, err := se.veriYonetici.GorevListele(ctx, map[string]interface{}{"status": constants.TaskStatusPending})
 	if err != nil {
 		return suggestions, err
 	}
@@ -182,7 +183,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 	}
 
 	// Suggest completing tasks in progress
-	devamEdenGorevler, err := se.veriYonetici.GorevListele(map[string]interface{}{"status": constants.TaskStatusInProgress})
+	devamEdenGorevler, err := se.veriYonetici.GorevListele(ctx, map[string]interface{}{"status": constants.TaskStatusInProgress})
 	if err == nil {
 		for i, gorev := range devamEdenGorevler {
 			if i >= 2 { // Limit to top 2
@@ -209,7 +210,7 @@ func (se *SuggestionEngine) generateNextActionSuggestions(request SuggestionRequ
 }
 
 // generateSimilarTaskSuggestions detects similar tasks and suggests templates
-func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionRequest) ([]Suggestion, error) {
+func (se *SuggestionEngine) generateSimilarTaskSuggestions(ctx context.Context, request SuggestionRequest) ([]Suggestion, error) {
 	var suggestions []Suggestion
 
 	if request.ActiveTaskID == "" {
@@ -217,13 +218,13 @@ func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionReq
 	}
 
 	// Get active task
-	activeTask, err := se.veriYonetici.GorevDetay(request.ActiveTaskID)
+	activeTask, err := se.veriYonetici.GorevDetay(ctx, request.ActiveTaskID)
 	if err != nil {
 		return suggestions, err
 	}
 
 	// Find similar tasks based on title and description
-	allTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{})
+	allTasks, err := se.veriYonetici.GorevListele(ctx, map[string]interface{}{})
 	if err != nil {
 		return suggestions, err
 	}
@@ -272,17 +273,17 @@ func (se *SuggestionEngine) generateSimilarTaskSuggestions(request SuggestionReq
 }
 
 // generateTemplateSuggestions recommends templates based on task content
-func (se *SuggestionEngine) generateTemplateSuggestions(request SuggestionRequest) ([]Suggestion, error) {
+func (se *SuggestionEngine) generateTemplateSuggestions(ctx context.Context, request SuggestionRequest) ([]Suggestion, error) {
 	var suggestions []Suggestion
 
 	// Get available templates
-	templates, err := se.veriYonetici.TemplateListele("")
+	templates, err := se.veriYonetici.TemplateListele(ctx, "")
 	if err != nil {
 		return suggestions, err
 	}
 
 	// Analyze recent tasks to suggest relevant templates
-	recentTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{})
+	recentTasks, err := se.veriYonetici.GorevListele(ctx, map[string]interface{}{})
 	if err != nil {
 		return suggestions, err
 	}
@@ -327,11 +328,11 @@ func (se *SuggestionEngine) generateTemplateSuggestions(request SuggestionReques
 }
 
 // generateDeadlineRiskSuggestions analyzes deadline risks
-func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRequest) ([]Suggestion, error) {
+func (se *SuggestionEngine) generateDeadlineRiskSuggestions(ctx context.Context, request SuggestionRequest) ([]Suggestion, error) {
 	var suggestions []Suggestion
 
 	// Get tasks with deadlines
-	allTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{})
+	allTasks, err := se.veriYonetici.GorevListele(ctx, map[string]interface{}{})
 	if err != nil {
 		return suggestions, err
 	}
@@ -408,7 +409,7 @@ func (se *SuggestionEngine) generateDeadlineRiskSuggestions(request SuggestionRe
 func (se *SuggestionEngine) checkCanStartTask(taskID string) (bool, error) {
 	// Simple check - if no blocking dependencies, task can start
 	// This could be enhanced with more sophisticated dependency analysis
-	dependencies, err := se.veriYonetici.GorevBagimlilikGetir(taskID)
+	dependencies, err := se.veriYonetici.GorevBagimlilikGetir(context.Background(), taskID)
 	if err != nil {
 		return true, nil // Assume can start if we can't check dependencies
 	}

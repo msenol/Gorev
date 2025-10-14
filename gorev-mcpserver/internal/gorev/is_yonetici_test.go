@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -478,7 +479,7 @@ func NewMockVeriYonetici() *MockVeriYonetici {
 		shouldReturnError: false,
 	}
 }
-func (m *MockVeriYonetici) AktifProjeAyarla(projeID string) error {
+func (m *MockVeriYonetici) AktifProjeAyarla(ctx context.Context, projeID string) error {
 	if m.shouldFailAktifProje {
 		return errors.New("mock error")
 	}
@@ -491,7 +492,7 @@ func (m *MockVeriYonetici) AktifProjeAyarla(projeID string) error {
 	return nil
 }
 
-func (m *MockVeriYonetici) AktifProjeGetir() (string, error) {
+func (m *MockVeriYonetici) AktifProjeGetir(ctx context.Context) (string, error) {
 	if m.shouldFailAktifProje {
 		return "", errors.New("mock error")
 	}
@@ -501,7 +502,7 @@ func (m *MockVeriYonetici) AktifProjeGetir() (string, error) {
 	return m.aktifProjeID, nil
 }
 
-func (m *MockVeriYonetici) AktifProjeKaldir() error {
+func (m *MockVeriYonetici) AktifProjeKaldir(ctx context.Context) error {
 	if m.shouldFailAktifProje {
 		return errors.New("mock error")
 	}
@@ -815,7 +816,7 @@ func (m *MockVeriYonetici) VarsayilanTemplateleriOlustur() error {
 	return nil
 }
 
-func (m *MockVeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) {
+func (m *MockVeriYonetici) AltGorevleriGetir(ctx context.Context, parentID string) ([]*Gorev, error) {
 	var result []*Gorev
 	for _, gorev := range m.gorevler {
 		if gorev.ParentID == parentID {
@@ -825,12 +826,12 @@ func (m *MockVeriYonetici) AltGorevleriGetir(parentID string) ([]*Gorev, error) 
 	return result, nil
 }
 
-func (m *MockVeriYonetici) TumAltGorevleriGetir(parentID string) ([]*Gorev, error) {
+func (m *MockVeriYonetici) TumAltGorevleriGetir(ctx context.Context, parentID string) ([]*Gorev, error) {
 	// Simplified implementation for testing
-	return m.AltGorevleriGetir(parentID)
+	return m.AltGorevleriGetir(ctx, parentID)
 }
 
-func (m *MockVeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
+func (m *MockVeriYonetici) UstGorevleriGetir(ctx context.Context, gorevID string) ([]*Gorev, error) {
 	var result []*Gorev
 	gorev, ok := m.gorevler[gorevID]
 	if !ok || gorev.ParentID == "" {
@@ -844,7 +845,7 @@ func (m *MockVeriYonetici) UstGorevleriGetir(gorevID string) ([]*Gorev, error) {
 	return result, nil
 }
 
-func (m *MockVeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi, error) {
+func (m *MockVeriYonetici) GorevHiyerarsiGetir(ctx context.Context, gorevID string) (*GorevHiyerarsi, error) {
 	gorev, err := m.GorevGetir(gorevID)
 	if err != nil {
 		return nil, err
@@ -861,7 +862,7 @@ func (m *MockVeriYonetici) GorevHiyerarsiGetir(gorevID string) (*GorevHiyerarsi,
 	}, nil
 }
 
-func (m *MockVeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error {
+func (m *MockVeriYonetici) ParentIDGuncelle(ctx context.Context, gorevID, yeniParentID string) error {
 	gorev, ok := m.gorevler[gorevID]
 	if !ok {
 		return errors.New("görev bulunamadı")
@@ -870,7 +871,7 @@ func (m *MockVeriYonetici) ParentIDGuncelle(gorevID, yeniParentID string) error 
 	return nil
 }
 
-func (m *MockVeriYonetici) DaireBagimliligiKontrolEt(gorevID, hedefParentID string) (bool, error) {
+func (m *MockVeriYonetici) DaireBagimliligiKontrolEt(ctx context.Context, gorevID, hedefParentID string) (bool, error) {
 	// Simple check for testing - just check if they're the same
 	return gorevID == hedefParentID, nil
 }
@@ -920,7 +921,7 @@ func (m *MockVeriYonetici) AILastInteractionGuncelle(taskID string, timestamp ti
 	return nil
 }
 
-func (m *MockVeriYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
+func (m *MockVeriYonetici) AltGorevOlustur(ctx context.Context, parentID, baslik, aciklama, oncelik, sonTarihStr string, etiketIsimleri []string) (*Gorev, error) {
 	return nil, nil
 }
 

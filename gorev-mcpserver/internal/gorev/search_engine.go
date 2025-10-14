@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -293,7 +294,7 @@ func (se *SearchEngine) Search(options SearchOptions) (*SearchResponse, error) {
 
 		// If FTS didn't return enough results and fuzzy is enabled, try fuzzy search
 		if len(results) < options.MaxResults/2 && options.UseFuzzySearch {
-			fuzzyResults, err := se.performFuzzySearch(options)
+			fuzzyResults, err := se.performFuzzySearch(context.Background(), options)
 			if err != nil {
 				log.Printf("%s", i18n.T("error.fuzzySearchFailed", map[string]interface{}{"Error": err}))
 			} else {
@@ -307,7 +308,7 @@ func (se *SearchEngine) Search(options SearchOptions) (*SearchResponse, error) {
 	if len(options.Filters) > 0 {
 		if len(results) == 0 {
 			// No text search, just filter all tasks
-			allTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{
+			allTasks, err := se.veriYonetici.GorevListele(context.Background(), map[string]interface{}{
 				"limit": 1000,
 			})
 			if err != nil {
@@ -394,7 +395,7 @@ func (se *SearchEngine) performFTSSearch(options SearchOptions) ([]SearchResult,
 		}
 
 		// Load tags - first get the task details which includes tags
-		taskDetail, err := se.veriYonetici.GorevDetay(task.ID)
+		taskDetail, err := se.veriYonetici.GorevDetay(context.Background(), task.ID)
 		if err == nil && taskDetail != nil {
 			task.Tags = taskDetail.Tags
 		}
@@ -417,9 +418,9 @@ func (se *SearchEngine) performFTSSearch(options SearchOptions) ([]SearchResult,
 }
 
 // performFuzzySearch executes fuzzy string matching
-func (se *SearchEngine) performFuzzySearch(options SearchOptions) ([]SearchResult, error) {
+func (se *SearchEngine) performFuzzySearch(ctx context.Context, options SearchOptions) ([]SearchResult, error) {
 	// Get all tasks for fuzzy matching
-	allTasks, err := se.veriYonetici.GorevListele(map[string]interface{}{
+	allTasks, err := se.veriYonetici.GorevListele(context.Background(), map[string]interface{}{
 		"limit": 1000,
 	})
 	if err != nil {
@@ -435,7 +436,7 @@ func (se *SearchEngine) performFuzzySearch(options SearchOptions) ([]SearchResul
 		descScore := se.calculateLevenshteinSimilarity(query, strings.ToLower(task.Description))
 
 		// Get tag names for fuzzy matching
-		taskDetail, _ := se.veriYonetici.GorevDetay(task.ID)
+		taskDetail, _ := se.veriYonetici.GorevDetay(context.Background(), task.ID)
 		var tagNames []string
 		if taskDetail != nil && taskDetail.Tags != nil {
 			for _, etiket := range taskDetail.Tags {

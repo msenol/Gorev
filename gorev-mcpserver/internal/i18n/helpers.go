@@ -1,13 +1,43 @@
 package i18n
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/msenol/gorev/internal/constants"
 )
 
-// DRY i18n helper functions to eliminate repeated patterns
+// ==================== CONTEXT HELPERS ====================
+
+// contextKey is a private type for context keys to avoid collisions
+type contextKey string
+
+// languageKey is the context key for language storage
+const languageKey contextKey = "language"
+
+// WithLanguage stores the language preference in context
+func WithLanguage(ctx context.Context, lang string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, languageKey, lang)
+}
+
+// FromContext extracts the language from context, defaulting to Turkish
+func FromContext(ctx context.Context) string {
+	if ctx == nil {
+		return "tr"
+	}
+
+	if lang, ok := ctx.Value(languageKey).(string); ok && lang != "" {
+		return lang
+	}
+
+	return "tr"
+}
+
+// ==================== DRY i18n helper functions ====================
 
 // TCommon gets a common pattern translation
 func TCommon(lang string, key string, data map[string]interface{}) string {

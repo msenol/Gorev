@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -94,7 +95,7 @@ type ImportResult struct {
 }
 
 // ExportData exports data from the database according to the given options
-func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
+func (iy *IsYonetici) ExportData(ctx context.Context, options ExportOptions) (*ExportFormat, error) {
 	if iy.veriYonetici == nil {
 		return nil, fmt.Errorf(i18n.T("error.dataManagerNotInitialized", nil))
 	}
@@ -116,7 +117,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 	}
 
 	// Export projects using IsYonetici method
-	projects, err := iy.ProjeListele()
+	projects, err := iy.ProjeListele(ctx)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.failedToExportProjects", map[string]interface{}{"Error": err}))
 	}
@@ -159,7 +160,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 	}
 
 	// Get all tasks first
-	allTasks, err := iy.veriYonetici.GorevListele(filters)
+	allTasks, err := iy.veriYonetici.GorevListele(ctx, filters)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.failedToExportTasks", map[string]interface{}{"Error": err}))
 	}
@@ -213,7 +214,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 	exportData.Tags = tags
 
 	// Export task-tag associations
-	taskTags, err := iy.exportTaskTagAssociations(filteredTasks)
+	taskTags, err := iy.exportTaskTagAssociations(ctx, filteredTasks)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.T("error.failedToExportTaskTags", map[string]interface{}{"Error": err}))
 	}
@@ -221,7 +222,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 
 	// Export dependencies if requested
 	if options.IncludeDependencies {
-		dependencies, err := iy.exportTaskDependencies(filteredTasks)
+		dependencies, err := iy.exportTaskDependencies(ctx, filteredTasks)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.failedToExportDependencies", map[string]interface{}{"Error": err}))
 		}
@@ -230,7 +231,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 
 	// Export templates if requested
 	if options.IncludeTemplates {
-		templates, err := iy.veriYonetici.TemplateListele("")
+		templates, err := iy.veriYonetici.TemplateListele(ctx, "")
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.failedToExportTemplates", map[string]interface{}{"Error": err}))
 		}
@@ -239,7 +240,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 
 	// Export AI context if requested
 	if options.IncludeAIContext {
-		aiContext, err := iy.exportAIContext(filteredTasks)
+		aiContext, err := iy.exportAIContext(ctx, filteredTasks)
 		if err != nil {
 			// Log warning but continue with export - AI context is optional
 			fmt.Printf("Warning: AI context export failed: %v\n", err)
@@ -253,7 +254,7 @@ func (iy *IsYonetici) ExportData(options ExportOptions) (*ExportFormat, error) {
 }
 
 // SaveExportToFile saves export data to a file
-func (iy *IsYonetici) SaveExportToFile(exportData *ExportFormat, options ExportOptions) error {
+func (iy *IsYonetici) SaveExportToFile(ctx context.Context, exportData *ExportFormat, options ExportOptions) error {
 	// Validate export file options
 	if err := iy.validateExportFileOptions(options); err != nil {
 		return fmt.Errorf(i18n.T("error.invalidExportOptions", map[string]interface{}{"Error": err}))
@@ -432,7 +433,7 @@ func (iy *IsYonetici) validateExportFileOptions(options ExportOptions) error {
 }
 
 // exportTaskTagAssociations exports task-tag associations
-func (iy *IsYonetici) exportTaskTagAssociations(tasks []*Gorev) ([]TaskTagAssociation, error) {
+func (iy *IsYonetici) exportTaskTagAssociations(ctx context.Context, tasks []*Gorev) ([]TaskTagAssociation, error) {
 	taskTags := []TaskTagAssociation{}
 
 	for _, task := range tasks {
@@ -450,7 +451,7 @@ func (iy *IsYonetici) exportTaskTagAssociations(tasks []*Gorev) ([]TaskTagAssoci
 }
 
 // exportTaskDependencies exports task dependencies
-func (iy *IsYonetici) exportTaskDependencies(tasks []*Gorev) ([]*Baglanti, error) {
+func (iy *IsYonetici) exportTaskDependencies(ctx context.Context, tasks []*Gorev) ([]*Baglanti, error) {
 	// Create a map of task IDs for filtering
 	taskIDMap := make(map[string]bool)
 	for _, task := range tasks {
@@ -460,7 +461,7 @@ func (iy *IsYonetici) exportTaskDependencies(tasks []*Gorev) ([]*Baglanti, error
 	// Get dependencies for each task and combine them
 	dependencies := []*Baglanti{}
 	for _, task := range tasks {
-		taskDeps, err := iy.veriYonetici.BaglantilariGetir(task.ID)
+		taskDeps, err := iy.veriYonetici.BaglantilariGetir(ctx, task.ID)
 		if err != nil {
 			continue // Skip on error
 		}
@@ -479,7 +480,7 @@ func (iy *IsYonetici) exportTaskDependencies(tasks []*Gorev) ([]*Baglanti, error
 }
 
 // exportAIContext exports AI context data
-func (iy *IsYonetici) exportAIContext(tasks []*Gorev) ([]*AIInteraction, error) {
+func (iy *IsYonetici) exportAIContext(ctx context.Context, tasks []*Gorev) ([]*AIInteraction, error) {
 	// Create a map of task IDs for filtering
 	taskIDMap := make(map[string]bool)
 	for _, task := range tasks {
@@ -492,7 +493,7 @@ func (iy *IsYonetici) exportAIContext(tasks []*Gorev) ([]*AIInteraction, error) 
 }
 
 // ImportData imports data from a file according to the given options
-func (iy *IsYonetici) ImportData(options ImportOptions) (*ImportResult, error) {
+func (iy *IsYonetici) ImportData(ctx context.Context, options ImportOptions) (*ImportResult, error) {
 	if iy.veriYonetici == nil {
 		return nil, fmt.Errorf(i18n.T("error.dataManagerNotInitialized", nil))
 	}
@@ -522,7 +523,7 @@ func (iy *IsYonetici) ImportData(options ImportOptions) (*ImportResult, error) {
 
 	// If dry run, analyze conflicts without making changes
 	if options.DryRun {
-		conflicts, err := iy.analyzeImportConflicts(importData, options)
+		conflicts, err := iy.analyzeImportConflicts(ctx, importData, options)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.failedToAnalyzeConflicts", map[string]interface{}{"Error": err}))
 		}
@@ -537,7 +538,7 @@ func (iy *IsYonetici) ImportData(options ImportOptions) (*ImportResult, error) {
 
 	// Import projects
 	if len(importData.Projects) > 0 {
-		imported, conflicts, err := iy.importProjects(importData.Projects, options)
+		imported, conflicts, err := iy.importProjects(ctx, importData.Projects, options)
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Projects: %v", err))
 			result.Success = false
@@ -549,7 +550,7 @@ func (iy *IsYonetici) ImportData(options ImportOptions) (*ImportResult, error) {
 
 	// Import tags
 	if len(importData.Tags) > 0 {
-		imported, conflicts, err := iy.importTags(importData.Tags, options)
+		imported, conflicts, err := iy.importTags(ctx, importData.Tags, options)
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Tags: %v", err))
 			result.Success = false
@@ -561,7 +562,7 @@ func (iy *IsYonetici) ImportData(options ImportOptions) (*ImportResult, error) {
 
 	// Import templates
 	if len(importData.Templates) > 0 {
-		imported, conflicts, err := iy.importTemplates(importData.Templates, options)
+		imported, conflicts, err := iy.importTemplates(ctx, importData.Templates, options)
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Templates: %v", err))
 			result.Success = false
@@ -573,7 +574,7 @@ func (iy *IsYonetici) ImportData(options ImportOptions) (*ImportResult, error) {
 
 	// Import tasks
 	if len(importData.Tasks) > 0 {
-		imported, conflicts, err := iy.importTasks(importData.Tasks, options)
+		imported, conflicts, err := iy.importTasks(ctx, importData.Tasks, options)
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Tasks: %v", err))
 			result.Success = false
@@ -585,14 +586,14 @@ func (iy *IsYonetici) ImportData(options ImportOptions) (*ImportResult, error) {
 
 	// Import task-tag associations
 	if len(importData.TaskTags) > 0 {
-		if err := iy.importTaskTagAssociations(importData.TaskTags, options); err != nil {
+		if err := iy.importTaskTagAssociations(ctx, importData.TaskTags, options); err != nil {
 			result.Warnings = append(result.Warnings, fmt.Sprintf("Task-Tag associations: %v", err))
 		}
 	}
 
 	// Import dependencies
 	if len(importData.Dependencies) > 0 {
-		if err := iy.importDependencies(importData.Dependencies, options); err != nil {
+		if err := iy.importDependencies(ctx, importData.Dependencies, options); err != nil {
 			result.Warnings = append(result.Warnings, fmt.Sprintf("Dependencies: %v", err))
 		}
 	}
@@ -702,12 +703,12 @@ func (iy *IsYonetici) validateImportData(importData *ExportFormat) error {
 }
 
 // analyzeImportConflicts analyzes potential conflicts without importing
-func (iy *IsYonetici) analyzeImportConflicts(importData *ExportFormat, options ImportOptions) ([]ConflictResolution, error) {
+func (iy *IsYonetici) analyzeImportConflicts(ctx context.Context, importData *ExportFormat, options ImportOptions) ([]ConflictResolution, error) {
 	conflicts := []ConflictResolution{}
 
 	// Check project conflicts
 	for _, project := range importData.Projects {
-		existing, err := iy.veriYonetici.ProjeGetir(project.ID)
+		existing, err := iy.veriYonetici.ProjeGetir(ctx, project.ID)
 		if err == nil && existing != nil {
 			conflicts = append(conflicts, ConflictResolution{
 				Type:       "project",
@@ -720,7 +721,7 @@ func (iy *IsYonetici) analyzeImportConflicts(importData *ExportFormat, options I
 
 	// Check task conflicts
 	for _, task := range importData.Tasks {
-		existing, err := iy.veriYonetici.GorevGetir(task.ID)
+		existing, err := iy.veriYonetici.GorevGetir(ctx, task.ID)
 		if err == nil && existing != nil {
 			conflicts = append(conflicts, ConflictResolution{
 				Type:       "task",
@@ -739,7 +740,7 @@ func (iy *IsYonetici) analyzeImportConflicts(importData *ExportFormat, options I
 }
 
 // importProjects imports project data
-func (iy *IsYonetici) importProjects(projects []*Proje, options ImportOptions) (int, []ConflictResolution, error) {
+func (iy *IsYonetici) importProjects(ctx context.Context, projects []*Proje, options ImportOptions) (int, []ConflictResolution, error) {
 	imported := 0
 	conflicts := []ConflictResolution{}
 
@@ -752,7 +753,7 @@ func (iy *IsYonetici) importProjects(projects []*Proje, options ImportOptions) (
 		}
 
 		// Check for conflicts
-		existing, err := iy.veriYonetici.ProjeGetir(projectID)
+		existing, err := iy.veriYonetici.ProjeGetir(ctx, projectID)
 		if err == nil && existing != nil {
 			// Handle conflict
 			switch options.ConflictResolution {
@@ -767,7 +768,7 @@ func (iy *IsYonetici) importProjects(projects []*Proje, options ImportOptions) (
 			case "overwrite":
 				// Update existing project using ProjeKaydet (since ProjeGuncelle doesn't exist)
 				project.ID = projectID
-				if err := iy.veriYonetici.ProjeKaydet(project); err != nil {
+				if err := iy.veriYonetici.ProjeKaydet(ctx, project); err != nil {
 					return imported, conflicts, err
 				}
 				conflicts = append(conflicts, ConflictResolution{
@@ -790,7 +791,7 @@ func (iy *IsYonetici) importProjects(projects []*Proje, options ImportOptions) (
 		} else {
 			// No conflict, create new project
 			project.ID = projectID
-			if err := iy.veriYonetici.ProjeKaydet(project); err != nil {
+			if err := iy.veriYonetici.ProjeKaydet(ctx, project); err != nil {
 				return imported, conflicts, err
 			}
 		}
@@ -802,7 +803,7 @@ func (iy *IsYonetici) importProjects(projects []*Proje, options ImportOptions) (
 }
 
 // importTags imports tag data
-func (iy *IsYonetici) importTags(tags []*Etiket, options ImportOptions) (int, []ConflictResolution, error) {
+func (iy *IsYonetici) importTags(ctx context.Context, tags []*Etiket, options ImportOptions) (int, []ConflictResolution, error) {
 	imported := 0
 	conflicts := []ConflictResolution{}
 
@@ -810,7 +811,7 @@ func (iy *IsYonetici) importTags(tags []*Etiket, options ImportOptions) (int, []
 		// Create or get existing tags using EtiketleriGetirVeyaOlustur
 		// This method already handles duplicates by name
 		tagNames := []string{tag.Name}
-		createdTags, err := iy.veriYonetici.EtiketleriGetirVeyaOlustur(tagNames)
+		createdTags, err := iy.veriYonetici.EtiketleriGetirVeyaOlustur(ctx, tagNames)
 		if err != nil {
 			return imported, conflicts, err
 		}
@@ -825,7 +826,7 @@ func (iy *IsYonetici) importTags(tags []*Etiket, options ImportOptions) (int, []
 }
 
 // importTemplates imports template data
-func (iy *IsYonetici) importTemplates(templates []*GorevTemplate, options ImportOptions) (int, []ConflictResolution, error) {
+func (iy *IsYonetici) importTemplates(ctx context.Context, templates []*GorevTemplate, options ImportOptions) (int, []ConflictResolution, error) {
 	imported := 0
 	conflicts := []ConflictResolution{}
 
@@ -838,7 +839,7 @@ func (iy *IsYonetici) importTemplates(templates []*GorevTemplate, options Import
 		}
 
 		// Check for conflicts by ID (no TemplateGetirIsimile available)
-		existing, err := iy.veriYonetici.TemplateGetir(templateID)
+		existing, err := iy.veriYonetici.TemplateGetir(ctx, templateID)
 
 		if err == nil && existing != nil {
 			// Handle conflict
@@ -853,7 +854,7 @@ func (iy *IsYonetici) importTemplates(templates []*GorevTemplate, options Import
 				continue
 			case "overwrite":
 				template.ID = existing.ID // Use existing ID
-				if err := iy.veriYonetici.TemplateOlustur(template); err != nil {
+				if err := iy.veriYonetici.TemplateOlustur(ctx, template); err != nil {
 					return imported, conflicts, err
 				}
 				conflicts = append(conflicts, ConflictResolution{
@@ -875,7 +876,7 @@ func (iy *IsYonetici) importTemplates(templates []*GorevTemplate, options Import
 		} else {
 			// No conflict, create new template
 			template.ID = templateID
-			if err := iy.veriYonetici.TemplateOlustur(template); err != nil {
+			if err := iy.veriYonetici.TemplateOlustur(ctx, template); err != nil {
 				return imported, conflicts, err
 			}
 		}
@@ -887,7 +888,7 @@ func (iy *IsYonetici) importTemplates(templates []*GorevTemplate, options Import
 }
 
 // importTasks imports task data
-func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, []ConflictResolution, error) {
+func (iy *IsYonetici) importTasks(ctx context.Context, tasks []*Gorev, options ImportOptions) (int, []ConflictResolution, error) {
 	imported := 0
 	conflicts := []ConflictResolution{}
 
@@ -907,7 +908,7 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 		}
 
 		// Check for conflicts (both by ID and potentially by title for better duplicate detection)
-		existing, err := iy.veriYonetici.GorevGetir(taskID)
+		existing, err := iy.veriYonetici.GorevGetir(ctx, taskID)
 		if err == nil && existing != nil {
 			log.Printf("Import: Found existing task with ID %s, applying conflict resolution: %s", taskID, options.ConflictResolution)
 			// Handle conflict
@@ -922,7 +923,7 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 				continue
 			case "overwrite":
 				task.ID = taskID
-				if err := iy.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{
+				if err := iy.veriYonetici.GorevGuncelle(ctx, taskID, map[string]interface{}{
 					"title":       task.Title,
 					"description": task.Description,
 					"status":      task.Status,
@@ -961,7 +962,7 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 				"parent_id":   task.ParentID,
 				"due_date":    task.DueDate,
 			}
-			if _, err := iy.veriYonetici.GorevOlustur(params); err != nil {
+			if _, err := iy.veriYonetici.GorevOlustur(ctx, params); err != nil {
 				log.Printf("Import: Failed to create new task %s: %v", taskID, err)
 				return imported, conflicts, err
 			}
@@ -975,10 +976,10 @@ func (iy *IsYonetici) importTasks(tasks []*Gorev, options ImportOptions) (int, [
 }
 
 // importTaskTagAssociations imports task-tag associations
-func (iy *IsYonetici) importTaskTagAssociations(taskTags []TaskTagAssociation, options ImportOptions) error {
+func (iy *IsYonetici) importTaskTagAssociations(ctx context.Context, taskTags []TaskTagAssociation, options ImportOptions) error {
 	for _, taskTag := range taskTags {
 		// Verify task exists
-		task, err := iy.veriYonetici.GorevGetir(taskTag.TaskID)
+		task, err := iy.veriYonetici.GorevGetir(ctx, taskTag.TaskID)
 		if err != nil || task == nil {
 			continue // Skip if task doesn't exist
 		}
@@ -993,15 +994,15 @@ func (iy *IsYonetici) importTaskTagAssociations(taskTags []TaskTagAssociation, o
 }
 
 // importDependencies imports task dependencies
-func (iy *IsYonetici) importDependencies(dependencies []*Baglanti, options ImportOptions) error {
+func (iy *IsYonetici) importDependencies(ctx context.Context, dependencies []*Baglanti, options ImportOptions) error {
 	for _, dep := range dependencies {
 		// Verify both tasks exist
-		source, err := iy.veriYonetici.GorevGetir(dep.SourceID)
+		source, err := iy.veriYonetici.GorevGetir(ctx, dep.SourceID)
 		if err != nil || source == nil {
 			continue // Skip if source task doesn't exist
 		}
 
-		target, err := iy.veriYonetici.GorevGetir(dep.TargetID)
+		target, err := iy.veriYonetici.GorevGetir(ctx, dep.TargetID)
 		if err != nil || target == nil {
 			continue // Skip if target task doesn't exist
 		}
@@ -1013,7 +1014,7 @@ func (iy *IsYonetici) importDependencies(dependencies []*Baglanti, options Impor
 			TargetID:       dep.TargetID,
 			ConnectionType: dep.ConnectionType,
 		}
-		if err := iy.veriYonetici.BaglantiEkle(newDep); err != nil {
+		if err := iy.veriYonetici.BaglantiEkle(ctx, newDep); err != nil {
 			// Log warning but continue
 			log.Printf("Warning: Failed to create dependency from %s to %s: %v", dep.SourceID, dep.TargetID, err)
 		}

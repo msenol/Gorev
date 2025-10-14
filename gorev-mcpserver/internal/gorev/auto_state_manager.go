@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
@@ -42,11 +43,11 @@ func (asm *AutoStateManager) SetAIContextManager(acm *AIContextYonetici) {
 }
 
 // AutoTransitionToInProgress automatically transitions a task to in-progress when accessed
-func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
+func (asm *AutoStateManager) AutoTransitionToInProgress(ctx context.Context, taskID string) error {
 	log.Printf("Debug: Auto-transitioning task to in-progress, taskID: %s", taskID)
 
 	// Get current task
-	task, err := asm.veriYonetici.GorevDetay(taskID)
+	task, err := asm.veriYonetici.GorevDetay(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	}
 
 	// Check dependencies before transitioning
-	canStart, err := asm.checkDependenciesCompleted(taskID)
+	canStart, err := asm.checkDependenciesCompleted(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -69,14 +70,14 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 	}
 
 	// Transition to in-progress
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": constants.TaskStatusInProgress})
+	err = asm.veriYonetici.GorevGuncelle(ctx, taskID, map[string]interface{}{"status": constants.TaskStatusInProgress})
 	if err != nil {
 		return err
 	}
 
 	// Record the interaction
 	if asm.aiContextManager != nil {
-		if recErr := asm.aiContextManager.recordInteraction(taskID, "auto_transition_start", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction(ctx, taskID, "auto_transition_start", map[string]interface{}{
 			"from_status": constants.TaskStatusPending,
 			"to_status":   constants.TaskStatusInProgress,
 			"reason":      "task_accessed",
@@ -95,11 +96,11 @@ func (asm *AutoStateManager) AutoTransitionToInProgress(taskID string) error {
 }
 
 // AutoTransitionToPending automatically transitions a task back to pending after inactivity
-func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
+func (asm *AutoStateManager) AutoTransitionToPending(ctx context.Context, taskID string) error {
 	log.Printf("Auto-transitioning task to pending due to inactivity: taskID=%s", taskID)
 
 	// Get current task
-	task, err := asm.veriYonetici.GorevDetay(taskID)
+	task, err := asm.veriYonetici.GorevDetay(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -111,14 +112,14 @@ func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 	}
 
 	// Transition back to pending
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": constants.TaskStatusPending})
+	err = asm.veriYonetici.GorevGuncelle(ctx, taskID, map[string]interface{}{"status": constants.TaskStatusPending})
 	if err != nil {
 		return err
 	}
 
 	// Record the interaction
 	if asm.aiContextManager != nil {
-		if recErr := asm.aiContextManager.recordInteraction(taskID, "auto_transition_pause", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction(ctx, taskID, "auto_transition_pause", map[string]interface{}{
 			"from_status": constants.TaskStatusInProgress,
 			"to_status":   constants.TaskStatusPending,
 			"reason":      "inactivity_timeout",
@@ -138,11 +139,11 @@ func (asm *AutoStateManager) AutoTransitionToPending(taskID string) error {
 }
 
 // CheckParentCompletion checks if a parent task can be completed based on subtask completion
-func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
+func (asm *AutoStateManager) CheckParentCompletion(ctx context.Context, taskID string) error {
 	log.Printf("Checking parent completion eligibility: taskID=%s", taskID)
 
 	// Get task details
-	task, err := asm.veriYonetici.GorevDetay(taskID)
+	task, err := asm.veriYonetici.GorevDetay(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -155,7 +156,7 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 	parentID := task.ParentID
 
 	// Get all subtasks of the parent
-	subtasks, err := asm.getSubtasks(parentID)
+	subtasks, err := asm.getSubtasks(ctx, parentID)
 	if err != nil {
 		return err
 	}
@@ -171,21 +172,21 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 
 	if allCompleted {
 		// Get parent task
-		parentTask, err := asm.veriYonetici.GorevDetay(parentID)
+		parentTask, err := asm.veriYonetici.GorevDetay(ctx, parentID)
 		if err != nil {
 			return err
 		}
 
 		// Auto-complete parent if not already completed
 		if parentTask.Status != constants.TaskStatusCompleted {
-			err = asm.veriYonetici.GorevGuncelle(parentID, map[string]interface{}{"status": constants.TaskStatusCompleted})
+			err = asm.veriYonetici.GorevGuncelle(ctx, parentID, map[string]interface{}{"status": constants.TaskStatusCompleted})
 			if err != nil {
 				return err
 			}
 
 			// Record the interaction
 			if asm.aiContextManager != nil {
-				if recErr := asm.aiContextManager.recordInteraction(parentID, "auto_complete_parent", map[string]interface{}{
+				if recErr := asm.aiContextManager.recordInteraction(ctx, parentID, "auto_complete_parent", map[string]interface{}{
 					"reason":        "all_subtasks_completed",
 					"subtask_count": len(subtasks),
 					"timestamp":     time.Now(),
@@ -197,7 +198,7 @@ func (asm *AutoStateManager) CheckParentCompletion(taskID string) error {
 			log.Printf("Auto-completed parent task: parentID=%s, subtaskCount=%d, reason=all_subtasks_completed", parentID, len(subtasks))
 
 			// Recursively check grandparent
-			return asm.CheckParentCompletion(parentID)
+			return asm.CheckParentCompletion(ctx, parentID)
 		}
 	}
 
@@ -216,9 +217,9 @@ func (asm *AutoStateManager) ResetInactivityTimer(taskID string) {
 }
 
 // OnTaskAccessed should be called whenever a task is accessed by AI
-func (asm *AutoStateManager) OnTaskAccessed(taskID string) error {
+func (asm *AutoStateManager) OnTaskAccessed(ctx context.Context, taskID string) error {
 	// Auto-transition to in-progress if needed
-	err := asm.AutoTransitionToInProgress(taskID)
+	err := asm.AutoTransitionToInProgress(ctx, taskID)
 	if err != nil {
 		return err
 	}
@@ -230,12 +231,12 @@ func (asm *AutoStateManager) OnTaskAccessed(taskID string) error {
 }
 
 // OnTaskCompleted should be called when a task is completed
-func (asm *AutoStateManager) OnTaskCompleted(taskID string) error {
+func (asm *AutoStateManager) OnTaskCompleted(ctx context.Context, taskID string) error {
 	// Clear inactivity timer
 	asm.clearInactivityTimer(taskID)
 
 	// Check if parent can be completed
-	return asm.CheckParentCompletion(taskID)
+	return asm.CheckParentCompletion(ctx, taskID)
 }
 
 // SetInactivityDuration sets the inactivity timeout duration
@@ -255,7 +256,7 @@ func (asm *AutoStateManager) startInactivityTimer(taskID string) {
 
 	// Create new timer
 	timer := time.AfterFunc(asm.inactivityTimer, func() {
-		err := asm.AutoTransitionToPending(taskID)
+		err := asm.AutoTransitionToPending(context.Background(), taskID)
 		if err != nil {
 			log.Printf("Failed to auto-transition task to pending: taskID=%s, error=%v", taskID, err)
 		}
@@ -275,8 +276,8 @@ func (asm *AutoStateManager) clearInactivityTimer(taskID string) {
 }
 
 // checkDependenciesCompleted checks if all dependencies for a task are completed
-func (asm *AutoStateManager) checkDependenciesCompleted(taskID string) (bool, error) {
-	dependencies, err := asm.veriYonetici.GorevBagimlilikGetir(taskID)
+func (asm *AutoStateManager) checkDependenciesCompleted(ctx context.Context, taskID string) (bool, error) {
+	dependencies, err := asm.veriYonetici.GorevBagimlilikGetir(ctx, taskID)
 	if err != nil {
 		return false, err
 	}
@@ -291,9 +292,9 @@ func (asm *AutoStateManager) checkDependenciesCompleted(taskID string) (bool, er
 }
 
 // getSubtasks returns all subtasks for a given parent task
-func (asm *AutoStateManager) getSubtasks(parentID string) ([]*Gorev, error) {
+func (asm *AutoStateManager) getSubtasks(ctx context.Context, parentID string) ([]*Gorev, error) {
 	// Query all tasks and filter by ParentID
-	allTasks, err := asm.veriYonetici.GorevleriGetir("", "", "")
+	allTasks, err := asm.veriYonetici.GorevleriGetir(ctx, "", "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +319,7 @@ func (asm *AutoStateManager) Cleanup() {
 }
 
 // ProcessNaturalLanguageQuery processes natural language queries and executes corresponding actions
-func (asm *AutoStateManager) ProcessNaturalLanguageQuery(query string, lang string) (interface{}, error) {
+func (asm *AutoStateManager) ProcessNaturalLanguageQuery(ctx context.Context, query string, lang string) (interface{}, error) {
 	log.Printf("Processing natural language query: query=%s, lang=%s", query, lang)
 
 	// Parse the query using NLP processor
@@ -334,7 +335,7 @@ func (asm *AutoStateManager) ProcessNaturalLanguageQuery(query string, lang stri
 
 	// Record the query in AI context
 	if asm.aiContextManager != nil {
-		if recErr := asm.aiContextManager.recordInteraction("system", "nlp_query", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction(ctx, "system", "nlp_query", map[string]interface{}{
 			"query":      query,
 			"intent":     intent,
 			"confidence": intent.Confidence,
@@ -345,7 +346,7 @@ func (asm *AutoStateManager) ProcessNaturalLanguageQuery(query string, lang stri
 	}
 
 	// Execute the action based on intent
-	result, err := asm.executeAction(intent)
+	result, err := asm.executeAction(ctx, intent)
 	if err != nil {
 		return nil, err
 	}
@@ -363,29 +364,29 @@ func (asm *AutoStateManager) ProcessNaturalLanguageQuery(query string, lang stri
 }
 
 // executeAction executes the parsed action from NLP intent
-func (asm *AutoStateManager) executeAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	switch intent.Action {
 	case "list":
-		return asm.executeListAction(intent)
+		return asm.executeListAction(ctx, intent)
 	case "create":
-		return asm.executeCreateAction(intent)
+		return asm.executeCreateAction(ctx, intent)
 	case "update":
-		return asm.executeUpdateAction(intent)
+		return asm.executeUpdateAction(ctx, intent)
 	case "complete":
-		return asm.executeCompleteAction(intent)
+		return asm.executeCompleteAction(ctx, intent)
 	case "delete":
-		return asm.executeDeleteAction(intent)
+		return asm.executeDeleteAction(ctx, intent)
 	case "search":
-		return asm.executeSearchAction(intent)
+		return asm.executeSearchAction(ctx, intent)
 	case "status":
-		return asm.executeStatusAction(intent)
+		return asm.executeStatusAction(ctx, intent)
 	default:
-		return nil, fmt.Errorf(i18n.T("error.unsupportedAction", map[string]interface{}{"Action": intent.Action}))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.unsupportedAction", map[string]interface{}{"Action": intent.Action}))
 	}
 }
 
 // executeListAction lists tasks based on filters
-func (asm *AutoStateManager) executeListAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeListAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	// Build query parameters from intent
 	filters := make(map[string]interface{})
 
@@ -405,7 +406,7 @@ func (asm *AutoStateManager) executeListAction(intent *QueryIntent) (interface{}
 	}
 
 	// Get tasks from data manager
-	tasks, err := asm.veriYonetici.GorevListele(filters)
+	tasks, err := asm.veriYonetici.GorevListele(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -414,14 +415,14 @@ func (asm *AutoStateManager) executeListAction(intent *QueryIntent) (interface{}
 }
 
 // executeCreateAction creates a new task from natural language
-func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeCreateAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	// Extract task content from the query
 	content := asm.nlpProcessor.ExtractTaskContent(intent.Raw)
 
 	// Validate required fields
 	title, ok := content["title"].(string)
 	if !ok || title == "" {
-		return nil, fmt.Errorf(i18n.T("error.taskTitleRequired"))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.taskTitleRequired"))
 	}
 
 	// Create task parameters
@@ -453,14 +454,14 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 	}
 
 	// Create the task
-	taskID, err := asm.veriYonetici.GorevOlustur(taskParams)
+	taskID, err := asm.veriYonetici.GorevOlustur(ctx, taskParams)
 	if err != nil {
 		return nil, err
 	}
 
 	// Record the creation
 	if asm.aiContextManager != nil {
-		if recErr := asm.aiContextManager.recordInteraction(taskID, "nlp_create", map[string]interface{}{
+		if recErr := asm.aiContextManager.recordInteraction(ctx, taskID, "nlp_create", map[string]interface{}{
 			"original_query":    intent.Raw,
 			"extracted_content": content,
 			"timestamp":         time.Now(),
@@ -473,20 +474,20 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 }
 
 // executeUpdateAction updates an existing task
-func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeUpdateAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	refs, ok := intent.Parameters["task_references"].([]string)
 	if !ok || len(refs) == 0 {
-		return nil, fmt.Errorf(i18n.T("error.taskReferenceRequiredUpdate"))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.taskReferenceRequiredUpdate"))
 	}
 
 	// For now, handle the first reference
-	taskID, err := asm.resolveTaskReference(refs[0])
+	taskID, err := asm.resolveTaskReference(ctx, refs[0])
 	if err != nil {
 		return nil, err
 	}
 
 	// Get current task
-	task, err := asm.veriYonetici.GorevDetay(taskID)
+	task, err := asm.veriYonetici.GorevDetay(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
@@ -517,7 +518,7 @@ func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface
 	}
 
 	// Update the task
-	err = asm.veriYonetici.GorevGuncelle(taskID, updateParams)
+	err = asm.veriYonetici.GorevGuncelle(ctx, taskID, updateParams)
 	if err != nil {
 		return nil, err
 	}
@@ -526,31 +527,31 @@ func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface
 }
 
 // executeCompleteAction marks a task as completed
-func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeCompleteAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	refs, ok := intent.Parameters["task_references"].([]string)
 	if !ok || len(refs) == 0 {
-		return nil, fmt.Errorf(i18n.T("error.taskReferenceRequiredCompletion"))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.taskReferenceRequiredCompletion"))
 	}
 
-	taskID, err := asm.resolveTaskReference(refs[0])
+	taskID, err := asm.resolveTaskReference(ctx, refs[0])
 	if err != nil {
 		return nil, err
 	}
 
 	// Get task details
-	task, err := asm.veriYonetici.GorevDetay(taskID)
+	task, err := asm.veriYonetici.GorevDetay(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Complete the task
-	err = asm.veriYonetici.GorevGuncelle(taskID, map[string]interface{}{"status": constants.TaskStatusCompleted})
+	err = asm.veriYonetici.GorevGuncelle(ctx, taskID, map[string]interface{}{"status": constants.TaskStatusCompleted})
 	if err != nil {
 		return nil, err
 	}
 
 	// Trigger auto-completion check for parent
-	err = asm.OnTaskCompleted(taskID)
+	err = asm.OnTaskCompleted(ctx, taskID)
 	if err != nil {
 		log.Printf("Failed to check parent completion: taskID=%s, error=%v", taskID, err)
 	}
@@ -559,25 +560,25 @@ func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interfa
 }
 
 // executeDeleteAction deletes a task
-func (asm *AutoStateManager) executeDeleteAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeDeleteAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	refs, ok := intent.Parameters["task_references"].([]string)
 	if !ok || len(refs) == 0 {
-		return nil, fmt.Errorf(i18n.T("error.taskReferenceRequiredDeletion"))
+		return nil, fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.taskReferenceRequiredDeletion"))
 	}
 
-	taskID, err := asm.resolveTaskReference(refs[0])
+	taskID, err := asm.resolveTaskReference(ctx, refs[0])
 	if err != nil {
 		return nil, err
 	}
 
 	// Get task details before deletion
-	task, err := asm.veriYonetici.GorevDetay(taskID)
+	task, err := asm.veriYonetici.GorevDetay(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Delete the task
-	err = asm.veriYonetici.GorevSil(taskID)
+	err = asm.veriYonetici.GorevSil(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
@@ -589,20 +590,20 @@ func (asm *AutoStateManager) executeDeleteAction(intent *QueryIntent) (interface
 }
 
 // executeSearchAction searches for tasks
-func (asm *AutoStateManager) executeSearchAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeSearchAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	// Use the list action with search-specific filters
-	return asm.executeListAction(intent)
+	return asm.executeListAction(ctx, intent)
 }
 
 // executeStatusAction shows status of specific tasks
-func (asm *AutoStateManager) executeStatusAction(intent *QueryIntent) (interface{}, error) {
+func (asm *AutoStateManager) executeStatusAction(ctx context.Context, intent *QueryIntent) (interface{}, error) {
 	if refs, ok := intent.Parameters["task_references"].([]string); ok && len(refs) > 0 {
-		taskID, err := asm.resolveTaskReference(refs[0])
+		taskID, err := asm.resolveTaskReference(ctx, refs[0])
 		if err != nil {
 			return nil, err
 		}
 
-		task, err := asm.veriYonetici.GorevDetay(taskID)
+		task, err := asm.veriYonetici.GorevDetay(ctx, taskID)
 		if err != nil {
 			return nil, err
 		}
@@ -614,11 +615,11 @@ func (asm *AutoStateManager) executeStatusAction(intent *QueryIntent) (interface
 	}
 
 	// Return general status
-	return asm.executeListAction(intent)
+	return asm.executeListAction(ctx, intent)
 }
 
 // resolveTaskReference resolves a task reference to a task ID
-func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
+func (asm *AutoStateManager) resolveTaskReference(ctx context.Context, ref string) (string, error) {
 	if strings.HasPrefix(ref, "id:") {
 		return strings.TrimPrefix(ref, "id:"), nil
 	}
@@ -626,7 +627,7 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 	if strings.HasPrefix(ref, "title:") {
 		title := strings.TrimPrefix(ref, "title:")
 		// Search for task by title - this would need implementation in VeriYonetici
-		tasks, err := asm.veriYonetici.GorevListele(map[string]interface{}{
+		tasks, err := asm.veriYonetici.GorevListele(ctx, map[string]interface{}{
 			"title_search": title,
 			"limit":        1,
 		})
@@ -634,7 +635,7 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 			return "", err
 		}
 		if len(tasks) == 0 {
-			return "", fmt.Errorf(i18n.T("error.noTaskFoundWithTitle", map[string]interface{}{"Title": title}))
+			return "", fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.noTaskFoundWithTitle", map[string]interface{}{"Title": title}))
 		}
 		return tasks[0].ID, nil
 	}
@@ -647,7 +648,7 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 		}
 
 		// Get recent tasks
-		tasks, err := asm.veriYonetici.GorevListele(map[string]interface{}{
+		tasks, err := asm.veriYonetici.GorevListele(ctx, map[string]interface{}{
 			"order_by": "created_desc",
 			"limit":    count,
 		})
@@ -655,7 +656,7 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 			return "", err
 		}
 		if len(tasks) == 0 {
-			return "", fmt.Errorf(i18n.T("error.noRecentTasksFound"))
+			return "", fmt.Errorf(i18n.TWithLang(i18n.FromContext(ctx), "error.noRecentTasksFound"))
 		}
 		return tasks[0].ID, nil
 	}
