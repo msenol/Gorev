@@ -447,7 +447,7 @@ func TestAIContextYonetici_GetActiveTask_EdgeCases(t *testing.T) {
 				tc.setupError(vy)
 			}
 
-			task, err := acy.GetActiveTask()
+			task, err := acy.GetActiveTask(context.Background())
 
 			if tc.expectError && err == nil {
 				t.Error("Expected error but got none")
@@ -535,7 +535,7 @@ func TestAIContextYonetici_recordInteraction_EdgeCases(t *testing.T) {
 				tc.setupError(vy)
 			}
 
-			err := acy.recordInteraction(tc.taskID, tc.actionType, tc.context)
+			err := acy.recordInteraction(context.Background(), tc.taskID, tc.actionType, tc.context)
 
 			if tc.expectError && err == nil {
 				t.Error("Expected error but got none")

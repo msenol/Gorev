@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -608,7 +609,7 @@ func TestFileWatcher_UpdateTaskOnFileChange(t *testing.T) {
 	}
 
 	// Test task update on file change
-	err = fw.updateTaskOnFileChange("test-task", changeEvent)
+	err = fw.updateTaskOnFileChange(context.Background(), "test-task", changeEvent)
 	if err != nil {
 		t.Errorf("updateTaskOnFileChange failed: %v", err)
 	}
@@ -620,7 +621,7 @@ func TestFileWatcher_UpdateTaskOnFileChange(t *testing.T) {
 	}
 
 	// Test with task that doesn't exist
-	err = fw.updateTaskOnFileChange("non-existent", changeEvent)
+	err = fw.updateTaskOnFileChange(context.Background(), "non-existent", changeEvent)
 	if err == nil {
 		t.Error("Expected error for non-existent task")
 	}
@@ -636,7 +637,7 @@ func TestFileWatcher_UpdateTaskOnFileChange(t *testing.T) {
 	}
 	vy.gorevler["progress-task"] = inProgressTask
 
-	err = fw.updateTaskOnFileChange("progress-task", changeEvent)
+	err = fw.updateTaskOnFileChange(context.Background(), "progress-task", changeEvent)
 	if err != nil {
 		t.Errorf("updateTaskOnFileChange failed for in-progress task: %v", err)
 	}

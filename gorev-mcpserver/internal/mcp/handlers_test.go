@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -151,7 +152,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
-	templates, err := isYonetici.VeriYonetici().TemplateListele("")
+	templates, err := isYonetici.VeriYonetici().TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	require.NotEmpty(t, templates)
 	templateID := templates[0].ID
@@ -433,7 +434,7 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := veriYonetici.TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	require.NotEmpty(t, templates)
 	templateID := templates[0].ID
@@ -533,15 +534,15 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 		Name:       "Test Dependency Project",
 		Definition: "Test project for dependencies",
 	}
-	err := veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
-	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	err = veriYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := veriYonetici.TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	require.NotEmpty(t, templates)
 	templateID := templates[0].ID
@@ -688,15 +689,15 @@ func TestMCPHandlers_Performance(t *testing.T) {
 		Name:       "Test Performance Project",
 		Definition: "Test project for performance testing",
 	}
-	err := veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
-	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	err = veriYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	handlers := YeniHandlers(isYonetici)
 
 	// Get the first available template
-	templates, err := veriYonetici.TemplateListele("")
+	templates, err := veriYonetici.TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	require.NotEmpty(t, templates)
 	templateID := templates[0].ID
@@ -855,13 +856,13 @@ func TestTemplateHandlers(t *testing.T) {
 			Name:       "Test Bug Project",
 			Definition: "Test project for bug reports",
 		}
-		err := veriYonetici.ProjeKaydet(proje)
+		err := veriYonetici.ProjeKaydet(context.Background(), proje)
 		require.NoError(t, err)
-		err = veriYonetici.AktifProjeAyarla(proje.ID)
+		err = veriYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 		require.NoError(t, err)
 
 		// Get bug report template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
@@ -946,7 +947,7 @@ func TestTemplateHandlers(t *testing.T) {
 		veriYonetici := isYonetici.VeriYonetici()
 
 		// Get bug report template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
@@ -1008,7 +1009,7 @@ func TestTemplateHandlers(t *testing.T) {
 		veriYonetici := isYonetici.VeriYonetici()
 
 		// Get feature request template ID
-		templates, err := veriYonetici.TemplateListele("Özellik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Özellik")
 		require.NoError(t, err)
 
 		var featureTemplateID string
@@ -1094,13 +1095,13 @@ func TestTemplateHandlers(t *testing.T) {
 			Name:       "Test Tech Debt Project",
 			Definition: "Test project for technical debt",
 		}
-		err := veriYonetici.ProjeKaydet(proje)
+		err := veriYonetici.ProjeKaydet(context.Background(), proje)
 		require.NoError(t, err)
-		err = veriYonetici.AktifProjeAyarla(proje.ID)
+		err = veriYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 		require.NoError(t, err)
 
 		// Get technical debt template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var techDebtTemplateID string
@@ -1237,13 +1238,13 @@ func TestTemplateConcurrency(t *testing.T) {
 		Name:       "Test Concurrent Project",
 		Definition: "Test project for concurrent operations",
 	}
-	err := veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
-	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	err = veriYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	// Get bug report template ID
-	templates, err := veriYonetici.TemplateListele("Teknik")
+	templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 	require.NoError(t, err)
 
 	var bugTemplateID string
@@ -1362,7 +1363,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 		assert.Contains(t, templatesText, "Teknik Borç")
 
 		// Get Bug Raporu template ID
-		templates, err := isYonetici.VeriYonetici().TemplateListele("Teknik")
+		templates, err := isYonetici.VeriYonetici().TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
@@ -1417,7 +1418,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 	t.Run("Template validation works", func(t *testing.T) {
 		// Get Bug Raporu template ID
-		templates, err := isYonetici.VeriYonetici().TemplateListele("Teknik")
+		templates, err := isYonetici.VeriYonetici().TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string

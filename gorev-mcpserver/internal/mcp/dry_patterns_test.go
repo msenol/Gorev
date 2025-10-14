@@ -18,19 +18,19 @@ func TestDRYPatternsBasic(t *testing.T) {
 	// Test i18n DRY helpers
 	t.Run("I18nHelpers", func(t *testing.T) {
 		// Test TParam function
-		result := i18n.TParam("id_field")
+		result := i18n.TParam("tr", "id_field")
 		if result == "" {
 			t.Error("TParam should return non-empty string for 'id'")
 		}
 
 		// Test FormatParameterRequired
-		required := i18n.FormatParameterRequired("test_param")
+		required := i18n.FormatParameterRequired("tr", "test_param")
 		if required == "" {
 			t.Error("FormatParameterRequired should return non-empty string")
 		}
 
 		// Test FormatInvalidValue
-		invalid := i18n.FormatInvalidValue("durum", "invalid", constants.GetValidTaskStatuses()[:2])
+		invalid := i18n.FormatInvalidValue("tr", "durum", "invalid", constants.GetValidTaskStatuses()[:2])
 		if invalid == "" {
 			t.Error("FormatInvalidValue should return non-empty string")
 		}
@@ -208,7 +208,7 @@ func BenchmarkDRYPatternsSample(b *testing.B) {
 			},
 			Cleanup: func() {},
 			Operation: func(data interface{}) error {
-				i18n.TParam("id_field")
+				i18n.TParam("tr", "id_field")
 				return nil
 			},
 		},

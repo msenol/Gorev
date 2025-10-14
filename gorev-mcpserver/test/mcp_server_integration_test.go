@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -268,7 +269,7 @@ func TestMCPServerPerformance(t *testing.T) {
 
 	// Create some test data
 	for i := 0; i < 50; i++ {
-		_, err := isYonetici.GorevOlustur(fmt.Sprintf("Performance Test Görev %d", i), "", "orta", "", "", nil)
+		_, err := isYonetici.GorevOlustur(context.Background(), fmt.Sprintf("Performance Test Görev %d", i), "", "orta", "", "", nil)
 		require.NoError(t, err)
 	}
 
@@ -335,11 +336,11 @@ func TestMCPServerLargeDataset(t *testing.T) {
 	tasksPerProject := 100
 
 	for p := 0; p < projects; p++ {
-		proje, err := isYonetici.ProjeOlustur(fmt.Sprintf("Large Dataset Projesi %d", p+1), "")
+		proje, err := isYonetici.ProjeOlustur(context.Background(), fmt.Sprintf("Large Dataset Projesi %d", p+1), "")
 		require.NoError(t, err)
 
 		for i := 0; i < tasksPerProject; i++ {
-			_, err := isYonetici.GorevOlustur(
+			_, err := isYonetici.GorevOlustur(context.Background(), 
 				fmt.Sprintf("Görev %d-%d", p+1, i+1),
 				fmt.Sprintf("Bu görev %d. projenin %d. görevidir", p+1, i+1),
 				[]string{"dusuk", "orta", "yuksek"}[i%3],
@@ -397,7 +398,7 @@ func TestMCPServerInitializationSequence(t *testing.T) {
 		defer cleanup()
 
 		// Verify database is accessible
-		_, err = isYonetici.ProjeListele()
+		_, err = isYonetici.ProjeListele(context.Background())
 		assert.NoError(t, err, "Should be able to access database after initialization")
 	})
 
@@ -415,7 +416,7 @@ func TestMCPServerInitializationSequence(t *testing.T) {
 		isYonetici := gorev.YeniIsYonetici(vy)
 
 		// Verify manager is functional
-		_, err2 := isYonetici.ProjeListele()
+		_, err2 := isYonetici.ProjeListele(context.Background())
 		assert.NoError(t, err2, "Manager should be functional with existing database")
 		// Note: We don't assert projects is not nil since the database might be empty
 		// The important thing is that the manager can access the database without errors

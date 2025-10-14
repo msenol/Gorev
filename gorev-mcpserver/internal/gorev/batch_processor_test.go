@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -196,7 +197,7 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				tc.setupError(vy)
 			}
 
-			result, err := bp.ProcessBatchUpdate(tc.requests)
+			result, err := bp.ProcessBatchUpdate(context.Background(), tc.requests)
 
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
@@ -286,7 +287,7 @@ func TestProcessBatchUpdate_DryRun(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := bp.ProcessBatchUpdate([]BatchUpdateRequest{tc.request})
+			result, err := bp.ProcessBatchUpdate(context.Background(), []BatchUpdateRequest{tc.request})
 
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
@@ -382,7 +383,7 @@ func TestProcessBatchUpdate_WithWarnings(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := bp.ProcessBatchUpdate([]BatchUpdateRequest{tc.request})
+			result, err := bp.ProcessBatchUpdate(context.Background(), []BatchUpdateRequest{tc.request})
 
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
@@ -428,7 +429,7 @@ func TestProcessBatchUpdate_WithAIContext(t *testing.T) {
 		},
 	}
 
-	result, err := bp.ProcessBatchUpdate([]BatchUpdateRequest{request})
+	result, err := bp.ProcessBatchUpdate(context.Background(), []BatchUpdateRequest{request})
 
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -650,7 +651,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 		}
 
 		for _, test := range validRequestTests {
-			err := bp.validateUpdateRequest(test.request)
+			err := bp.validateUpdateRequest(context.Background(), test.request)
 			if test.expectError && err == nil {
 				t.Errorf("validateUpdateRequest: expected error for %s, but got none", test.desc)
 			}
@@ -664,7 +665,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 	t.Run("checkDependenciesCompleted", func(t *testing.T) {
 		// This would need more complex mocking for dependency management
 		// For now, just test the basic call
-		canStart, err := bp.checkDependenciesCompleted("task-1")
+		canStart, err := bp.checkDependenciesCompleted(context.Background(), "task-1")
 		if err != nil {
 			t.Errorf("checkDependenciesCompleted returned error: %v", err)
 		}
@@ -789,7 +790,7 @@ func TestBulkStatusTransition_Basic(t *testing.T) {
 			task2.Status = constants.TaskStatusPending
 			task3.Status = constants.TaskStatusCompleted
 
-			result, err := bp.BulkStatusTransition(tc.request)
+			result, err := bp.BulkStatusTransition(context.Background(), tc.request)
 
 			if tc.expectError {
 				if err == nil {
@@ -894,14 +895,14 @@ func TestBulkStatusTransition_DryRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Test dry run with invalid status should return error before processing
 			if tc.request.NewStatus == "invalid-status" {
-				_, err := bp.BulkStatusTransition(tc.request)
+				_, err := bp.BulkStatusTransition(context.Background(), tc.request)
 				if err == nil {
 					t.Error("Expected error for invalid status but got none")
 				}
 				return
 			}
 
-			result, err := bp.BulkStatusTransition(tc.request)
+			result, err := bp.BulkStatusTransition(context.Background(), tc.request)
 
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
@@ -944,7 +945,7 @@ func TestBulkStatusTransition_WithAIContext(t *testing.T) {
 		NewStatus: constants.TaskStatusInProgress,
 	}
 
-	result, err := bp.BulkStatusTransition(request)
+	result, err := bp.BulkStatusTransition(context.Background(), request)
 
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)

@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -147,7 +148,7 @@ func TestAutoStateManager_AutoTransitionToInProgress(t *testing.T) {
 				pendingTask.Status = constants.TaskStatusPending
 			}
 
-			err := asm.AutoTransitionToInProgress(tc.taskID)
+			err := asm.AutoTransitionToInProgress(context.Background(), tc.taskID)
 
 			if tc.expectError {
 				if err == nil {
@@ -272,7 +273,7 @@ func TestAutoStateManager_AutoTransitionToPending(t *testing.T) {
 				inProgressTask.Status = constants.TaskStatusInProgress
 			}
 
-			err := asm.AutoTransitionToPending(tc.taskID)
+			err := asm.AutoTransitionToPending(context.Background(), tc.taskID)
 
 			if tc.expectError {
 				if err == nil {
@@ -324,7 +325,7 @@ func TestAutoStateManager_OnTaskAccessed(t *testing.T) {
 	vy.gorevler["test-task"] = testTask
 
 	// Call OnTaskAccessed
-	err := asm.OnTaskAccessed("test-task")
+	err := asm.OnTaskAccessed(context.Background(), "test-task")
 	if err != nil {
 		t.Errorf("OnTaskAccessed returned error: %v", err)
 	}
@@ -363,7 +364,7 @@ func TestAutoStateManager_OnTaskCompleted(t *testing.T) {
 	}
 
 	// Call OnTaskCompleted
-	err := asm.OnTaskCompleted("test-task")
+	err := asm.OnTaskCompleted(context.Background(), "test-task")
 	if err != nil {
 		t.Errorf("OnTaskCompleted returned error: %v", err)
 	}
@@ -532,7 +533,7 @@ func TestAutoStateManager_CheckParentCompletion(t *testing.T) {
 				parentTask.Status = constants.TaskStatusInProgress
 			}
 
-			err := asm.CheckParentCompletion(tc.taskID)
+			err := asm.CheckParentCompletion(context.Background(), tc.taskID)
 
 			if tc.expectError {
 				if err == nil {
@@ -589,7 +590,7 @@ func TestAutoStateManager_CheckDependenciesCompleted(t *testing.T) {
 	vy.gorevler["main-task"] = mainTask
 
 	// Test with no dependencies (empty slice returned by mock)
-	canStart, err := asm.checkDependenciesCompleted("main-task")
+	canStart, err := asm.checkDependenciesCompleted(context.Background(), "main-task")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -668,7 +669,7 @@ func TestAutoStateManager_ProcessNaturalLanguageQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := asm.ProcessNaturalLanguageQuery(tc.query, tc.lang)
+			result, err := asm.ProcessNaturalLanguageQuery(context.Background(), tc.query, tc.lang)
 
 			if tc.expectError {
 				if err == nil {

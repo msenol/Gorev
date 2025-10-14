@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -28,18 +29,18 @@ func setupMissingCoverageTestServer(t *testing.T) (*APIServer, string, string, f
 	require.NoError(t, err)
 
 	// Create templates
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	err = veriYonetici.VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create IsYonetici
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 
 	// Create a test project
-	proje, err := isYonetici.ProjeOlustur("Test Project", "Test Description")
+	proje, err := isYonetici.ProjeOlustur(context.Background(), "Test Project", "Test Description")
 	require.NoError(t, err)
 
 	// Set active project
-	err = isYonetici.AktifProjeAyarla(proje.ID)
+	err = isYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	// Create a test task using the "bug" template alias
@@ -54,7 +55,7 @@ func setupMissingCoverageTestServer(t *testing.T) (*APIServer, string, string, f
 		"oncelik":   constants.PriorityMedium,
 		"etiketler": "test",
 	}
-	gorevResult, err := isYonetici.TemplatedenGorevOlustur("bug", degerler)
+	gorevResult, err := isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
 
 	// Create API server
@@ -171,7 +172,7 @@ func TestChangeParentTask(t *testing.T) {
 		"oncelik":   constants.PriorityMedium,
 		"etiketler": "test",
 	}
-	parentResult, err := server.isYonetici.TemplatedenGorevOlustur("bug", degerler)
+	parentResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
 
 	payload := map[string]interface{}{
@@ -222,7 +223,7 @@ func TestAddDependency(t *testing.T) {
 		"oncelik":   constants.PriorityMedium,
 		"etiketler": "test",
 	}
-	depResult, err := server.isYonetici.TemplatedenGorevOlustur("bug", degerler)
+	depResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
 
 	payload := map[string]interface{}{
@@ -274,7 +275,7 @@ func TestRemoveDependency(t *testing.T) {
 		"oncelik":   constants.PriorityMedium,
 		"etiketler": "test",
 	}
-	depResult, err := server.isYonetici.TemplatedenGorevOlustur("bug", degerler)
+	depResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
 
 	// First add a dependency using VeriYonetici
@@ -284,7 +285,7 @@ func TestRemoveDependency(t *testing.T) {
 		TargetID:       depResult.ID,
 		ConnectionType: "depends_on",
 	}
-	err = server.isYonetici.VeriYonetici().BaglantiEkle(baglanti)
+	err = server.isYonetici.VeriYonetici().BaglantiEkle(context.Background(), baglanti)
 	require.NoError(t, err)
 
 	// Now remove it
@@ -325,7 +326,7 @@ func TestGetActiveProjectAPI(t *testing.T) {
 	defer cleanup()
 
 	// First set an active project
-	err := server.isYonetici.AktifProjeAyarla(projectID)
+	err := server.isYonetici.AktifProjeAyarla(context.Background(), projectID)
 	require.NoError(t, err)
 
 	req := httptest.NewRequest("GET", "/api/v1/active-project", nil)
@@ -380,7 +381,7 @@ func TestRemoveActiveProjectAPI(t *testing.T) {
 	defer cleanup()
 
 	// First set an active project
-	err := server.isYonetici.AktifProjeAyarla(projectID)
+	err := server.isYonetici.AktifProjeAyarla(context.Background(), projectID)
 	require.NoError(t, err)
 
 	// Now remove it

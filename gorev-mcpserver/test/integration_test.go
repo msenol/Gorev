@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -53,15 +54,15 @@ func TestGorevOlusturVeListele(t *testing.T) {
 	defer handlers.Close()
 
 	// Test projesi oluştur
-	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Test açıklaması")
+	proje, err := isYonetici.ProjeOlustur(context.Background(), "Test Projesi", "Test açıklaması")
 	require.NoError(t, err)
 
 	// Projeyi aktif yap
-	err = isYonetici.VeriYonetici().AktifProjeAyarla(proje.ID)
+	err = isYonetici.VeriYonetici().AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	// Test: Template listesini kontrol et
-	templates, err := isYonetici.VeriYonetici().TemplateListele("")
+	templates, err := isYonetici.VeriYonetici().TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	t.Logf("Available templates: %d", len(templates))
 	for _, tmpl := range templates {
@@ -125,7 +126,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	defer handlers.Close()
 
 	// Önce bir görev oluştur
-	gorevObj, err := isYonetici.GorevOlustur("Durum test görevi", "", "orta", "", "", nil)
+	gorevObj, err := isYonetici.GorevOlustur(context.Background(), "Durum test görevi", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
 	// Durumu güncelle
@@ -142,7 +143,7 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	assert.Contains(t, text, "devam_ediyor")
 
 	// Güncellemeyi doğrula
-	gorevler, err := isYonetici.GorevListele(map[string]interface{}{"durum": "devam_ediyor"})
+	gorevler, err := isYonetici.GorevListele(context.Background(), map[string]interface{}{"durum": "devam_ediyor"})
 	require.NoError(t, err)
 	assert.Len(t, gorevler, 1)
 	assert.Equal(t, "devam_ediyor", gorevler[0].Status)
@@ -181,16 +182,16 @@ func TestOzetGoster(t *testing.T) {
 	defer handlers.Close()
 
 	// Test verisi oluştur
-	_, err := isYonetici.ProjeOlustur("Proje 1", "")
+	_, err := isYonetici.ProjeOlustur(context.Background(), "Proje 1", "")
 	require.NoError(t, err)
 
-	_, err = isYonetici.GorevOlustur("Görev 1", "", "yuksek", "", "", nil)
+	_, err = isYonetici.GorevOlustur(context.Background(), "Görev 1", "", "yuksek", "", "", nil)
 	require.NoError(t, err)
 
-	gorev2, err := isYonetici.GorevOlustur("Görev 2", "", "orta", "", "", nil)
+	gorev2, err := isYonetici.GorevOlustur(context.Background(), "Görev 2", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
-	err = isYonetici.GorevDurumGuncelle(gorev2.ID, "tamamlandi")
+	err = isYonetici.GorevDurumGuncelle(context.Background(), gorev2.ID, "tamamlandi")
 	require.NoError(t, err)
 
 	// Özet al
@@ -217,19 +218,19 @@ func TestHataYonetimi(t *testing.T) {
 	defer handlers.Close()
 
 	// Varsayılan template'leri oluştur (idempotent)
-	err := isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Test projesi oluştur
-	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Test açıklaması")
+	proje, err := isYonetici.ProjeOlustur(context.Background(), "Test Projesi", "Test açıklaması")
 	require.NoError(t, err)
 
 	// Projeyi aktif yap
-	err = isYonetici.VeriYonetici().AktifProjeAyarla(proje.ID)
+	err = isYonetici.VeriYonetici().AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	// Get available templates
-	templates, err := isYonetici.VeriYonetici().TemplateListele("")
+	templates, err := isYonetici.VeriYonetici().TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	if len(templates) == 0 {
 		t.Fatal("No templates available for testing")
@@ -290,17 +291,17 @@ func TestGorevDetay(t *testing.T) {
 	defer handlers.Close()
 
 	// Test verisi oluştur
-	proje, err := isYonetici.ProjeOlustur("Test Projesi", "Proje açıklaması")
+	proje, err := isYonetici.ProjeOlustur(context.Background(), "Test Projesi", "Proje açıklaması")
 	require.NoError(t, err)
 
-	gorev1, err := isYonetici.GorevOlustur("Detaylı Test Görevi", "## Açıklama\n\nBu bir **markdown** açıklamadır.", "yuksek", proje.ID, "2025-12-31", []string{"bug", "acil"})
+	gorev1, err := isYonetici.GorevOlustur(context.Background(), "Detaylı Test Görevi", "## Açıklama\n\nBu bir **markdown** açıklamadır.", "yuksek", proje.ID, "2025-12-31", []string{"bug", "acil"})
 	require.NoError(t, err)
 
-	gorev2, err := isYonetici.GorevOlustur("Bağlı Görev", "", "orta", proje.ID, "", nil)
+	gorev2, err := isYonetici.GorevOlustur(context.Background(), "Bağlı Görev", "", "orta", proje.ID, "", nil)
 	require.NoError(t, err)
 
 	// Bağımlılık ekle (gorev1 önce tamamlanmalı, sonra gorev2 başlayabilir)
-	_, err = isYonetici.GorevBagimlilikEkle(gorev1.ID, gorev2.ID, "onceki")
+	_, err = isYonetici.GorevBagimlilikEkle(context.Background(), gorev1.ID, gorev2.ID, "onceki")
 	require.NoError(t, err)
 
 	// Detay al
@@ -335,7 +336,7 @@ func TestGorevDuzenle(t *testing.T) {
 	defer handlers.Close()
 
 	// Test görevi oluştur
-	gorevObj, err := isYonetici.GorevOlustur("Eski Başlık", "Eski açıklama", "orta", "", "", nil)
+	gorevObj, err := isYonetici.GorevOlustur(context.Background(), "Eski Başlık", "Eski açıklama", "orta", "", "", nil)
 	require.NoError(t, err)
 
 	// Başlık ve açıklama güncelle
@@ -353,7 +354,7 @@ func TestGorevDuzenle(t *testing.T) {
 	assert.Contains(t, text, "✓ Görev düzenlendi")
 
 	// Değişiklikleri doğrula
-	guncelGorev, err := isYonetici.GorevGetir(gorevObj.ID)
+	guncelGorev, err := isYonetici.GorevGetir(context.Background(), gorevObj.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "Yeni Başlık", guncelGorev.Title)
 	assert.Equal(t, "## Yeni Açıklama\n\nMarkdown destekli", guncelGorev.Description)
@@ -370,7 +371,7 @@ func TestGorevSil(t *testing.T) {
 	defer handlers.Close()
 
 	// Test görevi oluştur
-	gorevObj, err := isYonetici.GorevOlustur("Silinecek Görev", "", "orta", "", "", nil)
+	gorevObj, err := isYonetici.GorevOlustur(context.Background(), "Silinecek Görev", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
 	// Onaysız silme denemesi
@@ -394,7 +395,7 @@ func TestGorevSil(t *testing.T) {
 	assert.Contains(t, text, "✓ Görev silindi: Silinecek Görev")
 
 	// Silinen görevi arama
-	_, err = isYonetici.GorevGetir(gorevObj.ID)
+	_, err = isYonetici.GorevGetir(context.Background(), gorevObj.ID)
 	assert.Error(t, err)
 }
 
@@ -414,21 +415,21 @@ func TestProjeListele(t *testing.T) {
 	defer handlers.Close()
 
 	// Test projeleri oluştur
-	proje1, err := isYonetici.ProjeOlustur("Proje 1", "İlk proje")
+	proje1, err := isYonetici.ProjeOlustur(context.Background(), "Proje 1", "İlk proje")
 	require.NoError(t, err)
 
-	_, err = isYonetici.ProjeOlustur("Proje 2", "İkinci proje")
+	_, err = isYonetici.ProjeOlustur(context.Background(), "Proje 2", "İkinci proje")
 	require.NoError(t, err)
 
 	// Proje 1'e görevler ekle
-	gorev1, err := isYonetici.GorevOlustur("Görev 1", "", "yuksek", "", "", nil)
+	gorev1, err := isYonetici.GorevOlustur(context.Background(), "Görev 1", "", "yuksek", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev1.ID, "", "", "", proje1.ID, "", false, false, false, true, false)
+	err = isYonetici.GorevDuzenle(context.Background(), gorev1.ID, "", "", "", proje1.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
 
-	gorev2, err := isYonetici.GorevOlustur("Görev 2", "", "orta", "", "", nil)
+	gorev2, err := isYonetici.GorevOlustur(context.Background(), "Görev 2", "", "orta", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev2.ID, "", "", "", proje1.ID, "", false, false, false, true, false)
+	err = isYonetici.GorevDuzenle(context.Background(), gorev2.ID, "", "", "", proje1.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
 
 	// Projeleri listele
@@ -455,27 +456,27 @@ func TestProjeGorevleri(t *testing.T) {
 	defer handlers.Close()
 
 	// Test projesi ve görevleri oluştur
-	proje, err := isYonetici.ProjeOlustur("Test Projesi", "")
+	proje, err := isYonetici.ProjeOlustur(context.Background(), "Test Projesi", "")
 	require.NoError(t, err)
 
 	// Farklı durumlarda görevler oluştur
-	gorev1, err := isYonetici.GorevOlustur("Devam Eden Görev", "Açıklama 1", "yuksek", "", "", nil)
+	gorev1, err := isYonetici.GorevOlustur(context.Background(), "Devam Eden Görev", "Açıklama 1", "yuksek", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev1.ID, "", "", "", proje.ID, "", false, false, false, true, false)
+	err = isYonetici.GorevDuzenle(context.Background(), gorev1.ID, "", "", "", proje.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
-	err = isYonetici.GorevDurumGuncelle(gorev1.ID, "devam_ediyor")
-	require.NoError(t, err)
-
-	gorev2, err := isYonetici.GorevOlustur("Bekleyen Görev", "Açıklama 2", "orta", "", "", nil)
-	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev2.ID, "", "", "", proje.ID, "", false, false, false, true, false)
+	err = isYonetici.GorevDurumGuncelle(context.Background(), gorev1.ID, "devam_ediyor")
 	require.NoError(t, err)
 
-	gorev3, err := isYonetici.GorevOlustur("Tamamlanan Görev", "", "dusuk", "", "", nil)
+	gorev2, err := isYonetici.GorevOlustur(context.Background(), "Bekleyen Görev", "Açıklama 2", "orta", "", "", nil)
 	require.NoError(t, err)
-	err = isYonetici.GorevDuzenle(gorev3.ID, "", "", "", proje.ID, "", false, false, false, true, false)
+	err = isYonetici.GorevDuzenle(context.Background(), gorev2.ID, "", "", "", proje.ID, "", false, false, false, true, false)
 	require.NoError(t, err)
-	err = isYonetici.GorevDurumGuncelle(gorev3.ID, "tamamlandi")
+
+	gorev3, err := isYonetici.GorevOlustur(context.Background(), "Tamamlanan Görev", "", "dusuk", "", "", nil)
+	require.NoError(t, err)
+	err = isYonetici.GorevDuzenle(context.Background(), gorev3.ID, "", "", "", proje.ID, "", false, false, false, true, false)
+	require.NoError(t, err)
+	err = isYonetici.GorevDurumGuncelle(context.Background(), gorev3.ID, "tamamlandi")
 	require.NoError(t, err)
 
 	// Proje görevlerini listele
@@ -507,9 +508,9 @@ func TestGorevBagimlilikEkle(t *testing.T) {
 	defer handlers.Close()
 
 	// İki test görevi oluştur
-	gorev1, err := isYonetici.GorevOlustur("Kaynak Görev", "", "orta", "", "", nil)
+	gorev1, err := isYonetici.GorevOlustur(context.Background(), "Kaynak Görev", "", "orta", "", "", nil)
 	require.NoError(t, err)
-	gorev2, err := isYonetici.GorevOlustur("Hedef Görev", "", "yuksek", "", "", nil)
+	gorev2, err := isYonetici.GorevOlustur(context.Background(), "Hedef Görev", "", "yuksek", "", "", nil)
 	require.NoError(t, err)
 
 	// Bağımlılık ekle
@@ -526,7 +527,7 @@ func TestGorevBagimlilikEkle(t *testing.T) {
 	assert.Contains(t, text, "✓ Bağımlılık eklendi")
 
 	// Bağımlılığı doğrula
-	baglantilar, err := isYonetici.GorevBaglantilariGetir(gorev1.ID)
+	baglantilar, err := isYonetici.GorevBaglantilariGetir(context.Background(), gorev1.ID)
 	require.NoError(t, err)
 	assert.Len(t, baglantilar, 1)
 	assert.Equal(t, gorev1.ID, baglantilar[0].SourceID)

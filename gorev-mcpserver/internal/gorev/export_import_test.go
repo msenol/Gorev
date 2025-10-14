@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -117,7 +118,7 @@ func TestExportData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := iy.ExportData(tt.options)
+			data, err := iy.ExportData(context.Background(), tt.options)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExportData() error = %v, wantErr %v", err, tt.wantErr)
@@ -147,7 +148,7 @@ func TestSaveExportToFile(t *testing.T) {
 	setupTestData(t, vy)
 
 	// Export data oluştur
-	data, err := iy.ExportData(ExportOptions{
+	data, err := iy.ExportData(context.Background(), ExportOptions{
 		OutputPath:          "/tmp/export_for_save_test.json",
 		IncludeCompleted:    true,
 		IncludeDependencies: true,
@@ -227,7 +228,7 @@ func TestSaveExportToFile(t *testing.T) {
 				OutputPath: tt.outputPath,
 				Format:     tt.format,
 			}
-			err := iy.SaveExportToFile(data, options)
+			err := iy.SaveExportToFile(context.Background(), data, options)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SaveExportToFile() error = %v, wantErr %v", err, tt.wantErr)
@@ -255,7 +256,7 @@ func TestImportData(t *testing.T) {
 
 	// Export data oluştur (import testi için)
 	setupTestData(t, vy)
-	exportData, err := iy.ExportData(ExportOptions{
+	exportData, err := iy.ExportData(context.Background(), ExportOptions{
 		OutputPath:          "/tmp/export_for_import.json",
 		IncludeCompleted:    true,
 		IncludeDependencies: true,
@@ -373,7 +374,7 @@ func TestImportData(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Export file'ı oluştur
-			err := iy.SaveExportToFile(tt.data, ExportOptions{
+			err := iy.SaveExportToFile(context.Background(), tt.data, ExportOptions{
 				OutputPath: tt.options.FilePath,
 				Format:     "json",
 			})
@@ -381,7 +382,7 @@ func TestImportData(t *testing.T) {
 				t.Fatalf("Failed to save export file: %v", err)
 			}
 
-			result, err := iy2.ImportData(tt.options)
+			result, err := iy2.ImportData(context.Background(), tt.options)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ImportData() error = %v, wantErr %v", err, tt.wantErr)
@@ -538,7 +539,7 @@ func setupTestData(t *testing.T, vy *VeriYonetici) {
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	err := vy.ProjeKaydet(proje)
+	err := vy.ProjeKaydet(context.Background(), proje)
 	if err != nil {
 		t.Fatalf("Failed to create test project: %v", err)
 	}
@@ -568,7 +569,7 @@ func setupTestData(t *testing.T, vy *VeriYonetici) {
 	}
 
 	for _, task := range tasks {
-		err := vy.GorevKaydet(task)
+		err := vy.GorevKaydet(context.Background(), task)
 		if err != nil {
 			t.Fatalf("Failed to create test task: %v", err)
 		}

@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -123,7 +124,7 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 				shownIDs[k] = v
 			}
 
-			result := handlers.gorevHiyerarsiYazdirVeIsaretle(
+			result := handlers.gorevHiyerarsiYazdirVeIsaretle(context.Background(), "tr", 
 				tt.gorev,
 				tt.gorevMap,
 				tt.seviye,
@@ -261,7 +262,7 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			shownIDs := make(map[string]bool)
-			result := handlers.gorevHiyerarsiYazdirInternal(
+			result := handlers.gorevHiyerarsiYazdirInternal(context.Background(), "tr", 
 				tt.gorev,
 				gorevMap,
 				tt.seviye,
@@ -321,7 +322,7 @@ func TestHierarchyWithPagination(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create a large hierarchy
@@ -439,7 +440,7 @@ func TestCircularDependencyPrevention(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create a chain of tasks

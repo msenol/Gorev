@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -47,7 +48,7 @@ func setupTestEnvironmentWithTemplate(t *testing.T) (*server.MCPServer, *Handler
 		Active:   true,
 	}
 
-	err := veriYonetici.TemplateOlustur(template)
+	err := veriYonetici.TemplateOlustur(context.Background(), template)
 	require.NoError(t, err)
 
 	// Create and set active project
@@ -56,9 +57,9 @@ func setupTestEnvironmentWithTemplate(t *testing.T) (*server.MCPServer, *Handler
 		Name:       "Test Edge Project",
 		Definition: "Test project for edge cases",
 	}
-	err = veriYonetici.ProjeKaydet(proje)
+	err = veriYonetici.ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
-	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	err = veriYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	mcpServer, err := YeniMCPSunucu(isYonetici)
@@ -631,9 +632,9 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 		Name:       "Test Template Edge Project",
 		Definition: "Test project for template edge cases",
 	}
-	err := veriYonetici.ProjeKaydet(proje)
+	err := veriYonetici.ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
-	err = veriYonetici.AktifProjeAyarla(proje.ID)
+	err = veriYonetici.AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	handlers := YeniHandlers(isYonetici)
@@ -674,7 +675,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 	// Test 3: Template field injection attempts
 	t.Run("Template field injection", func(t *testing.T) {
 		// Get bug report template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
@@ -723,7 +724,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 	// Test 4: Extremely large field values
 	t.Run("Large field values", func(t *testing.T) {
 		// Get bug report template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
@@ -761,7 +762,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 	// Test 5: Missing all required fields
 	t.Run("Missing all required fields", func(t *testing.T) {
 		// Get feature request template ID
-		templates, err := veriYonetici.TemplateListele("Özellik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Özellik")
 		require.NoError(t, err)
 
 		var featureTemplateID string
@@ -786,7 +787,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 	// Test 6: Invalid field types
 	t.Run("Invalid field types", func(t *testing.T) {
 		// Get bug report template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string
@@ -828,7 +829,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 	// Test 7: Duplicate tags in template
 	t.Run("Duplicate tags", func(t *testing.T) {
 		// Get bug report template ID
-		templates, err := veriYonetici.TemplateListele("Teknik")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "Teknik")
 		require.NoError(t, err)
 
 		var bugTemplateID string

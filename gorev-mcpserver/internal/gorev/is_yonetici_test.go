@@ -117,7 +117,7 @@ func TestIsYonetici_GorevOlustur_DateParsing(t *testing.T) {
 			}
 			iy := YeniIsYonetici(mockVeri)
 
-			gorev, err := iy.GorevOlustur("Test Task", "Test Description", "yuksek", "", tt.sonTarih, nil)
+			gorev, err := iy.GorevOlustur(context.Background(), "Test Task", "Test Description", "yuksek", "", tt.sonTarih, nil)
 
 			if tt.expectErr {
 				if err == nil {
@@ -155,7 +155,7 @@ func TestIsYonetici_GorevOlustur_WithTags(t *testing.T) {
 
 	etiketIsimleri := []string{"urgent", "bug"}
 
-	gorev, err := iy.GorevOlustur("Test Task", "Test Description", "yuksek", "", "", etiketIsimleri)
+	gorev, err := iy.GorevOlustur(context.Background(), "Test Task", "Test Description", "yuksek", "", "", etiketIsimleri)
 
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -177,7 +177,7 @@ func TestIsYonetici_GorevOlustur_SaveError(t *testing.T) {
 	}
 	iy := YeniIsYonetici(mockVeri)
 
-	_, err := iy.GorevOlustur("Test Task", "Test Description", "yuksek", "", "", nil)
+	_, err := iy.GorevOlustur(context.Background(), "Test Task", "Test Description", "yuksek", "", "", nil)
 
 	if err == nil {
 		t.Error("Expected error when GorevKaydet fails")
@@ -193,7 +193,7 @@ func TestIsYonetici_GorevListele_EmptyList(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	filters := make(map[string]interface{})
-	gorevler, err := iy.GorevListele(filters)
+	gorevler, err := iy.GorevListele(context.Background(), filters)
 
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -225,7 +225,7 @@ func TestIsYonetici_GorevListele_WithBulkDependencies(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	filters := make(map[string]interface{})
-	gorevler, err := iy.GorevListele(filters)
+	gorevler, err := iy.GorevListele(context.Background(), filters)
 
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -262,7 +262,7 @@ func TestIsYonetici_GorevGetir(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	// Test successful get
-	result, err := iy.GorevGetir("test-id")
+	result, err := iy.GorevGetir(context.Background(), "test-id")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -271,7 +271,7 @@ func TestIsYonetici_GorevGetir(t *testing.T) {
 	}
 
 	// Test not found
-	_, err = iy.GorevGetir("non-existent")
+	_, err = iy.GorevGetir(context.Background(), "non-existent")
 	if err == nil {
 		t.Error("Expected error for non-existent task")
 	}
@@ -294,7 +294,7 @@ func TestIsYonetici_ProjeGetir(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	// Test successful get
-	result, err := iy.ProjeGetir("test-proje")
+	result, err := iy.ProjeGetir(context.Background(), "test-proje")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -303,7 +303,7 @@ func TestIsYonetici_ProjeGetir(t *testing.T) {
 	}
 
 	// Test not found
-	_, err = iy.ProjeGetir("non-existent")
+	_, err = iy.ProjeGetir(context.Background(), "non-existent")
 	if err == nil {
 		t.Error("Expected error for non-existent project")
 	}
@@ -325,13 +325,13 @@ func TestIsYonetici_AktifProjeAyarla(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	// Test setting active project
-	err := iy.AktifProjeAyarla("test-proje")
+	err := iy.AktifProjeAyarla(context.Background(), "test-proje")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
 	// Test setting non-existent project
-	err = iy.AktifProjeAyarla("non-existent")
+	err = iy.AktifProjeAyarla(context.Background(), "non-existent")
 	if err == nil {
 		t.Error("Expected error for non-existent project")
 	}
@@ -355,7 +355,7 @@ func TestIsYonetici_AktifProjeGetir(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	// Test getting active project
-	result, err := iy.AktifProjeGetir()
+	result, err := iy.AktifProjeGetir(context.Background())
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -365,7 +365,7 @@ func TestIsYonetici_AktifProjeGetir(t *testing.T) {
 
 	// Test no active project
 	mockVeri.aktifProjeSet = false
-	_, err = iy.AktifProjeGetir()
+	_, err = iy.AktifProjeGetir(context.Background())
 	if err == nil {
 		t.Error("Expected error when no active project is set")
 	}
@@ -381,7 +381,7 @@ func TestIsYonetici_AktifProjeKaldir(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	// Test removing active project
-	err := iy.AktifProjeKaldir()
+	err := iy.AktifProjeKaldir(context.Background())
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -416,7 +416,7 @@ func TestIsYonetici_ProjeGorevleri(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	// Test getting tasks for project
-	result, err := iy.ProjeGorevleri("proje1")
+	result, err := iy.ProjeGorevleri(context.Background(), "proje1")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -449,7 +449,7 @@ func TestIsYonetici_ProjeGorevSayisi(t *testing.T) {
 	iy := YeniIsYonetici(mockVeri)
 
 	// Test getting task count for project
-	count, err := iy.ProjeGorevSayisi("proje1")
+	count, err := iy.ProjeGorevSayisi(context.Background(), "proje1")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -458,7 +458,7 @@ func TestIsYonetici_ProjeGorevSayisi(t *testing.T) {
 	}
 
 	// Test empty project
-	count, err = iy.ProjeGorevSayisi("empty-proje")
+	count, err = iy.ProjeGorevSayisi(context.Background(), "empty-proje")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -511,7 +511,7 @@ func (m *MockVeriYonetici) AktifProjeKaldir(ctx context.Context) error {
 	return nil
 }
 
-func (m *MockVeriYonetici) GorevKaydet(gorev *Gorev) error {
+func (m *MockVeriYonetici) GorevKaydet(ctx context.Context, gorev *Gorev) error {
 	if m.shouldFailGorevKaydet {
 		return errors.New("mock error: gorev kaydet failed")
 	}
@@ -519,18 +519,18 @@ func (m *MockVeriYonetici) GorevKaydet(gorev *Gorev) error {
 	return nil
 }
 
-func (m *MockVeriYonetici) GorevGetir(id string) (*Gorev, error) {
+func (m *MockVeriYonetici) GorevGetir(ctx context.Context, id string) (*Gorev, error) {
 	if m.shouldFailGorevGetir {
 		return nil, errors.New("mock error: gorev getir failed")
 	}
 	gorev, ok := m.gorevler[id]
 	if !ok {
-		return nil, errors.New(i18n.TEntityNotFound("task", errors.New("not found")))
+		return nil, errors.New(i18n.TEntityNotFound("tr", "task", errors.New("not found")))
 	}
 	return gorev, nil
 }
 
-func (m *MockVeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, error) {
+func (m *MockVeriYonetici) GorevleriGetir(ctx context.Context, durum, sirala, filtre string) ([]*Gorev, error) {
 	if m.shouldFailGorevleriGetir {
 		return nil, errors.New("mock error: gorevleri getir failed")
 	}
@@ -553,7 +553,7 @@ func (m *MockVeriYonetici) GorevleriGetir(durum, sirala, filtre string) ([]*Gore
 	return result, nil
 }
 
-func (m *MockVeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
+func (m *MockVeriYonetici) GorevGuncelle(ctx context.Context, taskID string, params interface{}) error {
 	if m.shouldFailGorevGuncelle {
 		return errors.New("mock error: gorev guncelle failed")
 	}
@@ -600,7 +600,7 @@ func (m *MockVeriYonetici) GorevGuncelle(taskID string, params interface{}) erro
 	return nil
 }
 
-func (m *MockVeriYonetici) GorevSil(id string) error {
+func (m *MockVeriYonetici) GorevSil(ctx context.Context, id string) error {
 	if m.shouldFailGorevSil {
 		return errors.New("mock error: gorev sil failed")
 	}
@@ -611,7 +611,7 @@ func (m *MockVeriYonetici) GorevSil(id string) error {
 	return nil
 }
 
-func (m *MockVeriYonetici) ProjeKaydet(proje *Proje) error {
+func (m *MockVeriYonetici) ProjeKaydet(ctx context.Context, proje *Proje) error {
 	if m.shouldFailProjeKaydet {
 		return errors.New("mock error: proje kaydet failed")
 	}
@@ -619,7 +619,7 @@ func (m *MockVeriYonetici) ProjeKaydet(proje *Proje) error {
 	return nil
 }
 
-func (m *MockVeriYonetici) ProjeGetir(id string) (*Proje, error) {
+func (m *MockVeriYonetici) ProjeGetir(ctx context.Context, id string) (*Proje, error) {
 	if m.shouldFailProjeGetir {
 		return nil, errors.New("mock error: proje getir failed")
 	}
@@ -630,7 +630,7 @@ func (m *MockVeriYonetici) ProjeGetir(id string) (*Proje, error) {
 	return proje, nil
 }
 
-func (m *MockVeriYonetici) ProjeleriGetir() ([]*Proje, error) {
+func (m *MockVeriYonetici) ProjeleriGetir(ctx context.Context) ([]*Proje, error) {
 	if m.shouldFailProjeleriGetir {
 		return nil, errors.New("mock error: projeleri getir failed")
 	}
@@ -641,7 +641,7 @@ func (m *MockVeriYonetici) ProjeleriGetir() ([]*Proje, error) {
 	return result, nil
 }
 
-func (m *MockVeriYonetici) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
+func (m *MockVeriYonetici) ProjeGorevleriGetir(ctx context.Context, projeID string) ([]*Gorev, error) {
 	var result []*Gorev
 	for _, gorev := range m.gorevler {
 		if gorev.ProjeID == projeID {
@@ -711,7 +711,7 @@ func (m *MockVeriYonetici) EtiketOlustur(isim string) (*Etiket, error) {
 	return tag, nil
 }
 
-func (m *MockVeriYonetici) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error) {
+func (m *MockVeriYonetici) EtiketleriGetirVeyaOlustur(ctx context.Context, isimler []string) ([]*Etiket, error) {
 	if m.shouldReturnError {
 		return nil, m.errorToReturn
 	}
@@ -747,7 +747,7 @@ func (m *MockVeriYonetici) GorevEtiketleriniGetir(gorevID string) ([]*Etiket, er
 	return gorev.Tags, nil
 }
 
-func (m *MockVeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
+func (m *MockVeriYonetici) GorevEtiketleriniAyarla(ctx context.Context, gorevID string, etiketler []*Etiket) error {
 	if m.shouldReturnError {
 		return m.errorToReturn
 	}
@@ -759,7 +759,7 @@ func (m *MockVeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*
 	return nil
 }
 
-func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
+func (m *MockVeriYonetici) BaglantiEkle(ctx context.Context, baglanti *Baglanti) error {
 	if m.shouldFailBaglantiEkle {
 		return errors.New("mock error: baglanti ekle failed")
 	}
@@ -767,7 +767,7 @@ func (m *MockVeriYonetici) BaglantiEkle(baglanti *Baglanti) error {
 	return nil
 }
 
-func (m *MockVeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
+func (m *MockVeriYonetici) BaglantiSil(ctx context.Context, kaynakID, hedefID string) error {
 	for i, b := range m.baglantilar {
 		if b.SourceID == kaynakID && b.TargetID == hedefID {
 			m.baglantilar = append(m.baglantilar[:i], m.baglantilar[i+1:]...)
@@ -777,7 +777,7 @@ func (m *MockVeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
 	return errors.New("dependency not found")
 }
 
-func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
+func (m *MockVeriYonetici) BaglantilariGetir(ctx context.Context, gorevID string) ([]*Baglanti, error) {
 	var result []*Baglanti
 	for _, b := range m.baglantilar {
 		if b.SourceID == gorevID || b.TargetID == gorevID {
@@ -788,31 +788,31 @@ func (m *MockVeriYonetici) BaglantilariGetir(gorevID string) ([]*Baglanti, error
 }
 
 // Template mock methods
-func (m *MockVeriYonetici) TemplateOlustur(template *GorevTemplate) error {
+func (m *MockVeriYonetici) TemplateOlustur(ctx context.Context, template *GorevTemplate) error {
 	return nil
 }
 
-func (m *MockVeriYonetici) TemplateListele(kategori string) ([]*GorevTemplate, error) {
+func (m *MockVeriYonetici) TemplateListele(ctx context.Context, kategori string) ([]*GorevTemplate, error) {
 	return []*GorevTemplate{}, nil
 }
 
-func (m *MockVeriYonetici) TemplateGetir(templateID string) (*GorevTemplate, error) {
+func (m *MockVeriYonetici) TemplateGetir(ctx context.Context, templateID string) (*GorevTemplate, error) {
 	return &GorevTemplate{}, nil
 }
 
-func (m *MockVeriYonetici) TemplateAliasIleGetir(alias string) (*GorevTemplate, error) {
+func (m *MockVeriYonetici) TemplateAliasIleGetir(ctx context.Context, alias string) (*GorevTemplate, error) {
 	return &GorevTemplate{}, nil
 }
 
-func (m *MockVeriYonetici) TemplateIDVeyaAliasIleGetir(idOrAlias string) (*GorevTemplate, error) {
+func (m *MockVeriYonetici) TemplateIDVeyaAliasIleGetir(ctx context.Context, idOrAlias string) (*GorevTemplate, error) {
 	return &GorevTemplate{}, nil
 }
 
-func (m *MockVeriYonetici) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
+func (m *MockVeriYonetici) TemplatedenGorevOlustur(ctx context.Context, templateID string, degerler map[string]string) (*Gorev, error) {
 	return &Gorev{}, nil
 }
 
-func (m *MockVeriYonetici) VarsayilanTemplateleriOlustur() error {
+func (m *MockVeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error {
 	return nil
 }
 
@@ -846,7 +846,7 @@ func (m *MockVeriYonetici) UstGorevleriGetir(ctx context.Context, gorevID string
 }
 
 func (m *MockVeriYonetici) GorevHiyerarsiGetir(ctx context.Context, gorevID string) (*GorevHiyerarsi, error) {
-	gorev, err := m.GorevGetir(gorevID)
+	gorev, err := m.GorevGetir(context.Background(), gorevID)
 	if err != nil {
 		return nil, err
 	}
@@ -949,11 +949,11 @@ func (m *MockVeriYonetici) GorevSonAIEtkilesiminiGuncelle(gorevID string, timest
 	return nil
 }
 
-func (m *MockVeriYonetici) GorevDetay(id string) (*Gorev, error) {
-	return m.GorevGetir(id)
+func (m *MockVeriYonetici) GorevDetay(ctx context.Context, id string) (*Gorev, error) {
+	return m.GorevGetir(context.Background(), id)
 }
 
-func (m *MockVeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+func (m *MockVeriYonetici) GorevListele(ctx context.Context, filters map[string]interface{}) ([]*Gorev, error) {
 	if m.shouldFailGorevListele {
 		return nil, errors.New("mock error: gorev listele failed")
 	}
@@ -975,11 +975,11 @@ func (m *MockVeriYonetici) GorevListele(filters map[string]interface{}) ([]*Gore
 	return result, nil
 }
 
-func (m *MockVeriYonetici) GorevOlustur(params map[string]interface{}) (string, error) {
+func (m *MockVeriYonetici) GorevOlustur(ctx context.Context, params map[string]interface{}) (string, error) {
 	return "test-id", nil
 }
 
-func (m *MockVeriYonetici) GorevBagimlilikGetir(gorevID string) ([]*Gorev, error) {
+func (m *MockVeriYonetici) GorevBagimlilikGetir(ctx context.Context, gorevID string) ([]*Gorev, error) {
 	return nil, nil
 }
 
@@ -1061,7 +1061,7 @@ func TestIsYonetici_GorevOlustur(t *testing.T) {
 			mockVY.shouldFailGorevKaydet = tc.shouldFailKaydet
 			iy := YeniIsYonetici(mockVY)
 
-			gorev, err := iy.GorevOlustur(tc.baslik, tc.aciklama, tc.oncelik, tc.projeID, "", nil)
+			gorev, err := iy.GorevOlustur(context.Background(), tc.baslik, tc.aciklama, tc.oncelik, tc.projeID, "", nil)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -1147,7 +1147,7 @@ func TestIsYonetici_GorevListele(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockVY.shouldFailGorevListele = tc.shouldFail
 
-			gorevler, err := iy.GorevListele(map[string]interface{}{"durum": tc.durum})
+			gorevler, err := iy.GorevListele(context.Background(), map[string]interface{}{"durum": tc.durum})
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -1224,7 +1224,7 @@ func TestIsYonetici_GorevDurumGuncelle(t *testing.T) {
 			mockVY.shouldFailGorevGetir = tc.shouldFailGetir
 			mockVY.shouldFailGorevGuncelle = tc.shouldFailUpdate
 
-			err := iy.GorevDurumGuncelle(tc.gorevID, tc.yeniDurum)
+			err := iy.GorevDurumGuncelle(context.Background(), tc.gorevID, tc.yeniDurum)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -1285,7 +1285,7 @@ func TestIsYonetici_ProjeOlustur(t *testing.T) {
 			mockVY.shouldFailProjeKaydet = tc.shouldFailKaydet
 			iy := YeniIsYonetici(mockVY)
 
-			proje, err := iy.ProjeOlustur(tc.isim, tc.tanim)
+			proje, err := iy.ProjeOlustur(context.Background(), tc.isim, tc.tanim)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -1403,7 +1403,7 @@ func TestIsYonetici_GorevDuzenle(t *testing.T) {
 			mockVY.shouldFailGorevGetir = tc.shouldFailGetir
 			mockVY.shouldFailGorevGuncelle = tc.shouldFailUpdate
 
-			err := iy.GorevDuzenle(tc.gorevID, tc.baslik, tc.aciklama, tc.oncelik, tc.projeID, "",
+			err := iy.GorevDuzenle(context.Background(), tc.gorevID, tc.baslik, tc.aciklama, tc.oncelik, tc.projeID, "",
 				tc.baslikVar, tc.aciklamaVar, tc.oncelikVar, tc.projeVar, false)
 
 			if tc.wantErr {
@@ -1490,7 +1490,7 @@ func TestIsYonetici_GorevSil(t *testing.T) {
 			mockVY.shouldFailGorevGetir = tc.shouldFailGetir
 			mockVY.shouldFailGorevSil = tc.shouldFailSil
 
-			err := iy.GorevSil(tc.gorevID)
+			err := iy.GorevSil(context.Background(), tc.gorevID)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -1573,7 +1573,7 @@ func TestIsYonetici_OzetAl(t *testing.T) {
 			mockVY.shouldFailGorevleriGetir = tc.shouldFailGorevleriGetir
 			mockVY.shouldFailProjeleriGetir = tc.shouldFailProjeleriGetir
 
-			ozet, err := iy.OzetAl()
+			ozet, err := iy.OzetAl(context.Background())
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -1660,7 +1660,7 @@ func TestIsYonetici_GorevBagimliMi(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(tc.gorevID)
+			bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(context.Background(), tc.gorevID)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -1698,7 +1698,7 @@ func TestIsYonetici_GorevDurumGuncelle_WithDependencies(t *testing.T) {
 	}
 
 	// gorev2'yi devam_ediyor yapmaya çalış (gorev1 henüz tamamlanmadı)
-	err := iy.GorevDurumGuncelle("gorev2", "devam_ediyor")
+	err := iy.GorevDurumGuncelle(context.Background(), "gorev2", "devam_ediyor")
 	if err == nil {
 		t.Error("expected error when trying to start task with incomplete dependencies")
 	}
@@ -1708,13 +1708,13 @@ func TestIsYonetici_GorevDurumGuncelle_WithDependencies(t *testing.T) {
 	}
 
 	// gorev1'i tamamla
-	err = iy.GorevDurumGuncelle("gorev1", "tamamlandi")
+	err = iy.GorevDurumGuncelle(context.Background(), "gorev1", "tamamlandi")
 	if err != nil {
 		t.Errorf("unexpected error completing gorev1: %v", err)
 	}
 
 	// Şimdi gorev2'yi başlatabilmeli
-	err = iy.GorevDurumGuncelle("gorev2", "devam_ediyor")
+	err = iy.GorevDurumGuncelle(context.Background(), "gorev2", "devam_ediyor")
 	if err != nil {
 		t.Errorf("unexpected error starting gorev2 after dependencies completed: %v", err)
 	}

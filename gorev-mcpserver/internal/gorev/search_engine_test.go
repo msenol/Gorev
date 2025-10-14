@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"testing"
 
 	"github.com/msenol/gorev/internal/i18n"
@@ -44,14 +45,14 @@ func TestSearchEngine_PerformSearch(t *testing.T) {
 	require.NoError(t, searchEngine.Initialize())
 
 	// Create test project
-	proje, err := veriYonetici.ProjeOlustur("Test Proje", "Test açıklama")
+	proje, err := veriYonetici.ProjeOlustur(context.Background(), "Test Proje", "Test açıklama")
 	require.NoError(t, err)
 
 	// Create test tasks
-	task1, err := veriYonetici.GorevOlusturBasit("Search Test Task", "Test açıklama database", proje.ID, "yuksek", "2024-12-31", "", "")
+	task1, err := veriYonetici.GorevOlusturBasit(context.Background(), "Search Test Task", "Test açıklama database", proje.ID, "yuksek", "2024-12-31", "", "")
 	require.NoError(t, err)
 
-	_, err = veriYonetici.GorevOlusturBasit("Another Task", "Different content here", proje.ID, "orta", "2024-12-31", "", "")
+	_, err = veriYonetici.GorevOlusturBasit(context.Background(), "Another Task", "Different content here", proje.ID, "orta", "2024-12-31", "", "")
 	require.NoError(t, err)
 
 	// Test basic search

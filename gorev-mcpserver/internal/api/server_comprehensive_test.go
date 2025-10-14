@@ -29,14 +29,14 @@ func setupComprehensiveTestServer(t *testing.T) (*APIServer, string, func()) {
 	require.NoError(t, err)
 
 	// Create templates
-	err = veriYonetici.VarsayilanTemplateleriOlustur()
+	err = veriYonetici.VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create IsYonetici
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
 
 	// Create a test project
-	proje, err := isYonetici.ProjeOlustur("Test Project", "Test Description")
+	proje, err := isYonetici.ProjeOlustur(context.Background(), "Test Project", "Test Description")
 	require.NoError(t, err)
 
 	// Create API server

@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -227,7 +228,7 @@ func TestBatchProcessor_BulkTagOperation(t *testing.T) {
 				task3.Tags = []*Etiket{existingTag}
 			}
 
-			result, err := bp.BulkTagOperation(tc.request)
+			result, err := bp.BulkTagOperation(context.Background(), tc.request)
 
 			if tc.expectedResult.errorResult {
 				if err == nil {
@@ -545,7 +546,7 @@ func TestBatchProcessor_BulkDelete(t *testing.T) {
 			vy.gorevler["parent-task"] = parentTask
 			vy.gorevler["child-task"] = childTask
 
-			result, err := bp.BulkDelete(tc.request)
+			result, err := bp.BulkDelete(context.Background(), tc.request)
 
 			if tc.expectedResult.errorResult {
 				if err == nil {

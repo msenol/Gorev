@@ -41,7 +41,7 @@ func TestTCommon(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := TCommon(tt.key, tt.data)
+			result := TCommon("tr", tt.key, tt.data)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -75,7 +75,7 @@ func TestTParam(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := TParam(tt.paramName)
+			result := TParam("tr", tt.paramName)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -117,7 +117,7 @@ func TestTValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := TValidation(tt.validationType, tt.param, tt.extra)
+			result := TValidation("tr", tt.validationType, tt.param, tt.extra)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -152,7 +152,7 @@ func TestBuildFieldDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := BuildFieldDescription(tt.prefix, tt.entity, tt.field)
+			result := BuildFieldDescription("tr", tt.prefix, tt.entity, tt.field)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -184,7 +184,7 @@ func TestBuildIDDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := BuildIDDescription(tt.entity, tt.idType)
+			result := BuildIDDescription("tr", tt.entity, tt.idType)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -222,7 +222,7 @@ func TestBuildPaginationDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := BuildPaginationDescription(tt.paginationType, tt.entity, tt.defaultVal, tt.maxVal)
+			result := BuildPaginationDescription("tr", tt.paginationType, tt.entity, tt.defaultVal, tt.maxVal)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -260,7 +260,7 @@ func TestBuildPrefixedDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := BuildPrefixedDescription(tt.prefix, tt.target)
+			result := BuildPrefixedDescription("tr", tt.prefix, tt.target)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -294,7 +294,7 @@ func TestGetCommonSuffix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetCommonSuffix(tt.suffixType)
+			result := GetCommonSuffix("tr", tt.suffixType)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -307,87 +307,87 @@ func TestUncoveredHelpers(t *testing.T) {
 	assert.NoError(t, err)
 
 	// GetEntityName
-	assert.NotEmpty(t, GetEntityName("task"))
-	assert.NotEmpty(t, GetEntityName("project"))
+	assert.NotEmpty(t, GetEntityName("tr", "task"))
+	assert.NotEmpty(t, GetEntityName("tr", "project"))
 
 	// Format functions
-	assert.NotEmpty(t, FormatParameterRequired("gorev_id"))
-	assert.NotEmpty(t, FormatInvalidValue("status", "invalid", []string{"beklemede", "tamamlandi"}))
-	assert.NotEmpty(t, FormatEntityNotFound("task", "123"))
-	assert.NotEmpty(t, FormatOperationFailed("create", assert.AnError))
+	assert.NotEmpty(t, FormatParameterRequired("tr", "gorev_id"))
+	assert.NotEmpty(t, FormatInvalidValue("tr", "status", "invalid", []string{"beklemede", "tamamlandi"}))
+	assert.NotEmpty(t, FormatEntityNotFound("tr", "task", "123"))
+	assert.NotEmpty(t, FormatOperationFailed("tr", "create", assert.AnError))
 
 	// TRequired functions
-	assert.NotEmpty(t, TRequiredParam("gorev_id"))
-	assert.NotEmpty(t, TRequiredArray("etiketler"))
-	assert.NotEmpty(t, TRequiredObject("degerler"))
+	assert.NotEmpty(t, TRequiredParam("tr", "gorev_id"))
+	assert.NotEmpty(t, TRequiredArray("tr", "etiketler"))
+	assert.NotEmpty(t, TRequiredObject("tr", "degerler"))
 
 	// TEntity functions
-	assert.NotEmpty(t, TEntityNotFound("task", assert.AnError))
-	assert.NotEmpty(t, TEntityNotFoundByID("task", "123"))
+	assert.NotEmpty(t, TEntityNotFound("tr", "task", assert.AnError))
+	assert.NotEmpty(t, TEntityNotFoundByID("tr", "task", "123"))
 
 	// TOperation functions
-	assert.NotEmpty(t, TOperationFailed("create", "task", assert.AnError))
-	assert.NotEmpty(t, TSuccess("created", "task", nil))
+	assert.NotEmpty(t, TOperationFailed("tr", "create", "task", assert.AnError))
+	assert.NotEmpty(t, TSuccess("tr", "created", "task", nil))
 
 	// TInvalid functions
-	assert.NotEmpty(t, TInvalidValue("field", "value", []string{"option1", "option2"}))
-	assert.NotEmpty(t, TInvalidStatus("invalid", []string{"beklemede", "tamamlandi"}))
-	assert.NotEmpty(t, TInvalidPriority("invalid"))
-	assert.NotEmpty(t, TInvalidDate("2025-13-45"))
-	assert.NotEmpty(t, TInvalidFormat("date", "2025-13-45"))
+	assert.NotEmpty(t, TInvalidValue("tr", "field", "value", []string{"option1", "option2"}))
+	assert.NotEmpty(t, TInvalidStatus("tr", "invalid", []string{"beklemede", "tamamlandi"}))
+	assert.NotEmpty(t, TInvalidPriority("tr", "invalid"))
+	assert.NotEmpty(t, TInvalidDate("tr", "2025-13-45"))
+	assert.NotEmpty(t, TInvalidFormat("tr", "date", "2025-13-45"))
 
 	// TAction functions (all require error parameter)
 	testErr := assert.AnError
-	assert.NotEmpty(t, TCreateFailed("task", testErr))
-	assert.NotEmpty(t, TUpdateFailed("task", testErr))
-	assert.NotEmpty(t, TDeleteFailed("task", testErr))
-	assert.NotEmpty(t, TFetchFailed("task", testErr))
-	assert.NotEmpty(t, TSaveFailed("task", testErr))
-	assert.NotEmpty(t, TSetFailed("status", testErr))
-	assert.NotEmpty(t, TInitFailed("database", testErr))
-	assert.NotEmpty(t, TCheckFailed("validation", testErr))
-	assert.NotEmpty(t, TQueryFailed("task", testErr))
-	assert.NotEmpty(t, TProcessFailed("data", testErr))
-	assert.NotEmpty(t, TListFailed("tasks", testErr))
-	assert.NotEmpty(t, TEditFailed("task", testErr))
-	assert.NotEmpty(t, TAddFailed("tag", testErr))
-	assert.NotEmpty(t, TRemoveFailed("tag", testErr))
-	assert.NotEmpty(t, TReadFailed("file", testErr))
-	assert.NotEmpty(t, TConvertFailed("data", "json", testErr))
-	assert.NotEmpty(t, TParseFailed("date", testErr))
+	assert.NotEmpty(t, TCreateFailed("tr", "task", testErr))
+	assert.NotEmpty(t, TUpdateFailed("tr", "task", testErr))
+	assert.NotEmpty(t, TDeleteFailed("tr", "task", testErr))
+	assert.NotEmpty(t, TFetchFailed("tr", "task", testErr))
+	assert.NotEmpty(t, TSaveFailed("tr", "task", testErr))
+	assert.NotEmpty(t, TSetFailed("tr", "status", testErr))
+	assert.NotEmpty(t, TInitFailed("tr", "database", testErr))
+	assert.NotEmpty(t, TCheckFailed("tr", "validation", testErr))
+	assert.NotEmpty(t, TQueryFailed("tr", "task", testErr))
+	assert.NotEmpty(t, TProcessFailed("tr", "data", testErr))
+	assert.NotEmpty(t, TListFailed("tr", "tasks", testErr))
+	assert.NotEmpty(t, TEditFailed("tr", "task", testErr))
+	assert.NotEmpty(t, TAddFailed("tr", "tag", testErr))
+	assert.NotEmpty(t, TRemoveFailed("tr", "tag", testErr))
+	assert.NotEmpty(t, TReadFailed("tr", "file", testErr))
+	assert.NotEmpty(t, TConvertFailed("tr", "data", "json", testErr))
+	assert.NotEmpty(t, TParseFailed("tr", "date", testErr))
 
 	// TSuccess messages
-	assert.NotEmpty(t, TCreated("task", "Test Task", "123"))
-	assert.NotEmpty(t, TUpdated("task", "details"))
-	assert.NotEmpty(t, TDeleted("task", "Test Task", "123"))
-	assert.NotEmpty(t, TSet("status", "devam_ediyor"))
-	assert.NotEmpty(t, TRemoved("tag"))
-	assert.NotEmpty(t, TAdded("tag", "yeni etiket"))
-	assert.NotEmpty(t, TMoved("task"))
-	assert.NotEmpty(t, TEdited("task", "Test Task"))
+	assert.NotEmpty(t, TCreated("tr", "task", "Test Task", "123"))
+	assert.NotEmpty(t, TUpdated("tr", "task", "details"))
+	assert.NotEmpty(t, TDeleted("tr", "task", "Test Task", "123"))
+	assert.NotEmpty(t, TSet("tr", "status", "devam_ediyor"))
+	assert.NotEmpty(t, TRemoved("tr", "tag"))
+	assert.NotEmpty(t, TAdded("tr", "tag", "yeni etiket"))
+	assert.NotEmpty(t, TMoved("tr", "task"))
+	assert.NotEmpty(t, TEdited("tr", "task", "Test Task"))
 
 	// Field helpers
-	assert.NotEmpty(t, TFieldID("task", "create"))
-	assert.NotEmpty(t, TTaskCount("total", "10"))
-	assert.NotEmpty(t, TProjectField("name"))
-	assert.NotEmpty(t, TSubtaskField("title"))
-	assert.NotEmpty(t, TCommaSeparated("tags"))
-	assert.NotEmpty(t, TWithFormat("file path", "json"))
-	assert.NotEmpty(t, TFilePath("import"))
-	assert.NotEmpty(t, TTemplate("bug"))
-	assert.NotEmpty(t, TBatch("update"))
+	assert.NotEmpty(t, TFieldID("tr", "task", "create"))
+	assert.NotEmpty(t, TTaskCount("tr", "total", "10"))
+	assert.NotEmpty(t, TProjectField("tr", "name"))
+	assert.NotEmpty(t, TSubtaskField("tr", "title"))
+	assert.NotEmpty(t, TCommaSeparated("tr", "tags"))
+	assert.NotEmpty(t, TWithFormat("tr", "file path", "json"))
+	assert.NotEmpty(t, TFilePath("tr", "import"))
+	assert.NotEmpty(t, TTemplate("tr", "bug"))
+	assert.NotEmpty(t, TBatch("tr", "update"))
 
 	// Markdown helpers
-	assert.NotEmpty(t, TLabel("test"))
-	assert.NotEmpty(t, TMarkdownLabel("test", "value"))
-	assert.NotEmpty(t, TMarkdownHeader(1, "test"))
-	assert.NotEmpty(t, TMarkdownBold("test"))
-	assert.NotEmpty(t, TMarkdownSection("📝", "test"))
+	assert.NotEmpty(t, TLabel("tr", "test"))
+	assert.NotEmpty(t, TMarkdownLabel("tr", "test", "value"))
+	assert.NotEmpty(t, TMarkdownHeader("tr", 1, "test"))
+	assert.NotEmpty(t, TMarkdownBold("tr", "test"))
+	assert.NotEmpty(t, TMarkdownSection("tr", "📝", "test"))
 
 	// Utility helpers
-	assert.NotEmpty(t, TCount("tasks", 5))
-	assert.NotEmpty(t, TDuration("elapsed", 120))
-	assert.NotEmpty(t, TListItem("task", 1))
+	assert.NotEmpty(t, TCount("tr", "tasks", 5))
+	assert.NotEmpty(t, TDuration("tr", "elapsed", 120))
+	assert.NotEmpty(t, TListItem("tr", "task", 1))
 }
 
 // TestTStatus tests all status value handling
@@ -423,7 +423,7 @@ func TestTStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := TStatus(tt.status)
+			result := TStatus("tr", tt.status)
 			// Just verify function returns non-empty string
 			assert.NotEmpty(t, result)
 			// Unknown status should return itself
@@ -463,7 +463,7 @@ func TestTPriority(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := TPriority(tt.priority)
+			result := TPriority("tr", tt.priority)
 			// Just verify function returns non-empty string
 			assert.NotEmpty(t, result)
 			// Unknown priority should return itself

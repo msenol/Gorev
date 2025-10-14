@@ -322,17 +322,17 @@ func TestTWithLangTemplateData(t *testing.T) {
 		contains []string
 	}{
 		{
-			name: "Turkish with template data",
-			lang: "tr",
-			key:  "common.operations.create_failed",
-			data: map[string]interface{}{"Entity": "veri yöneticisi", "Error": "bağlantı hatası"},
+			name:     "Turkish with template data",
+			lang:     "tr",
+			key:      "common.operations.create_failed",
+			data:     map[string]interface{}{"Entity": "veri yöneticisi", "Error": "bağlantı hatası"},
 			contains: []string{"veri yöneticisi", "bağlantı hatası"},
 		},
 		{
-			name: "English with template data",
-			lang: "en",
-			key:  "common.operations.create_failed",
-			data: map[string]interface{}{"Entity": "data manager", "Error": "connection error"},
+			name:     "English with template data",
+			lang:     "en",
+			key:      "common.operations.create_failed",
+			data:     map[string]interface{}{"Entity": "data manager", "Error": "connection error"},
 			contains: []string{"data manager", "connection error"},
 		},
 	}

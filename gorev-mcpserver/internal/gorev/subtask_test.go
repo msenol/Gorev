@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ func TestAltGorevOperations(t *testing.T) {
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	err = vy.ProjeKaydet(proje)
+	err = vy.ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
 
 	// Ana görev oluştur
@@ -37,7 +38,7 @@ func TestAltGorevOperations(t *testing.T) {
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	err = vy.GorevKaydet(anaGorev)
+	err = vy.GorevKaydet(context.Background(), anaGorev)
 	require.NoError(t, err)
 
 	t.Run("Create Subtask", func(t *testing.T) {
@@ -52,11 +53,11 @@ func TestAltGorevOperations(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		err = vy.GorevKaydet(altGorev)
+		err = vy.GorevKaydet(context.Background(), altGorev)
 		assert.NoError(t, err)
 
 		// Alt görevi getir ve kontrol et
-		gorev, err := vy.GorevGetir(altGorev.ID)
+		gorev, err := vy.GorevGetir(context.Background(), altGorev.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, anaGorev.ID, gorev.ParentID)
 	})
@@ -74,18 +75,18 @@ func TestAltGorevOperations(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		err = vy.GorevKaydet(altGorev2)
+		err = vy.GorevKaydet(context.Background(), altGorev2)
 		require.NoError(t, err)
 
 		// Alt görevleri getir
-		altGorevler, err := vy.AltGorevleriGetir(anaGorev.ID)
+		altGorevler, err := vy.AltGorevleriGetir(context.Background(), anaGorev.ID)
 		assert.NoError(t, err)
 		assert.Len(t, altGorevler, 2)
 	})
 
 	t.Run("Get Parent Tasks", func(t *testing.T) {
 		// Alt görevin alt görevi oluştur (3. seviye)
-		altGorevler, _ := vy.AltGorevleriGetir(anaGorev.ID)
+		altGorevler, _ := vy.AltGorevleriGetir(context.Background(), anaGorev.ID)
 		altAltGorev := &Gorev{
 			ID:          uuid.New().String(),
 			Title:       "Alt Alt Görev",
@@ -97,11 +98,11 @@ func TestAltGorevOperations(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		err = vy.GorevKaydet(altAltGorev)
+		err = vy.GorevKaydet(context.Background(), altAltGorev)
 		require.NoError(t, err)
 
 		// Üst görevleri getir
-		ustGorevler, err := vy.UstGorevleriGetir(altAltGorev.ID)
+		ustGorevler, err := vy.UstGorevleriGetir(context.Background(), altAltGorev.ID)
 		assert.NoError(t, err)
 		assert.GreaterOrEqual(t, len(ustGorevler), 1)
 	})
@@ -118,37 +119,37 @@ func TestAltGorevOperations(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		err = vy.GorevKaydet(yeniAnaGorev)
+		err = vy.GorevKaydet(context.Background(), yeniAnaGorev)
 		require.NoError(t, err)
 
 		// Alt görevi taşı
-		altGorevler, _ := vy.AltGorevleriGetir(anaGorev.ID)
-		err = vy.ParentIDGuncelle(altGorevler[0].ID, yeniAnaGorev.ID)
+		altGorevler, _ := vy.AltGorevleriGetir(context.Background(), anaGorev.ID)
+		err = vy.ParentIDGuncelle(context.Background(), altGorevler[0].ID, yeniAnaGorev.ID)
 		assert.NoError(t, err)
 
 		// Kontrol et
-		tasinanGorev, err := vy.GorevGetir(altGorevler[0].ID)
+		tasinanGorev, err := vy.GorevGetir(context.Background(), altGorevler[0].ID)
 		assert.NoError(t, err)
 		assert.Equal(t, yeniAnaGorev.ID, tasinanGorev.ParentID)
 	})
 
 	t.Run("Circular Dependency Check", func(t *testing.T) {
 		// Kendisine parent olamaz
-		daireVar, err := vy.DaireBagimliligiKontrolEt(anaGorev.ID, anaGorev.ID)
+		daireVar, err := vy.DaireBagimliligiKontrolEt(context.Background(), anaGorev.ID, anaGorev.ID)
 		assert.NoError(t, err)
 		assert.True(t, daireVar)
 
 		// Alt görev ana göreve parent olamaz
-		altGorevler, _ := vy.AltGorevleriGetir(anaGorev.ID)
+		altGorevler, _ := vy.AltGorevleriGetir(context.Background(), anaGorev.ID)
 		if len(altGorevler) > 0 {
-			daireVar, err = vy.DaireBagimliligiKontrolEt(anaGorev.ID, altGorevler[0].ID)
+			daireVar, err = vy.DaireBagimliligiKontrolEt(context.Background(), anaGorev.ID, altGorevler[0].ID)
 			assert.NoError(t, err)
 			assert.True(t, daireVar)
 		}
 	})
 
 	t.Run("Task Hierarchy Info", func(t *testing.T) {
-		hiyerarsi, err := vy.GorevHiyerarsiGetir(anaGorev.ID)
+		hiyerarsi, err := vy.GorevHiyerarsiGetir(context.Background(), anaGorev.ID)
 		assert.NoError(t, err)
 		assert.NotNil(t, hiyerarsi)
 		assert.Equal(t, anaGorev.ID, hiyerarsi.Gorev.ID)
@@ -182,7 +183,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 	mockVY.gorevler[anaGorev.ID] = anaGorev
 
 	t.Run("Create Subtask", func(t *testing.T) {
-		altGorev, err := iy.AltGorevOlustur(
+		altGorev, err := iy.AltGorevOlustur(context.Background(), 
 			anaGorev.ID,
 			"Alt Görev",
 			"Alt görev açıklaması",
@@ -199,7 +200,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 	})
 
 	t.Run("Create Subtask - Parent Not Found", func(t *testing.T) {
-		altGorev, err := iy.AltGorevOlustur(
+		altGorev, err := iy.AltGorevOlustur(context.Background(), 
 			"olmayan-gorev",
 			"Alt Görev",
 			"Açıklama",
@@ -239,7 +240,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 		}
 		mockVY.gorevler[altGorev.ID] = altGorev
 
-		err := iy.GorevUstDegistir(altGorev.ID, yeniAnaGorev.ID)
+		err := iy.GorevUstDegistir(context.Background(), altGorev.ID, yeniAnaGorev.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, yeniAnaGorev.ID, mockVY.gorevler[altGorev.ID].ParentID)
 	})
@@ -258,7 +259,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 		}
 		mockVY.gorevler[altGorev.ID] = altGorev
 
-		err := iy.GorevSil(anaGorev.ID)
+		err := iy.GorevSil(context.Background(), anaGorev.ID)
 		assert.Error(t, err)
 		// Check for i18n key or translated text
 		errMsg := err.Error()
@@ -281,7 +282,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 		}
 		mockVY.gorevler[altGorev.ID] = altGorev
 
-		err := iy.GorevDurumGuncelle(anaGorev.ID, "tamamlandi")
+		err := iy.GorevDurumGuncelle(context.Background(), anaGorev.ID, "tamamlandi")
 		assert.Error(t, err)
 		// Check for i18n key or translated text
 		errMsg := err.Error()

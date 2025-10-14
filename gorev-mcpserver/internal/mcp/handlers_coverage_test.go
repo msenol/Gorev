@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -28,7 +29,7 @@ func TestMain(m *testing.M) {
 
 // Helper function to get template ID by name
 func getTemplateIDByName(t *testing.T, handlers *Handlers, namePart string) string {
-	templates, err := handlers.isYonetici.TemplateListele("")
+	templates, err := handlers.isYonetici.TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	require.NotEmpty(t, templates)
 
@@ -164,7 +165,7 @@ func TestGorevHiyerarsiYazdir(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := handlers.gorevHiyerarsiYazdir(tt.gorev, tt.gorevMap, tt.seviye, tt.projeGoster)
+			result := handlers.gorevHiyerarsiYazdir(context.Background(), "tr", tt.gorev, tt.gorevMap, tt.seviye, tt.projeGoster)
 
 			// Check for expected components
 			assert.Contains(t, result, tt.gorev.Title)
@@ -189,11 +190,11 @@ func TestGorevAltGorevOlustur(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// List all templates to see what's available
-	templates, err := handlers.isYonetici.TemplateListele("")
+	templates, err := handlers.isYonetici.TemplateListele(context.Background(), "")
 	require.NoError(t, err)
 	require.NotEmpty(t, templates)
 
@@ -371,7 +372,7 @@ func TestGorevUstDegistir(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initialize templates
-	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Get template IDs
@@ -556,7 +557,7 @@ func TestGorevHiyerarsiGoster(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initialize templates
-	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Get template ID
@@ -706,7 +707,7 @@ func TestCallTool(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Get template IDs
@@ -1036,7 +1037,7 @@ func TestGorevGetActive_EdgeCases(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initialize templates
-	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err = handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Test when no active task is set
@@ -1096,7 +1097,7 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Test with no tasks
@@ -1106,7 +1107,7 @@ func TestGorevRecent_EdgeCases(t *testing.T) {
 	assert.Contains(t, text, "Son etkileşimde bulunulan görev yok")
 
 	// Create a project first
-	proje, err := handlers.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	proje, err := handlers.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 	require.NoError(t, err)
 
 	// Set as active project
@@ -1183,7 +1184,7 @@ func TestGorevContextSummary_EdgeCases(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Test with no context
@@ -1257,7 +1258,7 @@ func TestProjeGorevleri_EdgeCases(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create a project
@@ -1322,11 +1323,11 @@ func TestGorevBagimlilikEkle_EdgeCases(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create a project first
-	proje, err := handlers.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	proje, err := handlers.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 	require.NoError(t, err)
 
 	// Set as active project
@@ -1461,11 +1462,11 @@ func TestGorevDetay_EdgeCases(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create a project first
-	proje, err := handlers.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	proje, err := handlers.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
 	require.NoError(t, err)
 
 	// Set as active project
@@ -1560,7 +1561,7 @@ func TestGorevOzetYazdir_EdgeCases(t *testing.T) {
 	defer cleanup()
 
 	// Initialize templates
-	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur()
+	err := handlers.isYonetici.VeriYonetici().VarsayilanTemplateleriOlustur(context.Background())
 	require.NoError(t, err)
 
 	// Create project for testing

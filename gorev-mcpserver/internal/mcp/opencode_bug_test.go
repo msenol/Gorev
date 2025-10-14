@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -37,11 +38,11 @@ func TestOpenCodeAIIDSerializationBug(t *testing.T) {
 		Name:       "Test Project",
 		Definition: "Test project for OpenCode.ai bug reproduction",
 	}
-	err := isYonetici.VeriYonetici().ProjeKaydet(proje)
+	err := isYonetici.VeriYonetici().ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
 
 	// Set the project as active
-	err = isYonetici.VeriYonetici().AktifProjeAyarla(proje.ID)
+	err = isYonetici.VeriYonetici().AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	// Test 2: Call gorev_listele with empty project (reproduces OpenCode.ai bug)
@@ -167,11 +168,11 @@ func TestGorevListeleWithTasks(t *testing.T) {
 		Name:       "Project With Tasks",
 		Definition: "Test project with tasks",
 	}
-	err := isYonetici.VeriYonetici().ProjeKaydet(proje)
+	err := isYonetici.VeriYonetici().ProjeKaydet(context.Background(), proje)
 	require.NoError(t, err)
 
 	// Set as active project
-	err = isYonetici.VeriYonetici().AktifProjeAyarla(proje.ID)
+	err = isYonetici.VeriYonetici().AktifProjeAyarla(context.Background(), proje.ID)
 	require.NoError(t, err)
 
 	// Create some tasks
@@ -183,7 +184,7 @@ func TestGorevListeleWithTasks(t *testing.T) {
 		Priority:    "yuksek",
 		ProjeID:     proje.ID,
 	}
-	err = isYonetici.VeriYonetici().GorevKaydet(task1)
+	err = isYonetici.VeriYonetici().GorevKaydet(context.Background(), task1)
 	require.NoError(t, err)
 
 	task2 := &gorev.Gorev{
@@ -194,7 +195,7 @@ func TestGorevListeleWithTasks(t *testing.T) {
 		Priority:    "orta",
 		ProjeID:     proje.ID,
 	}
-	err = isYonetici.VeriYonetici().GorevKaydet(task2)
+	err = isYonetici.VeriYonetici().GorevKaydet(context.Background(), task2)
 	require.NoError(t, err)
 
 	// Call gorev_listele

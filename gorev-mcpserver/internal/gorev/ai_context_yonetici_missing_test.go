@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -76,7 +77,7 @@ func TestAIContextYonetici_RecordInteraction(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := acy.RecordInteraction(tc.taskID, tc.actionType, tc.context)
+			err := acy.RecordInteraction(context.Background(), tc.taskID, tc.actionType, tc.context)
 
 			if tc.shouldError && err == nil {
 				t.Error("Expected error but got none")
@@ -176,7 +177,7 @@ func TestAIContextYonetici_getTasksFromInteractions(t *testing.T) {
 	}
 
 	// Test getting tasks from interactions
-	tasks, err := acy.getTasksFromInteractions(interactions)
+	tasks, err := acy.getTasksFromInteractions(context.Background(), interactions)
 	if err != nil {
 		t.Errorf("Expected no error but got: %v", err)
 	}
@@ -270,7 +271,7 @@ func TestAIContextYonetici_getLastCreatedTasks(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tasks, err := acy.getLastCreatedTasks(tc.limit)
+			tasks, err := acy.getLastCreatedTasks(context.Background(), tc.limit)
 			if err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}

@@ -597,7 +597,7 @@ func listTemplates(kategori string) error {
 	}
 
 	if len(templates) == 0 {
-		fmt.Println("Henüz template bulunmuyor.")
+		fmt.Println(i18n.T("display.noTemplates"))
 		return nil
 	}
 
@@ -613,18 +613,18 @@ func listTemplates(kategori string) error {
 		for _, tmpl := range tmpls {
 			aliasInfo := ""
 			if tmpl.Alias != "" {
-				aliasInfo = fmt.Sprintf(" [alias: %s]", tmpl.Alias)
+				aliasInfo = fmt.Sprintf(" [%s: %s]", i18n.T("display.alias"), tmpl.Alias)
 			}
 			fmt.Printf("\n%s%s\n", tmpl.Name, aliasInfo)
 			fmt.Printf("  %s\n", tmpl.Definition)
-			fmt.Printf("  Başlık: %s\n", tmpl.DefaultTitle)
+			fmt.Println("  " + i18n.T("display.title", map[string]interface{}{"Title": tmpl.DefaultTitle}))
 			if tmpl.Alias != "" {
-				fmt.Printf("  Hızlı kullanım: gorev task create --template=%s\n", tmpl.Alias)
+				fmt.Println("  " + i18n.T("display.quickUsage", map[string]interface{}{"Alias": tmpl.Alias}))
 			}
 		}
 	}
 
-	fmt.Println("\nDetaylı bilgi için: gorev template show <template-id>")
+	fmt.Println("\n" + i18n.T("display.detailInfo"))
 	return nil
 }
 
@@ -643,31 +643,31 @@ func showTemplate(templateID string) error {
 	}
 
 	fmt.Printf("\n=== %s ===\n", template.Name)
-	fmt.Printf("ID: %s\n", template.ID)
+	fmt.Println(i18n.T("display.id", map[string]interface{}{"ID": template.ID}))
 	if template.Alias != "" {
-		fmt.Printf("Alias: %s\n", template.Alias)
+		fmt.Printf("%s: %s\n", strings.Title(i18n.T("display.alias")), template.Alias)
 	}
-	fmt.Printf("Kategori: %s\n", template.Category)
-	fmt.Printf("Açıklama: %s\n", template.Definition)
-	fmt.Printf("\nBaşlık Şablonu: %s\n", template.DefaultTitle)
+	fmt.Println(i18n.T("display.category", map[string]interface{}{"Category": template.Category}))
+	fmt.Println(i18n.T("display.desc", map[string]interface{}{"Description": template.Definition}))
+	fmt.Println("\n" + i18n.T("display.titleTemplate", map[string]interface{}{"Template": template.DefaultTitle}))
 
-	fmt.Println("\nAlanlar:")
+	fmt.Println("\n" + i18n.T("display.fields"))
 	for _, alan := range template.Fields {
 		zorunlu := ""
 		if alan.Required {
-			zorunlu = " (zorunlu)"
+			zorunlu = fmt.Sprintf(" (%s)", i18n.T("display.required"))
 		}
 		fmt.Printf("  - %s (%s)%s", alan.Name, alan.Type, zorunlu)
 		if alan.Default != "" {
-			fmt.Printf(" [varsayılan: %s]", alan.Default)
+			fmt.Printf(" [%s: %s]", i18n.T("display.default"), alan.Default)
 		}
 		if len(alan.Options) > 0 {
-			fmt.Printf("\n    Seçenekler: %v", alan.Options)
+			fmt.Printf("\n    %s", i18n.T("display.options", map[string]interface{}{"Options": fmt.Sprintf("%v", alan.Options)}))
 		}
 		fmt.Println()
 	}
 
-	fmt.Println("\nÖrnek Açıklama:")
+	fmt.Println("\n" + i18n.T("display.exampleDescription"))
 	fmt.Println(template.DescriptionTemplate)
 
 	return nil
@@ -687,7 +687,7 @@ func initTemplates() error {
 		return fmt.Errorf("template'ler oluşturulamadı: %w", err)
 	}
 
-	fmt.Println("✓ Varsayılan template'ler başarıyla oluşturuldu.")
+	fmt.Println(i18n.T("success.defaultTemplatesCreated"))
 	return nil
 }
 
@@ -706,11 +706,11 @@ func listTemplateAliases() error {
 	}
 
 	if len(templates) == 0 {
-		fmt.Println("Henüz template bulunmuyor.")
+		fmt.Println(i18n.T("display.noTemplates"))
 		return nil
 	}
 
-	fmt.Println("📋 Template Aliases (Hızlı Erişim)")
+	fmt.Println(i18n.T("display.templateAliasesHeader"))
 	fmt.Println("=" + strings.Repeat("=", 40))
 
 	// Alias'leri topla
@@ -722,7 +722,7 @@ func listTemplateAliases() error {
 	}
 
 	if len(aliases) == 0 {
-		fmt.Println("Henüz alias tanımlanmış template bulunmuyor.")
+		fmt.Println(i18n.T("display.noAliasTemplates"))
 		return nil
 	}
 
@@ -731,11 +731,11 @@ func listTemplateAliases() error {
 		fmt.Printf("\n🏷️  %s\n", alias)
 		fmt.Printf("   → %s (%s)\n", tmpl.Name, tmpl.Category)
 		fmt.Printf("   📝 %s\n", tmpl.Definition)
-		fmt.Printf("   💡 Kullanım: gorev mcp call templateden_gorev_olustur template_id=%s degerler='{...}'\n", alias)
+		fmt.Println("   " + i18n.T("display.templateAliasesInfo", map[string]interface{}{"ID": alias}))
 	}
 
-	fmt.Println("\n📖 Detaylı template bilgisi için: gorev template show <alias>")
-	fmt.Println("📋 Tüm template'ler için: gorev template list")
+	fmt.Println("\n" + i18n.T("display.templatesListInfo"))
+	fmt.Println(i18n.T("display.allTemplatesInfo"))
 
 	return nil
 }

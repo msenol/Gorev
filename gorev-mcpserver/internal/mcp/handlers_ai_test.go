@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"testing"
 
 	"github.com/msenol/gorev/internal/constants"
@@ -19,8 +20,8 @@ func TestGorevSetActive(t *testing.T) {
 	h := setupTestHandlers(t)
 
 	// Create a test task
-	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-	gorevTest, _ := h.isYonetici.GorevOlustur(constants.TestTaskTitleEN, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
+	proje, _ := h.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	gorevTest, _ := h.isYonetici.GorevOlustur(context.Background(), constants.TestTaskTitleEN, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
 
 	tests := []struct {
 		name        string
@@ -74,8 +75,8 @@ func TestGorevGetActive(t *testing.T) {
 
 	t.Run("Get active task when one exists", func(t *testing.T) {
 		// Create and set active task
-		proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-		gorevTest, _ := h.isYonetici.GorevOlustur(constants.TestTaskActive, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
+		proje, _ := h.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+		gorevTest, _ := h.isYonetici.GorevOlustur(context.Background(), constants.TestTaskActive, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
 		_, _ = h.GorevSetActive(map[string]interface{}{"task_id": gorevTest.ID})
 
 		result, _ := h.GorevGetActive(map[string]interface{}{})
@@ -154,9 +155,9 @@ func TestGorevContextSummary(t *testing.T) {
 	h := setupTestHandlers(t)
 
 	// Create test data
-	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-	_, _ = h.isYonetici.GorevOlustur(constants.TestTaskHighPriority, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
-	_, _ = h.isYonetici.GorevOlustur(constants.TestTaskNormal, constants.TestTaskDescriptionEN, constants.PriorityMedium, proje.ID, "", nil)
+	proje, _ := h.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	_, _ = h.isYonetici.GorevOlustur(context.Background(), constants.TestTaskHighPriority, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
+	_, _ = h.isYonetici.GorevOlustur(context.Background(), constants.TestTaskNormal, constants.TestTaskDescriptionEN, constants.PriorityMedium, proje.ID, "", nil)
 
 	result, _ := h.GorevContextSummary(map[string]interface{}{})
 
@@ -174,9 +175,9 @@ func TestGorevBatchUpdate(t *testing.T) {
 	h := setupTestHandlers(t)
 
 	// Create test tasks
-	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-	task1, _ := h.isYonetici.GorevOlustur(constants.TestTaskOne, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
-	task2, _ := h.isYonetici.GorevOlustur(constants.TestTaskTwo, constants.TestTaskDescriptionEN, constants.PriorityMedium, proje.ID, "", nil)
+	proje, _ := h.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	task1, _ := h.isYonetici.GorevOlustur(context.Background(), constants.TestTaskOne, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
+	task2, _ := h.isYonetici.GorevOlustur(context.Background(), constants.TestTaskTwo, constants.TestTaskDescriptionEN, constants.PriorityMedium, proje.ID, "", nil)
 
 	tests := []struct {
 		name           string
@@ -272,10 +273,10 @@ func TestGorevNLPQuery(t *testing.T) {
 	h := setupTestHandlers(t)
 
 	// Create test tasks
-	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-	_, _ = h.isYonetici.GorevOlustur("Yüksek Öncelikli Görev", "Acil", "yuksek", proje.ID, "", []string{"bug"})
-	h.isYonetici.GorevOlustur("Normal Görev", "Normal açıklama", "orta", proje.ID, "", []string{"feature"})
-	h.isYonetici.GorevOlustur("Test Görevi", "Test için", "dusuk", proje.ID, "", nil)
+	proje, _ := h.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	_, _ = h.isYonetici.GorevOlustur(context.Background(), "Yüksek Öncelikli Görev", "Acil", "yuksek", proje.ID, "", []string{"bug"})
+	h.isYonetici.GorevOlustur(context.Background(), "Normal Görev", "Normal açıklama", "orta", proje.ID, "", []string{"feature"})
+	h.isYonetici.GorevOlustur(context.Background(), "Test Görevi", "Test için", "dusuk", proje.ID, "", nil)
 
 	tests := []struct {
 		name        string
@@ -357,11 +358,11 @@ func TestAutoStateTransition(t *testing.T) {
 	h := setupTestHandlers(t)
 
 	// Create a task in pending state
-	proje, _ := h.isYonetici.ProjeOlustur(constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
-	gorevTest, _ := h.isYonetici.GorevOlustur(constants.TestTaskTitleEN, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
+	proje, _ := h.isYonetici.ProjeOlustur(context.Background(), constants.TestProjectNameEN, constants.TestProjectDescriptionEN)
+	gorevTest, _ := h.isYonetici.GorevOlustur(context.Background(), constants.TestTaskTitleEN, constants.TestTaskDescriptionEN, constants.PriorityHigh, proje.ID, "", nil)
 
 	// Verify initial state
-	gorev, _ := h.isYonetici.GorevGetir(gorevTest.ID)
+	gorev, _ := h.isYonetici.GorevGetir(context.Background(), gorevTest.ID)
 	assert.Equal(t, constants.TaskStatusPending, gorev.Status)
 
 	// Call GorevDetay which should trigger auto-state transition

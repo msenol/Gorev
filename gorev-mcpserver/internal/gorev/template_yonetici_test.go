@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -21,10 +22,10 @@ func TestTemplateOperationsSimple(t *testing.T) {
 		}()
 
 		// Create bug template for testing
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		err = veriYonetici.VarsayilanTemplateleriOlustur(context.Background())
 		require.NoError(t, err)
 
-		templates, err := veriYonetici.TemplateListele("")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "")
 		require.NoError(t, err)
 		require.Greater(t, len(templates), 0)
 
@@ -37,7 +38,7 @@ func TestTemplateOperationsSimple(t *testing.T) {
 			// Missing other required fields
 		}
 
-		_, err = veriYonetici.TemplatedenGorevOlustur(bugTemplate.ID, degerler)
+		_, err = veriYonetici.TemplatedenGorevOlustur(context.Background(), bugTemplate.ID, degerler)
 		assert.Error(t, err)
 		// Check for i18n key (translation may not be loaded in test environment)
 		errMsg := err.Error()
@@ -58,7 +59,7 @@ func TestTemplateOperationsSimple(t *testing.T) {
 		}()
 
 		// Try to get non-existent template
-		_, err = veriYonetici.TemplateGetir("non-existent-id")
+		_, err = veriYonetici.TemplateGetir(context.Background(), "non-existent-id")
 		assert.Error(t, err)
 		// Check for i18n key (translation may not be loaded in test environment)
 		errMsg := err.Error()
@@ -69,7 +70,7 @@ func TestTemplateOperationsSimple(t *testing.T) {
 		}
 
 		// Try to create task from non-existent template
-		_, err = veriYonetici.TemplatedenGorevOlustur("non-existent-id", map[string]string{})
+		_, err = veriYonetici.TemplatedenGorevOlustur(context.Background(), "non-existent-id", map[string]string{})
 		assert.Error(t, err)
 	})
 
@@ -83,11 +84,11 @@ func TestTemplateOperationsSimple(t *testing.T) {
 		}()
 
 		// Create default templates
-		err = veriYonetici.VarsayilanTemplateleriOlustur()
+		err = veriYonetici.VarsayilanTemplateleriOlustur(context.Background())
 		require.NoError(t, err)
 
 		// List templates
-		templates, err := veriYonetici.TemplateListele("")
+		templates, err := veriYonetici.TemplateListele(context.Background(), "")
 		require.NoError(t, err)
 		assert.Greater(t, len(templates), 0)
 

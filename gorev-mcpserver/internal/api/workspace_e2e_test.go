@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -129,14 +130,14 @@ func TestE2E_WorkspaceDatabaseIsolation(t *testing.T) {
 	// Get workspace 1 context and verify it has 2 projects
 	ws1Context, err := manager.GetWorkspaceContext(ws1ID)
 	require.NoError(t, err)
-	ws1Projects, err := ws1Context.IsYonetici.ProjeListele()
+	ws1Projects, err := ws1Context.IsYonetici.ProjeListele(context.Background())
 	require.NoError(t, err)
 	assert.Len(t, ws1Projects, 2, "Workspace 1 should have 2 projects")
 
 	// Get workspace 2 context and verify it has 3 projects
 	ws2Context, err := manager.GetWorkspaceContext(ws2ID)
 	require.NoError(t, err)
-	ws2Projects, err := ws2Context.IsYonetici.ProjeListele()
+	ws2Projects, err := ws2Context.IsYonetici.ProjeListele(context.Background())
 	require.NoError(t, err)
 	assert.Len(t, ws2Projects, 3, "Workspace 2 should have 3 projects")
 
@@ -375,7 +376,7 @@ func setupTestServer(manager *WorkspaceManager) *fiber.App {
 
 		wsContext := workspace.(*WorkspaceContext)
 		filters := make(map[string]interface{})
-		tasks, err := wsContext.IsYonetici.GorevListele(filters)
+		tasks, err := wsContext.IsYonetici.GorevListele(context.Background(), filters)
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -399,7 +400,7 @@ func setupTestServer(manager *WorkspaceManager) *fiber.App {
 		}
 
 		wsContext := workspace.(*WorkspaceContext)
-		project, err := wsContext.IsYonetici.ProjeOlustur(req.Name, req.Description)
+		project, err := wsContext.IsYonetici.ProjeOlustur(context.Background(), req.Name, req.Description)
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -426,7 +427,7 @@ func setupTestServer(manager *WorkspaceManager) *fiber.App {
 		wsContext := workspace.(*WorkspaceContext)
 
 		// Use Feature template for testing (it has minimal required fields)
-		templates, _ := wsContext.IsYonetici.TemplateListele("")
+		templates, _ := wsContext.IsYonetici.TemplateListele(context.Background(), "")
 		if len(templates) == 0 {
 			return c.Status(500).JSON(fiber.Map{"error": "No templates available"})
 		}
@@ -451,7 +452,7 @@ func setupTestServer(manager *WorkspaceManager) *fiber.App {
 			"etiketler": "test",
 		}
 
-		task, err := wsContext.IsYonetici.TemplatedenGorevOlustur(templateID, values)
+		task, err := wsContext.IsYonetici.TemplatedenGorevOlustur(context.Background(), templateID, values)
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}

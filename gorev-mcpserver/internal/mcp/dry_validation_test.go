@@ -15,13 +15,13 @@ func TestDRYi18nPatterns(t *testing.T) {
 	}
 
 	t.Run("TParamFunction", func(t *testing.T) {
-		result := i18n.TParam("id_field")
+		result := i18n.TParam("tr", "id_field")
 		if result == "" {
 			t.Error("TParam should return non-empty string for 'id' parameter")
 		}
 
 		// Test fallback behavior
-		fallback := i18n.TParam("nonexistent_param")
+		fallback := i18n.TParam("tr", "nonexistent_param")
 		expected := "nonexistent_param parameter"
 		if fallback != expected {
 			t.Errorf("Expected fallback '%s', got '%s'", expected, fallback)
@@ -29,7 +29,7 @@ func TestDRYi18nPatterns(t *testing.T) {
 	})
 
 	t.Run("FormatParameterRequired", func(t *testing.T) {
-		result := i18n.FormatParameterRequired("test_param")
+		result := i18n.FormatParameterRequired("tr", "test_param")
 		if result == "" {
 			t.Error("FormatParameterRequired should return non-empty string")
 		}
@@ -41,7 +41,7 @@ func TestDRYi18nPatterns(t *testing.T) {
 	})
 
 	t.Run("FormatInvalidValue", func(t *testing.T) {
-		result := i18n.FormatInvalidValue("durum", "invalid", constants.GetValidTaskStatuses()[:2])
+		result := i18n.FormatInvalidValue("tr", "durum", "invalid", constants.GetValidTaskStatuses()[:2])
 		if result == "" {
 			t.Error("FormatInvalidValue should return non-empty string")
 		}
@@ -249,13 +249,13 @@ func BenchmarkDRYValidationPatterns(b *testing.B) {
 
 	b.Run("I18nTParam", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			i18n.TParam("id_field")
+			i18n.TParam("tr", "id_field")
 		}
 	})
 
 	b.Run("I18nFormatParameterRequired", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			i18n.FormatParameterRequired("test_param")
+			i18n.FormatParameterRequired("tr", "test_param")
 		}
 	})
 

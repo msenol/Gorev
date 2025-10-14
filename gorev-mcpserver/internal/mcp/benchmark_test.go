@@ -208,14 +208,14 @@ func BenchmarkI18nHelpers(b *testing.B) {
 		Cleanup: func() {},
 		Operation: func(data interface{}) error {
 			// Test DRY i18n helper functions
-			i18n.TParam("id_field")
-			i18n.TParam("durum")
-			i18n.TParam("limit")
-			i18n.TParam("offset")
+			i18n.TParam("tr", "id_field")
+			i18n.TParam("tr", "durum")
+			i18n.TParam("tr", "limit")
+			i18n.TParam("tr", "offset")
 
-			i18n.TValidation("param_required", "test_param", nil)
-			i18n.FormatParameterRequired("test_param")
-			i18n.FormatInvalidValue("test_param", "invalid", []string{"valid1", "valid2"})
+			i18n.TValidation("tr", "param_required", "test_param", nil)
+			i18n.FormatParameterRequired("tr", "test_param")
+			i18n.FormatInvalidValue("tr", "test_param", "invalid", []string{"valid1", "valid2"})
 
 			return nil
 		},

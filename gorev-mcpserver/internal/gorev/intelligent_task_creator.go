@@ -427,7 +427,7 @@ func (itc *IntelligentTaskCreator) generateSubtasks(parentID, description string
 			break
 		}
 
-		subtask, err := itc.veriYonetici.AltGorevOlustur(context.Background(), 
+		subtask, err := itc.veriYonetici.AltGorevOlustur(context.Background(),
 			parentID,
 			item,
 			"",                       // No description for auto-generated subtasks

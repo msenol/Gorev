@@ -44,12 +44,12 @@ func setupBasicAIContextMocks(mockVY *MockVeriYoneticiAI) {
 	mockVY.On("AILastInteractionGuncelle", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(nil).Maybe()
 }
 
-func (m *MockVeriYoneticiAI) GorevKaydet(gorev *Gorev) error {
+func (m *MockVeriYoneticiAI) GorevKaydet(ctx context.Context, gorev *Gorev) error {
 	args := m.Called(gorev)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) GorevGetir(id string) (*Gorev, error) {
+func (m *MockVeriYoneticiAI) GorevGetir(ctx context.Context, id string) (*Gorev, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -57,17 +57,17 @@ func (m *MockVeriYoneticiAI) GorevGetir(id string) (*Gorev, error) {
 	return args.Get(0).(*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) GorevGuncelle(taskID string, params interface{}) error {
+func (m *MockVeriYoneticiAI) GorevGuncelle(ctx context.Context, taskID string, params interface{}) error {
 	args := m.Called(taskID, params)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) GorevSil(id string) error {
+func (m *MockVeriYoneticiAI) GorevSil(ctx context.Context, id string) error {
 	args := m.Called(id)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) GorevleriGetir(durum, sirala, filtre string) ([]*Gorev, error) {
+func (m *MockVeriYoneticiAI) GorevleriGetir(ctx context.Context, durum, sirala, filtre string) ([]*Gorev, error) {
 	args := m.Called(durum, sirala, filtre)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -75,12 +75,12 @@ func (m *MockVeriYoneticiAI) GorevleriGetir(durum, sirala, filtre string) ([]*Go
 	return args.Get(0).([]*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) ProjeKaydet(proje *Proje) error {
+func (m *MockVeriYoneticiAI) ProjeKaydet(ctx context.Context, proje *Proje) error {
 	args := m.Called(proje)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) ProjeGetir(id string) (*Proje, error) {
+func (m *MockVeriYoneticiAI) ProjeGetir(ctx context.Context, id string) (*Proje, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -88,7 +88,7 @@ func (m *MockVeriYoneticiAI) ProjeGetir(id string) (*Proje, error) {
 	return args.Get(0).(*Proje), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) ProjeleriGetir() ([]*Proje, error) {
+func (m *MockVeriYoneticiAI) ProjeleriGetir(ctx context.Context) ([]*Proje, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -96,7 +96,7 @@ func (m *MockVeriYoneticiAI) ProjeleriGetir() ([]*Proje, error) {
 	return args.Get(0).([]*Proje), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) ProjeGorevleriGetir(projeID string) ([]*Gorev, error) {
+func (m *MockVeriYoneticiAI) ProjeGorevleriGetir(ctx context.Context, projeID string) ([]*Gorev, error) {
 	args := m.Called(projeID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -119,17 +119,17 @@ func (m *MockVeriYoneticiAI) AktifProjeKaldir(ctx context.Context) error {
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) BaglantiEkle(baglanti *Baglanti) error {
+func (m *MockVeriYoneticiAI) BaglantiEkle(ctx context.Context, baglanti *Baglanti) error {
 	args := m.Called(baglanti)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) BaglantiSil(kaynakID, hedefID string) error {
+func (m *MockVeriYoneticiAI) BaglantiSil(ctx context.Context, kaynakID, hedefID string) error {
 	args := m.Called(kaynakID, hedefID)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) BaglantilariGetir(gorevID string) ([]*Baglanti, error) {
+func (m *MockVeriYoneticiAI) BaglantilariGetir(ctx context.Context, gorevID string) ([]*Baglanti, error) {
 	args := m.Called(gorevID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -137,7 +137,7 @@ func (m *MockVeriYoneticiAI) BaglantilariGetir(gorevID string) ([]*Baglanti, err
 	return args.Get(0).([]*Baglanti), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) EtiketleriGetir() ([]*Etiket, error) {
+func (m *MockVeriYoneticiAI) EtiketleriGetir(ctx context.Context) ([]*Etiket, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -145,7 +145,7 @@ func (m *MockVeriYoneticiAI) EtiketleriGetir() ([]*Etiket, error) {
 	return args.Get(0).([]*Etiket), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) EtiketOlustur(isim string) (*Etiket, error) {
+func (m *MockVeriYoneticiAI) EtiketOlustur(ctx context.Context, isim string) (*Etiket, error) {
 	args := m.Called(isim)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -153,7 +153,7 @@ func (m *MockVeriYoneticiAI) EtiketOlustur(isim string) (*Etiket, error) {
 	return args.Get(0).(*Etiket), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Etiket, error) {
+func (m *MockVeriYoneticiAI) EtiketleriGetirVeyaOlustur(ctx context.Context, isimler []string) ([]*Etiket, error) {
 	args := m.Called(isimler)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -161,12 +161,12 @@ func (m *MockVeriYoneticiAI) EtiketleriGetirVeyaOlustur(isimler []string) ([]*Et
 	return args.Get(0).([]*Etiket), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) GorevEtiketleriniAyarla(gorevID string, etiketler []*Etiket) error {
+func (m *MockVeriYoneticiAI) GorevEtiketleriniAyarla(ctx context.Context, gorevID string, etiketler []*Etiket) error {
 	args := m.Called(gorevID, etiketler)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) GorevEtiketleriniGetir(gorevID string) ([]*Etiket, error) {
+func (m *MockVeriYoneticiAI) GorevEtiketleriniGetir(ctx context.Context, gorevID string) ([]*Etiket, error) {
 	args := m.Called(gorevID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -174,7 +174,7 @@ func (m *MockVeriYoneticiAI) GorevEtiketleriniGetir(gorevID string) ([]*Etiket, 
 	return args.Get(0).([]*Etiket), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) TemplateListele(kategori string) ([]*GorevTemplate, error) {
+func (m *MockVeriYoneticiAI) TemplateListele(ctx context.Context, kategori string) ([]*GorevTemplate, error) {
 	args := m.Called(kategori)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -182,7 +182,7 @@ func (m *MockVeriYoneticiAI) TemplateListele(kategori string) ([]*GorevTemplate,
 	return args.Get(0).([]*GorevTemplate), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) TemplatedenGorevOlustur(templateID string, degerler map[string]string) (*Gorev, error) {
+func (m *MockVeriYoneticiAI) TemplatedenGorevOlustur(ctx context.Context, templateID string, degerler map[string]string) (*Gorev, error) {
 	args := m.Called(templateID, degerler)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -232,12 +232,12 @@ func (m *MockVeriYoneticiAI) DaireBagimliligiKontrolEt(ctx context.Context, gore
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) TemplateOlustur(template *GorevTemplate) error {
+func (m *MockVeriYoneticiAI) TemplateOlustur(ctx context.Context, template *GorevTemplate) error {
 	args := m.Called(template)
 	return args.Error(0)
 }
 
-func (m *MockVeriYoneticiAI) TemplateGetir(templateID string) (*GorevTemplate, error) {
+func (m *MockVeriYoneticiAI) TemplateGetir(ctx context.Context, templateID string) (*GorevTemplate, error) {
 	args := m.Called(templateID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -245,7 +245,7 @@ func (m *MockVeriYoneticiAI) TemplateGetir(templateID string) (*GorevTemplate, e
 	return args.Get(0).(*GorevTemplate), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) TemplateAliasIleGetir(alias string) (*GorevTemplate, error) {
+func (m *MockVeriYoneticiAI) TemplateAliasIleGetir(ctx context.Context, alias string) (*GorevTemplate, error) {
 	args := m.Called(alias)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -253,7 +253,7 @@ func (m *MockVeriYoneticiAI) TemplateAliasIleGetir(alias string) (*GorevTemplate
 	return args.Get(0).(*GorevTemplate), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) TemplateIDVeyaAliasIleGetir(idOrAlias string) (*GorevTemplate, error) {
+func (m *MockVeriYoneticiAI) TemplateIDVeyaAliasIleGetir(ctx context.Context, idOrAlias string) (*GorevTemplate, error) {
 	args := m.Called(idOrAlias)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -261,7 +261,7 @@ func (m *MockVeriYoneticiAI) TemplateIDVeyaAliasIleGetir(idOrAlias string) (*Gor
 	return args.Get(0).(*GorevTemplate), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) VarsayilanTemplateleriOlustur() error {
+func (m *MockVeriYoneticiAI) VarsayilanTemplateleriOlustur(ctx context.Context) error {
 	args := m.Called()
 	return args.Error(0)
 }
@@ -376,12 +376,12 @@ func (m *MockVeriYoneticiAI) GorevDetay(ctx context.Context, taskID string) (*Go
 	return args.Get(0).(*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) GorevListele(filters map[string]interface{}) ([]*Gorev, error) {
+func (m *MockVeriYoneticiAI) GorevListele(ctx context.Context, filters map[string]interface{}) ([]*Gorev, error) {
 	args := m.Called(filters)
 	return args.Get(0).([]*Gorev), args.Error(1)
 }
 
-func (m *MockVeriYoneticiAI) GorevOlustur(params map[string]interface{}) (string, error) {
+func (m *MockVeriYoneticiAI) GorevOlustur(ctx context.Context, params map[string]interface{}) (string, error) {
 	args := m.Called(params)
 	return args.String(0), args.Error(1)
 }
@@ -454,7 +454,7 @@ func TestSetActiveTask(t *testing.T) {
 			}
 
 			// Execute
-			err := acy.SetActiveTask(tt.taskID)
+			err := acy.SetActiveTask(context.Background(), tt.taskID)
 
 			// Assert
 			if tt.expectError {
@@ -477,7 +477,7 @@ func TestGetActiveTask(t *testing.T) {
 	setupBasicAIContextMocks(mockVeriYonetici)
 
 	// Since GetContext returns a mock implementation, we test the basic flow
-	task, err := acy.GetActiveTask()
+	task, err := acy.GetActiveTask(context.Background())
 	assert.NoError(t, err)
 	assert.Nil(t, task) // Context returns empty ActiveTaskID
 }
@@ -491,7 +491,7 @@ func TestGetRecentTasks(t *testing.T) {
 	setupBasicAIContextMocks(mockVeriYonetici)
 
 	// Test with empty recent tasks
-	tasks, err := acy.GetRecentTasks(5)
+	tasks, err := acy.GetRecentTasks(context.Background(), 5)
 	assert.NoError(t, err)
 	assert.Empty(t, tasks)
 }
@@ -553,7 +553,7 @@ func TestRecordTaskView(t *testing.T) {
 			}
 
 			// Execute
-			err := acy.RecordTaskView(tt.taskID)
+			err := acy.RecordTaskView(context.Background(), tt.taskID)
 
 			// Assert
 			if tt.expectError {
@@ -730,7 +730,7 @@ func TestGetContextSummary(t *testing.T) {
 	mockVeriYonetici.On("GorevleriGetir", "beklemede", "", "").Return(allTasks, nil)
 
 	// Execute
-	summary, err := acy.GetContextSummary()
+	summary, err := acy.GetContextSummary(context.Background())
 
 	// Assert
 	assert.NoError(t, err)
@@ -973,14 +973,14 @@ func TestAIContextRaceCondition(t *testing.T) {
 			switch i % 4 {
 			case 0:
 				// SetActiveTask (write operation)
-				err := acy.SetActiveTask("test-task-id")
+				err := acy.SetActiveTask(context.Background(), "test-task-id")
 				if err != nil {
 					errors <- fmt.Errorf("SetActiveTask failed: %w", err)
 					return
 				}
 			case 1:
 				// GetActiveTask (read operation)
-				_, err := acy.GetActiveTask()
+				_, err := acy.GetActiveTask(context.Background())
 				if err != nil {
 					errors <- fmt.Errorf("GetActiveTask failed: %w", err)
 					return
@@ -994,7 +994,7 @@ func TestAIContextRaceCondition(t *testing.T) {
 				}
 			case 3:
 				// GetRecentTasks (read operation)
-				_, err := acy.GetRecentTasks(5)
+				_, err := acy.GetRecentTasks(context.Background(), 5)
 				if err != nil {
 					errors <- fmt.Errorf("GetRecentTasks failed: %w", err)
 					return
@@ -1030,11 +1030,11 @@ func TestAIContextRaceCondition(t *testing.T) {
 	}
 
 	// Verify final state is consistent
-	context, err := acy.GetContext()
+	aiContext, err := acy.GetContext()
 	assert.NoError(t, err)
-	assert.NotNil(t, context)
+	assert.NotNil(t, aiContext)
 
-	activeTask, err := acy.GetActiveTask()
+	activeTask, err := acy.GetActiveTask(context.Background())
 	assert.NoError(t, err)
 	if activeTask != nil {
 		assert.Equal(t, "test-task-id", activeTask.ID)

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -382,12 +383,12 @@ func TestExportImportRoundTrip(t *testing.T) {
 	}
 
 	// Veri karşılaştırması
-	sourceGorevler, err := sourceVY.GorevListele(map[string]interface{}{})
+	sourceGorevler, err := sourceVY.GorevListele(context.Background(), map[string]interface{}{})
 	if err != nil {
 		t.Fatalf("Failed to list source tasks: %v", err)
 	}
 
-	targetGorevler, err := targetVY.GorevListele(map[string]interface{}{})
+	targetGorevler, err := targetVY.GorevListele(context.Background(), map[string]interface{}{})
 	if err != nil {
 		t.Fatalf("Failed to list target tasks: %v", err)
 	}
@@ -398,12 +399,12 @@ func TestExportImportRoundTrip(t *testing.T) {
 	}
 
 	// Proje sayısını kontrol et
-	sourceProjeler, err := sourceIY.ProjeListele()
+	sourceProjeler, err := sourceIY.ProjeListele(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to list source projects: %v", err)
 	}
 
-	targetProjeler, err := targetIY.ProjeListele()
+	targetProjeler, err := targetIY.ProjeListele(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to list target projects: %v", err)
 	}
@@ -498,7 +499,7 @@ func setupExportTestData(t *testing.T, vy *gorev.VeriYonetici) {
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	err := vy.ProjeKaydet(proje)
+	err := vy.ProjeKaydet(context.Background(), proje)
 	if err != nil {
 		t.Fatalf("Failed to create test project: %v", err)
 	}
@@ -528,7 +529,7 @@ func setupExportTestData(t *testing.T, vy *gorev.VeriYonetici) {
 	}
 
 	for _, task := range tasks {
-		err := vy.GorevKaydet(task)
+		err := vy.GorevKaydet(context.Background(), task)
 		if err != nil {
 			t.Fatalf("Failed to create test task: %v", err)
 		}
@@ -541,7 +542,7 @@ func createTestExportFile(t *testing.T, vy *gorev.VeriYonetici) string {
 
 	// Export data oluştur
 	iy := gorev.YeniIsYonetici(vy)
-	exportData, err := iy.ExportData(gorev.ExportOptions{
+	exportData, err := iy.ExportData(context.Background(), gorev.ExportOptions{
 		IncludeCompleted:    true,
 		IncludeDependencies: true,
 	})
@@ -551,7 +552,7 @@ func createTestExportFile(t *testing.T, vy *gorev.VeriYonetici) string {
 
 	// Dosyaya kaydet
 	exportPath := filepath.Join(t.TempDir(), "test_export.json")
-	err = iy.SaveExportToFile(exportData, gorev.ExportOptions{
+	err = iy.SaveExportToFile(context.Background(), exportData, gorev.ExportOptions{
 		OutputPath: exportPath,
 		Format:     "json",
 	})
@@ -572,7 +573,7 @@ func setupLargeTestDataset(t *testing.T, vy *gorev.VeriYonetici, projectCount, t
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		}
-		err := vy.ProjeKaydet(proje)
+		err := vy.ProjeKaydet(context.Background(), proje)
 		if err != nil {
 			t.Fatalf("Failed to create large test project %d: %v", i, err)
 		}
@@ -591,7 +592,7 @@ func setupLargeTestDataset(t *testing.T, vy *gorev.VeriYonetici, projectCount, t
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		err := vy.GorevKaydet(task)
+		err := vy.GorevKaydet(context.Background(), task)
 		if err != nil {
 			t.Fatalf("Failed to create large test task %d: %v", i, err)
 		}

@@ -1,6 +1,7 @@
 package gorev
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -114,7 +115,7 @@ func TestVeriYonetici_GorevKaydet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := vy.GorevKaydet(tc.gorev)
+			err := vy.GorevKaydet(context.Background(), tc.gorev)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -145,7 +146,7 @@ func TestVeriYonetici_GorevGetir(t *testing.T) {
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	if err := vy.GorevKaydet(testGorev); err != nil {
+	if err := vy.GorevKaydet(context.Background(), testGorev); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
 	}
 
@@ -173,7 +174,7 @@ func TestVeriYonetici_GorevGetir(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gorev, err := vy.GorevGetir(tc.id)
+			gorev, err := vy.GorevGetir(context.Background(), tc.id)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -230,7 +231,7 @@ func TestVeriYonetici_GorevleriGetir(t *testing.T) {
 	}
 
 	for _, gorev := range testGorevler {
-		if err := vy.GorevKaydet(gorev); err != nil {
+		if err := vy.GorevKaydet(context.Background(), gorev); err != nil {
 			t.Fatalf("failed to insert test data: %v", err)
 		}
 	}
@@ -269,7 +270,7 @@ func TestVeriYonetici_GorevleriGetir(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gorevler, err := vy.GorevleriGetir(tc.durum, "", "")
+			gorevler, err := vy.GorevleriGetir(context.Background(), tc.durum, "", "")
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -306,7 +307,7 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 		CreatedAt:   time.Now().Add(-1 * time.Hour),
 		UpdatedAt:   time.Now().Add(-1 * time.Hour),
 	}
-	if err := vy.GorevKaydet(originalGorev); err != nil {
+	if err := vy.GorevKaydet(context.Background(), originalGorev); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
 	}
 
@@ -353,7 +354,7 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 				"updated_at": tc.gorev.UpdatedAt,
 			}
 
-			err := vy.GorevGuncelle(tc.gorev.ID, params)
+			err := vy.GorevGuncelle(context.Background(), tc.gorev.ID, params)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -367,7 +368,7 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 
 			// Verify update
 			if tc.gorev.ID == "test-update-1" {
-				updated, err := vy.GorevGetir(tc.gorev.ID)
+				updated, err := vy.GorevGetir(context.Background(), tc.gorev.ID)
 				if err != nil {
 					t.Fatalf("failed to get updated task: %v", err)
 				}
@@ -398,7 +399,7 @@ func TestVeriYonetici_GorevSil(t *testing.T) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := vy.GorevKaydet(testGorev); err != nil {
+	if err := vy.GorevKaydet(context.Background(), testGorev); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
 	}
 
@@ -426,7 +427,7 @@ func TestVeriYonetici_GorevSil(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := vy.GorevSil(tc.id)
+			err := vy.GorevSil(context.Background(), tc.id)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -439,7 +440,7 @@ func TestVeriYonetici_GorevSil(t *testing.T) {
 			}
 
 			// Verify deletion
-			_, err = vy.GorevGetir(tc.id)
+			_, err = vy.GorevGetir(context.Background(), tc.id)
 			if err == nil {
 				t.Error("task still exists after deletion")
 			}
@@ -494,7 +495,7 @@ func TestVeriYonetici_ProjeKaydet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := vy.ProjeKaydet(tc.proje)
+			err := vy.ProjeKaydet(context.Background(), tc.proje)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -523,7 +524,7 @@ func TestVeriYonetici_ProjeGetir(t *testing.T) {
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	if err := vy.ProjeKaydet(testProje); err != nil {
+	if err := vy.ProjeKaydet(context.Background(), testProje); err != nil {
 		t.Fatalf("failed to insert test data: %v", err)
 	}
 
@@ -551,7 +552,7 @@ func TestVeriYonetici_ProjeGetir(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			proje, err := vy.ProjeGetir(tc.id)
+			proje, err := vy.ProjeGetir(context.Background(), tc.id)
 			if tc.wantErr {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -605,12 +606,12 @@ func TestVeriYonetici_ProjeleriGetir(t *testing.T) {
 	}
 
 	for _, proje := range testProjeler {
-		if err := vy.ProjeKaydet(proje); err != nil {
+		if err := vy.ProjeKaydet(context.Background(), proje); err != nil {
 			t.Fatalf("failed to insert test data: %v", err)
 		}
 	}
 
-	projeler, err := vy.ProjeleriGetir()
+	projeler, err := vy.ProjeleriGetir(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -641,7 +642,7 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := vy.ProjeKaydet(testProje); err != nil {
+	if err := vy.ProjeKaydet(context.Background(), testProje); err != nil {
 		t.Fatalf("failed to insert test project: %v", err)
 	}
 
@@ -686,7 +687,7 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 	}
 
 	for _, gorev := range testGorevler {
-		if err := vy.GorevKaydet(gorev); err != nil {
+		if err := vy.GorevKaydet(context.Background(), gorev); err != nil {
 			t.Fatalf("failed to insert test task: %v", err)
 		}
 	}
@@ -715,7 +716,7 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gorevler, err := vy.ProjeGorevleriGetir(tc.projeID)
+			gorevler, err := vy.ProjeGorevleriGetir(context.Background(), tc.projeID)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -756,7 +757,7 @@ func TestVeriYonetici_Kapat(t *testing.T) {
 	}
 
 	// Operations after close should fail
-	_, err = vy.GorevleriGetir("", "", "")
+	_, err = vy.GorevleriGetir(context.Background(), "", "", "")
 	if err == nil {
 		t.Error("expected error after closing database, but got nil")
 	}
@@ -789,7 +790,7 @@ func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}
-			done <- vy.GorevKaydet(gorev)
+			done <- vy.GorevKaydet(context.Background(), gorev)
 		}(i)
 	}
 
@@ -810,7 +811,7 @@ func TestVeriYonetici_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Verify tasks were created
-	gorevler, err := vy.GorevleriGetir("", "", "")
+	gorevler, err := vy.GorevleriGetir(context.Background(), "", "", "")
 	if err != nil {
 		t.Fatalf("failed to get tasks: %v", err)
 	}
@@ -838,7 +839,7 @@ func TestVeriYonetici_SQLInjection(t *testing.T) {
 	}
 
 	// Should save without executing the injection
-	err = vy.GorevKaydet(maliciousGorev)
+	err = vy.GorevKaydet(context.Background(), maliciousGorev)
 	if err != nil {
 		t.Fatalf("failed to save task: %v", err)
 	}
@@ -851,7 +852,7 @@ func TestVeriYonetici_SQLInjection(t *testing.T) {
 	}
 
 	// Verify the malicious string was stored as data, not executed
-	retrieved, err := vy.GorevGetir("test-injection")
+	retrieved, err := vy.GorevGetir(context.Background(), "test-injection")
 	if err != nil {
 		t.Fatalf("failed to retrieve task: %v", err)
 	}
@@ -860,7 +861,7 @@ func TestVeriYonetici_SQLInjection(t *testing.T) {
 	}
 
 	// Try injection in filter parameter
-	_, err = vy.GorevleriGetir("'; DROP TABLE gorevler; --", "", "")
+	_, err = vy.GorevleriGetir(context.Background(), "'; DROP TABLE gorevler; --", "", "")
 	if err != nil {
 		t.Errorf("query failed: %v", err)
 	}
@@ -891,13 +892,13 @@ func TestVeriYonetici_NullHandling(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	err = vy.GorevKaydet(gorevWithoutProject)
+	err = vy.GorevKaydet(context.Background(), gorevWithoutProject)
 	if err != nil {
 		t.Fatalf("failed to save task: %v", err)
 	}
 
 	// Retrieve and verify NULL handling
-	retrieved, err := vy.GorevGetir("no-project")
+	retrieved, err := vy.GorevGetir(context.Background(), "no-project")
 	if err != nil {
 		t.Fatalf("failed to retrieve task: %v", err)
 	}
@@ -907,7 +908,7 @@ func TestVeriYonetici_NullHandling(t *testing.T) {
 	}
 
 	// Verify in list query
-	gorevler, err := vy.GorevleriGetir("", "", "")
+	gorevler, err := vy.GorevleriGetir(context.Background(), "", "", "")
 	if err != nil {
 		t.Fatalf("failed to list tasks: %v", err)
 	}
@@ -942,12 +943,12 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 		ID:    "etiket-test-gorev",
 		Title: "Etiket Testi",
 	}
-	err = vy.GorevKaydet(gorev)
+	err = vy.GorevKaydet(context.Background(), gorev)
 	require.NoError(t, err)
 
 	// 1. Yeni etiketler oluştur ve getir
 	isimler := []string{"bug", "acil", "  yeni-ozellik  "}
-	etiketler, err := vy.EtiketleriGetirVeyaOlustur(isimler)
+	etiketler, err := vy.EtiketleriGetirVeyaOlustur(context.Background(), isimler)
 	require.NoError(t, err)
 	require.Len(t, etiketler, 3)
 	assert.Equal(t, "bug", etiketler[0].Name)
@@ -955,11 +956,11 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 	assert.Equal(t, "yeni-ozellik", etiketler[2].Name) // Boşlukların temizlendiğini doğrula
 
 	// 2. Göreve etiketleri ata
-	err = vy.GorevEtiketleriniAyarla(gorev.ID, etiketler)
+	err = vy.GorevEtiketleriniAyarla(context.Background(), gorev.ID, etiketler)
 	require.NoError(t, err)
 
 	// 3. Görevi getir ve etiketleri doğrula
-	getirilenGorev, err := vy.GorevGetir(gorev.ID)
+	getirilenGorev, err := vy.GorevGetir(context.Background(), gorev.ID)
 	require.NoError(t, err)
 	require.NotNil(t, getirilenGorev)
 	require.Len(t, getirilenGorev.Tags, 3)
@@ -975,13 +976,13 @@ func TestVeriYonetici_Etiketleme(t *testing.T) {
 
 	// 4. Etiketleri güncelle (birini çıkar, birini ekle)
 	yeniIsimler := []string{"acil", "dokumantasyon"}
-	yeniEtiketler, err := vy.EtiketleriGetirVeyaOlustur(yeniIsimler)
+	yeniEtiketler, err := vy.EtiketleriGetirVeyaOlustur(context.Background(), yeniIsimler)
 	require.NoError(t, err)
-	err = vy.GorevEtiketleriniAyarla(gorev.ID, yeniEtiketler)
+	err = vy.GorevEtiketleriniAyarla(context.Background(), gorev.ID, yeniEtiketler)
 	require.NoError(t, err)
 
 	// 5. Güncellenmiş görevi getir ve etiketleri doğrula
-	getirilenGorev, err = vy.GorevGetir(gorev.ID)
+	getirilenGorev, err = vy.GorevGetir(context.Background(), gorev.ID)
 	require.NoError(t, err)
 	require.NotNil(t, getirilenGorev)
 	require.Len(t, getirilenGorev.Tags, 2)
@@ -1036,7 +1037,7 @@ func TestVeriYonetici_BulkDependencyCounts(t *testing.T) {
 	}
 
 	for _, task := range tasks {
-		if err := vy.GorevKaydet(task); err != nil {
+		if err := vy.GorevKaydet(context.Background(), task); err != nil {
 			t.Fatalf("failed to save task %s: %v", task.ID, err)
 		}
 	}
@@ -1073,7 +1074,7 @@ func TestVeriYonetici_BulkDependencyCounts(t *testing.T) {
 	}
 
 	for _, dep := range dependencies {
-		if err := vy.BaglantiEkle(dep); err != nil {
+		if err := vy.BaglantiEkle(context.Background(), dep); err != nil {
 			t.Fatalf("failed to add dependency %s: %v", dep.ID, err)
 		}
 	}
@@ -1188,7 +1189,7 @@ func BenchmarkVeriYonetici_GorevKaydet(b *testing.B) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		err = vy.GorevKaydet(gorev)
+		err = vy.GorevKaydet(context.Background(), gorev)
 		if err != nil {
 			b.Fatalf("failed to save task: %v", err)
 		}
@@ -1212,12 +1213,12 @@ func BenchmarkVeriYonetici_GorevleriGetir(b *testing.B) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		vy.GorevKaydet(gorev)
+		vy.GorevKaydet(context.Background(), gorev)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = vy.GorevleriGetir("", "", "")
+		_, err = vy.GorevleriGetir(context.Background(), "", "", "")
 		if err != nil {
 			b.Fatalf("failed to get tasks: %v", err)
 		}
@@ -1240,7 +1241,7 @@ func BenchmarkVeriYonetici_ProjeKaydet(b *testing.B) {
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		}
-		err = vy.ProjeKaydet(proje)
+		err = vy.ProjeKaydet(context.Background(), proje)
 		if err != nil {
 			b.Fatalf("failed to save project: %v", err)
 		}
@@ -1263,7 +1264,7 @@ func BenchmarkVeriYonetici_GorevGuncelle(b *testing.B) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	err = vy.GorevKaydet(gorev)
+	err = vy.GorevKaydet(context.Background(), gorev)
 	if err != nil {
 		b.Fatalf("failed to create task: %v", err)
 	}
@@ -1280,7 +1281,7 @@ func BenchmarkVeriYonetici_GorevGuncelle(b *testing.B) {
 			UpdatedAt: time.Now(),
 		}
 		// Create task first
-		err = vy.GorevKaydet(gorev)
+		err = vy.GorevKaydet(context.Background(), gorev)
 		if err != nil {
 			b.Fatalf("failed to create task: %v", err)
 		}
@@ -1289,7 +1290,7 @@ func BenchmarkVeriYonetici_GorevGuncelle(b *testing.B) {
 		params := map[string]interface{}{
 			"durum": "devam_ediyor",
 		}
-		err = vy.GorevGuncelle(taskID, params)
+		err = vy.GorevGuncelle(context.Background(), taskID, params)
 		if err != nil {
 			b.Fatalf("failed to update task: %v", err)
 		}
@@ -1330,10 +1331,10 @@ func TestVeriYonetici_HighConcurrencyAccess(t *testing.T) {
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				}
-				done <- vy.GorevKaydet(gorev)
+				done <- vy.GorevKaydet(context.Background(), gorev)
 			} else {
 				// Read operation
-				_, err := vy.GorevleriGetir("", "", "")
+				_, err := vy.GorevleriGetir(context.Background(), "", "", "")
 				done <- err
 			}
 		}(i)
@@ -1366,7 +1367,7 @@ func TestVeriYonetici_HighConcurrencyAccess(t *testing.T) {
 	}
 
 	// Verify data integrity
-	gorevler, err := vy.GorevleriGetir("", "", "")
+	gorevler, err := vy.GorevleriGetir(context.Background(), "", "", "")
 	if err != nil {
 		t.Fatalf("failed to verify data: %v", err)
 	}
@@ -1396,7 +1397,7 @@ func TestVeriYonetici_MixedOperationsConcurrency(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		vy.ProjeKaydet(proje)
+		vy.ProjeKaydet(context.Background(), proje)
 	}
 
 	// Test concurrent mixed operations
@@ -1420,29 +1421,29 @@ func TestVeriYonetici_MixedOperationsConcurrency(t *testing.T) {
 						CreatedAt: time.Now(),
 						UpdatedAt: time.Now(),
 					}
-					done <- vy.GorevKaydet(gorev)
+					done <- vy.GorevKaydet(context.Background(), gorev)
 
 				case 1: // Update task
-					gorev, err := vy.GorevGetir(taskID)
+					gorev, err := vy.GorevGetir(context.Background(), taskID)
 					if err == nil {
 						params := map[string]interface{}{
 							"durum": "devam_ediyor",
 						}
-						done <- vy.GorevGuncelle(gorev.ID, params)
+						done <- vy.GorevGuncelle(context.Background(), gorev.ID, params)
 					} else {
 						done <- nil // Task doesn't exist yet, that's ok
 					}
 
 				case 2: // List tasks
-					_, err := vy.GorevleriGetir("", "", "")
+					_, err := vy.GorevleriGetir(context.Background(), "", "", "")
 					done <- err
 
 				case 3: // List projects
-					_, err := vy.ProjeleriGetir()
+					_, err := vy.ProjeleriGetir(context.Background())
 					done <- err
 
 				case 4: // Get task details
-					_, err := vy.GorevGetir(taskID)
+					_, err := vy.GorevGetir(context.Background(), taskID)
 					done <- err
 				}
 			}
@@ -1510,14 +1511,14 @@ func TestVeriYonetici_ConnectionPoolStress(t *testing.T) {
 				UpdatedAt: time.Now(),
 			}
 
-			err := vy.GorevKaydet(gorev)
+			err := vy.GorevKaydet(context.Background(), gorev)
 			if err != nil {
 				done <- err
 				return
 			}
 
 			// Immediate read after write to test connection cycling
-			_, err = vy.GorevGetir(gorev.ID)
+			_, err = vy.GorevGetir(context.Background(), gorev.ID)
 			if err != nil {
 				done <- err
 				return
@@ -1547,7 +1548,7 @@ func TestVeriYonetici_ConnectionPoolStress(t *testing.T) {
 	t.Logf("Success rate: %d/%d (%.1f%%)", successCount, totalOps, float64(successCount)*100/float64(totalOps))
 
 	// Verify no database corruption
-	gorevler, err := vy.GorevleriGetir("", "", "")
+	gorevler, err := vy.GorevleriGetir(context.Background(), "", "", "")
 	if err != nil {
 		t.Fatalf("database potentially corrupted after stress test: %v", err)
 	}
@@ -1615,7 +1616,7 @@ func TestVeriYonetici_LongRunningConcurrency(t *testing.T) {
 						UpdatedAt: time.Now(),
 					}
 
-					err := vy.GorevKaydet(gorev)
+					err := vy.GorevKaydet(context.Background(), gorev)
 					if err != nil {
 						errorChan <- fmt.Errorf("worker %d: %v", workerID, err)
 					} else {
