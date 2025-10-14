@@ -42,12 +42,12 @@ type VeriYonetici struct {
 func configureSQLiteForConcurrency(db *sql.DB) error {
 	// Enable WAL mode for better concurrent access
 	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
-		return fmt.Errorf("failed to enable WAL mode: %w", err)
+		return fmt.Errorf(i18n.T("error.walModeFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Set busy timeout to avoid immediate failures (10 seconds)
 	if _, err := db.Exec("PRAGMA busy_timeout=10000"); err != nil {
-		return fmt.Errorf("failed to set busy timeout: %w", err)
+		return fmt.Errorf(i18n.T("error.busyTimeoutFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Set connection pooling for better concurrency
@@ -80,7 +80,7 @@ func retryOnBusy(operation func() error, maxRetries int) error {
 		// Not a busy error, return immediately
 		return err
 	}
-	return fmt.Errorf("operation failed after %d retries: %w", maxRetries, err)
+	return fmt.Errorf(i18n.T("error.operationRetryFailed", map[string]interface{}{"Retries": maxRetries, "Error": err}))
 }
 
 func YeniVeriYonetici(dbYolu string, migrationsYolu string) (*VeriYonetici, error) {
@@ -97,7 +97,7 @@ func YeniVeriYoneticiWithEventEmitter(dbYolu string, migrationsYolu string, even
 	// Configure SQLite for better concurrent access
 	if err := configureSQLiteForConcurrency(db); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to configure database: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.dbConfigureFailed", map[string]interface{}{"Error": err}))
 	}
 
 	vy := &VeriYonetici{
@@ -127,7 +127,7 @@ func YeniVeriYoneticiWithEmbeddedMigrationsAndEventEmitter(dbYolu string, migrat
 	// Configure SQLite for better concurrent access
 	if err := configureSQLiteForConcurrency(db); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to configure database: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.dbConfigureFailed", map[string]interface{}{"Error": err}))
 	}
 
 	vy := &VeriYonetici{
@@ -419,7 +419,7 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, title, description, priority, 
 	}
 
 	if err := vy.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf(i18n.TSaveFailed("task", err))
+		return nil, fmt.Errorf(i18n.TSaveFailed("tr", "task", err))
 	}
 
 	if len(etiketIsimleri) > 0 {
@@ -428,7 +428,7 @@ func (vy *VeriYonetici) AltGorevOlustur(parentID, title, description, priority, 
 			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
 		if err := vy.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
-			return nil, fmt.Errorf(i18n.TSetFailed("task_tags", err))
+			return nil, fmt.Errorf(i18n.TSetFailed("tr", "task_tags", err))
 		}
 		gorev.Tags = etiketler
 	}
@@ -779,7 +779,7 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(gorevID string, etiketler []*Eti
 func (vy *VeriYonetici) GorevGuncelle(taskID string, params interface{}) error {
 	paramsMap, ok := params.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("invalid params type, expected map[string]interface{}")
+		return fmt.Errorf(i18n.T("error.invalidParamsType"))
 	}
 
 	if len(paramsMap) == 0 {
@@ -893,7 +893,7 @@ func (vy *VeriYonetici) GorevSil(id string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf(i18n.TEntityNotFound("task", errors.New("not found")))
+		return fmt.Errorf(i18n.TEntityNotFound("tr", "task", errors.New("not found")))
 	}
 
 	// Emit task deleted event if operation succeeded
@@ -966,7 +966,7 @@ func (vy *VeriYonetici) BaglantiSil(kaynakID, hedefID string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("dependency not found between tasks %s and %s", kaynakID, hedefID)
+		return fmt.Errorf(i18n.T("error.dependencyNotFound", map[string]interface{}{"Source": kaynakID, "Target": hedefID}))
 	}
 
 	return nil
@@ -1633,7 +1633,7 @@ func (vy *VeriYonetici) GorevDosyaYoluEkle(taskID string, path string) error {
 	`
 	_, err := vy.db.Exec(query, taskID, path)
 	if err != nil {
-		return fmt.Errorf("dosya yolu eklenirken hata: %w", err)
+		return fmt.Errorf(i18n.T("error.filePathAddFailed", map[string]interface{}{"Error": err}))
 	}
 	return nil
 }
@@ -1647,12 +1647,12 @@ func (vy *VeriYonetici) GorevDosyaYoluSil(taskID string, path string) error {
 	`
 	result, err := vy.db.Exec(query, taskID, path)
 	if err != nil {
-		return fmt.Errorf("dosya yolu silinirken hata: %w", err)
+		return fmt.Errorf(i18n.T("error.filePathRemoveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		return fmt.Errorf("silinecek dosya yolu bulunamadı")
+		return fmt.Errorf(i18n.T("error.filePathNotFound"))
 	}
 
 	return nil
@@ -1670,7 +1670,7 @@ func (vy *VeriYonetici) GorevDosyaYollariGetir(taskID string) ([]string, error) 
 
 	rows, err := vy.db.Query(query, taskID)
 	if err != nil {
-		return nil, fmt.Errorf("dosya yolları sorgulanırken hata: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.filePathQueryFailed", map[string]interface{}{"Error": err}))
 	}
 	defer rows.Close()
 
@@ -1678,13 +1678,13 @@ func (vy *VeriYonetici) GorevDosyaYollariGetir(taskID string) ([]string, error) 
 	for rows.Next() {
 		var path string
 		if err := rows.Scan(&path); err != nil {
-			return nil, fmt.Errorf("dosya yolu okunurken hata: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.filePathReadFailed", map[string]interface{}{"Error": err}))
 		}
 		paths = append(paths, path)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("satır okuma hatası: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.rowIterationError", map[string]interface{}{"Error": err}))
 	}
 
 	return paths, nil
@@ -1702,7 +1702,7 @@ func (vy *VeriYonetici) DosyaYoluGorevleriGetir(path string) ([]string, error) {
 
 	rows, err := vy.db.Query(query, path)
 	if err != nil {
-		return nil, fmt.Errorf("görevler sorgulanırken hata: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.tasksQueryFailed", map[string]interface{}{"Error": err}))
 	}
 	defer rows.Close()
 
@@ -1710,13 +1710,13 @@ func (vy *VeriYonetici) DosyaYoluGorevleriGetir(path string) ([]string, error) {
 	for rows.Next() {
 		var taskID string
 		if err := rows.Scan(&taskID); err != nil {
-			return nil, fmt.Errorf("görev ID okunurken hata: %w", err)
+			return nil, fmt.Errorf(i18n.T("error.taskIdReadFailed", map[string]interface{}{"Error": err}))
 		}
 		taskIDs = append(taskIDs, taskID)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("satır okuma hatası: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.rowIterationError", map[string]interface{}{"Error": err}))
 	}
 
 	return taskIDs, nil

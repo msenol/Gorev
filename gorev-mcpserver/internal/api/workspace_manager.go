@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 	ws "github.com/msenol/gorev/internal/websocket"
 )
 
@@ -40,12 +41,12 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 	// Clean and validate path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return nil, fmt.Errorf("invalid workspace path: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.invalidWorkspacePath", map[string]interface{}{"Error": err}))
 	}
 
 	// Check if path exists
 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("workspace path does not exist: %s", absPath)
+		return nil, fmt.Errorf(i18n.T("error.workspacePathNotExist", map[string]interface{}{"Path": absPath}))
 	}
 
 	// Generate workspace ID from path
@@ -72,7 +73,7 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 	// Ensure .gorev directory exists
 	gorevDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(gorevDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create .gorev directory: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.gorevDirCreateFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Create event emitter for real-time updates BEFORE initializing database
@@ -104,7 +105,7 @@ func (wm *WorkspaceManager) RegisterWorkspace(path string, name string) (*Worksp
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database for workspace %s: %w", name, err)
+		return nil, fmt.Errorf(i18n.T("error.workspaceDbInitFailed", map[string]interface{}{"Name": name, "Error": err}))
 	}
 
 	// Initialize business logic manager
@@ -139,7 +140,7 @@ func (wm *WorkspaceManager) GetWorkspace(workspaceID string) (any, error) {
 
 	workspace, exists := wm.workspaces[workspaceID]
 	if !exists {
-		return nil, fmt.Errorf("workspace not found: %s", workspaceID)
+		return nil, fmt.Errorf(i18n.T("error.workspaceNotFound", map[string]interface{}{"ID": workspaceID}))
 	}
 
 	// Update last accessed time
@@ -157,7 +158,7 @@ func (wm *WorkspaceManager) GetWorkspaceContext(workspaceID string) (*WorkspaceC
 	if ws, ok := workspace.(*WorkspaceContext); ok {
 		return ws, nil
 	}
-	return nil, fmt.Errorf("unexpected workspace type")
+	return nil, fmt.Errorf(i18n.T("error.unexpectedWorkspaceType"))
 }
 
 // ListWorkspaces returns all registered workspaces
@@ -180,13 +181,13 @@ func (wm *WorkspaceManager) UnregisterWorkspace(workspaceID string) error {
 
 	workspace, exists := wm.workspaces[workspaceID]
 	if !exists {
-		return fmt.Errorf("workspace not found: %s", workspaceID)
+		return fmt.Errorf(i18n.T("error.workspaceNotFound", map[string]interface{}{"ID": workspaceID}))
 	}
 
 	// Close database connection
 	if workspace.VeriYonetici != nil {
 		if err := workspace.VeriYonetici.Kapat(); err != nil {
-			return fmt.Errorf("failed to close database: %w", err)
+			return fmt.Errorf(i18n.T("error.dbCloseFailed", map[string]interface{}{"Error": err}))
 		}
 	}
 
@@ -241,7 +242,7 @@ func (wm *WorkspaceManager) CloseAll() error {
 	for id, ws := range wm.workspaces {
 		if ws.VeriYonetici != nil {
 			if err := ws.VeriYonetici.Kapat(); err != nil {
-				errors = append(errors, fmt.Errorf("failed to close workspace %s: %w", id, err))
+				errors = append(errors, fmt.Errorf(i18n.T("error.workspaceCloseFailed", map[string]interface{}{"ID": id, "Error": err})))
 			}
 		}
 	}
@@ -250,7 +251,7 @@ func (wm *WorkspaceManager) CloseAll() error {
 	wm.workspaces = make(map[string]*WorkspaceContext)
 
 	if len(errors) > 0 {
-		return fmt.Errorf("errors closing workspaces: %v", errors)
+		return fmt.Errorf(i18n.T("error.workspacesCloseFailed", map[string]interface{}{"Errors": errors}))
 	}
 
 	return nil

@@ -254,7 +254,7 @@ func (bp *BatchProcessor) BulkStatusTransition(request BulkStatusTransitionReque
 
 	// Validate new status
 	if !bp.validateStatus(request.NewStatus) {
-		return nil, fmt.Errorf("invalid status: %s", request.NewStatus)
+		return nil, fmt.Errorf(i18n.T("error.invalidStatusBatch", map[string]interface{}{"Status": request.NewStatus}))
 	}
 
 	for _, taskID := range request.TaskIDs {
@@ -374,7 +374,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 
 	// Validate operation
 	if request.Operation != "add" && request.Operation != "remove" && request.Operation != "replace" {
-		return nil, fmt.Errorf("invalid operation: %s. Must be 'add', 'remove', or 'replace'", request.Operation)
+		return nil, fmt.Errorf(i18n.T("error.invalidOperationBatch", map[string]interface{}{"Operation": request.Operation}))
 	}
 
 	// Get or create tags for add/replace operations
@@ -383,7 +383,7 @@ func (bp *BatchProcessor) BulkTagOperation(request BulkTagOperationRequest) (*Ba
 		var err error
 		tags, err = bp.veriYonetici.EtiketleriGetirVeyaOlustur(request.Tags)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get/create tags: %v", err)
+			return nil, fmt.Errorf(i18n.T("error.tagsGetCreateFailed", map[string]interface{}{"Error": err}))
 		}
 	}
 
@@ -519,7 +519,7 @@ func (bp *BatchProcessor) BulkDelete(request BulkDeleteRequest) (*BatchUpdateRes
 	// Safety check: require confirmation
 	expectedConfirmation := fmt.Sprintf("DELETE %d TASKS", len(request.TaskIDs))
 	if !request.Force && request.Confirmation != expectedConfirmation {
-		return nil, fmt.Errorf("confirmation required: '%s'", expectedConfirmation)
+		return nil, fmt.Errorf(i18n.T("error.bulkDeleteConfirmRequired", map[string]interface{}{"Confirmation": expectedConfirmation}))
 	}
 
 	for _, taskID := range request.TaskIDs {
@@ -607,19 +607,19 @@ func (bp *BatchProcessor) validateUpdateRequest(request BatchUpdateRequest) erro
 	// Validate individual fields
 	if status, ok := request.Updates["status"].(string); ok {
 		if !bp.validateStatus(status) {
-			return fmt.Errorf("invalid status: %s", status)
+			return fmt.Errorf(i18n.T("error.invalidStatusBatch", map[string]interface{}{"Status": status}))
 		}
 	}
 
 	if priority, ok := request.Updates["priority"].(string); ok {
 		if !bp.validatePriority(priority) {
-			return fmt.Errorf("invalid priority: %s", priority)
+			return fmt.Errorf(i18n.T("error.invalidPriorityBatch", map[string]interface{}{"Priority": priority}))
 		}
 	}
 
 	if title, ok := request.Updates["title"].(string); ok {
 		if strings.TrimSpace(title) == "" {
-			return fmt.Errorf("title cannot be empty")
+			return fmt.Errorf(i18n.T("error.titleCannotBeEmpty"))
 		}
 	}
 

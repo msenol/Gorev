@@ -47,7 +47,7 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf(i18n.TSaveFailed("task", err))
+		return nil, fmt.Errorf(i18n.TSaveFailed("tr", "task", err))
 	}
 
 	if len(etiketIsimleri) > 0 {
@@ -56,7 +56,7 @@ func (iy *IsYonetici) GorevOlustur(baslik, aciklama, oncelik, projeID, sonTarihS
 			return nil, fmt.Errorf(i18n.T("error.tagsProcessFailed", map[string]interface{}{"Error": err}))
 		}
 		if err := iy.veriYonetici.GorevEtiketleriniAyarla(gorev.ID, etiketler); err != nil {
-			return nil, fmt.Errorf(i18n.TSetFailed("task_tags", err))
+			return nil, fmt.Errorf(i18n.TSetFailed("tr", "task_tags", err))
 		}
 		gorev.Tags = etiketler
 	}
@@ -143,14 +143,14 @@ func (iy *IsYonetici) GorevDurumGuncelle(id, durum string) error {
 
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf(i18n.TEntityNotFound("task", err))
+		return fmt.Errorf(i18n.TEntityNotFound("tr", "task", err))
 	}
 
 	// Eğer görev "devam_ediyor" durumuna geçiyorsa, bağımlılıkları kontrol et
 	if durum == constants.TaskStatusInProgress && gorev.Status == constants.TaskStatusPending {
 		bagimli, tamamlanmamislar, err := iy.GorevBagimliMi(id)
 		if err != nil {
-			return fmt.Errorf(i18n.TCheckFailed("dependency", err))
+			return fmt.Errorf(i18n.TCheckFailed("tr", "dependency", err))
 		}
 
 		if !bagimli {
@@ -191,7 +191,7 @@ func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 	}
 
 	if err := iy.veriYonetici.ProjeKaydet(proje); err != nil {
-		return nil, fmt.Errorf(i18n.TSaveFailed("project", err))
+		return nil, fmt.Errorf(i18n.TSaveFailed("tr", "project", err))
 	}
 
 	return proje, nil
@@ -200,7 +200,7 @@ func (iy *IsYonetici) ProjeOlustur(isim, tanim string) (*Proje, error) {
 func (iy *IsYonetici) GorevGetir(id string) (*Gorev, error) {
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.TEntityNotFound("task", err))
+		return nil, fmt.Errorf(i18n.TEntityNotFound("tr", "task", err))
 	}
 	return gorev, nil
 }
@@ -217,7 +217,7 @@ func (iy *IsYonetici) GorevDuzenle(id, baslik, aciklama, oncelik, projeID, sonTa
 	// Önce mevcut görevi al
 	gorev, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf(i18n.TEntityNotFound("task", err))
+		return fmt.Errorf(i18n.TEntityNotFound("tr", "task", err))
 	}
 
 	// Sadece belirtilen alanları güncelle
@@ -294,7 +294,7 @@ func (iy *IsYonetici) GorevSil(id string) error {
 	// Önce görevin var olduğunu kontrol et
 	_, err := iy.veriYonetici.GorevGetir(id)
 	if err != nil {
-		return fmt.Errorf(i18n.TEntityNotFound("task", err))
+		return fmt.Errorf(i18n.TEntityNotFound("tr", "task", err))
 	}
 
 	// Alt görevleri kontrol et
@@ -443,7 +443,7 @@ func (iy *IsYonetici) GorevBagimlilikEkle(kaynakID, hedefID, baglantiTipi string
 	}
 
 	if err := iy.veriYonetici.BaglantiEkle(baglanti); err != nil {
-		return nil, fmt.Errorf(i18n.TAddFailed("link", err))
+		return nil, fmt.Errorf(i18n.TAddFailed("tr", "link", err))
 	}
 
 	return baglanti, nil
@@ -522,7 +522,7 @@ func (iy *IsYonetici) AltGorevOlustur(parentID, baslik, aciklama, oncelik, sonTa
 	}
 
 	if err := iy.veriYonetici.GorevKaydet(gorev); err != nil {
-		return nil, fmt.Errorf(i18n.TSaveFailed("subtask", err))
+		return nil, fmt.Errorf(i18n.TSaveFailed("tr", "subtask", err))
 	}
 
 	if len(etiketIsimleri) > 0 {
@@ -544,7 +544,7 @@ func (iy *IsYonetici) GorevUstDegistir(gorevID, yeniParentID string) error {
 	// Görevi kontrol et
 	gorev, err := iy.veriYonetici.GorevGetir(gorevID)
 	if err != nil {
-		return fmt.Errorf(i18n.TEntityNotFound("task", err))
+		return fmt.Errorf(i18n.TEntityNotFound("tr", "task", err))
 	}
 
 	// Yeni parent varsa kontrol et

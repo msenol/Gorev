@@ -15,7 +15,7 @@ func TestDRYi18nPatterns(t *testing.T) {
 	}
 
 	t.Run("TParamFunction", func(t *testing.T) {
-		result := i18n.TParam("id")
+		result := i18n.TParam("id_field")
 		if result == "" {
 			t.Error("TParam should return non-empty string for 'id' parameter")
 		}
@@ -249,7 +249,7 @@ func BenchmarkDRYValidationPatterns(b *testing.B) {
 
 	b.Run("I18nTParam", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			i18n.TParam("id")
+			i18n.TParam("id_field")
 		}
 	})
 

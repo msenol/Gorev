@@ -321,7 +321,7 @@ func TestConcurrentI18nAccess(t *testing.T) {
 			}
 
 			// Test helper functions
-			i18n.TParam("id")
+			i18n.TParam("id_field")
 			i18n.TValidation("param_required", "test_param", nil)
 			i18n.FormatParameterRequired("test_param")
 
@@ -425,7 +425,7 @@ func TestStressConcurrencyMixed(t *testing.T) {
 
 			case 3: // i18n
 				i18n.T("tools.descriptions.gorev_listele", nil)
-				i18n.TParam("id")
+				i18n.TParam("id_field")
 			}
 
 			return nil
@@ -527,7 +527,7 @@ func TestConcurrentDRYPatterns(t *testing.T) {
 			helpers.Formatter.FormatTaskBasic("DRY Test", "dry-test-id")
 
 			// i18n using DRY helper
-			i18n.TParam("id")
+			i18n.TParam("id_field")
 
 			return nil
 		},

@@ -64,7 +64,7 @@ func NewExtensionInstaller(detector *IDEDetector) *ExtensionInstaller {
 func (ei *ExtensionInstaller) InstallExtension(ctx context.Context, ideType IDEType, extensionInfo *ExtensionInfo) (*InstallResult, error) {
 	// Handle nil extension info
 	if extensionInfo == nil {
-		return nil, fmt.Errorf("extension info cannot be nil")
+		return nil, fmt.Errorf(i18n.T("error.ide.extensionInfoNil"))
 	}
 
 	result := &InstallResult{
@@ -230,7 +230,7 @@ func (ei *ExtensionInstaller) downloadVSIX(ctx context.Context, extensionInfo *E
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("download failed with status: %d", resp.StatusCode)
+		return "", fmt.Errorf(i18n.T("error.ide.downloadFailedStatus", map[string]interface{}{"Status": resp.StatusCode}))
 	}
 
 	// Create file
@@ -256,7 +256,7 @@ func (ei *ExtensionInstaller) downloadVSIX(ctx context.Context, extensionInfo *E
 		valid, err := ei.verifyChecksum(filePath, extensionInfo.Checksum)
 		if err != nil || !valid {
 			_ = os.Remove(filePath)
-			return "", fmt.Errorf("checksum verification failed")
+			return "", fmt.Errorf(i18n.T("error.ide.checksumFailed"))
 		}
 	}
 
@@ -283,7 +283,7 @@ func (ei *ExtensionInstaller) verifyChecksum(filePath, expectedChecksum string) 
 // installVSIX installs a VSIX file using the IDE's CLI
 func (ei *ExtensionInstaller) installVSIX(ide *IDEInfo, vsixPath string) error {
 	if ide.ExecutablePath == "" {
-		return fmt.Errorf("IDE executable path not found")
+		return fmt.Errorf(i18n.T("error.ide.executableNotFound"))
 	}
 
 	var args []string
@@ -291,7 +291,7 @@ func (ei *ExtensionInstaller) installVSIX(ide *IDEInfo, vsixPath string) error {
 	case IDETypeVSCode, IDETypeCursor, IDETypeWindsurf:
 		args = []string{"--install-extension", vsixPath}
 	default:
-		return fmt.Errorf("unsupported IDE type: %s", ide.Type)
+		return fmt.Errorf(i18n.T("error.ide.unsupportedType", map[string]interface{}{"Type": ide.Type}))
 	}
 
 	cmd := exec.Command(ide.ExecutablePath, args...)
@@ -304,7 +304,7 @@ func (ei *ExtensionInstaller) installVSIX(ide *IDEInfo, vsixPath string) error {
 // uninstallExtension uninstalls an extension using the IDE's CLI
 func (ei *ExtensionInstaller) uninstallExtension(ide *IDEInfo, extensionID string) error {
 	if ide.ExecutablePath == "" {
-		return fmt.Errorf("IDE executable path not found")
+		return fmt.Errorf(i18n.T("error.ide.executableNotFound"))
 	}
 
 	var args []string
@@ -312,7 +312,7 @@ func (ei *ExtensionInstaller) uninstallExtension(ide *IDEInfo, extensionID strin
 	case IDETypeVSCode, IDETypeCursor, IDETypeWindsurf:
 		args = []string{"--uninstall-extension", extensionID}
 	default:
-		return fmt.Errorf("unsupported IDE type: %s", ide.Type)
+		return fmt.Errorf(i18n.T("error.ide.unsupportedType", map[string]interface{}{"Type": ide.Type}))
 	}
 
 	cmd := exec.Command(ide.ExecutablePath, args...)
@@ -326,11 +326,11 @@ func (ei *ExtensionInstaller) uninstallExtension(ide *IDEInfo, extensionID strin
 func (ei *ExtensionInstaller) ListInstalledExtensions(ideType IDEType) ([]string, error) {
 	ide, exists := ei.detector.GetDetectedIDE(ideType)
 	if !exists {
-		return nil, fmt.Errorf("IDE not detected: %s", ideType)
+		return nil, fmt.Errorf(i18n.T("error.ide.notDetected", map[string]interface{}{"IDE": string(ideType)}))
 	}
 
 	if ide.ExecutablePath == "" {
-		return nil, fmt.Errorf("IDE executable path not found")
+		return nil, fmt.Errorf(i18n.T("error.ide.executableNotFound"))
 	}
 
 	var args []string
@@ -338,7 +338,7 @@ func (ei *ExtensionInstaller) ListInstalledExtensions(ideType IDEType) ([]string
 	case IDETypeVSCode, IDETypeCursor, IDETypeWindsurf:
 		args = []string{"--list-extensions"}
 	default:
-		return nil, fmt.Errorf("unsupported IDE type: %s", ide.Type)
+		return nil, fmt.Errorf(i18n.T("error.ide.unsupportedType", map[string]interface{}{"Type": ide.Type}))
 	}
 
 	cmd := exec.Command(ide.ExecutablePath, args...)
@@ -378,7 +378,7 @@ func (ei *ExtensionInstaller) GetLatestExtensionInfo(ctx context.Context, repoOw
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitHub API request failed with status: %d", resp.StatusCode)
+		return nil, fmt.Errorf(i18n.T("error.ide.githubApiFailed", map[string]interface{}{"Status": resp.StatusCode}))
 	}
 
 	var release struct {
@@ -407,7 +407,7 @@ func (ei *ExtensionInstaller) GetLatestExtensionInfo(ctx context.Context, repoOw
 	}
 
 	if vsixAsset == nil {
-		return nil, fmt.Errorf("no VSIX asset found in release")
+		return nil, fmt.Errorf(i18n.T("error.ide.noVsixAsset"))
 	}
 
 	// Parse extension info from asset name
@@ -415,7 +415,7 @@ func (ei *ExtensionInstaller) GetLatestExtensionInfo(ctx context.Context, repoOw
 	baseName := strings.TrimSuffix(vsixAsset.Name, ".vsix")
 	parts := strings.Split(baseName, "-")
 	if len(parts) < 3 {
-		return nil, fmt.Errorf("invalid asset name format: %s", vsixAsset.Name)
+		return nil, fmt.Errorf(i18n.T("error.ide.invalidAssetName", map[string]interface{}{"Name": vsixAsset.Name}))
 	}
 
 	version := strings.TrimPrefix(release.TagName, "v")

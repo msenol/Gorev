@@ -18,7 +18,7 @@ func TestDRYPatternsBasic(t *testing.T) {
 	// Test i18n DRY helpers
 	t.Run("I18nHelpers", func(t *testing.T) {
 		// Test TParam function
-		result := i18n.TParam("id")
+		result := i18n.TParam("id_field")
 		if result == "" {
 			t.Error("TParam should return non-empty string for 'id'")
 		}
@@ -208,7 +208,7 @@ func BenchmarkDRYPatternsSample(b *testing.B) {
 			},
 			Cleanup: func() {},
 			Operation: func(data interface{}) error {
-				i18n.TParam("id")
+				i18n.TParam("id_field")
 				return nil
 			},
 		},

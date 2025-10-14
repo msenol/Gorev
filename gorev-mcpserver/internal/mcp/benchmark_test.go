@@ -208,7 +208,7 @@ func BenchmarkI18nHelpers(b *testing.B) {
 		Cleanup: func() {},
 		Operation: func(data interface{}) error {
 			// Test DRY i18n helper functions
-			i18n.TParam("id")
+			i18n.TParam("id_field")
 			i18n.TParam("durum")
 			i18n.TParam("limit")
 			i18n.TParam("offset")

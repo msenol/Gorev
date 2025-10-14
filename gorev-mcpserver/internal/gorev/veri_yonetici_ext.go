@@ -3,6 +3,8 @@ package gorev
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // AktifProjeAyarla aktif projeyi ayarlar
@@ -11,17 +13,17 @@ func (vy *VeriYonetici) AktifProjeAyarla(projeID string) error {
 	var count int
 	err := vy.db.QueryRow("SELECT COUNT(*) FROM projeler WHERE id = ?", projeID).Scan(&count)
 	if err != nil {
-		return fmt.Errorf("proje kontrolü başarısız: %w", err)
+		return fmt.Errorf(i18n.T("error.check_failed", map[string]interface{}{"Entity": "proje", "Error": err}))
 	}
 	if count == 0 {
-		return fmt.Errorf("proje bulunamadı: %s", projeID)
+		return fmt.Errorf(i18n.T("error.projectNotFoundId", map[string]interface{}{"Id": projeID}))
 	}
 
 	// Aktif proje tablosunu güncelle (INSERT OR REPLACE)
 	sorgu := `INSERT OR REPLACE INTO aktif_proje (id, project_id) VALUES (1, ?)`
 	_, err = vy.db.Exec(sorgu, projeID)
 	if err != nil {
-		return fmt.Errorf("aktif proje ayarlanamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.activeProjectSetFailed", map[string]interface{}{"Error": err}))
 	}
 
 	return nil
@@ -35,7 +37,7 @@ func (vy *VeriYonetici) AktifProjeGetir() (string, error) {
 		if err == sql.ErrNoRows {
 			return "", nil // Aktif proje yok
 		}
-		return "", fmt.Errorf("aktif proje getirilemedi: %w", err)
+		return "", fmt.Errorf(i18n.T("error.activeProjectGetFailed", map[string]interface{}{"Error": err}))
 	}
 	return projeID, nil
 }
@@ -44,7 +46,7 @@ func (vy *VeriYonetici) AktifProjeGetir() (string, error) {
 func (vy *VeriYonetici) AktifProjeKaldir() error {
 	_, err := vy.db.Exec("DELETE FROM aktif_proje WHERE id = 1")
 	if err != nil {
-		return fmt.Errorf("aktif proje kaldırılamadı: %w", err)
+		return fmt.Errorf(i18n.T("error.activeProjectRemoveFailed", map[string]interface{}{"Error": err}))
 	}
 	return nil
 }

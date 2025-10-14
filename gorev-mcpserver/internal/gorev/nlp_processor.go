@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/constants"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // NLPProcessor handles natural language queries for task management
@@ -460,11 +461,11 @@ func (nlp *NLPProcessor) FormatResponse(action string, results interface{}, lang
 // ValidateIntent checks if the parsed intent is actionable
 func (nlp *NLPProcessor) ValidateIntent(intent *QueryIntent) error {
 	if intent.Confidence < constants.ConfidenceThreshold {
-		return fmt.Errorf("query confidence too low (%.2f): %s", intent.Confidence, intent.Raw)
+		return fmt.Errorf(i18n.T("error.queryConfidenceTooLow", map[string]interface{}{"Confidence": fmt.Sprintf("%.2f", intent.Confidence), "Query": intent.Raw}))
 	}
 
 	if intent.Action == "" {
-		return fmt.Errorf("no clear action identified in query: %s", intent.Raw)
+		return fmt.Errorf(i18n.T("error.noActionIdentified", map[string]interface{}{"Query": intent.Raw}))
 	}
 
 	// Validate action-specific requirements
@@ -473,12 +474,12 @@ func (nlp *NLPProcessor) ValidateIntent(intent *QueryIntent) error {
 		// Create actions should have some content indication
 		if !strings.Contains(strings.ToLower(intent.Raw), "görev") &&
 			!strings.Contains(strings.ToLower(intent.Raw), "task") {
-			return fmt.Errorf("create action requires task content specification")
+			return fmt.Errorf(i18n.T("error.createActionRequiresContent"))
 		}
 	case "update", "complete", "delete":
 		// These actions need task reference
 		if refs, ok := intent.Parameters["task_references"]; !ok || len(refs.([]string)) == 0 {
-			return fmt.Errorf("%s action requires task reference", intent.Action)
+			return fmt.Errorf(i18n.T("error.actionRequiresTaskReference", map[string]interface{}{"Action": intent.Action}))
 		}
 	}
 

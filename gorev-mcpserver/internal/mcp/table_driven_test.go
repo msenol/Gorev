@@ -250,7 +250,7 @@ func TestI18nHelperFunctionsTableDriven(t *testing.T) {
 			Name:  "TParamWithExistingKey",
 			Input: "id",
 			Expected: func() string {
-				return i18n.TParam("id")
+				return i18n.TParam("id_field")
 			}(),
 			ShouldFail: false,
 		},
@@ -379,7 +379,7 @@ func BenchmarkDRYPatterns(b *testing.B) {
 			},
 			Cleanup: func() {},
 			Operation: func(data interface{}) error {
-				i18n.TParam("id")
+				i18n.TParam("id_field")
 				i18n.FormatParameterRequired("test")
 				i18n.FormatInvalidValue("param", "invalid", []string{"valid"})
 				return nil
@@ -435,7 +435,7 @@ func BenchmarkDRYPatterns(b *testing.B) {
 				helpers.Formatter.FormatTaskBasic("Test", constants.TestIDBasic)
 
 				// i18n
-				i18n.TParam("id")
+				i18n.TParam("id_field")
 
 				return nil
 			},
@@ -453,7 +453,7 @@ func TestDRYPatternsIntegration(t *testing.T) {
 	// Test complete workflow using DRY patterns
 	t.Run("CompleteWorkflow", func(t *testing.T) {
 		// 1. Use i18n helpers
-		paramDesc := i18n.TParam("id")
+		paramDesc := i18n.TParam("id_field")
 		if paramDesc == "" {
 			t.Error("Parameter description should not be empty")
 		}

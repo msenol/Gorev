@@ -70,7 +70,7 @@ func (acy *AIContextYonetici) SetActiveTask(taskID string) error {
 	// Validate task exists
 	gorev, err := acy.veriYonetici.GorevGetir(taskID)
 	if err != nil {
-		return errors.New(i18n.TEntityNotFound("task", err))
+		return errors.New(i18n.TEntityNotFound("tr", "task", err))
 	}
 
 	// Get current context
@@ -360,7 +360,7 @@ func (acy *AIContextYonetici) BatchUpdate(updates []BatchUpdate) (*BatchUpdateRe
 		if err != nil {
 			result.Failed = append(result.Failed, BatchUpdateError{
 				TaskID: update.ID,
-				Error:  i18n.TEntityNotFound("task", err),
+				Error:  i18n.TEntityNotFound("tr", "task", err),
 			})
 			continue
 		}

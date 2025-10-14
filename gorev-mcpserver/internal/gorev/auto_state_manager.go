@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/constants"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // AutoStateManager handles automatic task state transitions
@@ -379,7 +380,7 @@ func (asm *AutoStateManager) executeAction(intent *QueryIntent) (interface{}, er
 	case "status":
 		return asm.executeStatusAction(intent)
 	default:
-		return nil, fmt.Errorf("unsupported action: %s", intent.Action)
+		return nil, fmt.Errorf(i18n.T("error.unsupportedAction", map[string]interface{}{"Action": intent.Action}))
 	}
 }
 
@@ -420,7 +421,7 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 	// Validate required fields
 	title, ok := content["title"].(string)
 	if !ok || title == "" {
-		return nil, fmt.Errorf("task title is required")
+		return nil, fmt.Errorf(i18n.T("error.taskTitleRequired"))
 	}
 
 	// Create task parameters
@@ -475,7 +476,7 @@ func (asm *AutoStateManager) executeCreateAction(intent *QueryIntent) (interface
 func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface{}, error) {
 	refs, ok := intent.Parameters["task_references"].([]string)
 	if !ok || len(refs) == 0 {
-		return nil, fmt.Errorf("task reference required for update")
+		return nil, fmt.Errorf(i18n.T("error.taskReferenceRequiredUpdate"))
 	}
 
 	// For now, handle the first reference
@@ -528,7 +529,7 @@ func (asm *AutoStateManager) executeUpdateAction(intent *QueryIntent) (interface
 func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interface{}, error) {
 	refs, ok := intent.Parameters["task_references"].([]string)
 	if !ok || len(refs) == 0 {
-		return nil, fmt.Errorf("task reference required for completion")
+		return nil, fmt.Errorf(i18n.T("error.taskReferenceRequiredCompletion"))
 	}
 
 	taskID, err := asm.resolveTaskReference(refs[0])
@@ -561,7 +562,7 @@ func (asm *AutoStateManager) executeCompleteAction(intent *QueryIntent) (interfa
 func (asm *AutoStateManager) executeDeleteAction(intent *QueryIntent) (interface{}, error) {
 	refs, ok := intent.Parameters["task_references"].([]string)
 	if !ok || len(refs) == 0 {
-		return nil, fmt.Errorf("task reference required for deletion")
+		return nil, fmt.Errorf(i18n.T("error.taskReferenceRequiredDeletion"))
 	}
 
 	taskID, err := asm.resolveTaskReference(refs[0])
@@ -633,7 +634,7 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 			return "", err
 		}
 		if len(tasks) == 0 {
-			return "", fmt.Errorf("no task found with title: %s", title)
+			return "", fmt.Errorf(i18n.T("error.noTaskFoundWithTitle", map[string]interface{}{"Title": title}))
 		}
 		return tasks[0].ID, nil
 	}
@@ -654,7 +655,7 @@ func (asm *AutoStateManager) resolveTaskReference(ref string) (string, error) {
 			return "", err
 		}
 		if len(tasks) == 0 {
-			return "", fmt.Errorf("no recent tasks found")
+			return "", fmt.Errorf(i18n.T("error.noRecentTasksFound"))
 		}
 		return tasks[0].ID, nil
 	}

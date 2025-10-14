@@ -21,7 +21,7 @@ func NewParameterValidator() *ParameterValidator {
 func (pv *ParameterValidator) ValidateRequiredString(params map[string]interface{}, paramName string) (string, *mcp.CallToolResult) {
 	value, ok := params[paramName].(string)
 	if !ok || strings.TrimSpace(value) == "" {
-		return "", mcp.NewToolResultError(i18n.FormatParameterRequired(paramName))
+		return "", mcp.NewToolResultError(i18n.TRequiredParam("tr", paramName))
 	}
 	return strings.TrimSpace(value), nil
 }
@@ -40,7 +40,7 @@ func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramN
 
 	if !exists || value == "" {
 		if required {
-			return "", mcp.NewToolResultError(i18n.TValidation("param_required_with_values", paramName, map[string]interface{}{
+			return "", mcp.NewToolResultError(i18n.TValidation("tr", "param_required_with_values", paramName, map[string]interface{}{
 				"Values": strings.Join(validValues, ", "),
 			}))
 		}
@@ -53,7 +53,7 @@ func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramN
 		}
 	}
 
-	return "", mcp.NewToolResultError(i18n.FormatInvalidValue(paramName, value, validValues))
+	return "", mcp.NewToolResultError(i18n.TInvalidValue("tr", paramName, value, validValues))
 }
 
 // ValidateNumber validates a number parameter
@@ -144,17 +144,21 @@ func NewErrorFormatter() *ErrorFormatter {
 
 // FormatNotFoundError formats "not found" errors consistently
 func (ef *ErrorFormatter) FormatNotFoundError(entityType, id string) *mcp.CallToolResult {
-	return mcp.NewToolResultError(i18n.FormatEntityNotFound(entityType, id))
+	return mcp.NewToolResultError(i18n.TEntityNotFoundByID("tr", entityType, id))
 }
 
 // FormatOperationError formats operation errors consistently
+// DEPRECATED: This function receives hardcoded Turkish strings which violates DRY.
+// Use specific i18n helpers instead: TCreateFailed, TUpdateFailed, TDeleteFailed, etc.
+// This function is kept temporarily for backwards compatibility.
 func (ef *ErrorFormatter) FormatOperationError(operation string, err error) *mcp.CallToolResult {
-	return mcp.NewToolResultError(i18n.FormatOperationFailed(operation, err))
+	// Legacy implementation - just formats the hardcoded string with error
+	return mcp.NewToolResultError(fmt.Sprintf("%s: %v", operation, err))
 }
 
 // FormatValidationError formats validation errors consistently
 func (ef *ErrorFormatter) FormatValidationError(message string) *mcp.CallToolResult {
-	return mcp.NewToolResultError(i18n.TValidation("validation_error", "", map[string]interface{}{
+	return mcp.NewToolResultError(i18n.TValidation("tr", "validation_error", "", map[string]interface{}{
 		"Message": message,
 	}))
 }

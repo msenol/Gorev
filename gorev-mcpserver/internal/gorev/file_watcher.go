@@ -12,6 +12,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/msenol/gorev/internal/constants"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // FileWatcher monitors file system changes and automatically updates related tasks
@@ -73,7 +74,7 @@ type FileChangeEvent struct {
 func NewFileWatcher(veriYonetici VeriYoneticiInterface, config FileWatcherConfig) (*FileWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create file watcher: %w", err)
+		return nil, fmt.Errorf(i18n.T("error.fileWatcherCreateFailed", map[string]interface{}{"Error": err}))
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -111,7 +112,7 @@ func (fw *FileWatcher) AddTaskPath(taskID string, path string) error {
 	// Check if path exists and get info
 	info, err := filepath.Glob(cleanPath)
 	if err != nil {
-		return fmt.Errorf("invalid path pattern: %w", err)
+		return fmt.Errorf(i18n.T("error.invalidPathPattern", map[string]interface{}{"Error": err}))
 	}
 
 	if len(info) == 0 {
@@ -130,13 +131,13 @@ func (fw *FileWatcher) AddTaskPath(taskID string, path string) error {
 	if err := fw.watcher.Add(watchPath); err != nil {
 		// Ignore "already watching" errors
 		if !strings.Contains(err.Error(), "already watching") {
-			return fmt.Errorf("failed to add path to watcher: %w", err)
+			return fmt.Errorf(i18n.T("error.watcherAddFailed", map[string]interface{}{"Error": err}))
 		}
 	}
 
 	// Save to database for persistence
 	if err := fw.veriYonetici.GorevDosyaYoluEkle(taskID, cleanPath); err != nil {
-		return fmt.Errorf("failed to save path to database: %w", err)
+		return fmt.Errorf(i18n.T("error.pathSaveFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Update internal mappings
@@ -350,7 +351,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 	// Get current task
 	gorev, err := fw.veriYonetici.GorevGetir(taskID)
 	if err != nil {
-		return fmt.Errorf("failed to get task %s: %w", taskID, err)
+		return fmt.Errorf(i18n.T("error.taskGetFailed", map[string]interface{}{"TaskID": taskID, "Error": err}))
 	}
 
 	// Create interaction record
@@ -376,7 +377,7 @@ func (fw *FileWatcher) updateTaskOnFileChange(taskID string, event FileChangeEve
 				"status": constants.TaskStatusInProgress,
 			}
 			if err := fw.veriYonetici.GorevGuncelle(taskID, updateParams); err != nil {
-				return fmt.Errorf("failed to update task status: %w", err)
+				return fmt.Errorf(i18n.T("error.statusUpdateFailed", map[string]interface{}{"Error": err}))
 			}
 
 			log.Printf("Auto-transitioned task %s to in-progress due to file changes", taskID)
@@ -519,7 +520,7 @@ func (fw *FileWatcher) loadFromDatabase() error {
 	// Get all unique task IDs from database
 	db, err := fw.veriYonetici.GetDB()
 	if err != nil {
-		return fmt.Errorf("failed to get database: %w", err)
+		return fmt.Errorf(i18n.T("error.databaseGetFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// If database is nil (e.g., in tests with mocks), skip loading
@@ -535,7 +536,7 @@ func (fw *FileWatcher) loadFromDatabase() error {
 		ORDER BY task_id, created_at ASC
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to query file paths: %w", err)
+		return fmt.Errorf(i18n.T("error.filePathQueryFailed", map[string]interface{}{"Error": err}))
 	}
 	defer rows.Close()
 
@@ -569,7 +570,7 @@ func (fw *FileWatcher) loadFromDatabase() error {
 	}
 
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("row iteration error: %w", err)
+		return fmt.Errorf(i18n.T("error.rowIterationError", map[string]interface{}{"Error": err}))
 	}
 
 	log.Printf("Loaded %d file watches from database", loadCount)

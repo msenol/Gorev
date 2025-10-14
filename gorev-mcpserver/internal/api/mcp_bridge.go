@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	mcpgo "github.com/mark3labs/mcp-go/mcp"
+	"github.com/msenol/gorev/internal/i18n"
 	"github.com/msenol/gorev/internal/mcp"
 	ws "github.com/msenol/gorev/internal/websocket"
 )
@@ -317,7 +318,7 @@ func (s *APIServer) dispatchMCPTool(handlers *mcp.Handlers, toolName string, par
 		// Execute a tool call - body should have "name" and "arguments"
 		toolCallName, ok := params["name"].(string)
 		if !ok {
-			return nil, fmt.Errorf("tools/call requires 'name' parameter")
+			return nil, fmt.Errorf(i18n.T("error.toolsCallNameRequired"))
 		}
 
 		// Get arguments (optional)
@@ -333,7 +334,7 @@ func (s *APIServer) dispatchMCPTool(handlers *mcp.Handlers, toolName string, par
 		return s.dispatchMCPTool(handlers, toolCallName, toolArgs, wsCtx)
 
 	default:
-		return nil, fmt.Errorf("unknown tool: %s", toolName)
+		return nil, fmt.Errorf(i18n.T("error.unknownTool", map[string]interface{}{"Tool": toolName}))
 	}
 
 	return result, err

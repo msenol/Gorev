@@ -10,22 +10,22 @@ import (
 // DRY i18n helper functions to eliminate repeated patterns
 
 // TCommon gets a common pattern translation
-func TCommon(key string, data map[string]interface{}) string {
-	return T("common."+key, data)
+func TCommon(lang string, key string, data map[string]interface{}) string {
+	return TWithLang(lang, "common."+key, data)
 }
 
 // TParam gets parameter description using DRY patterns
-func TParam(paramName string) string {
+func TParam(lang string, paramName string) string {
 	// Check if specific param description exists
 	specificKey := "tools.params.descriptions." + paramName
 	if HasKey(specificKey) {
-		return T(specificKey, nil)
+		return TWithLang(lang, specificKey, nil)
 	}
 
 	// Fallback to common field patterns
 	commonKey := "common.fields." + paramName
 	if HasKey(commonKey) {
-		return TCommon("fields."+paramName, nil)
+		return TCommon(lang, "fields."+paramName, nil)
 	}
 
 	// Default fallback
@@ -33,7 +33,7 @@ func TParam(paramName string) string {
 }
 
 // TValidation gets validation message using DRY patterns
-func TValidation(validationType string, param string, extra map[string]interface{}) string {
+func TValidation(lang string, validationType string, param string, extra map[string]interface{}) string {
 	data := map[string]interface{}{
 		"Param": param,
 	}
@@ -45,48 +45,48 @@ func TValidation(validationType string, param string, extra map[string]interface
 		}
 	}
 
-	return T("validation."+validationType, data)
+	return TWithLang(lang, "validation."+validationType, data)
 }
 
 // BuildFieldDescription builds field description using common patterns
-func BuildFieldDescription(prefix, entity, field string) string {
+func BuildFieldDescription(lang string, prefix, entity, field string) string {
 	data := map[string]interface{}{
-		"Prefix": TCommon("prefixes."+prefix, nil),
-		"Entity": TCommon("entities."+entity, nil),
+		"Prefix": TCommon(lang, "prefixes."+prefix, nil),
+		"Entity": TCommon(lang, "entities."+entity, nil),
 		"Field":  field,
 	}
 
-	return TCommon("patterns.new_field", data)
+	return TCommon(lang, "patterns.new_field", data)
 }
 
 // BuildIDDescription builds ID description using DRY patterns
-func BuildIDDescription(entity, idType string) string {
+func BuildIDDescription(lang string, entity, idType string) string {
 	data := map[string]interface{}{
 		"Entity": entity,
 		"Type":   idType,
 	}
 
 	if idType == "unique" {
-		return TCommon("fields.task_id", map[string]interface{}{"Type": TCommon("fields.id_base", nil)})
+		return TCommon(lang, "fields.task_id", map[string]interface{}{"Type": TCommon(lang, "fields.id_base", nil)})
 	}
 
-	return TCommon("fields.task_id", data)
+	return TCommon(lang, "fields.task_id", data)
 }
 
 // BuildPaginationDescription builds pagination descriptions using common patterns
-func BuildPaginationDescription(paginationType, entity string, defaultVal, maxVal int) string {
+func BuildPaginationDescription(lang string, paginationType, entity string, defaultVal, maxVal int) string {
 	data := map[string]interface{}{
 		"Entity":  entity,
 		"Default": defaultVal,
 		"Max":     maxVal,
 	}
 
-	return TCommon("pagination."+paginationType+"_pattern", data)
+	return TCommon(lang, "pagination."+paginationType+"_pattern", data)
 }
 
 // BuildPrefixedDescription builds descriptions with common prefixes
-func BuildPrefixedDescription(prefix, target string) string {
-	prefixText := TCommon("prefixes."+prefix, nil)
+func BuildPrefixedDescription(lang string, prefix, target string) string {
+	prefixText := TCommon(lang, "prefixes."+prefix, nil)
 	if prefixText == "" {
 		prefixText = prefix
 	}
@@ -95,8 +95,8 @@ func BuildPrefixedDescription(prefix, target string) string {
 }
 
 // GetCommonSuffix gets common suffix patterns
-func GetCommonSuffix(suffixType string) string {
-	return TCommon("suffixes."+suffixType, nil)
+func GetCommonSuffix(lang string, suffixType string) string {
+	return TCommon(lang, "suffixes."+suffixType, nil)
 }
 
 // HasKey checks if a translation key exists (mock implementation for now)
@@ -142,85 +142,85 @@ func HasKey(key string) bool {
 }
 
 // GetEntityName gets entity name in current language
-func GetEntityName(entity string) string {
-	return TCommon("entities."+entity, nil)
+func GetEntityName(lang string, entity string) string {
+	return TCommon(lang, "entities."+entity, nil)
 }
 
 // FormatParameterRequired formats the "parameter required" message
-func FormatParameterRequired(paramName string) string {
-	return fmt.Sprintf("%s %s", paramName, GetCommonSuffix("required"))
+func FormatParameterRequired(lang string, paramName string) string {
+	return fmt.Sprintf("%s %s", paramName, GetCommonSuffix(lang, "required"))
 }
 
 // FormatInvalidValue formats the "invalid value" message
-func FormatInvalidValue(paramName, value string, validValues []string) string {
+func FormatInvalidValue(lang string, paramName, value string, validValues []string) string {
 	return fmt.Sprintf("%s %s: %s. Geçerli değerler: %s",
 		paramName,
-		GetCommonSuffix("invalid"),
+		GetCommonSuffix(lang, "invalid"),
 		value,
 		strings.Join(validValues, ", "))
 }
 
 // FormatEntityNotFound formats the "entity not found" message
-func FormatEntityNotFound(entityType, id string) string {
+func FormatEntityNotFound(lang string, entityType, id string) string {
 	return fmt.Sprintf("%s bulunamadı: %s", entityType, id)
 }
 
 // FormatOperationFailed formats the "operation failed" message
-func FormatOperationFailed(operation string, err error) string {
+func FormatOperationFailed(lang string, operation string, err error) string {
 	return fmt.Sprintf("%s işlemi başarısız: %v", operation, err)
 }
 
 // ==================== NEW DRY HELPER FUNCTIONS ====================
 
 // TRequiredParam formats the "parameter required" message using DRY pattern
-func TRequiredParam(param string) string {
-	return TCommon("validation.required", map[string]interface{}{
+func TRequiredParam(lang string, param string) string {
+	return TCommon(lang, "validation.required", map[string]interface{}{
 		"Param": param,
 	})
 }
 
 // TRequiredArray formats the "parameter required and must be array" message
-func TRequiredArray(param string) string {
-	return TCommon("validation.required_array", map[string]interface{}{
+func TRequiredArray(lang string, param string) string {
+	return TCommon(lang, "validation.required_array", map[string]interface{}{
 		"Param": param,
 	})
 }
 
 // TRequiredObject formats the "parameter required and must be object" message
-func TRequiredObject(param string) string {
-	return TCommon("validation.required_object", map[string]interface{}{
+func TRequiredObject(lang string, param string) string {
+	return TCommon(lang, "validation.required_object", map[string]interface{}{
 		"Param": param,
 	})
 }
 
 // TEntityNotFound formats the "entity not found" message using DRY pattern
-func TEntityNotFound(entity string, err error) string {
-	return TCommon("validation.not_found", map[string]interface{}{
-		"Entity": TCommon("entities."+entity, nil),
+func TEntityNotFound(lang string, entity string, err error) string {
+	return TCommon(lang, "validation.not_found", map[string]interface{}{
+		"Entity": TCommon(lang, "entities."+entity, nil),
 		"Error":  err.Error(),
 	})
 }
 
 // TEntityNotFoundByID formats the "entity not found by ID" message
-func TEntityNotFoundByID(entity, id string) string {
-	return TCommon("validation.not_found_id", map[string]interface{}{
-		"Entity": TCommon("entities."+entity, nil),
+func TEntityNotFoundByID(lang string, entity, id string) string {
+	return TCommon(lang, "validation.not_found_id", map[string]interface{}{
+		"Entity": TCommon(lang, "entities."+entity, nil),
 		"Id":     id,
 	})
 }
 
 // TOperationFailed formats operation failure messages using DRY pattern
-func TOperationFailed(operation, entity string, err error) string {
-	return TCommon("operations."+operation+"_failed", map[string]interface{}{
-		"Entity": TCommon("entities."+entity, nil),
+func TOperationFailed(lang string, operation, entity string, err error) string {
+	return TCommon(lang, "operations."+operation+"_failed", map[string]interface{}{
+		"Entity": TCommon(lang, "entities."+entity, nil),
 		"Error":  err.Error(),
 	})
 }
 
 // TSuccess formats success messages using DRY pattern
-func TSuccess(operation, entity string, details map[string]interface{}) string {
+func TSuccess(lang string, operation, entity string, details map[string]interface{}) string {
 	data := map[string]interface{}{
-		"Entity": TCommon("entities."+entity, nil),
+		"Entity": TCommon(lang, "entities."+entity, nil),
 	}
 
 	// Merge details if provided
@@ -230,163 +230,163 @@ func TSuccess(operation, entity string, details map[string]interface{}) string {
 		}
 	}
 
-	return TCommon("success."+operation, data)
+	return TCommon(lang, "success."+operation, data)
 }
 
 // TInvalidValue formats invalid value messages using DRY pattern
-func TInvalidValue(param, value string, validValues []string) string {
-	return TCommon("validation.invalid_value", map[string]interface{}{
+func TInvalidValue(lang string, param, value string, validValues []string) string {
+	return TCommon(lang, "validation.invalid_value", map[string]interface{}{
 		"Param": param,
 		"Value": value,
 	}) + " Geçerli değerler: " + strings.Join(validValues, ", ")
 }
 
 // TInvalidStatus formats invalid status messages
-func TInvalidStatus(status string, validStatuses []string) string {
-	return TCommon("validation.invalid_status", map[string]interface{}{
+func TInvalidStatus(lang string, status string, validStatuses []string) string {
+	return TCommon(lang, "validation.invalid_status", map[string]interface{}{
 		"Status":        status,
 		"ValidStatuses": strings.Join(validStatuses, ", "),
 	})
 }
 
 // TInvalidPriority formats invalid priority messages
-func TInvalidPriority(priority string) string {
-	return TCommon("validation.invalid_priority", map[string]interface{}{
+func TInvalidPriority(lang string, priority string) string {
+	return TCommon(lang, "validation.invalid_priority", map[string]interface{}{
 		"Priority": priority,
 	})
 }
 
 // TInvalidDate formats invalid date messages
-func TInvalidDate(dateValue string) string {
-	return TCommon("validation.invalid_date", map[string]interface{}{
+func TInvalidDate(lang string, dateValue string) string {
+	return TCommon(lang, "validation.invalid_date", map[string]interface{}{
 		"Date": dateValue,
 	})
 }
 
 // TInvalidFormat formats invalid format messages
-func TInvalidFormat(formatType, value string) string {
-	return TCommon("validation.invalid_format", map[string]interface{}{
+func TInvalidFormat(lang string, formatType, value string) string {
+	return TCommon(lang, "validation.invalid_format", map[string]interface{}{
 		"Type":  formatType,
 		"Value": value,
 	})
 }
 
 // Specific operation helpers for common patterns
-func TCreateFailed(entity string, err error) string {
-	return TOperationFailed("create", entity, err)
+func TCreateFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "create", entity, err)
 }
 
-func TUpdateFailed(entity string, err error) string {
-	return TOperationFailed("update", entity, err)
+func TUpdateFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "update", entity, err)
 }
 
-func TDeleteFailed(entity string, err error) string {
-	return TOperationFailed("delete", entity, err)
+func TDeleteFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "delete", entity, err)
 }
 
-func TFetchFailed(entity string, err error) string {
-	return TOperationFailed("fetch", entity, err)
+func TFetchFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "fetch", entity, err)
 }
 
-func TSaveFailed(entity string, err error) string {
-	return TOperationFailed("save", entity, err)
+func TSaveFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "save", entity, err)
 }
 
-func TSetFailed(entity string, err error) string {
-	return TOperationFailed("set", entity, err)
+func TSetFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "set", entity, err)
 }
 
-func TInitFailed(entity string, err error) string {
-	return TOperationFailed("init", entity, err)
+func TInitFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "init", entity, err)
 }
 
-func TCheckFailed(entity string, err error) string {
-	return TOperationFailed("check", entity, err)
+func TCheckFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "check", entity, err)
 }
 
-func TQueryFailed(entity string, err error) string {
-	return TOperationFailed("query", entity, err)
+func TQueryFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "query", entity, err)
 }
 
-func TProcessFailed(entity string, err error) string {
-	return TOperationFailed("process", entity, err)
+func TProcessFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "process", entity, err)
 }
 
-func TListFailed(entity string, err error) string {
-	return TOperationFailed("list", entity, err)
+func TListFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "list", entity, err)
 }
 
-func TEditFailed(entity string, err error) string {
-	return TOperationFailed("edit", entity, err)
+func TEditFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "edit", entity, err)
 }
 
-func TAddFailed(entity string, err error) string {
-	return TOperationFailed("add", entity, err)
+func TAddFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "add", entity, err)
 }
 
-func TRemoveFailed(entity string, err error) string {
-	return TOperationFailed("remove", entity, err)
+func TRemoveFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "remove", entity, err)
 }
 
-func TReadFailed(entity string, err error) string {
-	return TOperationFailed("read", entity, err)
+func TReadFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "read", entity, err)
 }
 
-func TConvertFailed(entity, format string, err error) string {
-	return TCommon("operations.convert_failed", map[string]interface{}{
-		"Entity": TCommon("entities."+entity, nil),
+func TConvertFailed(lang string, entity, format string, err error) string {
+	return TCommon(lang, "operations.convert_failed", map[string]interface{}{
+		"Entity": TCommon(lang, "entities."+entity, nil),
 		"Format": format,
 		"Error":  err.Error(),
 	})
 }
 
-func TParseFailed(entity string, err error) string {
-	return TOperationFailed("parse", entity, err)
+func TParseFailed(lang string, entity string, err error) string {
+	return TOperationFailed(lang, "parse", entity, err)
 }
 
 // Success message helpers
-func TCreated(entity, title, id string) string {
-	return TSuccess("created", entity, map[string]interface{}{
+func TCreated(lang string, entity, title, id string) string {
+	return TSuccess(lang, "created", entity, map[string]interface{}{
 		"Title": title,
 		"Id":    id,
 	})
 }
 
-func TUpdated(entity, details string) string {
-	return TSuccess("updated", entity, map[string]interface{}{
+func TUpdated(lang string, entity, details string) string {
+	return TSuccess(lang, "updated", entity, map[string]interface{}{
 		"Details": details,
 	})
 }
 
-func TDeleted(entity, title, id string) string {
-	return TSuccess("deleted", entity, map[string]interface{}{
+func TDeleted(lang string, entity, title, id string) string {
+	return TSuccess(lang, "deleted", entity, map[string]interface{}{
 		"Title": title,
 		"Id":    id,
 	})
 }
 
-func TSet(entity, details string) string {
-	return TSuccess("set", entity, map[string]interface{}{
+func TSet(lang string, entity, details string) string {
+	return TSuccess(lang, "set", entity, map[string]interface{}{
 		"Details": details,
 	})
 }
 
-func TRemoved(entity string) string {
-	return TSuccess("removed", entity, nil)
+func TRemoved(lang string, entity string) string {
+	return TSuccess(lang, "removed", entity, nil)
 }
 
-func TAdded(entity, details string) string {
-	return TSuccess("added", entity, map[string]interface{}{
+func TAdded(lang string, entity, details string) string {
+	return TSuccess(lang, "added", entity, map[string]interface{}{
 		"Details": details,
 	})
 }
 
-func TMoved(entity string) string {
-	return TSuccess("moved", entity, nil)
+func TMoved(lang string, entity string) string {
+	return TSuccess(lang, "moved", entity, nil)
 }
 
-func TEdited(entity, title string) string {
-	return TSuccess("edited", entity, map[string]interface{}{
+func TEdited(lang string, entity, title string) string {
+	return TSuccess(lang, "edited", entity, map[string]interface{}{
 		"Title": title,
 	})
 }
@@ -394,137 +394,137 @@ func TEdited(entity, title string) string {
 // ==================== FIELD DESCRIPTION HELPERS ====================
 
 // TFieldID returns ID field descriptions using DRY patterns
-func TFieldID(entityType, action string) string {
+func TFieldID(lang string, entityType, action string) string {
 	key := fmt.Sprintf("common.fields.id_descriptions.%s_%s", entityType, action)
-	return T(key, nil)
+	return TWithLang(lang, key, nil)
 }
 
 // TTaskCount returns task count descriptions with defaults
-func TTaskCount(countType string, defaultVal ...string) string {
-	desc := T(fmt.Sprintf("common.fields.task_count.%s", countType), nil)
+func TTaskCount(lang string, countType string, defaultVal ...string) string {
+	desc := TWithLang(lang, fmt.Sprintf("common.fields.task_count.%s", countType), nil)
 	if len(defaultVal) > 0 {
-		desc += " " + T(fmt.Sprintf("common.fields.defaults.default_%s", defaultVal[0]), nil)
+		desc += " " + TWithLang(lang, fmt.Sprintf("common.fields.defaults.default_%s", defaultVal[0]), nil)
 	}
 	return desc
 }
 
 // TProjectField returns project field descriptions
-func TProjectField(field string) string {
-	return T(fmt.Sprintf("common.fields.project.project_%s", field), nil)
+func TProjectField(lang string, field string) string {
+	return TWithLang(lang, fmt.Sprintf("common.fields.project.project_%s", field), nil)
 }
 
 // TSubtaskField returns subtask field descriptions using DRY patterns
-func TSubtaskField(field string) string {
-	return T(fmt.Sprintf("common.fields.subtask.%s", field), nil)
+func TSubtaskField(lang string, field string) string {
+	return TWithLang(lang, fmt.Sprintf("common.fields.subtask.%s", field), nil)
 }
 
 // TCommaSeparated returns comma-separated list descriptions
-func TCommaSeparated(entity string) string {
-	return T("common.fields.patterns.comma_separated", map[string]interface{}{
+func TCommaSeparated(lang string, entity string) string {
+	return TWithLang(lang, "common.fields.patterns.comma_separated", map[string]interface{}{
 		"Entity": entity,
 	})
 }
 
 // TWithFormat returns description with format pattern
-func TWithFormat(description, format string) string {
-	return T("common.fields.patterns.with_format", map[string]interface{}{
+func TWithFormat(lang string, description, format string) string {
+	return TWithLang(lang, "common.fields.patterns.with_format", map[string]interface{}{
 		"Description": description,
 		"Format":      format,
 	})
 }
 
 // TFilePath returns file path descriptions
-func TFilePath(action string) string {
-	return T(fmt.Sprintf("common.fields.patterns.file_path.%s", action), nil)
+func TFilePath(lang string, action string) string {
+	return TWithLang(lang, fmt.Sprintf("common.fields.patterns.file_path.%s", action), nil)
 }
 
 // TTemplate returns template-related descriptions
-func TTemplate(templateType string) string {
-	return T(fmt.Sprintf("common.fields.patterns.template.%s", templateType), nil)
+func TTemplate(lang string, templateType string) string {
+	return TWithLang(lang, fmt.Sprintf("common.fields.patterns.template.%s", templateType), nil)
 }
 
 // TBatch returns batch operation descriptions
-func TBatch(batchType string) string {
-	return T(fmt.Sprintf("common.fields.patterns.batch.%s", batchType), nil)
+func TBatch(lang string, batchType string) string {
+	return TWithLang(lang, fmt.Sprintf("common.fields.patterns.batch.%s", batchType), nil)
 }
 
 // ==================== MARKDOWN FORMATTING HELPERS ====================
 
 // TLabel returns a translated label for markdown formatting
-func TLabel(labelKey string) string {
-	return T(fmt.Sprintf("common.labels.%s", labelKey), nil)
+func TLabel(lang string, labelKey string) string {
+	return TWithLang(lang, fmt.Sprintf("common.labels.%s", labelKey), nil)
 }
 
 // TMarkdownLabel formats a markdown label with value
-func TMarkdownLabel(labelKey string, value interface{}) string {
-	label := TLabel(labelKey)
+func TMarkdownLabel(lang string, labelKey string, value interface{}) string {
+	label := TLabel(lang, labelKey)
 	return fmt.Sprintf("**%s:** %v", label, value)
 }
 
 // TMarkdownHeader formats a markdown header with translated text
-func TMarkdownHeader(level int, labelKey string) string {
-	label := TLabel(labelKey)
+func TMarkdownHeader(lang string, level int, labelKey string) string {
+	label := TLabel(lang, labelKey)
 	prefix := strings.Repeat("#", level)
 	return fmt.Sprintf("%s %s", prefix, label)
 }
 
 // TMarkdownBold formats text as bold markdown
-func TMarkdownBold(labelKey string) string {
-	label := TLabel(labelKey)
+func TMarkdownBold(lang string, labelKey string) string {
+	label := TLabel(lang, labelKey)
 	return fmt.Sprintf("**%s**", label)
 }
 
 // TMarkdownSection formats a section header with emoji and text
-func TMarkdownSection(emoji, labelKey string) string {
-	label := TLabel(labelKey)
+func TMarkdownSection(lang string, emoji, labelKey string) string {
+	label := TLabel(lang, labelKey)
 	return fmt.Sprintf("### %s %s", emoji, label)
 }
 
 // TCount formats count messages with label
-func TCount(labelKey string, count int) string {
-	label := TLabel(labelKey)
+func TCount(lang string, labelKey string, count int) string {
+	label := TLabel(lang, labelKey)
 	return fmt.Sprintf("**%s:** %d", label, count)
 }
 
 // TDuration formats duration with label
-func TDuration(labelKey string, duration interface{}) string {
-	label := TLabel(labelKey)
+func TDuration(lang string, labelKey string, duration interface{}) string {
+	label := TLabel(lang, labelKey)
 	return fmt.Sprintf("**%s:** %v", label, duration)
 }
 
 // TListItem formats a list item with label and value
-func TListItem(labelKey string, value interface{}) string {
-	label := TLabel(labelKey)
+func TListItem(lang string, labelKey string, value interface{}) string {
+	label := TLabel(lang, labelKey)
 	return fmt.Sprintf("- **%s:** %v", label, value)
 }
 
 // ==================== STATUS/PRIORITY TRANSLATIONS ====================
 
 // TStatus returns translated status text
-func TStatus(status string) string {
+func TStatus(lang string, status string) string {
 	switch status {
 	case constants.TaskStatusPending:
-		return T("status.pending", nil)
+		return TWithLang(lang, "status.pending", nil)
 	case constants.TaskStatusInProgress:
-		return T("status.in_progress", nil)
+		return TWithLang(lang, "status.in_progress", nil)
 	case constants.TaskStatusCompleted:
-		return T("status.completed", nil)
+		return TWithLang(lang, "status.completed", nil)
 	case constants.TaskStatusCancelled:
-		return T("status.cancelled", nil)
+		return TWithLang(lang, "status.cancelled", nil)
 	default:
 		return status
 	}
 }
 
 // TPriority returns translated priority text
-func TPriority(priority string) string {
+func TPriority(lang string, priority string) string {
 	switch priority {
 	case constants.PriorityLow:
-		return T("priority.low", nil)
+		return TWithLang(lang, "priority.low", nil)
 	case constants.PriorityMedium:
-		return T("priority.medium", nil)
+		return TWithLang(lang, "priority.medium", nil)
 	case constants.PriorityHigh:
-		return T("priority.high", nil)
+		return TWithLang(lang, "priority.high", nil)
 	default:
 		return priority
 	}

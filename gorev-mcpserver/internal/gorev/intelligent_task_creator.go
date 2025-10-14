@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/constants"
+	"github.com/msenol/gorev/internal/i18n"
 )
 
 // IntelligentTaskCreator provides advanced task creation capabilities
@@ -127,13 +128,13 @@ func (itc *IntelligentTaskCreator) CreateIntelligentTask(request TaskCreationReq
 		"due_date":    "", // due date will be set by caller if needed
 	})
 	if err != nil {
-		return nil, fmt.Errorf("ana görev oluşturulamadı: %v", err)
+		return nil, fmt.Errorf(i18n.T("error.mainTaskCreateFailed", map[string]interface{}{"Error": err}))
 	}
 
 	// Get the created task for response
 	mainTask, err := itc.veriYonetici.GorevGetir(mainTaskID)
 	if err != nil {
-		return nil, fmt.Errorf("oluşturulan görev alınamadı: %v", err)
+		return nil, fmt.Errorf(i18n.T("error.createdTaskFetchFailed", map[string]interface{}{"Error": err}))
 	}
 
 	response.MainTask = mainTask
