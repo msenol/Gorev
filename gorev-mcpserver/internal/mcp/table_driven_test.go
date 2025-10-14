@@ -290,7 +290,7 @@ func TestI18nHelperFunctionsTableDriven(t *testing.T) {
 
 		case "FormatInvalidValue":
 			inputs := tc.Input.([]interface{})
-			result = i18n.FormatInvalidValue("tr", 
+			result = i18n.FormatInvalidValue("tr",
 				inputs[0].(string),
 				inputs[1].(string),
 				inputs[2].([]string),

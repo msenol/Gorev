@@ -124,7 +124,7 @@ func TestGorevHiyerarsiYazdirVeIsaretle(t *testing.T) {
 				shownIDs[k] = v
 			}
 
-			result := handlers.gorevHiyerarsiYazdirVeIsaretle(context.Background(), "tr", 
+			result := handlers.gorevHiyerarsiYazdirVeIsaretle(context.Background(), "tr",
 				tt.gorev,
 				tt.gorevMap,
 				tt.seviye,
@@ -262,7 +262,7 @@ func TestGorevHiyerarsiYazdirInternal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			shownIDs := make(map[string]bool)
-			result := handlers.gorevHiyerarsiYazdirInternal(context.Background(), "tr", 
+			result := handlers.gorevHiyerarsiYazdirInternal(context.Background(), "tr",
 				tt.gorev,
 				gorevMap,
 				tt.seviye,

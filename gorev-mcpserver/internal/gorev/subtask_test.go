@@ -183,7 +183,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 	mockVY.gorevler[anaGorev.ID] = anaGorev
 
 	t.Run("Create Subtask", func(t *testing.T) {
-		altGorev, err := iy.AltGorevOlustur(context.Background(), 
+		altGorev, err := iy.AltGorevOlustur(context.Background(),
 			anaGorev.ID,
 			"Alt Görev",
 			"Alt görev açıklaması",
@@ -200,7 +200,7 @@ func TestIsYonetici_AltGorevOperations(t *testing.T) {
 	})
 
 	t.Run("Create Subtask - Parent Not Found", func(t *testing.T) {
-		altGorev, err := iy.AltGorevOlustur(context.Background(), 
+		altGorev, err := iy.AltGorevOlustur(context.Background(),
 			"olmayan-gorev",
 			"Alt Görev",
 			"Açıklama",

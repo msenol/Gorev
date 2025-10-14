@@ -340,7 +340,7 @@ func TestMCPServerLargeDataset(t *testing.T) {
 		require.NoError(t, err)
 
 		for i := 0; i < tasksPerProject; i++ {
-			_, err := isYonetici.GorevOlustur(context.Background(), 
+			_, err := isYonetici.GorevOlustur(context.Background(),
 				fmt.Sprintf("Görev %d-%d", p+1, i+1),
 				fmt.Sprintf("Bu görev %d. projenin %d. görevidir", p+1, i+1),
 				[]string{"dusuk", "orta", "yuksek"}[i%3],
