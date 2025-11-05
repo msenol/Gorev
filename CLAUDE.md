@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** October 11, 2025 | **Version:** v0.17.0
+**Last Updated:** November 5, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -71,21 +71,91 @@ See [Daemon Architecture Documentation](docs/architecture/daemon-architecture.md
 
 ## 🔧 Development Commands
 
+### Build & Run
+
 ```bash
-# Build & Run
-make build                # Build for current platform
-make test                 # Run all tests with coverage
-./gorev serve --debug     # Run with debug logging
+# Build Process (Important: Web UI is built first, then embedded in Go binary)
+cd gorev-mcpserver
+make build                             # Builds Web UI first, then Go binary
+make build-all                         # Cross-platform builds (Linux/macOS/Windows)
 
-# Database
-./gorev init              # Initialize workspace DB (.gorev/gorev.db)
+# Run server
+./gorev serve                          # Normal mode
+./gorev serve --debug                  # Debug mode with verbose logging
+./gorev serve --port 5082              # Custom port
+./gorev daemon --detach                # Start daemon in background (recommended for MCP)
+```
 
-# VS Code Extension
+### Testing
+
+```bash
+# Run all tests
+make test                              # Root: runs both server and extension tests
+cd gorev-mcpserver && make test        # Server tests only (~71% coverage)
+cd gorev-vscode && npm test            # Extension tests (100% coverage)
+
+# Specific test commands
+cd gorev-mcpserver
+go test -v ./internal/mcp/             # Test specific package
+go test -v -run TestGorevOlustur ./... # Run single test by name
+go test -v -race ./...                 # Race condition detection
+make test-coverage                     # Generate coverage report (coverage.html)
+
+# VS Code Extension Testing
 cd gorev-vscode
-npm install && npm run compile
+npm test                               # Run extension tests
+npm run test:coverage                  # Extension test coverage
+```
 
-# Web UI (embedded in binary, auto-available at :5082)
-./gorev serve --api-port 5082
+### Web UI Development
+
+```bash
+# Develop Web UI independently (gorev-web)
+cd gorev-web
+npm install                            # Install dependencies
+npm run dev                            # Start Vite dev server (port 5173)
+npm run build                          # Build production bundle
+npm run preview                        # Preview production build
+
+# Note: Web UI is automatically embedded in Go binary via build-web target
+# The production build goes to gorev-mcpserver/binaries/web-ui/
+```
+
+### VS Code Extension Development
+
+```bash
+cd gorev-vscode
+npm install                            # Install dependencies
+npm run compile                        # Compile TypeScript
+npm run watch                          # Watch mode (for development)
+
+# Testing in VS Code
+# 1. Open gorev-vscode folder in VS Code
+# 2. Press F5 (Run > Start Debugging)
+# 3. Test in Extension Development Host window
+```
+
+### Database
+
+```bash
+./gorev init                           # Initialize workspace database (.gorev/gorev.db)
+# Migrations run automatically on first init
+# Migration files: gorev-mcpserver/internal/veri/migrations/*.sql
+```
+
+### Debugging & Development
+
+```bash
+# Daemon management
+./gorev daemon --detach                # Start daemon in background
+./gorev daemon-status                  # Check daemon status
+./gorev daemon-stop                    # Stop running daemon
+curl http://localhost:5082/api/health  # Health check endpoint
+
+# Clean build artifacts
+make clean                             # Root level: cleans both modules
+cd gorev-mcpserver && make clean       # Server only
+cd gorev-vscode && rm -rf out/         # Extension only
 ```
 
 ## 🛠️ MCP Tools Summary
@@ -109,6 +179,23 @@ npm install && npm run compile
 - **Error Handling**: Always return explicit errors, use `mcp.NewToolResultError()`
 - **Go Idioms**: Follow Go conventions, prefer composition over inheritance
 - **i18n**: Use `i18n.T("key", templateData)` for user-facing strings
+
+## 🗂️ Quick File Reference
+
+**Need to modify...**
+
+- **MCP Tools**: `internal/mcp/handlers.go` + register in `tool_registry.go`
+- **Business Logic**: `internal/gorev/is_yonetici.go`
+- **Database Access**: `internal/veri/veri_yonetici.go`
+- **Database Schema**: `internal/veri/migrations/*.sql` (add new migration)
+- **REST API Endpoints**: `internal/api/handlers.go` (23 endpoints)
+- **i18n Strings**: `locales/en.toml`, `locales/tr.toml`
+- **CLI Commands**: `cmd/gorev/*.go` (daemon.go, serve.go, etc.)
+- **Daemon Logic**: `cmd/gorev/daemon.go`, `internal/daemon/lockfile.go`
+- **VS Code Extension**: `gorev-vscode/src/extension.ts`
+- **Extension TreeView**: `gorev-vscode/src/providers/*.ts`
+- **Web UI Components**: `gorev-web/src/components/*.tsx`
+- **Web UI API Client**: `gorev-web/src/api/client.ts`
 
 ## 🧪 Testing Strategy
 
@@ -183,15 +270,58 @@ gorev serve --lang=tr    # Turkish interface
 - [ ] Proper error handling with context
 - [ ] i18n keys used for user messages
 
-## 🚨 Important Development Rules
+## 🚨 Pre-Commit Checklist
 
-1. **NEVER commit**: `*.db`, `*.log`, binary files (`gorev`, `gorev.exe`)
-2. **Always run before commit**: `make fmt`, `go vet ./...`, `make deps`, `make test`
-3. **Template Usage**: Mandatory since v0.10.0, use `templateden_gorev_olustur`
-4. **Turkish Domain**: Keep domain concepts in Turkish, technical terms in English
-5. **Error Context**: Wrap errors with context: `fmt.Errorf("context: %w", err)`
-6. **i18n Strings**: Use `i18n.T()` for all user-facing messages
-7. **Rule 15 Compliance**: NO workarounds, NO technical debt, NO quick fixes
+**Before committing, ALWAYS run these commands in order:**
+
+```bash
+# 1. Format code
+make fmt                               # Formats both Go and TypeScript
+
+# 2. Update dependencies (if go.mod or package.json changed)
+make deps
+
+# 3. Run linters
+make lint                              # Both Go (golangci-lint) and TS linters
+go vet ./...                           # Additional Go static analysis
+
+# 4. Run all tests (MUST pass 100%)
+make test                              # Both server and extension tests
+
+# 5. If tests pass, commit
+git add .
+git commit -m "feat: your message"
+```
+
+**NEVER commit:**
+
+- Database files: `*.db`, `*.db-shm`, `*.db-wal`
+- Log files: `*.log`
+- Binary files: `gorev`, `gorev.exe`, `gorev-linux`, `gorev-darwin`, `gorev-windows`
+- Build artifacts: `node_modules/`, `out/`, `dist/`, `coverage.out`, `coverage.html`
+- Lock files: `~/.gorev-daemon/.lock`
+- Temporary files: `.DS_Store`, `Thumbs.db`
+
+**Development Standards:**
+
+1. **Template Usage**: Mandatory since v0.10.0, use `templateden_gorev_olustur` tool
+2. **Turkish Domain**: Keep domain concepts in Turkish (gorev, proje, durum), technical terms in English
+3. **Error Context**: Always wrap errors with context: `fmt.Errorf("context: %w", err)`
+4. **i18n Strings**: Use `i18n.T("key", templateData)` for all user-facing messages
+5. **Rule 15 Compliance**: NO workarounds, NO technical debt, NO quick fixes
+6. **Test Coverage**: All new code must have tests (maintain ~71% server, 100% extension)
+
+**Commit Message Format:**
+
+```
+<type>(<scope>): <subject>
+
+Examples:
+feat(mcp): add new search filter tool
+fix(api): resolve race condition in workspace manager
+docs(readme): update installation instructions
+test(handlers): add edge case tests for bulk operations
+```
 
 ---
 
