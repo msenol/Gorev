@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**Last Updated:** October 6, 2025 | **Version:** v0.16.3
+**Last Updated:** October 6, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 
-> 🎉 **YENİ v0.16.3**: MCP araç parametre dönüşümü düzeltmeleri + %100 test başarısı! [Yeniliklere Bak](#-v0163-yenilikleri)
+> 🎉 **YENİ v0.17.0**: MCP araç parametre dönüşümü düzeltmeleri + %100 test başarısı! [Yeniliklere Bak](#-v0163-yenilikleri)
 
 > ⚠️ **BREAKING CHANGE (v0.10.0)**: `gorev_olustur` tool artık kullanılmıyor! Template kullanımı zorunlu hale getirildi. [Detaylar](#breaking-change-template-zorunluluğu)
 
@@ -90,7 +90,7 @@ Extension daemon yaşam döngüsünü otomatik yönetir:
 
 Detaylı teknik özellikler için [Daemon Mimari Dokümantasyonu](docs/architecture/daemon-architecture.md)'na bakın.
 
-## 🎉 v0.16.3 Yenilikleri
+## 🎉 v0.17.0 Yenilikleri
 
 ### 🔧 MCP Araç Parametre Dönüşüm Düzeltmeleri (6 Ekim 2025)
 

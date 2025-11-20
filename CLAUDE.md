@@ -18,7 +18,7 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 - **Backward Compatibility**: Domain terms (`gorevler`, `projeler`) remain Turkish
 - See `docs/MIGRATION_GUIDE_v0.17.md` for upgrade instructions
 
-**Previous (v0.16.3 - October 6, 2025):**
+**Previous (v0.17.0 - October 6, 2025):**
 
 - MCP Tool Parameter Transformation Fixes, Bulk Operations, VS Code Dependency Counters
 

@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**Last Updated:** October 6, 2025 | **Version:** v0.16.3
+**Last Updated:** October 6, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 
-> 🎉 **NEW in v0.16.3**: MCP tool parameter transformation fixes + 100% test success! [See What's New](#-whats-new-in-v0163)
+> 🎉 **NEW in v0.17.0**: MCP tool parameter transformation fixes + 100% test success! [See What's New](#-whats-new-in-v0163)
 
 ![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-4A154B?style=flat-square&logo=anthropic)
@@ -131,7 +131,7 @@ The extension automatically manages the daemon lifecycle:
 
 See [Daemon Architecture Documentation](docs/architecture/daemon-architecture.md) for detailed technical specifications.
 
-## 🎉 What's New in v0.16.3
+## 🎉 What's New in v0.17.0
 
 ### 🔧 MCP Tool Parameter Transformation Fixes (October 6, 2025)
 
@@ -581,7 +581,7 @@ make docker-build
 
 ## 📊 Project Status
 
-- **Version**: v0.16.3 🚀
+- **Version**: v0.17.0 🚀
 - **Test Coverage**: 75%+ (Comprehensive test coverage with ongoing improvements)
 - **Go Version**: 1.23+
 - **MCP SDK**: mark3labs/mcp-go v0.6.0

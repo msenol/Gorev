@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.msenol/gorev",
   "description": "Task management system for AI assistants with MCP protocol, templates, and bilingual support (TR/EN)",
-  "version": "0.16.3",
+  "version": "0.17.0",
   "repository": {
     "url": "https://github.com/msenol/Gorev",
     "source": "github",

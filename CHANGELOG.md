@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2025-11-20
+
+### Added
+
+#### 🚀 DevOps Improvements
+- **Automated Testing Workflow**: New GitHub Action `go-test.yml` for automated Go testing and linting
+  - Runs `golangci-lint` for code quality
+  - Executes `go test` with coverage reporting
+  - Triggers on push and pull requests to main/develop branches
+
+### Changed
+
+#### 📚 Documentation
+- Updated all documentation to reflect v0.17.0 version
+- Synchronized version numbers across all components (VS Code, NPM, Web, Server)
+
 ## [0.16.3] - 2025-10-07
 
 ### Added
