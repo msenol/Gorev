@@ -534,13 +534,13 @@ func TListItem(lang string, labelKey string, value interface{}) string {
 func TStatus(lang string, status string) string {
 	switch status {
 	case constants.TaskStatusPending:
-		return TWithLang(lang, "status.pending", nil)
+		return TCommon(lang, "status.pending", nil)
 	case constants.TaskStatusInProgress:
-		return TWithLang(lang, "status.in_progress", nil)
+		return TCommon(lang, "status.in_progress", nil)
 	case constants.TaskStatusCompleted:
-		return TWithLang(lang, "status.completed", nil)
+		return TCommon(lang, "status.completed", nil)
 	case constants.TaskStatusCancelled:
-		return TWithLang(lang, "status.cancelled", nil)
+		return TCommon(lang, "status.cancelled", nil)
 	default:
 		return status
 	}
@@ -550,11 +550,11 @@ func TStatus(lang string, status string) string {
 func TPriority(lang string, priority string) string {
 	switch priority {
 	case constants.PriorityLow:
-		return TWithLang(lang, "priority.low", nil)
+		return TCommon(lang, "priority.low", nil)
 	case constants.PriorityMedium:
-		return TWithLang(lang, "priority.medium", nil)
+		return TCommon(lang, "priority.medium", nil)
 	case constants.PriorityHigh:
-		return TWithLang(lang, "priority.high", nil)
+		return TCommon(lang, "priority.high", nil)
 	default:
 		return priority
 	}

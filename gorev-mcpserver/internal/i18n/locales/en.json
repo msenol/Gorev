@@ -165,7 +165,6 @@
     "tasksQueryFailed": "failed to query tasks: {{.Error}}",
     "taskIdReadFailed": "failed to read task ID: {{.Error}}",
     "toolsCallNameRequired": "tools/call requires 'name' parameter",
-    "unknownTool": "unknown tool: {{.Tool}}",
     "invalidWorkspacePath": "invalid workspace path: {{.Error}}",
     "workspacePathNotExist": "workspace path does not exist: {{.Path}}",
     "gorevDirCreateFailed": "failed to create .gorev directory: {{.Error}}",
@@ -185,7 +184,26 @@
     "migrationInstanceFailed": "Failed to create migration instance: {{.Error}}",
     "migrationProcessFailed": "Migration process failed: {{.Error}}",
     "noArguments": "No arguments provided",
-    "parameterRequired": "Parameter {{.Param}} is required"
+    "parameterRequired": "Parameter {{.Param}} is required",
+    "ide": {
+      "unsupportedType": "Unsupported IDE type: {{.Type}}",
+      "notFound": "{{.IDE}} not found",
+      "notDetected": "{{.IDE}} not detected",
+      "extensionsPathNotFound": "Extensions path not found for {{.IDE}}",
+      "cannotReadExtensions": "Cannot read extensions directory {{.Path}}: {{.Error}}",
+      "extensionNotInstalled": "{{.Extension}} extension is not installed in {{.IDE}}",
+      "downloadFailed": "Failed to download {{.Extension}}: {{.Error}}",
+      "installFailed": "Failed to install {{.Extension}} to {{.IDE}}: {{.Error}}",
+      "uninstallFailed": "Failed to uninstall {{.Extension}} from {{.IDE}}: {{.Error}}",
+      "noIDEsDetected": "No IDEs detected",
+      "extensionInfoNil": "extension info cannot be nil",
+      "downloadFailedStatus": "download failed with HTTP status code: {{.Status}}",
+      "checksumFailed": "checksum verification failed",
+      "executableNotFound": "IDE executable not found",
+      "githubApiFailed": "GitHub API request failed with HTTP status code: {{.Status}}",
+      "noVsixAsset": "no VSIX asset found in release",
+      "invalidAssetName": "invalid asset name format: {{.Name}}"
+    }
   },
   "success": {
     "activeProjectSet": "✓ Active project set: {{.Project}}",
@@ -207,7 +225,12 @@
     "filterProfileCreated": "✅ Filter profile created: {{.Name}} (ID: {{.ID}})",
     "filterProfileUpdated": "✅ Filter profile updated: {{.Name}}",
     "filterProfileDeleted": "✅ Filter profile deleted: {{.Name}}",
-    "searchHistoryCleaned": "✅ {{.Count}} old search records cleaned (older than {{.Days}} days)"
+    "searchHistoryCleaned": "✅ {{.Count}} old search records cleaned (older than {{.Days}} days)",
+    "ide": {
+      "extensionAlreadyInstalled": "{{.Extension}} already installed in {{.IDE}} (v{{.Version}})",
+      "extensionInstalled": "✓ {{.Extension}} successfully installed to {{.IDE}} (v{{.Version}})",
+      "extensionUninstalled": "✓ {{.Extension}} successfully uninstalled from {{.IDE}}"
+    }
   },
   "display": {
     "noTemplates": "No templates found yet.",
@@ -675,34 +698,6 @@
         "ide_type": "IDE type (vscode, cursor, windsurf or all for all)",
         "extension_id": "Extension ID (default: mehmetsenol.gorev-vscode)"
       }
-    }
-  },
-  "error": {
-    "ide": {
-      "unsupportedType": "Unsupported IDE type: {{.Type}}",
-      "notFound": "{{.IDE}} not found",
-      "notDetected": "{{.IDE}} not detected",
-      "extensionsPathNotFound": "Extensions path not found for {{.IDE}}",
-      "cannotReadExtensions": "Cannot read extensions directory {{.Path}}: {{.Error}}",
-      "extensionNotInstalled": "{{.Extension}} extension is not installed in {{.IDE}}",
-      "downloadFailed": "Failed to download {{.Extension}}: {{.Error}}",
-      "installFailed": "Failed to install {{.Extension}} to {{.IDE}}: {{.Error}}",
-      "uninstallFailed": "Failed to uninstall {{.Extension}} from {{.IDE}}: {{.Error}}",
-      "noIDEsDetected": "No IDEs detected",
-      "extensionInfoNil": "extension info cannot be nil",
-      "downloadFailedStatus": "download failed with HTTP status code: {{.Status}}",
-      "checksumFailed": "checksum verification failed",
-      "executableNotFound": "IDE executable not found",
-      "githubApiFailed": "GitHub API request failed with HTTP status code: {{.Status}}",
-      "noVsixAsset": "no VSIX asset found in release",
-      "invalidAssetName": "invalid asset name format: {{.Name}}"
-    }
-  },
-  "success": {
-    "ide": {
-      "extensionAlreadyInstalled": "{{.Extension}} already installed in {{.IDE}} (v{{.Version}})",
-      "extensionInstalled": "✓ {{.Extension}} successfully installed to {{.IDE}} (v{{.Version}})",
-      "extensionUninstalled": "✓ {{.Extension}} successfully uninstalled from {{.IDE}}"
     }
   },
   "export": {
