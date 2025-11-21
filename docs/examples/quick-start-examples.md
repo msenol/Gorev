@@ -249,9 +249,9 @@ Extension automatically starts daemon on activation. No manual setup needed.
 
 ```typescript
 // Select code in editor
-function calculateTotal(items: Item[]): number {
-  // TODO: Add tax calculation
-  return items.reduce((sum, item) => sum + item.price, 0);
+function calculateTotal(items: Item[], taxRate: number = 0.08): number {
+  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  return subtotal * (1 + taxRate);
 }
 
 // Right-click selection → "Create Gorev Task from Selection"

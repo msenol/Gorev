@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **i18n Phase 3**: Context-aware language propagation system
+  - Per-request language selection for MCP handlers with fallback hierarchy
+  - Environment variable `GOREV_LANG` propagates through CLI, MCP, and API layers
+  - Enhanced i18n helper functions with improved error handling and validation
+
+### Fixed
+
+- **i18n**: CLI template commands now properly respect `GOREV_LANG` environment variable
+- **VS Code Extension**: Eliminated all 242 ESLint warnings achieving Rule 15 compliance
+  - Fixed 179 `no-explicit-any` warnings using proper TypeScript types
+  - Fixed 48 `no-non-null-assertion` warnings with null checks and type guards
+  - Fixed 10 `array-type` warnings using consistent `T[]` notation
+  - Fixed 5 `no-useless-catch` warnings by removing unnecessary try-catch wrappers
+
+### Changed
+
+- **VS Code Extension**: Refactored 13 TypeScript files for type safety
+  - Updated `ui/taskDetailPanel.ts`, `providers/*.ts`, `commands/*.ts` with proper typing
+  - Maintained 100% test pass rate (104/104 tests) throughout refactoring
+- **Version Alignment**: Updated `gorev-web` to v0.17.0 for consistency across modules
+
 ## [0.16.3] - 2025-10-07
 
 ### Added
