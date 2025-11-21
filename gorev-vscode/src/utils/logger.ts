@@ -19,25 +19,25 @@ export class Logger {
     this.logLevel = level;
   }
 
-  static debug(...args: any[]): void {
+  static debug(...args: unknown[]): void {
     if (this.logLevel <= LogLevel.Debug) {
       this.log('DEBUG', ...args);
     }
   }
 
-  static info(...args: any[]): void {
+  static info(...args: unknown[]): void {
     if (this.logLevel <= LogLevel.Info) {
       this.log('INFO', ...args);
     }
   }
 
-  static warn(...args: any[]): void {
+  static warn(...args: unknown[]): void {
     if (this.logLevel <= LogLevel.Warning) {
       this.log('WARN', ...args);
     }
   }
 
-  static error(...args: any[]): void {
+  static error(...args: unknown[]): void {
     if (this.logLevel <= LogLevel.Error) {
       this.log('ERROR', ...args);
     }
@@ -47,7 +47,7 @@ export class Logger {
     this.outputChannel.show();
   }
 
-  private static log(level: string, ...args: any[]): void {
+  private static log(level: string, ...args: unknown[]): void {
     const timestamp = new Date().toISOString();
     const message = args
       .map((arg) => {

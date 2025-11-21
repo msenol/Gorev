@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import * as path from 'path';
-import { ApiClient } from '../api/client';
-import { GorevTemplate, TemplateAlan } from '../models/template';
+import { ApiClient, Template } from '../api/client';
 import { Logger } from '../utils/logger';
 
 /**
@@ -11,7 +9,7 @@ import { Logger } from '../utils/logger';
 export class TemplateWizard {
     private static currentPanel: TemplateWizard | undefined;
     private readonly panel: vscode.WebviewPanel;
-    private template: GorevTemplate | undefined;
+    private template: Template | undefined;
     private readonly disposables: vscode.Disposable[] = [];
 
     constructor(
@@ -119,7 +117,7 @@ export class TemplateWizard {
             const result = await this.apiClient.getTemplates();
             const templates = result.success && result.data ? result.data : [];
 
-            const filtered = templates.filter((t: any) =>
+            const filtered = templates.filter(t =>
                 t.isim.toLowerCase().includes(query.toLowerCase()) ||
                 t.tanim?.toLowerCase().includes(query.toLowerCase()) ||
                 t.kategori?.toLowerCase().includes(query.toLowerCase())
@@ -140,7 +138,7 @@ export class TemplateWizard {
             const result = await this.apiClient.getTemplates();
             const templates = result.success && result.data ? result.data : [];
 
-            this.template = templates.find(t => t.id === templateId) as any;
+            this.template = templates.find(t => t.id === templateId);
             if (!this.template) {
                 throw new Error(t('templateWizard.notFound'));
             }
@@ -156,7 +154,7 @@ export class TemplateWizard {
         }
     }
 
-    private async createTaskFromTemplate(values: Record<string, any>): Promise<void> {
+    private async createTaskFromTemplate(values: Record<string, unknown>): Promise<void> {
         if (!this.template) {
             vscode.window.showErrorMessage(t('templateWizard.notSelected'));
             return;
@@ -177,9 +175,15 @@ export class TemplateWizard {
             }
 
             // Create task from template using REST API
-            const result = await this.apiClient.createTaskFromTemplate({
+            // Convert Record<string, unknown> to Record<string, string> for API
+            const stringValues: Record<string, string> = {};
+            for (const [key, value] of Object.entries(values)) {
+                stringValues[key] = String(value ?? '');
+            }
+
+            await this.apiClient.createTaskFromTemplate({
                 template_id: this.template.id,
-                degerler: values
+                degerler: stringValues
             });
 
             // Show success message
@@ -196,7 +200,7 @@ export class TemplateWizard {
         }
     }
 
-    private previewTask(values: Record<string, any>): void {
+    private previewTask(values: Record<string, unknown>): void {
         if (!this.template) return;
 
         // Generate preview based on template and values
@@ -208,11 +212,11 @@ export class TemplateWizard {
         });
     }
 
-    private generateTaskPreview(template: GorevTemplate, values: Record<string, any>): string {
-        let preview = `# ${values.baslik || template.varsayilan_baslik || t('templateWizard.newTask')}\n\n`;
-        
-        if (values.aciklama || template.aciklama_template) {
-            preview += `## ${t('templateWizard.description')}\n${values.aciklama || template.aciklama_template}\n\n`;
+    private generateTaskPreview(template: Template, values: Record<string, unknown>): string {
+        let preview = `# ${values.baslik || t('templateWizard.newTask')}\n\n`;
+
+        if (values.aciklama) {
+            preview += `## ${t('templateWizard.description')}\n${values.aciklama}\n\n`;
         }
 
         preview += `## ${t('templateWizard.details')}\n`;
@@ -257,7 +261,7 @@ export class TemplateWizard {
             const result = await this.apiClient.getTemplates();
             const templates = result.success && result.data ? result.data : [];
 
-            const favorites = templates.filter((t: any) => favoriteIds.includes(t.id));
+            const favorites = templates.filter(t => favoriteIds.includes(t.id));
 
             await this.panel.webview.postMessage({
                 command: 'favoritesLoaded',
@@ -274,7 +278,7 @@ export class TemplateWizard {
         return [];
     }
 
-    private async saveFavorites(favorites: string[]): Promise<void> {
+    private async saveFavorites(_favorites: string[]): Promise<void> {
         // Favorites are now managed in the webview using localStorage
         // No need to implement here since the webview handles it
     }

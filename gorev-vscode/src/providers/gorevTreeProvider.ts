@@ -49,7 +49,7 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
 
       // Fetch all tasks with pagination using REST API
       while (hasMoreTasks) {
-        console.log('[GorevTreeProvider] Fetching tasks with offset:', offset);
+        Logger.debug(`[GorevTreeProvider] Fetching tasks with offset: ${offset}`);
 
         const result = await this.apiClient.getTasks({
           tum_projeler: true,
@@ -69,7 +69,7 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
           hasMoreTasks = false;
         }
 
-        console.log(`[GorevTreeProvider] Fetched ${result.data.length} tasks (total: ${this.tasks.length})`);
+        Logger.debug(`[GorevTreeProvider] Fetched ${result.data.length} tasks (total: ${this.tasks.length})`);
 
         // Update offset
         offset += pageSize;
@@ -78,7 +78,7 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
         if (offset > 1000) break;
       }
 
-      console.log('[GorevTreeProvider] Total tasks fetched:', this.tasks.length);
+      Logger.debug(`[GorevTreeProvider] Total tasks fetched: ${this.tasks.length}`);
     } catch (error) {
       Logger.error('Failed to load tasks:', error);
       throw error;
@@ -97,9 +97,9 @@ export class GorevTreeProvider implements vscode.TreeDataProvider<GorevTreeItem>
     const lines = content.split('\n');
     let currentTask: Partial<Gorev> | null = null;
     let descriptionLines: string[] = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
       
       // Skip empty lines and headers
       if (!line || line.startsWith('##')) {

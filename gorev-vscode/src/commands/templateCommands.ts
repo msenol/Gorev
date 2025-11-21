@@ -8,6 +8,7 @@ import { GorevTemplate } from '../models/template';
 import { Logger } from '../utils/logger';
 import { COMMANDS } from '../utils/constants';
 import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from '../managers/refreshManager';
+import { TemplateKategori } from '../models/common';
 
 export function registerTemplateCommands(
   context: vscode.ExtensionContext,
@@ -73,7 +74,7 @@ export function registerTemplateCommands(
             secenekler: field.secenekler,
           })),
           ornek_degerler: {},
-          kategori: template.kategori as any,
+          kategori: template.kategori as TemplateKategori,
           aktif: template.aktif,
         }));
 

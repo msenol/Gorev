@@ -12,7 +12,7 @@ export class Config {
     return vscode.workspace.getConfiguration(this.CONFIG_SECTION).get<T>(key);
   }
 
-  static async update(key: string, value: any, global = true): Promise<void> {
+  static async update(key: string, value: unknown, global = true): Promise<void> {
     await vscode.workspace
       .getConfiguration(this.CONFIG_SECTION)
       .update(key, value, global);
@@ -22,7 +22,7 @@ export class Config {
     return this.context.globalState.get(key, defaultValue);
   }
 
-  static async updateGlobalState(key: string, value: any): Promise<void> {
+  static async updateGlobalState(key: string, value: unknown): Promise<void> {
     await this.context.globalState.update(key, value);
   }
 
@@ -30,7 +30,7 @@ export class Config {
     return this.context.workspaceState.get(key, defaultValue);
   }
 
-  static async updateWorkspaceState(key: string, value: any): Promise<void> {
+  static async updateWorkspaceState(key: string, value: unknown): Promise<void> {
     await this.context.workspaceState.update(key, value);
   }
 }

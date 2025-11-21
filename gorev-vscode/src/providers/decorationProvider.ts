@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { TaskTreeViewItem } from './enhancedGorevTreeProvider';
 import { COLORS } from '../utils/constants';
-import { Logger } from '../utils/logger';
 
 /**
  * Task decoration provider for visual enhancements
@@ -20,7 +19,7 @@ export class TaskDecorationProvider implements vscode.FileDecorationProvider {
     /**
      * Updates decoration for a task
      */
-    updateTaskDecoration(task: Gorev, treeItem: TaskTreeViewItem): void {
+    updateTaskDecoration(task: Gorev, _treeItem: TaskTreeViewItem): void {
         const decoration = this.createTaskDecoration(task);
         const uri = this.getTaskUri(task);
         

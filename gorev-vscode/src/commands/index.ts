@@ -125,7 +125,7 @@ async function connectToServer(client: ApiClient, providers: CommandContext): Pr
 /**
  * Format summary data from API response to markdown-like text
  */
-function formatSummaryData(data: any): string {
+function formatSummaryData(data: Record<string, unknown>): string {
   let text = `# Özet Rapor\n\n`;
 
   if (data.toplam_proje !== undefined) {
@@ -136,17 +136,19 @@ function formatSummaryData(data: any): string {
   }
 
   if (data.durum_dagilimi) {
+    const durumDagilimi = data.durum_dagilimi as Record<string, number>;
     text += `### Durum Dağılımı\n`;
-    text += `- Beklemede: ${data.durum_dagilimi.beklemede || 0}\n`;
-    text += `- Devam Ediyor: ${data.durum_dagilimi.devam_ediyor || 0}\n`;
-    text += `- Tamamlandı: ${data.durum_dagilimi.tamamlandi || 0}\n\n`;
+    text += `- Beklemede: ${durumDagilimi.beklemede || 0}\n`;
+    text += `- Devam Ediyor: ${durumDagilimi.devam_ediyor || 0}\n`;
+    text += `- Tamamlandı: ${durumDagilimi.tamamlandi || 0}\n\n`;
   }
 
   if (data.oncelik_dagilimi) {
+    const oncelikDagilimi = data.oncelik_dagilimi as Record<string, number>;
     text += `### Öncelik Dağılımı\n`;
-    text += `- Yüksek: ${data.oncelik_dagilimi.yuksek || 0}\n`;
-    text += `- Orta: ${data.oncelik_dagilimi.orta || 0}\n`;
-    text += `- Düşük: ${data.oncelik_dagilimi.dusuk || 0}\n`;
+    text += `- Yüksek: ${oncelikDagilimi.yuksek || 0}\n`;
+    text += `- Orta: ${oncelikDagilimi.orta || 0}\n`;
+    text += `- Düşük: ${oncelikDagilimi.dusuk || 0}\n`;
   }
 
   return text;

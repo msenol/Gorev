@@ -6,7 +6,7 @@ import { COMMANDS } from '../utils/constants';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { TaskDetailPanel } from '../ui/taskDetailPanel';
 import { Logger } from '../utils/logger';
-// import { GorevTreeItem } from '../providers/gorevTreeProvider';
+import { GorevTreeItem } from '../providers/gorevTreeProvider';
 
 export function registerGorevCommands(
   context: vscode.ExtensionContext,
@@ -43,7 +43,7 @@ export function registerGorevCommands(
 
   // Show Task Detail
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.SHOW_TASK_DETAIL, async (item: any) => {
+    vscode.commands.registerCommand(COMMANDS.SHOW_TASK_DETAIL, async (item: GorevTreeItem) => {
       try {
         // Use the new TaskDetailPanel
         await TaskDetailPanel.createOrShow(
@@ -59,7 +59,7 @@ export function registerGorevCommands(
 
   // Update Task Status
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.UPDATE_TASK_STATUS, async (item: any) => {
+    vscode.commands.registerCommand(COMMANDS.UPDATE_TASK_STATUS, async (item: GorevTreeItem) => {
       try {
         const newStatus = await vscode.window.showQuickPick(
           [
@@ -94,7 +94,7 @@ export function registerGorevCommands(
 
   // Delete Task
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.DELETE_TASK, async (item: any) => {
+    vscode.commands.registerCommand(COMMANDS.DELETE_TASK, async (item: GorevTreeItem) => {
       try {
         const confirm = await vscode.window.showWarningMessage(
           t('confirm.deleteTask', item.task.baslik),
@@ -122,7 +122,7 @@ export function registerGorevCommands(
 
   // Create Subtask
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.CREATE_SUBTASK, async (item: any) => {
+    vscode.commands.registerCommand(COMMANDS.CREATE_SUBTASK, async (item: GorevTreeItem) => {
       try {
         const baslik = await vscode.window.showInputBox({
           prompt: t('input.subtaskTitle'),
@@ -177,7 +177,7 @@ export function registerGorevCommands(
 
   // Change Parent
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.CHANGE_PARENT, async (item: any) => {
+    vscode.commands.registerCommand(COMMANDS.CHANGE_PARENT, async (item: GorevTreeItem) => {
       try {
         // Use REST API to get all tasks
         const response = await apiClient.getTasks({
@@ -221,7 +221,7 @@ export function registerGorevCommands(
 
   // Remove Parent (make root task)
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.REMOVE_PARENT, async (item: any) => {
+    vscode.commands.registerCommand(COMMANDS.REMOVE_PARENT, async (item: GorevTreeItem) => {
       try {
         // Use REST API to remove parent (empty string makes it root)
         await apiClient.changeParent(item.task.id, '');
@@ -241,7 +241,7 @@ export function registerGorevCommands(
 
   // Add Dependency
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.ADD_DEPENDENCY, async (item: any) => {
+    vscode.commands.registerCommand(COMMANDS.ADD_DEPENDENCY, async (item: GorevTreeItem) => {
       try {
         // Use REST API to get all tasks
         const response = await apiClient.getTasks({
@@ -295,62 +295,4 @@ export function registerGorevCommands(
     })
   );
 
-}
-
-function getTaskDetailHtml(content: string): string {
-  return `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: var(--vscode-font-family);
-            color: var(--vscode-foreground);
-            background-color: var(--vscode-editor-background);
-            padding: 20px;
-            line-height: 1.6;
-        }
-        h1, h2, h3 {
-            color: var(--vscode-foreground);
-            margin-top: 20px;
-        }
-        .status {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status.pending { background-color: var(--vscode-badge-background); }
-        .status.in-progress { background-color: var(--vscode-progressBar-background); }
-        .status.completed { background-color: var(--vscode-testing-iconPassed); }
-        .priority {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: 8px;
-        }
-        .priority.high { color: var(--vscode-errorForeground); }
-        .priority.medium { color: var(--vscode-editorWarning-foreground); }
-        .priority.low { color: var(--vscode-editorInfo-foreground); }
-        pre {
-            background-color: var(--vscode-textBlockQuote-background);
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-        .dependency {
-            padding: 8px;
-            margin: 4px 0;
-            border-left: 3px solid var(--vscode-badge-background);
-            background-color: var(--vscode-editor-lineHighlightBackground);
-        }
-    </style>
-</head>
-<body>
-    ${content.replace(/\n/g, '<br>')}
-</body>
-</html>`;
 }

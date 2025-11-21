@@ -1,12 +1,21 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { ApiClient } from '../api/client';
+import * as os from 'os';
+import { ApiClient, ExportRequest } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { ExportDialog } from '../ui/exportDialog';
 import { ImportWizard } from '../ui/importWizard';
+
+/** Extended export options for validation (allows optional fields) */
+type ExportOptions = Partial<ExportRequest> & {
+  date_range?: {
+    from?: string;
+    to?: string;
+  };
+};
 
 /**
  * Export/Import data commands for the Gorev VS Code extension
@@ -60,7 +69,7 @@ export function registerDataCommands(
 
   // Export Current View Command - Exports filtered tasks from current view
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.EXPORT_CURRENT_VIEW, async (element?: any) => {
+    vscode.commands.registerCommand(COMMANDS.EXPORT_CURRENT_VIEW, async (element?: vscode.TreeItem) => {
       try {
         if (!apiClient.isConnected()) {
           vscode.window.showWarningMessage(t('connection.notConnected'));
@@ -103,7 +112,7 @@ export function registerDataCommands(
 async function exportCurrentView(
   apiClient: ApiClient,
   providers: CommandContext,
-  element?: any
+  element?: vscode.TreeItem
 ): Promise<void> {
   Logger.info('Exporting current view', { element });
 
@@ -135,7 +144,7 @@ async function exportCurrentView(
     progress.report({ increment: 10, message: t('export.preparing') });
 
     // Build export options based on current view context
-    const exportOptions: any = {
+    const exportOptions: ExportOptions = {
       output_path: saveUri.fsPath,
       format: format,
       include_completed: true,
@@ -145,7 +154,7 @@ async function exportCurrentView(
     };
 
     // If exporting from a specific task/project context, add filters
-    if (element && element.contextValue) {
+    if (element && element.contextValue && element.id) {
       if (element.contextValue === 'project' || element.contextValue === 'project-active') {
         exportOptions.project_filter = [element.id];
       }
@@ -154,7 +163,7 @@ async function exportCurrentView(
     progress.report({ increment: 30, message: t('export.exporting') });
 
     // Call REST API export endpoint
-    const result = await apiClient.exportData(exportOptions);
+    const result = await apiClient.exportData(exportOptions as ExportRequest);
 
     progress.report({ increment: 80, message: t('export.completing') });
 
@@ -188,7 +197,7 @@ async function quickExport(apiClient: ApiClient): Promise<void> {
   const defaultFileName = `gorev-quick-export-${timestamp}.json`;
   
   // Use Downloads folder or workspace root
-  const downloadsPath = path.join(require('os').homedir(), 'Downloads');
+  const downloadsPath = path.join(os.homedir(), 'Downloads');
   const defaultPath = path.join(downloadsPath, defaultFileName);
 
   // Show progress
@@ -211,7 +220,7 @@ async function quickExport(apiClient: ApiClient): Promise<void> {
     progress.report({ increment: 50, message: t('export.exporting') });
 
     // Call REST API export endpoint
-    const result = await apiClient.exportData(exportOptions);
+    const result = await apiClient.exportData(exportOptions as ExportRequest);
 
     if (!result.success) {
       throw new Error(result.message || 'Quick export failed');
@@ -240,7 +249,7 @@ async function quickExport(apiClient: ApiClient): Promise<void> {
 /**
  * Utility function to validate export options
  */
-export function validateExportOptions(options: any): { isValid: boolean; errors: string[] } {
+export function validateExportOptions(options: ExportOptions): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   if (!options.output_path) {
@@ -271,7 +280,7 @@ export function validateExportOptions(options: any): { isValid: boolean; errors:
 /**
  * Utility function to estimate export size
  */
-export async function estimateExportSize(apiClient: ApiClient, options: any): Promise<string> {
+export async function estimateExportSize(apiClient: ApiClient, _options: ExportOptions): Promise<string> {
   try {
     // Get summary to estimate size using REST API
     const summaryResult = await apiClient.getSummary();
@@ -280,8 +289,8 @@ export async function estimateExportSize(apiClient: ApiClient, options: any): Pr
     }
 
     // Extract task and project counts from summary data
-    const taskCount = summaryResult.data.total_tasks || 0;
-    const projectCount = summaryResult.data.total_projects || 0;
+    const taskCount = summaryResult.data.tasks || 0;
+    const projectCount = summaryResult.data.projects || 0;
 
     // Rough estimation: ~500 bytes per task, ~200 bytes per project
     const estimatedBytes = (taskCount * 500) + (projectCount * 200);

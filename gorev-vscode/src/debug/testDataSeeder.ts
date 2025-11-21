@@ -1,4 +1,4 @@
-import { ApiClient } from '../api/client';
+import { ApiClient, MCPToolResult } from '../api/client';
 import { t } from '../utils/l10n';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { Logger } from '../utils/logger';
@@ -640,16 +640,14 @@ export class TestDataSeeder {
                 Logger.info('Set active task for AI context');
 
                 // Doğal dil sorgusu test et
-                const nlpResults = [
-                    await this.apiClient.callTool('gorev_nlp_query', { query: 'bugün yapılacak görevler' }),
-                    await this.apiClient.callTool('gorev_nlp_query', { query: 'yüksek öncelikli görevler' }),
-                    await this.apiClient.callTool('gorev_nlp_query', { query: 'etiket:bug' })
-                ];
+                await this.apiClient.callTool('gorev_nlp_query', { query: 'bugün yapılacak görevler' });
+                await this.apiClient.callTool('gorev_nlp_query', { query: 'yüksek öncelikli görevler' });
+                await this.apiClient.callTool('gorev_nlp_query', { query: 'etiket:bug' });
 
                 Logger.info('Tested NLP queries');
 
                 // Context summary al
-                const contextSummary = await this.apiClient.callTool('gorev_context_summary', {});
+                await this.apiClient.callTool('gorev_context_summary', {});
                 Logger.info('Generated AI context summary');
 
                 // Batch update test et - bazı görevlerin durumunu toplu güncelle
@@ -869,7 +867,7 @@ export class TestDataSeeder {
     /**
      * Extract task ID from MCP response
      */
-    private extractTaskId(result: any): string | null {
+    private extractTaskId(result: MCPToolResult): string | null {
         try {
             const responseText = result.content[0].text;
             const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);

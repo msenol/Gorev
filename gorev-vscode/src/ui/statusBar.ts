@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { ApiClient } from '../api/client';
+import * as path from 'path';
+import * as fs from 'fs';
 import { COMMANDS } from '../utils/constants';
 import { t } from '../utils/l10n';
 import { WorkspaceContext } from '../models/workspace';
@@ -112,9 +113,7 @@ export class StatusBarManager implements vscode.Disposable {
       // auto mode
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (workspaceFolder) {
-        const path = require('path');
         const workspaceDbDir = path.join(workspaceFolder.uri.fsPath, '.gorev');
-        const fs = require('fs');
 
         if (fs.existsSync(workspaceDbDir)) {
           icon = '📁';

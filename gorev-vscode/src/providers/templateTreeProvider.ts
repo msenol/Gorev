@@ -22,33 +22,32 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   }
 
   async getChildren(element?: TemplateTreeItem | TemplateCategoryItem): Promise<(TemplateTreeItem | TemplateCategoryItem)[]> {
-    console.log('[TemplateTreeProvider] getChildren called with element:', element);
-    
+    Logger.debug(`[TemplateTreeProvider] getChildren called with element: ${element?.label}`);
+
     if (!this.apiClient.isConnected()) {
-      console.log('[TemplateTreeProvider] MCP client not connected');
+      Logger.debug('[TemplateTreeProvider] MCP client not connected');
       return [];
     }
 
     if (!element) {
       // Root level - return categories
-      console.log('[TemplateTreeProvider] Loading root categories...');
+      Logger.debug('[TemplateTreeProvider] Loading root categories...');
       try {
         await this.loadTemplates();
         const categories = this.getCategories();
-        console.log('[TemplateTreeProvider] Returning', categories.length, 'categories');
+        Logger.debug(`[TemplateTreeProvider] Returning ${categories.length} categories`);
         return categories;
       } catch (error) {
         Logger.error('Failed to load templates:', error);
-        console.error('[TemplateTreeProvider] Error loading templates:', error);
         return [];
       }
     } else if (element instanceof TemplateCategoryItem) {
       // Return templates for this category
-      console.log('[TemplateTreeProvider] Loading templates for category:', element.category);
+      Logger.debug(`[TemplateTreeProvider] Loading templates for category: ${element.category}`);
       const templates = this.templates
         .filter((template) => template.kategori === element.category)
         .map((template) => new TemplateTreeItem(template));
-      console.log('[TemplateTreeProvider] Returning', templates.length, 'templates');
+      Logger.debug(`[TemplateTreeProvider] Returning ${templates.length} templates`);
       return templates;
     }
 

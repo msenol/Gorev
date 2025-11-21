@@ -22,9 +22,7 @@ import { ApiClient } from '../api/client';
 import { Logger } from '../utils/logger';
 import {
   WorkspaceContext,
-  WorkspaceInfo,
-  WorkspaceRegistration,
-  WorkspaceRegistrationResponse
+  WorkspaceInfo
 } from '../models/workspace';
 
 export interface ServerStatus {
@@ -45,8 +43,8 @@ export class UnifiedServerManager extends EventEmitter {
   private readonly PORT_CHECK_RETRY_INTERVAL = 1000; // 1 second
 
   constructor(
-    private readonly apiHost: string = 'localhost',
-    private readonly apiPort: number = 5082
+    private readonly apiHost = 'localhost',
+    private readonly apiPort = 5082
   ) {
     super();
 
@@ -357,8 +355,6 @@ export class UnifiedServerManager extends EventEmitter {
         Logger.info(`[UnifiedServerManager] Running command: ${command} ${args.join(' ')} (port: ${this.apiPort})`);
         Logger.info(`[UnifiedServerManager] Database path: ${dbPath}`);
 
-        // Track if we've seen any output (to detect package not found)
-        let hasOutput = false;
         let errorOutput = '';
 
         this.serverProcess = spawn(command, args, {
@@ -372,7 +368,6 @@ export class UnifiedServerManager extends EventEmitter {
         // Log server output and detect errors
         if (this.serverProcess.stdout) {
           this.serverProcess.stdout.on('data', (data) => {
-            hasOutput = true;
             const output = data.toString().trim();
             Logger.info(`[Gorev Server] ${output}`);
           });
@@ -380,7 +375,6 @@ export class UnifiedServerManager extends EventEmitter {
 
         if (this.serverProcess.stderr) {
           this.serverProcess.stderr.on('data', (data) => {
-            hasOutput = true;
             const output = data.toString().trim();
             errorOutput += output + '\n';
 

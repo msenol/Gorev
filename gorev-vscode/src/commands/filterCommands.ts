@@ -3,6 +3,7 @@ import { t } from '../utils/l10n';
 import { ApiClient } from '../api/client';
 import { CommandContext } from './index';
 import { Logger } from '../utils/logger';
+import { GorevOncelik } from '../models/common';
 
 export function registerFilterCommands(
     context: vscode.ExtensionContext,
@@ -91,7 +92,7 @@ export function registerFilterCommands(
     // Yüksek öncelikli görevler
     context.subscriptions.push(
         vscode.commands.registerCommand('gorev.filterHighPriority', () => {
-            providers.gorevTreeProvider.updateFilter({ oncelik: 'yuksek' as any });
+            providers.gorevTreeProvider.updateFilter({ oncelik: GorevOncelik.Yuksek });
             vscode.window.showInformationMessage(t('filter.showingHighPriority'));
         })
     );
@@ -108,7 +109,7 @@ export function registerFilterCommands(
                 } else {
                     vscode.window.showWarningMessage(t('filter.activeProjectNotFound'));
                 }
-            } catch (error) {
+            } catch {
                 vscode.window.showErrorMessage(t('filter.activeProjectFetchFailed'));
             }
         })

@@ -8,7 +8,7 @@ import { t } from '../utils/l10n';
  * TreeView item'ları için inline düzenleme sağlayıcı
  */
 export class InlineEditProvider {
-    private editingItem: any | null = null;
+    private editingItem: { task?: Gorev } | null = null;
     private originalLabel: string | null = null;
 
     constructor(private apiClient: ApiClient) {}
@@ -16,7 +16,7 @@ export class InlineEditProvider {
     /**
      * Inline düzenlemeyi başlatır
      */
-    async startEdit(item: any): Promise<void> {
+    async startEdit(item: { task?: Gorev }): Promise<void> {
         if (!item || !item.task) {
             return;
         }

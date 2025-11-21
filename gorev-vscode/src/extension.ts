@@ -7,9 +7,8 @@ import { TemplateTreeProvider } from './providers/templateTreeProvider';
 import { registerCommands } from './commands';
 import { StatusBarManager } from './ui/statusBar';
 import { FilterToolbar } from './ui/filterToolbar';
-import { Logger, LogLevel } from './utils/logger';
+import { Logger } from './utils/logger';
 import { Config } from './utils/config';
-import { COMMANDS } from './utils/constants';
 import { initializeL10n } from './utils/l10n';
 import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from './managers/refreshManager';
 import { measureAsync } from './utils/performance';
@@ -128,7 +127,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     statusBarManager.setConnectionStatus(false, 'api');
   });
 
-  apiClient.on('error', (error: any) => {
+  apiClient.on('error', (error: unknown) => {
     Logger.error('[Extension] API error:', error);
   });
 

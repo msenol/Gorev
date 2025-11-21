@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { ApiClient } from '../api/client';
+import { ApiClient, ImportRequest } from '../api/client';
 import { CommandContext } from '../commands/index';
 import { Logger } from '../utils/logger';
 
@@ -68,7 +68,7 @@ export class ImportWizard {
     await this.loadInitialData();
   }
 
-  private async handleMessage(message: any): Promise<void> {
+  private async handleMessage(message: { command: string; [key: string]: unknown }): Promise<void> {
     Logger.debug('Import wizard received message', message);
 
     switch (message.command) {
@@ -77,7 +77,7 @@ export class ImportWizard {
         break;
 
       case 'analyzeFile':
-        await this.analyzeImportFile(message.filePath);
+        await this.analyzeImportFile(message.filePath as string);
         break;
 
       case 'loadProjects':
@@ -85,11 +85,11 @@ export class ImportWizard {
         break;
 
       case 'performDryRun':
-        await this.performDryRun(message.options);
+        await this.performDryRun(message.options as Record<string, unknown>);
         break;
 
       case 'startImport':
-        await this.startImport(message.options);
+        await this.startImport(message.options as Record<string, unknown>);
         break;
 
       case 'cancel':
@@ -208,7 +208,7 @@ export class ImportWizard {
     }
   }
 
-  private async performDryRun(options: any): Promise<void> {
+  private async performDryRun(options: Record<string, unknown>): Promise<void> {
     if (!this.panel) return;
 
     try {
@@ -220,7 +220,7 @@ export class ImportWizard {
       const dryRunOptions = {
         ...options,
         dry_run: true
-      };
+      } as ImportRequest;
 
       // Call REST API import endpoint
       const result = await this.apiClient.importData(dryRunOptions);
@@ -246,7 +246,7 @@ export class ImportWizard {
     }
   }
 
-  private async startImport(options: any): Promise<void> {
+  private async startImport(options: Record<string, unknown>): Promise<void> {
     if (!this.panel) return;
 
     try {
@@ -267,7 +267,7 @@ export class ImportWizard {
         const importOptions = {
           ...options,
           dry_run: false
-        };
+        } as ImportRequest;
 
         // Call REST API import endpoint
         const result = await this.apiClient.importData(importOptions);
@@ -331,7 +331,13 @@ export class ImportWizard {
     }
   }
 
-  private parseAnalysisResult(text: string): any {
+  private parseAnalysisResult(text: string): {
+    totalTasks: number;
+    totalProjects: number;
+    warnings: string[];
+    errors: string[];
+    preview: string[];
+  } {
     // Parse the analysis result from MCP tool response
     const result = {
       totalTasks: 0,
@@ -374,7 +380,13 @@ export class ImportWizard {
     return result;
   }
 
-  private parseDryRunResult(text: string): any {
+  private parseDryRunResult(text: string): {
+    tasksToImport: number;
+    projectsToImport: number;
+    conflicts: string[];
+    warnings: string[];
+    preview: string[];
+  } {
     const result = {
       tasksToImport: 0,
       projectsToImport: 0,
@@ -409,7 +421,12 @@ export class ImportWizard {
     return result;
   }
 
-  private parseImportResult(text: string): any {
+  private parseImportResult(text: string): {
+    tasksImported: number;
+    projectsImported: number;
+    skipped: number;
+    errors: string[];
+  } {
     const result = {
       tasksImported: 0,
       projectsImported: 0,
@@ -443,8 +460,8 @@ export class ImportWizard {
     return result;
   }
 
-  private parseProjectList(text: string): Array<{id: string, name: string, isActive: boolean}> {
-    const projects: Array<{id: string, name: string, isActive: boolean}> = [];
+  private parseProjectList(text: string): {id: string, name: string, isActive: boolean}[] {
+    const projects: {id: string, name: string, isActive: boolean}[] = [];
     const lines = text.split('\n');
     
     for (const line of lines) {

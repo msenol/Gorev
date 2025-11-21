@@ -3,6 +3,7 @@
  * Provides metrics, timing, and diagnostic information
  */
 
+import * as vscode from 'vscode';
 import { Logger } from './logger';
 
 export interface PerformanceMetrics {
@@ -13,7 +14,7 @@ export interface PerformanceMetrics {
     success: boolean;
     reason?: string;
     memoryUsage?: NodeJS.MemoryUsage;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface PerformanceAggregates {
@@ -49,11 +50,10 @@ export class PerformanceMonitor {
 
     private checkConfiguration(): void {
         try {
-            const vscode = require('vscode');
             const config = vscode.workspace.getConfiguration('gorev');
             this.enabled = config.get('performance.enableMonitoring', true);
             this.maxMetricsPerOperation = config.get('performance.maxMetricsPerOperation', 100);
-        } catch (error) {
+        } catch {
             // Fallback if VS Code API not available
             this.enabled = true;
         }
@@ -62,7 +62,7 @@ export class PerformanceMonitor {
     /**
      * Start timing an operation
      */
-    startOperation(operationId: string, operation: string, reason?: string, metadata?: Record<string, any>): void {
+    startOperation(operationId: string, operation: string, reason?: string, metadata?: Record<string, unknown>): void {
         if (!this.enabled) return;
 
         const metric: PerformanceMetrics = {
@@ -114,11 +114,12 @@ export class PerformanceMonitor {
 
         // Log performance information
         const status = success ? 'SUCCESS' : 'FAILED';
-        const duration = metric.duration!.toFixed(2);
+        const durationMs = metric.duration ?? 0;
+        const duration = durationMs.toFixed(2);
         Logger.debug(`[Performance] ${status}: ${metric.operation} (${duration}ms)${metric.reason ? ` - ${metric.reason}` : ''}`);
 
         // Warn about slow operations
-        if (metric.duration! > 1000) {
+        if (durationMs > 1000) {
             Logger.warn(`[Performance] Slow operation detected: ${metric.operation} took ${duration}ms`);
         }
 
@@ -134,9 +135,9 @@ export class PerformanceMonitor {
             return undefined;
         }
 
-        const completedMetrics = operationMetrics.filter(m => m.duration !== undefined);
+        const completedMetrics = operationMetrics.filter((m): m is typeof m & { duration: number } => m.duration !== undefined);
         const successfulMetrics = completedMetrics.filter(m => m.success);
-        const durations = completedMetrics.map(m => m.duration!);
+        const durations = completedMetrics.map(m => m.duration);
 
         const totalDuration = durations.reduce((sum, duration) => sum + duration, 0);
         const avgDuration = totalDuration / durations.length;
@@ -246,9 +247,11 @@ export class PerformanceMonitor {
  * Decorator for automatic performance monitoring
  */
 export function performanceMonitor(operation: string, logResults = true) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
         const method = descriptor.value;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         descriptor.value = async function (...args: any[]) {
             const monitor = PerformanceMonitor.getInstance();
             const operationId = `${operation}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -259,8 +262,8 @@ export function performanceMonitor(operation: string, logResults = true) {
                 const result = await method.apply(this, args);
                 const metrics = monitor.endOperation(operationId, true);
 
-                if (logResults && metrics) {
-                    Logger.debug(`[Performance] ${operation} completed in ${metrics.duration!.toFixed(2)}ms`);
+                if (logResults && metrics && metrics.duration !== undefined) {
+                    Logger.debug(`[Performance] ${operation} completed in ${metrics.duration.toFixed(2)}ms`);
                 }
 
                 return result;
@@ -281,7 +284,7 @@ export async function measureAsync<T>(
     operation: string,
     func: () => Promise<T>,
     reason?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
 ): Promise<T> {
     const monitor = PerformanceMonitor.getInstance();
     const operationId = `${operation}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -305,7 +308,7 @@ export function measureSync<T>(
     operation: string,
     func: () => T,
     reason?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
 ): T {
     const monitor = PerformanceMonitor.getInstance();
     const operationId = `${operation}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

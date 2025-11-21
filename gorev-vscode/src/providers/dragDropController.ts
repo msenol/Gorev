@@ -6,9 +6,7 @@ import {
     TasksDragData,
     DropTargetType,
     DropTarget,
-    DragDropResult,
-    DragDropConfig,
-    DropZoneVisual
+    DragDropConfig
 } from '../utils/dragDropTypes';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { GroupingStrategy } from '../models/treeModels';
@@ -16,9 +14,19 @@ import { ApiClient } from '../api/client';
 import { Logger } from '../utils/logger';
 
 /**
- * VS Code TreeView için Drag & Drop Controller
+ * Extended tree item interface for type safety with custom properties
  */
-export class DragDropController implements vscode.TreeDragAndDropController<any> {
+interface ExtendedTreeItem extends vscode.TreeItem {
+    task?: Gorev;
+    groupKey?: string;
+    parent?: { groupKey?: string };
+}
+
+/**
+ * VS Code TreeView için Drag & Drop Controller
+ * Uses vscode.TreeItem for compatibility with all tree providers
+ */
+export class DragDropController implements vscode.TreeDragAndDropController<vscode.TreeItem> {
     dropMimeTypes = [DragDataType.Task, DragDataType.Tasks];
     dragMimeTypes = [DragDataType.Task, DragDataType.Tasks];
 
@@ -36,17 +44,18 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
      * Drag başladığında çağrılır
      */
     public async handleDrag(
-        source: readonly any[],
+        source: readonly vscode.TreeItem[],
         dataTransfer: vscode.DataTransfer,
-        token: vscode.CancellationToken
+        _token: vscode.CancellationToken
     ): Promise<void> {
+        const items = source as ExtendedTreeItem[];
         // Tek görev mi yoksa çoklu görev mi?
-        if (source.length === 1 && source[0].task) {
+        if (items.length === 1 && items[0].task) {
             // Tek görev drag
             const dragData: TaskDragData = {
                 type: DragDataType.Task,
-                task: source[0].task,
-                sourceGroupKey: source[0].parent?.groupKey
+                task: items[0].task,
+                sourceGroupKey: items[0].parent?.groupKey
             };
             
             dataTransfer.set(
@@ -55,17 +64,17 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             );
             
             Logger.debug(`Dragging task: ${dragData.task.baslik}`);
-        } else if (source.length > 1) {
+        } else if (items.length > 1) {
             // Çoklu görev drag
-            const tasks = source
-                .filter(item => item.task)
+            const tasks = items
+                .filter((item): item is typeof item & { task: NonNullable<typeof item.task> } => !!item.task)
                 .map(item => item.task);
-            
+
             if (tasks.length > 0) {
                 const dragData: TasksDragData = {
                     type: DragDataType.Tasks,
                     tasks,
-                    sourceGroupKey: source[0].parent?.groupKey
+                    sourceGroupKey: items[0].parent?.groupKey
                 };
                 
                 dataTransfer.set(
@@ -82,12 +91,12 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
      * Drop yapıldığında çağrılır
      */
     public async handleDrop(
-        target: any | undefined,
+        target: vscode.TreeItem | undefined,
         dataTransfer: vscode.DataTransfer,
-        token: vscode.CancellationToken
+        _token: vscode.CancellationToken
     ): Promise<void> {
         // Drop hedefini belirle
-        const dropTarget = this.identifyDropTarget(target);
+        const dropTarget = this.identifyDropTarget(target as ExtendedTreeItem);
         if (!dropTarget) {
             Logger.warn('Invalid drop target');
             return;
@@ -111,7 +120,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
     /**
      * Drop hedefini belirler
      */
-    private identifyDropTarget(target: any): DropTarget | null {
+    private identifyDropTarget(target: ExtendedTreeItem | undefined): DropTarget | null {
         if (!target) {
             // Boş alana drop - parent'ı kaldır (root görev yap)
             return {
@@ -137,7 +146,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
                 case GroupingStrategy.ByProject:
                     return {
                         type: DropTargetType.ProjectGroup,
-                        groupKey: target.groupKey,
+                        groupKey: target.groupKey || '',
                         newProjectId: target.groupKey !== 'no-project' ? target.groupKey : undefined
                     };
                 default:
@@ -162,7 +171,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
     private async handleTaskDrop(
         task: Gorev,
         dropTarget: DropTarget,
-        sourceGroupKey?: string
+        _sourceGroupKey?: string
     ): Promise<void> {
         try {
             switch (dropTarget.type) {
@@ -216,7 +225,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
     private async handleMultipleTasksDrop(
         tasks: Gorev[],
         dropTarget: DropTarget,
-        sourceGroupKey?: string
+        _sourceGroupKey?: string
     ): Promise<void> {
         const operations: Promise<void>[] = [];
 
@@ -402,13 +411,14 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             );
 
             Logger.info(`Task ${task.id} parent changed to ${newParent.id}`);
-        } catch (error: any) {
-            if (error.message?.includes('dairesel bağımlılık')) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage?.includes('dairesel bağımlılık')) {
                 vscode.window.showErrorMessage(t('dragDrop.circularDependency'));
-            } else if (error.message?.includes('aynı projede olmalı')) {
+            } else if (errorMessage?.includes('aynı projede olmalı')) {
                 vscode.window.showErrorMessage(t('dragDrop.sameProjectRequired'));
             } else {
-                vscode.window.showErrorMessage(t('dragDrop.parentChangeFailed', error.message || error));
+                vscode.window.showErrorMessage(t('dragDrop.parentChangeFailed', errorMessage));
             }
             throw error;
         }
@@ -426,8 +436,9 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
             );
 
             Logger.info(`Task ${task.id} parent removed, now a root task`);
-        } catch (error: any) {
-            vscode.window.showErrorMessage(t('dragDrop.parentRemoveFailed', error.message || error));
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(t('dragDrop.parentRemoveFailed', errorMessage));
             throw error;
         }
     }
@@ -512,7 +523,7 @@ export class DragDropController implements vscode.TreeDragAndDropController<any>
     /**
      * Drop yapılabilir mi kontrolü
      */
-    public canDrop(target: any, dataTransfer: vscode.DataTransfer): boolean {
+    public canDrop(target: vscode.TreeItem, dataTransfer: vscode.DataTransfer): boolean {
         // Basit kontroller
         const hasTaskData = dataTransfer.get(DragDataType.Task) !== undefined;
         const hasTasksData = dataTransfer.get(DragDataType.Tasks) !== undefined;

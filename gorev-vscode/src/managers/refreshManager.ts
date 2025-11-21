@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { debounceRefresh, DebouncedFunction } from '../utils/debounce';
-import { performanceMonitor, measureAsync } from '../utils/performance';
+import { measureAsync } from '../utils/performance';
 import { Logger } from '../utils/logger';
 
 export enum RefreshReason {
@@ -36,7 +36,7 @@ export interface RefreshRequest {
     priority: RefreshPriority;
     targets: RefreshTarget[];
     timestamp: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export enum RefreshTarget {
@@ -135,7 +135,7 @@ export class RefreshManager {
             this.config.maxBatchSize = config.get('maxBatchSize', 10);
             this.config.enableBatching = config.get('enableBatching', true);
             this.config.enableDeduplication = config.get('enableDeduplication', true);
-        } catch (error) {
+        } catch {
             Logger.warn('[RefreshManager] Failed to load configuration, using defaults');
         }
     }
@@ -148,7 +148,10 @@ export class RefreshManager {
             if (!this.providers.has(target)) {
                 this.providers.set(target, []);
             }
-            this.providers.get(target)!.push(provider);
+            const providers = this.providers.get(target);
+            if (providers) {
+                providers.push(provider);
+            }
         }
         // Logger.debug(`[RefreshManager] Registered provider '${provider.getName()}' for targets: ${targets.join(', ')}`); // Reduced logging
     }
@@ -176,7 +179,7 @@ export class RefreshManager {
         reason: RefreshReason,
         targets: RefreshTarget[] = [RefreshTarget.ALL],
         priority: RefreshPriority = RefreshPriority.NORMAL,
-        metadata?: Record<string, any>
+        metadata?: Record<string, unknown>
     ): Promise<void> {
         const request: RefreshRequest = {
             id: this.generateRequestId(),
@@ -211,7 +214,7 @@ export class RefreshManager {
     async requestImmediateRefresh(
         reason: RefreshReason,
         targets: RefreshTarget[] = [RefreshTarget.ALL],
-        metadata?: Record<string, any>
+        metadata?: Record<string, unknown>
     ): Promise<void> {
         const request: RefreshRequest = {
             id: this.generateRequestId(),
@@ -421,7 +424,7 @@ export class RefreshManager {
                 // If provider has a cache clearing method, call it
                 if ('clearCache' in provider && typeof provider.clearCache === 'function') {
                     try {
-                        (provider as any).clearCache();
+                        (provider as unknown as { clearCache: () => void }).clearCache();
                         Logger.debug('[RefreshManager] Provider cache cleared successfully');
                     } catch (error) {
                         Logger.warn('[RefreshManager] Failed to clear provider cache:', error);

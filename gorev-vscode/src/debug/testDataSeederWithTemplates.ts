@@ -541,7 +541,7 @@ export class TestDataSeederWithTemplates {
                 Logger.info('Set active task for AI context');
 
                 // Context summary al
-                const contextSummary = await this.apiClient.callTool('gorev_context_summary', {});
+                await this.apiClient.callTool('gorev_context_summary', {});
                 Logger.info('Generated AI context summary');
             } catch (error) {
                 Logger.error('Failed to setup AI context:', error);

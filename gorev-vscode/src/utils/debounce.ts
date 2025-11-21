@@ -9,6 +9,7 @@ export interface DebounceOptions {
     maxWait?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface DebouncedFunction<T extends (...args: any[]) => any> {
     (...args: Parameters<T>): Promise<ReturnType<T>>;
     cancel(): void;
@@ -21,6 +22,7 @@ export interface DebouncedFunction<T extends (...args: any[]) => any> {
  * @param func Function to debounce
  * @param options Debounce configuration
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
     func: T,
     options: DebounceOptions = {}
@@ -36,7 +38,7 @@ export function debounce<T extends (...args: any[]) => any>(
 
     // Promise tracking for async support
     let resolvePromise: ((value: ReturnType<T>) => void) | undefined;
-    let rejectPromise: ((reason: any) => void) | undefined;
+    let rejectPromise: ((reason: unknown) => void) | undefined;
     let activePromise: Promise<ReturnType<T>> | undefined;
 
     function shouldInvoke(time: number): boolean {
@@ -47,14 +49,14 @@ export function debounce<T extends (...args: any[]) => any>(
     }
 
     function invokeFunc(): ReturnType<T> {
-        const args = lastArgs!;
+        const args = lastArgs || ([] as unknown as Parameters<T>);
         lastArgs = undefined;
         isInvoking = true;
 
         try {
             result = func.apply(null, args) as ReturnType<T>;
             isInvoking = false;
-            return result!;
+            return result as ReturnType<T>;
         } catch (error) {
             isInvoking = false;
             throw error;
@@ -76,7 +78,7 @@ export function debounce<T extends (...args: any[]) => any>(
         if (shouldInvoke(time)) {
             trailingEdge();
         } else {
-            timeoutId = setTimeout(timerExpired, delay - (time - lastCallTime!));
+            timeoutId = setTimeout(timerExpired, delay - (time - (lastCallTime || 0)));
         }
     }
 
@@ -137,11 +139,7 @@ export function debounce<T extends (...args: any[]) => any>(
             timeoutId = undefined;
 
             if (lastArgs) {
-                try {
-                    return invokeFunc();
-                } catch (error) {
-                    throw error;
-                }
+                return invokeFunc();
             }
         }
         return result;
@@ -198,7 +196,8 @@ export function debounce<T extends (...args: any[]) => any>(
             timeoutId = setTimeout(timerExpired, delay);
         }
 
-        return activePromise!;
+        // activePromise is always set at line 165, safe to assert
+        return activePromise as Promise<ReturnType<T>>;
     }
 
     debounced.cancel = cancel;
@@ -212,6 +211,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * Specialized debounce for refresh operations
  * Optimized for tree view refreshes with sensible defaults
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounceRefresh<T extends (...args: any[]) => any>(
     func: T,
     delay = 500
@@ -227,6 +227,7 @@ export function debounceRefresh<T extends (...args: any[]) => any>(
  * Specialized debounce for configuration changes
  * Uses immediate execution to provide responsive UI feedback
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounceConfig<T extends (...args: any[]) => any>(
     func: T,
     delay = 100

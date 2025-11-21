@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ApiClient } from '../api/client';
 import { GorevDurum, GorevOncelik } from '../models/common';
-import { TaskFilter, SortingCriteria } from '../models/treeModels';
+import { TaskFilter } from '../models/treeModels';
 import { Logger } from '../utils/logger';
 import { t } from '../utils/l10n';
 

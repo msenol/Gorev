@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { EventEmitter } from 'events';
 import { Logger } from '../utils/logger';
-import * as vscode from 'vscode';
 import {
   WorkspaceContext,
   WorkspaceInfo,
@@ -10,11 +9,18 @@ import {
   WorkspaceListResponse
 } from '../models/workspace';
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   success: boolean;
   message?: string;
   total?: number;
+}
+
+export interface MCPToolResult {
+  content: {
+    type: string;
+    text: string;
+  }[];
 }
 
 export interface Task {
@@ -28,7 +34,7 @@ export interface Task {
   son_tarih?: string;
   proje_id?: string;
   proje_name?: string;
-  etiketler?: Array<{ id: string; isim: string }>;
+  etiketler?: { id: string; isim: string }[];
   // Hierarchy fields
   parent_id?: string;
   alt_gorevler?: Task[];
@@ -153,12 +159,12 @@ export class ApiError extends Error {
 }
 
 export class ApiClient extends EventEmitter {
-  private axiosInstance: any;
+  private axiosInstance: ReturnType<typeof axios.create>;
   private connected = false;
   private baseURL: string;
   private workspaceContext: WorkspaceContext | undefined;
 
-  constructor(baseURL: string = 'http://localhost:5082') {
+  constructor(baseURL = 'http://localhost:5082') {
     super();
     this.baseURL = baseURL;
 
@@ -180,7 +186,8 @@ export class ApiClient extends EventEmitter {
   async connect(): Promise<void> {
     try {
       const response = await this.axiosInstance.get('/health');
-      this.connected = response.data && response.data.status === 'ok';
+      const healthData = response.data as { status: string };
+      this.connected = healthData && healthData.status === 'ok';
       if (this.connected) {
         this.emit('connected');
         Logger.info('[ApiClient] Connected to API server');
@@ -201,6 +208,7 @@ export class ApiClient extends EventEmitter {
   private setupInterceptors(): void {
     // Request interceptor for logging and workspace header injection
     this.axiosInstance.interceptors.request.use(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (config: any) => {
         // Inject workspace headers if context is set
         if (this.workspaceContext) {
@@ -212,6 +220,7 @@ export class ApiClient extends EventEmitter {
         Logger.debug(`[ApiClient] Request: ${config.method?.toUpperCase()} ${config.url}`, config.data);
         return config;
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (error: any) => {
         Logger.error('[ApiClient] Request Error:', error);
         return Promise.reject(error);
@@ -220,16 +229,20 @@ export class ApiClient extends EventEmitter {
 
     // Response interceptor for logging and error handling
     this.axiosInstance.interceptors.response.use(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (response: any) => {
         Logger.debug(`[ApiClient] Response: ${response.status} ${response.config.url}`, response.data);
         return response;
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (error: any) => {
         // Convert axios error to ApiError
         if (error.response) {
           const statusCode = error.response.status;
           const endpoint = error.config?.url || 'unknown';
-          const errorMessage = error.response.data?.error || error.response.data?.message || error.message;
+          const errorMessage = (error.response.data as { error?: string; message?: string })?.error ||
+                               (error.response.data as { error?: string; message?: string })?.message ||
+                               error.message;
 
           Logger.error(`[ApiClient] API Error ${statusCode} at ${endpoint}:`, errorMessage);
 
@@ -245,9 +258,9 @@ export class ApiClient extends EventEmitter {
   }
 
   // Health check
-  async checkHealth(): Promise<any> {
+  async checkHealth(): Promise<{ status: string }> {
     const response = await this.axiosInstance.get('/health');
-    return response.data;
+    return response.data as { status: string };
   }
 
   // Tasks API
@@ -265,43 +278,43 @@ export class ApiClient extends EventEmitter {
     if (filters?.tum_projeler) params.append('tum_projeler', 'true');
 
     const response = await this.axiosInstance.get(`/tasks?${params.toString()}`);
-    return response.data;
+    return response.data as ApiResponse<Task[]>;
   }
 
   async getTask(id: string): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.get(`/tasks/${id}`);
-    return response.data;
+    return response.data as ApiResponse<Task>;
   }
 
   async createTaskFromTemplate(request: CreateTaskFromTemplateRequest): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.post('/tasks/from-template', request);
-    return response.data;
+    return response.data as ApiResponse<Task>;
   }
 
   async updateTask(id: string, updates: Partial<Task>): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.put(`/tasks/${id}`, updates);
-    return response.data;
+    return response.data as ApiResponse<Task>;
   }
 
   async deleteTask(id: string): Promise<ApiResponse<void>> {
     const response = await this.axiosInstance.delete(`/tasks/${id}`);
-    return response.data;
+    return response.data as ApiResponse<void>;
   }
 
   // Projects API
   async getProjects(): Promise<ApiResponse<Project[]>> {
     const response = await this.axiosInstance.get('/projects');
-    return response.data;
+    return response.data as ApiResponse<Project[]>;
   }
 
   async getProject(id: string): Promise<ApiResponse<Project>> {
     const response = await this.axiosInstance.get(`/projects/${id}`);
-    return response.data;
+    return response.data as ApiResponse<Project>;
   }
 
   async createProject(project: { isim: string; tanim?: string }): Promise<ApiResponse<Project>> {
     const response = await this.axiosInstance.post('/projects', project);
-    return response.data;
+    return response.data as ApiResponse<Project>;
   }
 
   async getProjectTasks(projectId: string, filters?: TaskFilter): Promise<ApiResponse<Task[]>> {
@@ -311,99 +324,110 @@ export class ApiClient extends EventEmitter {
     if (filters?.oncelik) params.append('oncelik', filters.oncelik);
 
     const response = await this.axiosInstance.get(`/projects/${projectId}/tasks?${params.toString()}`);
-    return response.data;
+    return response.data as ApiResponse<Task[]>;
   }
 
   async activateProject(id: string): Promise<ApiResponse<Project>> {
     const response = await this.axiosInstance.put(`/projects/${id}/activate`);
-    return response.data;
+    return response.data as ApiResponse<Project>;
   }
 
   // Templates API
   async getTemplates(kategori?: string): Promise<ApiResponse<Template[]>> {
     const params = kategori ? `?kategori=${encodeURIComponent(kategori)}` : '';
     const response = await this.axiosInstance.get(`/templates${params}`);
-    return response.data;
+    return response.data as ApiResponse<Template[]>;
   }
 
   // Summary API
-  async getSummary(): Promise<any> {
+  async getSummary(): Promise<ApiResponse<{
+    projects: number;
+    tasks: number;
+    templates: number;
+  }>> {
     const response = await this.axiosInstance.get('/summary');
-    return response.data;
+    return response.data as ApiResponse<{ projects: number; tasks: number; templates: number; }>;
   }
 
   // Export/Import API
-  async exportData(request: ExportRequest): Promise<ApiResponse<any>> {
+  async exportData(request: ExportRequest): Promise<ApiResponse<{
+    file_path: string;
+    exported_count: number;
+  }>> {
     const response = await this.axiosInstance.post('/export', request);
-    return response.data;
+    return response.data as ApiResponse<{ file_path: string; exported_count: number; }>;
   }
 
-  async importData(request: ImportRequest): Promise<ApiResponse<any>> {
+  async importData(request: ImportRequest): Promise<ApiResponse<{
+    imported_count: number;
+    skipped_count: number;
+    errors: string[];
+  }>> {
     const response = await this.axiosInstance.post('/import', request);
-    return response.data;
+    return response.data as ApiResponse<{ imported_count: number; skipped_count: number; errors: string[]; }>;
   }
 
   // Subtask API
   async createSubtask(parentId: string, data: SubtaskData): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.post(`/tasks/${parentId}/subtasks`, data);
-    return response.data;
+    return response.data as ApiResponse<Task>;
   }
 
   async changeParent(taskId: string, newParentId: string): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.put(`/tasks/${taskId}/parent`, {
       new_parent_id: newParentId
     });
-    return response.data;
+    return response.data as ApiResponse<Task>;
   }
 
   async getHierarchy(taskId: string): Promise<ApiResponse<TaskHierarchy>> {
     const response = await this.axiosInstance.get(`/tasks/${taskId}/hierarchy`);
-    return response.data;
+    return response.data as ApiResponse<TaskHierarchy>;
   }
 
   // Dependency API
   async addDependency(targetId: string, dependency: DependencyRequest): Promise<ApiResponse<void>> {
     const response = await this.axiosInstance.post(`/tasks/${targetId}/dependencies`, dependency);
-    return response.data;
+    return response.data as ApiResponse<void>;
   }
 
   async removeDependency(targetId: string, sourceId: string): Promise<ApiResponse<void>> {
     const response = await this.axiosInstance.delete(`/tasks/${targetId}/dependencies/${sourceId}`);
-    return response.data;
+    return response.data as ApiResponse<void>;
   }
 
   // Active Project API
   async getActiveProject(): Promise<ApiResponse<Project | null>> {
     const response = await this.axiosInstance.get('/active-project');
-    return response.data;
+    return response.data as ApiResponse<Project | null>;
   }
 
   async removeActiveProject(): Promise<ApiResponse<void>> {
     const response = await this.axiosInstance.delete('/active-project');
-    return response.data;
+    return response.data as ApiResponse<void>;
   }
 
   // Language API
   async getLanguage(): Promise<{ success: boolean; language: string }> {
     const response = await this.axiosInstance.get('/language');
-    return response.data;
+    return response.data as { success: boolean; language: string };
   }
 
   async setLanguage(language: 'tr' | 'en'): Promise<{ success: boolean; language: string; message: string }> {
     const response = await this.axiosInstance.post('/language', { language });
-    return response.data;
+    return response.data as { success: boolean; language: string; message: string };
   }
 
   // Convert API responses to MCP-like format for compatibility
-  async callTool(name: string, params?: any): Promise<any> {
+  async callTool(name: string, params?: Record<string, unknown>): Promise<MCPToolResult> {
     Logger.info(`[ApiClient] Calling tool: ${name} with params:`, params);
 
     try {
-      let result: any;
+      let result: ApiResponse<unknown>;
 
       switch (name) {
         case 'gorev_listele':
-          result = await this.getTasks(params);
+          result = await this.getTasks(params as TaskFilter | undefined);
           return this.convertToMCPFormat(result);
 
         case 'proje_listele':
@@ -411,27 +435,30 @@ export class ApiClient extends EventEmitter {
           return this.convertToMCPFormat(result);
 
         case 'template_listele':
-          result = await this.getTemplates(params?.kategori);
+          result = await this.getTemplates(params?.kategori as string | undefined);
           return this.convertToMCPFormat(result);
 
         case 'templateden_gorev_olustur':
-          result = await this.createTaskFromTemplate(params);
+          result = await this.createTaskFromTemplate(params as unknown as CreateTaskFromTemplateRequest);
           return this.convertToMCPFormat(result);
 
         case 'gorev_guncelle':
-          result = await this.updateTask(params.id, { durum: params.durum });
+          result = await this.updateTask(
+            (params as { id: string }).id,
+            { durum: (params as { durum: 'beklemede' | 'devam_ediyor' | 'tamamlandi' }).durum }
+          );
           return this.convertToMCPFormat(result);
 
         case 'gorev_sil':
-          result = await this.deleteTask(params.id);
+          result = await this.deleteTask((params as { id: string }).id);
           return this.convertToMCPFormat(result);
 
         case 'proje_olustur':
-          result = await this.createProject(params);
+          result = await this.createProject(params as { isim: string; tanim?: string });
           return this.convertToMCPFormat(result);
 
         case 'aktif_proje_ayarla':
-          result = await this.activateProject(params.proje_id);
+          result = await this.activateProject((params as { proje_id: string }).proje_id);
           return this.convertToMCPFormat(result);
 
         case 'ozet_goster':
@@ -439,11 +466,11 @@ export class ApiClient extends EventEmitter {
           return this.convertToMCPFormat(result);
 
         case 'gorev_export':
-          result = await this.exportData(params);
+          result = await this.exportData(params as unknown as ExportRequest);
           return this.convertToMCPFormat(result);
 
         case 'gorev_import':
-          result = await this.importData(params);
+          result = await this.importData(params as unknown as ImportRequest);
           return this.convertToMCPFormat(result);
 
         default:
@@ -455,7 +482,7 @@ export class ApiClient extends EventEmitter {
     }
   }
 
-  private convertToMCPFormat(apiResponse: ApiResponse): any {
+  private convertToMCPFormat(apiResponse: ApiResponse<unknown>): MCPToolResult {
     // Convert API response to MCP tool result format
     if (apiResponse.success) {
       return {
@@ -471,7 +498,7 @@ export class ApiClient extends EventEmitter {
     }
   }
 
-  private formatDataAsText(data: any): string {
+  private formatDataAsText(data: unknown): string {
     if (Array.isArray(data)) {
       if (data.length === 0) {
         return 'No data found.';
@@ -523,7 +550,7 @@ export class ApiClient extends EventEmitter {
    */
   async registerWorkspace(registration: WorkspaceRegistration): Promise<WorkspaceRegistrationResponse> {
     const response = await this.axiosInstance.post('/workspaces/register', registration);
-    return response.data;
+    return response.data as WorkspaceRegistrationResponse;
   }
 
   /**
@@ -531,7 +558,7 @@ export class ApiClient extends EventEmitter {
    */
   async listWorkspaces(): Promise<WorkspaceListResponse> {
     const response = await this.axiosInstance.get('/workspaces');
-    return response.data;
+    return response.data as WorkspaceListResponse;
   }
 
   /**
@@ -539,7 +566,7 @@ export class ApiClient extends EventEmitter {
    */
   async getWorkspace(workspaceId: string): Promise<ApiResponse<WorkspaceInfo>> {
     const response = await this.axiosInstance.get(`/workspaces/${workspaceId}`);
-    return response.data;
+    return response.data as ApiResponse<WorkspaceInfo>;
   }
 
   /**
@@ -547,7 +574,7 @@ export class ApiClient extends EventEmitter {
    */
   async unregisterWorkspace(workspaceId: string): Promise<ApiResponse<void>> {
     const response = await this.axiosInstance.delete(`/workspaces/${workspaceId}`);
-    return response.data;
+    return response.data as ApiResponse<void>;
   }
 
   // Formatting helpers

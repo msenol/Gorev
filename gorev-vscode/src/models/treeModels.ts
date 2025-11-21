@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { Gorev, GorevDurum, GorevOncelik } from './gorev';
-import { Proje } from './proje';
 
 /**
  * Gruplama stratejileri
@@ -170,7 +169,10 @@ export class TreeViewUtils {
             if (!groups.has(groupKey)) {
                 groups.set(groupKey, []);
             }
-            groups.get(groupKey)!.push(task);
+            const group = groups.get(groupKey);
+            if (group) {
+                group.push(task);
+            }
         });
 
         return groups;
@@ -305,7 +307,8 @@ export class TreeViewUtils {
 
             // Etiket filtresi
             if (filter.tags && filter.tags.length > 0) {
-                if (!task.etiketler || !task.etiketler.some(tag => filter.tags!.includes(tag.isim))) return false;
+                const filterTags = filter.tags;
+                if (!task.etiketler || !task.etiketler.some(tag => filterTags.includes(tag.isim))) return false;
             }
 
             // Son tarih aralığı

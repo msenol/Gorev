@@ -16,9 +16,10 @@ export function registerEnhancedGorevCommands(
 
   // Select Task Command
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.SELECT_TASK, (taskId: string, event?: any) => {
-      const multiSelect = event?.ctrlKey || event?.metaKey || false;
-      const rangeSelect = event?.shiftKey || false;
+    vscode.commands.registerCommand(COMMANDS.SELECT_TASK, (taskId: string, event?: unknown) => {
+      const evt = event as { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } | undefined;
+      const multiSelect = evt?.ctrlKey || evt?.metaKey || false;
+      const rangeSelect = evt?.shiftKey || false;
       treeProvider.selectTask(taskId, multiSelect, rangeSelect);
     })
   );
@@ -100,7 +101,7 @@ export function registerEnhancedGorevCommands(
       const filter: Partial<TaskFilter> = {};
 
       switch (action.value) {
-        case 'search':
+        case 'search': {
           const query = await vscode.window.showInputBox({
             prompt: t('filter.searchPrompt'),
             placeHolder: t('filter.searchPlaceholder'),
@@ -109,8 +110,9 @@ export function registerEnhancedGorevCommands(
             filter.searchQuery = query;
           }
           break;
+        }
 
-        case 'status':
+        case 'status': {
           const statuses = await vscode.window.showQuickPick(
             [
               { label: t('status.pending'), value: GorevDurum.Beklemede, picked: true },
@@ -127,8 +129,9 @@ export function registerEnhancedGorevCommands(
             filter.durum = statuses[0].value;
           }
           break;
+        }
 
-        case 'priority':
+        case 'priority': {
           const priorities = await vscode.window.showQuickPick(
             [
               { label: t('priority.high'), value: GorevOncelik.Yuksek },
@@ -145,8 +148,9 @@ export function registerEnhancedGorevCommands(
             filter.oncelik = priorities[0].value;
           }
           break;
+        }
 
-        case 'tag':
+        case 'tag': {
           const tag = await vscode.window.showInputBox({
             prompt: t('filter.tagPrompt'),
             placeHolder: t('filter.tagPlaceholder'),
@@ -155,8 +159,9 @@ export function registerEnhancedGorevCommands(
             filter.tags = [tag];
           }
           break;
+        }
 
-        case 'dueDate':
+        case 'dueDate': {
           const dateFilter = await vscode.window.showQuickPick(
             [
               { label: t('filter.overdueTasks'), value: 'overdue' },
@@ -184,16 +189,18 @@ export function registerEnhancedGorevCommands(
               case 'today':
                 filter.dueDateRange = { start: today, end: tomorrow };
                 break;
-              case 'week':
+              case 'week': {
                 const nextWeek = new Date(today);
                 nextWeek.setDate(nextWeek.getDate() + 7);
                 filter.dueDateRange = { start: today, end: nextWeek };
                 break;
-              case 'month':
+              }
+              case 'month': {
                 const nextMonth = new Date(today);
                 nextMonth.setMonth(nextMonth.getMonth() + 1);
                 filter.dueDateRange = { start: today, end: nextMonth };
                 break;
+              }
               case 'hasDue':
                 // Will be handled by checking if son_tarih exists
                 break;
@@ -203,8 +210,9 @@ export function registerEnhancedGorevCommands(
             }
           }
           break;
+        }
 
-        case 'quick':
+        case 'quick': {
           const quickFilter = await vscode.window.showQuickPick(
             [
               { label: t('filter.highPriority'), value: 'highPriority' },
@@ -226,12 +234,13 @@ export function registerEnhancedGorevCommands(
               case 'overdue':
                 filter.overdue = true;
                 break;
-              case 'today':
+              case 'today': {
                 const today = new Date();
                 const tomorrow = new Date(today);
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 filter.dueDateRange = { start: today, end: tomorrow };
                 break;
+              }
               case 'inProgress':
                 filter.durum = GorevDurum.DevamEdiyor;
                 break;
@@ -243,6 +252,7 @@ export function registerEnhancedGorevCommands(
             }
           }
           break;
+        }
       }
 
       treeProvider.updateFilter(filter);

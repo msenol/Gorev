@@ -23,27 +23,26 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
   }
 
   async getChildren(element?: ProjeTreeItem): Promise<ProjeTreeItem[]> {
-    console.log('[ProjeTreeProvider] getChildren called with element:', element);
-    
+    Logger.debug(`[ProjeTreeProvider] getChildren called with element: ${element?.label}`);
+
     if (!this.apiClient.isConnected()) {
-      console.log('[ProjeTreeProvider] MCP client not connected');
+      Logger.debug('[ProjeTreeProvider] MCP client not connected');
       return [];
     }
 
     if (!element) {
       // Root level - return all projects
-      console.log('[ProjeTreeProvider] Loading root projects...');
+      Logger.debug('[ProjeTreeProvider] Loading root projects...');
       try {
         await this.loadProjects();
         await this.loadActiveProject();
         const items = this.projects.map((project) => 
           new ProjeTreeItem(project, project.id === this.activeProjectId)
         );
-        console.log('[ProjeTreeProvider] Returning', items.length, 'project items');
+        Logger.debug(`[ProjeTreeProvider] Returning ${items.length} project items`);
         return items;
       } catch (error) {
         Logger.error('Failed to load projects:', error);
-        console.error('[ProjeTreeProvider] Error loading projects:', error);
         return [];
       }
     }
@@ -139,7 +138,7 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
 export class ProjeTreeItem extends vscode.TreeItem {
   constructor(
     public readonly project: Proje,
-    public readonly isActive: boolean = false,
+    public readonly isActive = false,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.None
   ) {
     super(project.isim, collapsibleState);
