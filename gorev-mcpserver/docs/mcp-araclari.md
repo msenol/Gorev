@@ -680,7 +680,7 @@ Gelişmiş arama ve NLP sorguları (action tabanlı birleşik araç).
 
 **v0.16.3'te Yenilikler:**
 
-- Gelişmiş mod artık sorgu dizelerini `"durum:X oncelik:Y"` formatında filtrelere ayrıştırıyor
+- Gelişmiş mod artık sorgu dizelerini `"status:X priority:Y"` formatında filtrelere ayrıştırıyor
 - Boşlukla ayrılmış key:value çiftleri otomatik olarak çıkarılıyor
 - Mevcut filtre parametresiyle sorunsuz çalışıyor
 
@@ -707,9 +707,9 @@ FTS5 tam metin arama + gelişmiş filtreler.
 // Sorgu dizesindeki key:value çiftleri otomatik olarak filtrelere dönüştürülür
 {
   "action": "advanced",
-  "query": "durum:devam_ediyor oncelik:yuksek API dokümantasyonu"
+  "query": "status:devam_ediyor priority:yuksek API dokümantasyonu"
 }
-// İç ayrıştırma: durum ve oncelik filtrelere çıkarılır, "API dokümantasyonu" FTS5 aramasında kullanılır
+// İç ayrıştırma: status ve priority filtrelere çıkarılır, "API dokümantasyonu" FTS5 aramasında kullanılır
 ```
 
 **Manuel Filtreler:**
@@ -855,7 +855,7 @@ Görevleri içe aktarır.
 ```json
 {
   "format": "json",
-  "data": "[{\"baslik\":\"Yeni görev\",\"oncelik\":\"yuksek\"}]",
+  "data": "[{\"title\":\"New Task\",\"priority\":\"high\"}]",
   "proje_id": "xyz78901"
 }
 ```
@@ -954,7 +954,7 @@ Doğal dil sorgularını işler ve çalıştırır.
    - Test sonucu: %100 başarı (durum ✓, öncelik ✓, her ikisi ✓)
 
 3. **gorev_search** ⭐ - Sorgu ayrıştırma geliştirildi
-   - Gelişmiş mod artık `"durum:X oncelik:Y"` gibi sorguları ayrıştırıyor
+   - Gelişmiş mod artık `"status:X priority:Y"` gibi sorguları ayrıştırıyor
    - `parseQueryFilters()` yardımcı fonksiyonu eklendi
    - Boşlukla ayrılmış key:value çiftleri otomatik olarak çıkarılıyor
    - Test sonucu: %100 başarı (tek filtre 8 sonuç, çoklu filtre 4 sonuç, etiket 21 sonuç)
