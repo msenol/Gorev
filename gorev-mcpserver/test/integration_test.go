@@ -7,6 +7,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/gorev"
+	"github.com/msenol/gorev/internal/i18n"
 	mcphandlers "github.com/msenol/gorev/internal/mcp"
 	testinghelpers "github.com/msenol/gorev/internal/testing"
 	"github.com/stretchr/testify/assert"
@@ -87,11 +88,11 @@ func TestGorevOlusturVeListele(t *testing.T) {
 		constants.ParamValues: map[string]interface{}{
 			"title":       "Test Bug Görevi",
 			"description": "Bu bir test bug raporu",
-			"modul":       "test-integration",
-			"ortam":       "development",
-			"adimlar":     "1. Test çalıştır",
-			"beklenen":    "Başarı",
-			"mevcut":      "Hata",
+			"module":      "test-integration",
+			"environment": "development",
+			"steps":       "1. Test çalıştır",
+			"expected":    "Başarı",
+			"actual":      "Hata",
 			"priority":    "yuksek",
 		},
 	}
@@ -168,7 +169,7 @@ func TestProjeOlustur(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
 	text := extractText(t, result)
-	assert.Contains(t, text, "✓ Proje oluşturuldu")
+	assert.Contains(t, text, "✓ proje oluşturuldu")
 	assert.Contains(t, text, "Test Projesi")
 }
 
@@ -253,11 +254,11 @@ func TestHataYonetimi(t *testing.T) {
 		constants.ParamValues: map[string]interface{}{
 			"title":       "Integration Test Bug",
 			"description": "Template ile oluşturulan test bug raporu",
-			"modul":       "integration-test",
-			"ortam":       "development",
-			"adimlar":     "1. Test çalıştır 2. Hatayı gözle",
-			"beklenen":    "Test başarılı olması",
-			"mevcut":      "Test hata verdi",
+			"module":      "integration-test",
+			"environment": "development",
+			"steps":       "1. Test çalıştır 2. Hatayı gözle",
+			"expected":    "Test başarılı olması",
+			"actual":      "Test hata verdi",
 			"priority":    "orta",
 		},
 	}
@@ -351,7 +352,8 @@ func TestGorevDuzenle(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
 	text := extractText(t, result)
-	assert.Contains(t, text, "✓ Görev düzenlendi")
+	assert.Contains(t, text, "✓ görev düzenlendi")
+	assert.Contains(t, text, "Yeni Başlık")
 
 	// Değişiklikleri doğrula
 	guncelGorev, err := isYonetici.GorevGetir(context.Background(), gorevObj.ID)
@@ -384,7 +386,9 @@ func TestGorevSil(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, result.IsError)
 	text := extractText(t, result)
-	assert.Contains(t, text, "onay' parametresi true olmalıdır")
+	t.Logf("Error message: %s", text)
+	t.Logf("i18n initialized: %v", i18n.IsInitialized())
+	assert.Contains(t, text, "görevi silmek için")
 
 	// Onaylı silme
 	params["onay"] = true
@@ -392,7 +396,8 @@ func TestGorevSil(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
 	text = extractText(t, result)
-	assert.Contains(t, text, "✓ Görev silindi: Silinecek Görev")
+	assert.Contains(t, text, "✓ görev silindi")
+	assert.Contains(t, text, "Silinecek Görev")
 
 	// Silinen görevi arama
 	_, err = isYonetici.GorevGetir(context.Background(), gorevObj.ID)
@@ -515,9 +520,9 @@ func TestGorevBagimlilikEkle(t *testing.T) {
 
 	// Bağımlılık ekle
 	params := map[string]interface{}{
-		"kaynak_id":     gorev1.ID,
-		"hedef_id":      gorev2.ID,
-		"baglanti_tipi": "engelliyor",
+		"source_id":       gorev1.ID,
+		"target_id":       gorev2.ID,
+		"connection_type": "engelliyor",
 	}
 
 	result, err := handlers.GorevBagimlilikEkle(params)

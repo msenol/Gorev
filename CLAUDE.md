@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** November 5, 2025 | **Version:** v0.17.0
+**Last Updated:** November 8, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -17,6 +17,22 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 - **Template Placeholders**: `{{baslik}}` → `{{title}}`, `{{aciklama}}` → `{{description}}`
 - **Backward Compatibility**: Domain terms (`gorevler`, `projeler`) remain Turkish
 - See `docs/MIGRATION_GUIDE_v0.17.md` for upgrade instructions
+
+**Recent Updates (November 2025):**
+
+- **i18n Phase 3 Complete** - Context-aware language propagation system
+  - Environment variable `GOREV_LANG` now properly propagates through all layers (CLI, MCP, API)
+  - Per-request language selection for MCP handlers with fallback hierarchy
+  - Fixed: CLI template commands not respecting `GOREV_LANG` environment variable
+  - Enhanced i18n helper functions with improved error handling
+  - Files: `internal/i18n/manager.go`, `internal/i18n/helpers.go`, `internal/mcp/handlers.go`
+
+- **VS Code Extension: Rule 15 Compliance Achieved**
+  - Eliminated all 242 ESLint warnings → 0 warnings (100% clean)
+  - Fixed: `no-explicit-any` (179 instances), `no-non-null-assertion` (48), `array-type` (10), `no-useless-catch` (5)
+  - Maintained 100% test pass rate throughout cleanup (104/104 tests)
+  - Zero technical debt in TypeScript codebase
+  - Files: 13 files refactored including `ui/taskDetailPanel.ts`, `providers/*.ts`, `commands/*.ts`
 
 **Previous (v0.16.3 - October 6, 2025):**
 

@@ -222,7 +222,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(ctx context.Context, templateID 
 
 	// Etiketleri ayır
 	var etiketler []string
-	if val, ok := degerler["etiketler"]; ok {
+	if val, ok := degerler["tags"]; ok {
 		etiketler = strings.Split(val, ",")
 		for i := range etiketler {
 			etiketler[i] = strings.TrimSpace(etiketler[i])
@@ -238,7 +238,7 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(ctx context.Context, templateID 
 	}
 
 	// ProjeID'yi ayarla
-	if val, ok := degerler["proje_id"]; ok && val != "" {
+	if val, ok := degerler["project_id"]; ok && val != "" {
 		gorev.ProjeID = val
 	} else {
 		// Aktif projeyi kullan
@@ -289,43 +289,43 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 			Name:         "Bug Raporu",
 			Definition:   "Yazılım hatası bildirimi için detaylı template",
 			Alias:        "bug",
-			DefaultTitle: "🐛 [{{modul}}] {{title}}",
+			DefaultTitle: "🐛 [{{module}}] {{title}}",
 			DescriptionTemplate: `## 🐛 Hata Açıklaması
 {{description}}
 
 ## 📍 Nerede Oluşuyor?
-**Modül/Bileşen:** {{modul}}
-**Ortam:** {{ortam}}
+**Modül/Bileşen:** {{module}}
+**Ortam:** {{environment}}
 
 ## 🔄 Tekrar Üretme Adımları
-{{adimlar}}
+{{steps}}
 
 ## ✅ Beklenen Davranış
-{{beklenen}}
+{{expected}}
 
 ## ❌ Mevcut Davranış
-{{mevcut}}
+{{actual}}
 
 ## 📸 Ekran Görüntüleri/Loglar
-{{ekler}}
+{{attachments}}
 
 ## 🔧 Olası Çözüm
-{{cozum}}
+{{solution}}
 
 ## 📊 Öncelik: {{priority}}
-## 🏷️ Etiketler: {{etiketler}}`,
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
 				{Name: "title", Type: "text", Required: true},
 				{Name: "description", Type: "text", Required: true},
-				{Name: "modul", Type: "text", Required: true},
-				{Name: "ortam", Type: "select", Required: true, Options: constants.ValidEnvironments},
-				{Name: "adimlar", Type: "text", Required: true},
-				{Name: "beklenen", Type: "text", Required: true},
-				{Name: "mevcut", Type: "text", Required: true},
-				{Name: "ekler", Type: "text", Required: false},
-				{Name: "cozum", Type: "text", Required: false},
+				{Name: "module", Type: "text", Required: true},
+				{Name: "environment", Type: "select", Required: true, Options: constants.ValidEnvironments},
+				{Name: "steps", Type: "text", Required: true},
+				{Name: "expected", Type: "text", Required: true},
+				{Name: "actual", Type: "text", Required: true},
+				{Name: "attachments", Type: "text", Required: false},
+				{Name: "solution", Type: "text", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "bug"},
+				{Name: "tags", Type: "text", Required: false, Default: "bug"},
 			},
 			Category: "Teknik",
 			Active:   true,
@@ -339,36 +339,36 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 {{description}}
 
 ## 🎯 Amaç ve Faydalar
-{{amac}}
+{{purpose}}
 
 ## 👥 Hedef Kullanıcılar
-{{kullanicilar}}
+{{users}}
 
 ## 📋 Kabul Kriterleri
-{{kriterler}}
+{{criteria}}
 
 ## 🎨 UI/UX Düşünceleri
 {{ui_ux}}
 
 ## 🔗 İlgili Özellikler/Modüller
-{{ilgili}}
+{{related}}
 
 ## 📊 Tahmini Efor
-{{efor}}
+{{effort}}
 
-## 🏷️ Etiketler: {{etiketler}}`,
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
 				{Name: "title", Type: "text", Required: true},
 				{Name: "description", Type: "text", Required: true},
-				{Name: "amac", Type: "text", Required: true},
-				{Name: "kullanicilar", Type: "text", Required: true},
-				{Name: "kriterler", Type: "text", Required: true},
+				{Name: "purpose", Type: "text", Required: true},
+				{Name: "users", Type: "text", Required: true},
+				{Name: "criteria", Type: "text", Required: true},
 				{Name: "ui_ux", Type: "text", Required: false},
-				{Name: "ilgili", Type: "text", Required: false},
-				{Name: "efor", Type: "select", Required: false, Options: constants.ValidEffortLevels},
+				{Name: "related", Type: "text", Required: false},
+				{Name: "effort", Type: "select", Required: false, Options: constants.ValidEffortLevels},
 				{Name: "due_date", Type: "date", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "özellik"},
+				{Name: "tags", Type: "text", Required: false, Default: "özellik"},
 			},
 			Category: "Özellik",
 			Active:   true,
@@ -401,7 +401,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 {{iyilestirmeler}}
 
 ## ⏱️ Tahmini Süre: {{sure}}
-## 🏷️ Etiketler: {{etiketler}}`,
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
 				{Name: "title", Type: "text", Required: true},
 				{Name: "description", Type: "text", Required: true},
@@ -414,7 +414,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				{Name: "iyilestirmeler", Type: "text", Required: true},
 				{Name: "sure", Type: "select", Required: false, Options: []string{"1 gün", "2-3 gün", "1 hafta", "2+ hafta"}},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "teknik-borç,refaktöring"},
+				{Name: "tags", Type: "text", Required: false, Default: "teknik-borç,refaktöring"},
 			},
 			Category: "Teknik",
 			Active:   true,
@@ -423,37 +423,37 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 			Name:         "Araştırma Görevi",
 			Definition:   "Teknoloji veya çözüm araştırması için template",
 			Alias:        "research",
-			DefaultTitle: "🔍 {{konu}} Araştırması",
+			DefaultTitle: "🔍 {{topic}} Araştırması",
 			DescriptionTemplate: `## 🔍 Araştırma Konusu
-{{konu}}
+{{topic}}
 
 ## 🎯 Araştırma Amacı
-{{amac}}
+{{purpose}}
 
 ## ❓ Cevaplanması Gereken Sorular
-{{sorular}}
+{{questions}}
 
 ## 📚 Araştırılacak Kaynaklar
-{{kaynaklar}}
+{{sources}}
 
 ## 🔄 Alternatifler
-{{alternatifler}}
+{{alternatives}}
 
 ## ⚖️ Değerlendirme Kriterleri
-{{kriterler}}
+{{criteria}}
 
-## 📅 Bitiş Tarihi: {{son_tarih}}
-## 🏷️ Etiketler: {{etiketler}}`,
+## 📅 Bitiş Tarihi: {{due_date}}
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
-				{Name: "konu", Type: "text", Required: true},
-				{Name: "amac", Type: "text", Required: true},
-				{Name: "sorular", Type: "text", Required: true},
-				{Name: "kaynaklar", Type: "text", Required: false},
-				{Name: "alternatifler", Type: "text", Required: false},
-				{Name: "kriterler", Type: "text", Required: true},
+				{Name: "topic", Type: "text", Required: true},
+				{Name: "purpose", Type: "text", Required: true},
+				{Name: "questions", Type: "text", Required: true},
+				{Name: "sources", Type: "text", Required: false},
+				{Name: "alternatives", Type: "text", Required: false},
+				{Name: "criteria", Type: "text", Required: true},
 				{Name: "due_date", Type: "date", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "araştırma"},
+				{Name: "tags", Type: "text", Required: false, Default: "araştırma"},
 			},
 			Category: "Araştırma",
 			Active:   true,
@@ -507,7 +507,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				{Name: "attachments", Type: "text", Required: false},
 				{Name: "workaround", Type: "text", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "bug,production"},
+				{Name: "tags", Type: "text", Required: false, Default: "bug,production"},
 			},
 			Category: "Bug",
 			Active:   true,
@@ -536,7 +536,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 ## ⚡ Riskler ve Varsayımlar
 {{risks_assumptions}}
 
-## 🏷️ Etiketler: {{etiketler}}`,
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
 				{Name: "research_question", Type: "text", Required: true},
 				{Name: "success_criteria", Type: "text", Required: true},
@@ -546,7 +546,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				{Name: "expected_outputs", Type: "text", Required: true},
 				{Name: "risks_assumptions", Type: "text", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "spike,research,poc"},
+				{Name: "tags", Type: "text", Required: false, Default: "spike,research,poc"},
 			},
 			Category: "Araştırma",
 			Active:   true,
@@ -580,7 +580,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 ## ⚠️ Trade-offs
 {{tradeoffs}}
 
-## 🏷️ Etiketler: {{etiketler}}`,
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
 				{Name: "title", Type: "text", Required: true},
 				{Name: "description", Type: "text", Required: true},
@@ -594,7 +594,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				{Name: "proposed_solutions", Type: "text", Required: true},
 				{Name: "tradeoffs", Type: "text", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "performance,optimization"},
+				{Name: "tags", Type: "text", Required: false, Default: "performance,optimization"},
 			},
 			Category: "Teknik",
 			Active:   true,
@@ -633,7 +633,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 ## 🚨 Disclosure Timeline
 {{disclosure_timeline}}
 
-## 🏷️ Etiketler: {{etiketler}}`,
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
 				{Name: "title", Type: "text", Required: true},
 				{Name: "description", Type: "text", Required: true},
@@ -646,7 +646,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				{Name: "testing_requirements", Type: "text", Required: true},
 				{Name: "disclosure_timeline", Type: "text", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: []string{constants.PriorityHigh}}, // Güvenlik her zaman yüksek
-				{Name: "etiketler", Type: "text", Required: false, Default: "security,vulnerability"},
+				{Name: "tags", Type: "text", Required: false, Default: "security,vulnerability"},
 			},
 			Category: "Güvenlik",
 			Active:   true,
@@ -686,7 +686,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 - **Hedef Complexity:** {{target_complexity}}
 - **Mevcut Code Coverage:** {{current_coverage}}
 
-## 🏷️ Etiketler: {{etiketler}}`,
+## 🏷️ Tags: {{tags}}`,
 			Fields: []TemplateAlan{
 				{Name: "title", Type: "text", Required: true},
 				{Name: "description", Type: "text", Required: true},
@@ -701,7 +701,7 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				{Name: "target_complexity", Type: "text", Required: false},
 				{Name: "current_coverage", Type: "text", Required: false},
 				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "etiketler", Type: "text", Required: false, Default: "refactoring,code-quality"},
+				{Name: "tags", Type: "text", Required: false, Default: "refactoring,code-quality"},
 			},
 			Category: "Teknik",
 			Active:   true,

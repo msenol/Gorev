@@ -248,7 +248,7 @@ func TestI18nHelperFunctionsTableDriven(t *testing.T) {
 	testCases := []TestCase{
 		{
 			Name:  "TParamWithExistingKey",
-			Input: "id",
+			Input: "id_field",
 			Expected: func() string {
 				return i18n.TParam("tr", "id_field")
 			}(),

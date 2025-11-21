@@ -610,10 +610,10 @@ func (s *APIServer) createSubtask(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Title       string `json:"baslik"`
-		Description string `json:"aciklama"`
-		Priority    string `json:"oncelik"`
-		DueDate     string `json:"son_tarih"`
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Priority    string `json:"priority"`
+		DueDate     string `json:"due_date"`
 		Tags        string `json:"etiketler"`
 	}
 	if err := c.BodyParser(&req); err != nil {

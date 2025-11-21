@@ -635,6 +635,7 @@ func (h *Handlers) AktifProjeKaldir(params map[string]interface{}) (*mcp.CallToo
 // GorevGuncelle görev durumunu günceller
 func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	lang := h.extractLanguage()
+	h.toolHelpers.SetLanguage(lang)
 	ctx := i18n.WithLanguage(context.Background(), lang)
 
 	// Use helper for validation
@@ -643,13 +644,13 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 		return result, nil
 	}
 
-	// Check if we have durum or oncelik (at least one required)
-	durum, durumResult := h.toolHelpers.Validator.ValidateTaskStatus(params, false)
-	oncelik, oncelikResult := h.toolHelpers.Validator.ValidateTaskPriority(params, false)
+	// Check if we have durum or oncelik (at least one required) - using Turkish names per schema
+	durum, durumResult := h.toolHelpers.Validator.ValidateEnum(params, "durum", constants.GetValidTaskStatuses(), false)
+	oncelik, oncelikResult := h.toolHelpers.Validator.ValidateEnum(params, "oncelik", constants.GetValidPriorities(), false)
 
 	// If a parameter was provided but invalid, return that error immediately
 	// Special case: if status was explicitly provided but is empty/invalid, it should fail
-	if params["status"] != nil {
+	if params["durum"] != nil {
 		if durumResult != nil && durum == "" {
 			return durumResult, nil
 		}
@@ -663,7 +664,7 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 				})), nil
 		}
 	}
-	if params["priority"] != nil {
+	if params["oncelik"] != nil {
 		if oncelikResult != nil && oncelik == "" {
 			return oncelikResult, nil
 		}
@@ -673,7 +674,7 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 	if durumResult != nil && oncelikResult != nil {
 		// Custom validation: at least one of status or priority required
 		return mcp.NewToolResultError(i18n.T("common.validation.one_of_required",
-			map[string]interface{}{"Params": "status, priority"})), nil
+			map[string]interface{}{"Params": "durum, oncelik"})), nil
 	}
 
 	// Update status if provided
@@ -713,14 +714,15 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 // ProjeOlustur yeni bir proje oluşturur
 func (h *Handlers) ProjeOlustur(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	lang := h.extractLanguage()
+	h.toolHelpers.SetLanguage(lang)
 	ctx := i18n.WithLanguage(context.Background(), lang)
 
-	isim, result := h.toolHelpers.Validator.ValidateRequiredString(params, "name")
+	isim, result := h.toolHelpers.Validator.ValidateRequiredString(params, "isim")
 	if result != nil {
 		return result, nil
 	}
 
-	tanim := h.toolHelpers.Validator.ValidateOptionalString(params, "description")
+	tanim := h.toolHelpers.Validator.ValidateOptionalString(params, "tanim")
 
 	proje, err := h.isYonetici.ProjeOlustur(ctx, isim, tanim)
 	if err != nil {
@@ -1492,10 +1494,11 @@ func (h *Handlers) gorevBagimlilikBilgisi(g *gorev.Gorev, indent string) string 
 // ProjeGorevleri bir projenin görevlerini listeler
 func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	lang := h.extractLanguage()
+	h.toolHelpers.SetLanguage(lang)
 	ctx := i18n.WithLanguage(context.Background(), lang)
-	projeID, ok := params["project_id"].(string)
-	if !ok || projeID == "" {
-		return mcp.NewToolResultError(i18n.TRequiredParam(lang, "project_id")), nil
+	projeID, result := h.toolHelpers.Validator.ValidateRequiredString(params, "proje_id")
+	if result != nil {
+		return result, nil
 	}
 
 	// Pagination parametreleri

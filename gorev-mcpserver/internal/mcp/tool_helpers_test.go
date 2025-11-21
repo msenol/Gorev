@@ -358,7 +358,7 @@ func TestCommonValidators(t *testing.T) {
 
 	t.Run("ValidateTaskStatus - valid", func(t *testing.T) {
 		params := map[string]interface{}{
-			"durum": "devam_ediyor",
+			"status": "devam_ediyor",
 		}
 
 		result, toolResult := validators.ValidateTaskStatus(params, true)
@@ -368,7 +368,7 @@ func TestCommonValidators(t *testing.T) {
 
 	t.Run("ValidateTaskStatus - invalid", func(t *testing.T) {
 		params := map[string]interface{}{
-			"durum": "invalid_status",
+			"status": "invalid_status",
 		}
 
 		result, toolResult := validators.ValidateTaskStatus(params, true)
@@ -379,7 +379,7 @@ func TestCommonValidators(t *testing.T) {
 
 	t.Run("ValidateTaskPriority - valid", func(t *testing.T) {
 		params := map[string]interface{}{
-			"oncelik": "yuksek",
+			"priority": "yuksek",
 		}
 
 		result, toolResult := validators.ValidateTaskPriority(params, true)
@@ -389,7 +389,7 @@ func TestCommonValidators(t *testing.T) {
 
 	t.Run("ValidateTaskPriority - invalid", func(t *testing.T) {
 		params := map[string]interface{}{
-			"oncelik": "invalid_priority",
+			"priority": "invalid_priority",
 		}
 
 		result, toolResult := validators.ValidateTaskPriority(params, true)
@@ -533,8 +533,8 @@ func TestToolHelpers(t *testing.T) {
 		// Test that all helper components work together
 		params := map[string]interface{}{
 			"id":           "test-task-id",
-			"durum":        "devam_ediyor",
-			"oncelik":      "yuksek",
+			"status":       "devam_ediyor",
+			"priority":     "yuksek",
 			"limit":        25.0,
 			"tum_projeler": true,
 		}

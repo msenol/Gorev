@@ -72,8 +72,11 @@ func retryOnBusy(operation func() error, maxRetries int) error {
 		// Check if error is SQLITE_BUSY
 		if strings.Contains(err.Error(), "database is locked") ||
 			strings.Contains(err.Error(), "SQLITE_BUSY") {
-			// Exponential backoff: 10ms, 20ms, 40ms, 80ms, 160ms
+			// Exponential backoff with cap: 10ms, 20ms, 40ms, 80ms, 160ms, 320ms, 640ms, 1000ms (capped)
 			backoff := time.Duration(10<<uint(i)) * time.Millisecond
+			if backoff > time.Second {
+				backoff = time.Second // Cap at 1 second
+			}
 			time.Sleep(backoff)
 			continue
 		}
@@ -516,7 +519,7 @@ func (vy *VeriYonetici) GorevKaydet(ctx context.Context, gorev *Gorev) error {
 			gorev.DueDate,
 		)
 		return err
-	}, 5) // Retry up to 5 times
+	}, 10) // Retry up to 10 times with exponential backoff (capped at 1s)
 
 	// Emit task created event if operation succeeded
 	if err == nil && vy.eventEmitter != nil {
@@ -774,7 +777,7 @@ func (vy *VeriYonetici) GorevEtiketleriniAyarla(ctx context.Context, gorevID str
 		}
 
 		return tx.Commit()
-	}, 5) // Retry up to 5 times
+	}, 10) // Retry up to 10 times with exponential backoff (capped at 1s)
 }
 
 func (vy *VeriYonetici) GorevGuncelle(ctx context.Context, taskID string, params interface{}) error {
@@ -881,9 +884,24 @@ func (vy *VeriYonetici) ProjeleriGetir(ctx context.Context) ([]*Proje, error) {
 }
 
 func (vy *VeriYonetici) GorevSil(ctx context.Context, id string) error {
-	sorgu := `DELETE FROM gorevler WHERE id = ?`
+	// Start a transaction to ensure atomic deletion
+	tx, err := vy.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	result, err := vy.db.Exec(sorgu, id)
+	// First, delete all dependencies where this task is involved
+	// This prevents FK constraint violations
+	deleteDeps := `DELETE FROM baglantilar WHERE source_id = ? OR target_id = ?`
+	_, err = tx.Exec(deleteDeps, id, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete task dependencies: %w", err)
+	}
+
+	// Now delete the task itself
+	sorgu := `DELETE FROM gorevler WHERE id = ?`
+	result, err := tx.Exec(sorgu, id)
 	if err != nil {
 		return err
 	}
@@ -897,6 +915,11 @@ func (vy *VeriYonetici) GorevSil(ctx context.Context, id string) error {
 		return fmt.Errorf(i18n.TEntityNotFound(i18n.FromContext(ctx), "task", errors.New("not found")))
 	}
 
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
 	// Emit task deleted event if operation succeeded
 	if vy.eventEmitter != nil {
 		vy.eventEmitter.EmitTaskDeleted(vy.workspaceID, id)
@@ -906,10 +929,20 @@ func (vy *VeriYonetici) GorevSil(ctx context.Context, id string) error {
 }
 
 func (vy *VeriYonetici) ProjeGorevleriGetir(ctx context.Context, projeID string) ([]*Gorev, error) {
-	sorgu := `SELECT id, title, description, status, priority, project_id, created_at, updated_at
-	          FROM gorevler WHERE project_id = ? ORDER BY created_at DESC`
+	var sorgu string
+	var rows *sql.Rows
+	var err error
 
-	rows, err := vy.db.Query(sorgu, projeID)
+	// Handle empty projeID as NULL search
+	if projeID == "" {
+		sorgu = `SELECT id, title, description, status, priority, project_id, created_at, updated_at
+		          FROM gorevler WHERE project_id IS NULL ORDER BY created_at DESC`
+		rows, err = vy.db.Query(sorgu)
+	} else {
+		sorgu = `SELECT id, title, description, status, priority, project_id, created_at, updated_at
+		          FROM gorevler WHERE project_id = ? ORDER BY created_at DESC`
+		rows, err = vy.db.Query(sorgu, projeID)
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -450,7 +450,7 @@ func TestSetActiveTask(t *testing.T) {
 
 			if tt.mockTask != nil && tt.mockTask.Status == "beklemede" {
 				// The task will be updated with new status
-				mockVeriYonetici.On("GorevGuncelle", tt.taskID, map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
+				mockVeriYonetici.On("GorevGuncelle", tt.taskID, map[string]interface{}{"status": "devam_ediyor"}).Return(nil)
 			}
 
 			// Execute
@@ -549,7 +549,7 @@ func TestRecordTaskView(t *testing.T) {
 			mockVeriYonetici.On("GorevGetir", tt.taskID).Return(tt.mockTask, tt.mockError)
 
 			if tt.shouldUpdate && tt.mockTask != nil {
-				mockVeriYonetici.On("GorevGuncelle", tt.taskID, map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
+				mockVeriYonetici.On("GorevGuncelle", tt.taskID, map[string]interface{}{"status": "devam_ediyor"}).Return(nil)
 			}
 
 			// Execute
@@ -579,29 +579,29 @@ func TestBatchUpdate(t *testing.T) {
 		{
 			ID: "task-1",
 			Updates: map[string]interface{}{
-				"durum": "devam_ediyor",
+				"status": "devam_ediyor",
 			},
 		},
 		{
 			ID: "task-2",
 			Updates: map[string]interface{}{
-				"durum": "tamamlandi",
+				"status": "tamamlandi",
 			},
 		},
 		{
 			ID: "task-not-found",
 			Updates: map[string]interface{}{
-				"durum": "devam_ediyor",
+				"status": "devam_ediyor",
 			},
 		},
 	}
 
 	// Setup mock expectations
 	mockVeriYonetici.On("GorevGetir", "task-1").Return(&Gorev{ID: "task-1", Status: "beklemede"}, nil)
-	mockVeriYonetici.On("GorevGuncelle", "task-1", map[string]interface{}{"durum": "devam_ediyor"}).Return(nil)
+	mockVeriYonetici.On("GorevGuncelle", "task-1", map[string]interface{}{"status": "devam_ediyor"}).Return(nil)
 
 	mockVeriYonetici.On("GorevGetir", "task-2").Return(&Gorev{ID: "task-2", Status: "beklemede"}, nil)
-	mockVeriYonetici.On("GorevGuncelle", "task-2", map[string]interface{}{"durum": "tamamlandi"}).Return(nil)
+	mockVeriYonetici.On("GorevGuncelle", "task-2", map[string]interface{}{"status": "tamamlandi"}).Return(nil)
 
 	mockVeriYonetici.On("GorevGetir", "task-not-found").Return(nil, assert.AnError)
 
@@ -758,7 +758,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "task1",
 					Updates: map[string]interface{}{
-						"durum": "devam_ediyor",
+						"status": "devam_ediyor",
 					},
 				},
 			},
@@ -772,7 +772,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "task1",
 					Updates: map[string]interface{}{
-						"oncelik": "yuksek",
+						"priority": "yuksek",
 					},
 				},
 			},
@@ -786,11 +786,11 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "task1",
 					Updates: map[string]interface{}{
-						"durum":     "devam_ediyor",
-						"oncelik":   "yuksek",
-						"baslik":    "Updated Title",
-						"aciklama":  "Updated description",
-						"son_tarih": "2024-12-31",
+						"status":      "devam_ediyor",
+						"priority":    "yuksek",
+						"title":       "Updated Title",
+						"description": "Updated description",
+						"due_date":    "2024-12-31",
 					},
 				},
 			},
@@ -804,7 +804,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "task1",
 					Updates: map[string]interface{}{
-						"durum": "invalid_status",
+						"status": "invalid_status",
 					},
 				},
 			},
@@ -818,7 +818,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "task1",
 					Updates: map[string]interface{}{
-						"oncelik": "invalid_priority",
+						"priority": "invalid_priority",
 					},
 				},
 			},
@@ -832,7 +832,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "task1",
 					Updates: map[string]interface{}{
-						"baslik": "",
+						"title": "",
 					},
 				},
 			},
@@ -846,7 +846,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "task1",
 					Updates: map[string]interface{}{
-						"son_tarih": "invalid-date",
+						"due_date": "invalid-date",
 					},
 				},
 			},
@@ -860,7 +860,7 @@ func TestBatchUpdateEnhanced(t *testing.T) {
 				{
 					ID: "nonexistent",
 					Updates: map[string]interface{}{
-						"durum": "devam_ediyor",
+						"status": "devam_ediyor",
 					},
 				},
 			},

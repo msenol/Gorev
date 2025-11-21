@@ -10,18 +10,25 @@ import (
 )
 
 // ParameterValidator handles common parameter validation patterns
-type ParameterValidator struct{}
+type ParameterValidator struct {
+	lang string
+}
 
 // NewParameterValidator creates a new parameter validator
-func NewParameterValidator() *ParameterValidator {
-	return &ParameterValidator{}
+func NewParameterValidator(lang string) *ParameterValidator {
+	return &ParameterValidator{lang: lang}
+}
+
+// SetLanguage updates the language for the validator
+func (pv *ParameterValidator) SetLanguage(lang string) {
+	pv.lang = lang
 }
 
 // ValidateRequiredString validates a required string parameter
 func (pv *ParameterValidator) ValidateRequiredString(params map[string]interface{}, paramName string) (string, *mcp.CallToolResult) {
 	value, ok := params[paramName].(string)
 	if !ok || strings.TrimSpace(value) == "" {
-		return "", mcp.NewToolResultError(i18n.TRequiredParam("tr", paramName))
+		return "", mcp.NewToolResultError(i18n.TRequiredParam(pv.lang, paramName))
 	}
 	return strings.TrimSpace(value), nil
 }
@@ -40,7 +47,7 @@ func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramN
 
 	if !exists || value == "" {
 		if required {
-			return "", mcp.NewToolResultError(i18n.TValidation("tr", "param_required_with_values", paramName, map[string]interface{}{
+			return "", mcp.NewToolResultError(i18n.TValidation(pv.lang, "param_required_with_values", paramName, map[string]interface{}{
 				"Values": strings.Join(validValues, ", "),
 			}))
 		}
@@ -53,7 +60,7 @@ func (pv *ParameterValidator) ValidateEnum(params map[string]interface{}, paramN
 		}
 	}
 
-	return "", mcp.NewToolResultError(i18n.TInvalidValue("tr", paramName, value, validValues))
+	return "", mcp.NewToolResultError(i18n.TInvalidValue(pv.lang, paramName, value, validValues))
 }
 
 // ValidateNumber validates a number parameter
@@ -213,9 +220,14 @@ type CommonValidators struct {
 // NewCommonValidators creates a new common validators instance
 func NewCommonValidators() *CommonValidators {
 	return &CommonValidators{
-		paramValidator: NewParameterValidator(),
+		paramValidator: NewParameterValidator("tr"), // Default to Turkish
 		errorFormatter: NewErrorFormatter(),
 	}
+}
+
+// SetLanguage updates the language for all validators
+func (cv *CommonValidators) SetLanguage(lang string) {
+	cv.paramValidator.SetLanguage(lang)
 }
 
 // ValidateTaskID validates task ID parameter
@@ -231,13 +243,13 @@ func (cv *CommonValidators) ValidateTaskIDField(params map[string]interface{}, f
 // ValidateTaskStatus validates task status
 func (cv *CommonValidators) ValidateTaskStatus(params map[string]interface{}, required bool) (string, *mcp.CallToolResult) {
 	validStatuses := constants.GetValidTaskStatuses()
-	return cv.paramValidator.ValidateEnum(params, "durum", validStatuses, required)
+	return cv.paramValidator.ValidateEnum(params, "status", validStatuses, required)
 }
 
 // ValidateTaskPriority validates task priority
 func (cv *CommonValidators) ValidateTaskPriority(params map[string]interface{}, required bool) (string, *mcp.CallToolResult) {
 	validPriorities := constants.GetValidPriorities()
-	return cv.paramValidator.ValidateEnum(params, "oncelik", validPriorities, required)
+	return cv.paramValidator.ValidateEnum(params, "priority", validPriorities, required)
 }
 
 // ValidatePagination validates pagination parameters
@@ -300,6 +312,11 @@ func NewToolHelpers() *ToolHelpers {
 		ErrorFormatter:  NewErrorFormatter(),
 		ResponseBuilder: NewResponseBuilder(),
 	}
+}
+
+// SetLanguage updates the language for all tool helpers
+func (th *ToolHelpers) SetLanguage(lang string) {
+	th.Validator.SetLanguage(lang)
 }
 
 // ==================== CENTRALIZED FORMATTERS ====================

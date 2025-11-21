@@ -53,6 +53,12 @@ func TestVeriYonetici_GorevKaydet(t *testing.T) {
 	}
 	defer vy.Kapat()
 
+	// Create a test project for FK relationship testing
+	testProje, err := vy.ProjeOlustur(context.Background(), "Test Proje", "Test project for FK testing")
+	if err != nil {
+		t.Fatalf("failed to create test project: %v", err)
+	}
+
 	testCases := []struct {
 		name    string
 		gorev   *Gorev
@@ -79,7 +85,7 @@ func TestVeriYonetici_GorevKaydet(t *testing.T) {
 				Description: "Proje ile ilişkili görev",
 				Status:      "devam-ediyor",
 				Priority:    "yuksek",
-				ProjeID:     "proje-1",
+				ProjeID:     testProje.ID, // Use the actual created project ID
 				CreatedAt:   time.Now(),
 				UpdatedAt:   time.Now(),
 			},
@@ -297,6 +303,12 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 	}
 	defer vy.Kapat()
 
+	// Create a test project for FK relationship testing
+	testProje, err := vy.ProjeOlustur(context.Background(), "Test Proje", "Test project for FK testing")
+	if err != nil {
+		t.Fatalf("failed to create test project: %v", err)
+	}
+
 	// Insert test data
 	originalGorev := &Gorev{
 		ID:          "test-update-1",
@@ -324,7 +336,7 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 				Description: "Updated Description",
 				Status:      "devam-ediyor",
 				Priority:    "yuksek",
-				ProjeID:     "proje-1",
+				ProjeID:     testProje.ID, // Use the actual created project ID
 				UpdatedAt:   time.Now(),
 			},
 			wantErr: false,
@@ -346,12 +358,12 @@ func TestVeriYonetici_GorevGuncelle(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Convert gorev struct to map for GorevGuncelle
 			params := map[string]interface{}{
-				"baslik":     tc.gorev.Title,
-				"aciklama":   tc.gorev.Description,
-				"durum":      tc.gorev.Status,
-				"oncelik":    tc.gorev.Priority,
-				"proje_id":   tc.gorev.ProjeID,
-				"updated_at": tc.gorev.UpdatedAt,
+				"title":       tc.gorev.Title,
+				"description": tc.gorev.Description,
+				"status":      tc.gorev.Status,
+				"priority":    tc.gorev.Priority,
+				"project_id":  tc.gorev.ProjeID,
+				"updated_at":  tc.gorev.UpdatedAt,
 			}
 
 			err := vy.GorevGuncelle(context.Background(), tc.gorev.ID, params)
@@ -635,7 +647,7 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 	}
 	defer vy.Kapat()
 
-	// Insert test project
+	// Insert test projects
 	testProje := &Proje{
 		ID:        "proje-tasks-1",
 		Name:      "Test Projesi",
@@ -644,6 +656,17 @@ func TestVeriYonetici_ProjeGorevleriGetir(t *testing.T) {
 	}
 	if err := vy.ProjeKaydet(context.Background(), testProje); err != nil {
 		t.Fatalf("failed to insert test project: %v", err)
+	}
+
+	// Create the "other-project" for task-3 FK constraint
+	otherProje := &Proje{
+		ID:        "other-project",
+		Name:      "Other Project",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	if err := vy.ProjeKaydet(context.Background(), otherProje); err != nil {
+		t.Fatalf("failed to insert other project: %v", err)
 	}
 
 	// Insert tasks for the project

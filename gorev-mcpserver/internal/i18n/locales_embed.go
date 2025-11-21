@@ -21,8 +21,8 @@ func initializeWithEmbedded(lang string) error {
 	loadSuccess := false
 	var lastErr error
 
-	// Try to load from filesystem first (for development)
-	trPath := getLocaleFilePath("tr.json")
+	// Try to load from filesystem first (for development) - using flattened format
+	trPath := getLocaleFilePath("tr_flat.json")
 	if _, err := os.Stat(trPath); err == nil {
 		if _, err := bundle.LoadMessageFile(trPath); err == nil {
 			loadSuccess = true
@@ -31,7 +31,7 @@ func initializeWithEmbedded(lang string) error {
 		}
 	}
 
-	enPath := getLocaleFilePath("en.json")
+	enPath := getLocaleFilePath("en_flat.json")
 	if _, err := os.Stat(enPath); err == nil {
 		if _, err := bundle.LoadMessageFile(enPath); err == nil {
 			loadSuccess = true
@@ -42,10 +42,10 @@ func initializeWithEmbedded(lang string) error {
 
 	// If filesystem loading failed, use embedded data
 	if !loadSuccess {
-		// Load Turkish translations from embedded FS
-		trData, err := embeddedLocales.ReadFile("locales/tr.json")
+		// Load Turkish translations from embedded FS - using flattened format
+		trData, err := embeddedLocales.ReadFile("locales/tr_flat.json")
 		if err == nil {
-			if _, err := bundle.ParseMessageFileBytes(trData, "tr.json"); err == nil {
+			if _, err := bundle.ParseMessageFileBytes(trData, "tr_flat.json"); err == nil {
 				loadSuccess = true
 			} else {
 				lastErr = err
@@ -54,10 +54,10 @@ func initializeWithEmbedded(lang string) error {
 			lastErr = err
 		}
 
-		// Load English translations from embedded FS
-		enData, err := embeddedLocales.ReadFile("locales/en.json")
+		// Load English translations from embedded FS - using flattened format
+		enData, err := embeddedLocales.ReadFile("locales/en_flat.json")
 		if err == nil {
-			if _, err := bundle.ParseMessageFileBytes(enData, "en.json"); err == nil {
+			if _, err := bundle.ParseMessageFileBytes(enData, "en_flat.json"); err == nil {
 				loadSuccess = true
 			} else {
 				lastErr = err

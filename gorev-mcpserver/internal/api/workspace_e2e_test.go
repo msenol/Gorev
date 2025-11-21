@@ -445,11 +445,11 @@ func setupTestServer(manager *WorkspaceManager) *fiber.App {
 		}
 
 		values := map[string]string{
-			"baslik":    req.Title,
-			"aciklama":  req.Description,
-			"oncelik":   "orta",
-			"proje_id":  req.ProjectID,
-			"etiketler": "test",
+			"title":       req.Title,
+			"description": req.Description,
+			"priority":    "orta",
+			"proje_id":    req.ProjectID,
+			"etiketler":   "test",
 		}
 
 		task, err := wsContext.IsYonetici.TemplatedenGorevOlustur(context.Background(), templateID, values)

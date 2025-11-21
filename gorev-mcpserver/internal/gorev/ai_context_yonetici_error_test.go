@@ -185,7 +185,7 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 				{
 					ID: "task-1",
 					Updates: map[string]interface{}{
-						"durum": "invalid-status",
+						"status": "invalid-status",
 					},
 				},
 			},
@@ -199,13 +199,13 @@ func TestAIContextYonetici_BatchUpdate_ErrorHandling(t *testing.T) {
 				{
 					ID: "task-1",
 					Updates: map[string]interface{}{
-						"baslik": "Updated Title",
+						"title": "Updated Title",
 					},
 				},
 				{
 					ID: "non-existent",
 					Updates: map[string]interface{}{
-						"baslik": "Another Title",
+						"title": "Another Title",
 					},
 				},
 			},
