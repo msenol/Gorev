@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Multilingual Template Support**: Templates now support multiple languages (TR/EN)
+  - Database schema extended with `language_code` and `base_template_id` fields (migration 000012)
+  - Template pairs created for common templates (bug, feature) in Turkish and English
+  - Language-aware template selection based on `GOREV_LANG` environment variable
+  - Backward compatibility maintained for existing Turkish-only templates
+  - Files: `internal/gorev/template_yonetici.go`, `internal/veri/migrations/000012_add_template_multilang.*.sql`
+
 - **i18n Phase 3**: Context-aware language propagation system
   - Per-request language selection for MCP handlers with fallback hierarchy
   - Environment variable `GOREV_LANG` propagates through CLI, MCP, and API layers

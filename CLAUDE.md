@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** November 8, 2025 | **Version:** v0.17.0
+**Last Updated:** November 22, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -18,7 +18,14 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 - **Backward Compatibility**: Domain terms (`gorevler`, `projeler`) remain Turkish
 - See `docs/MIGRATION_GUIDE_v0.17.md` for upgrade instructions
 
-**Recent Updates (November 2025):**
+**Recent Updates (November 22, 2025):**
+
+- **Multilingual Template Support** - Templates now support multiple languages (TR/EN)
+  - Database schema extended with `language_code` and `base_template_id` fields (migration 000012)
+  - Template pairs created for common templates (bug, feature) in Turkish and English
+  - Language-aware template selection based on `GOREV_LANG` environment variable
+  - Backward compatibility maintained for existing Turkish-only templates
+  - Files: `internal/gorev/template_yonetici.go`, `internal/veri/migrations/000012_add_template_multilang.*.sql`
 
 - **i18n Phase 3 Complete** - Context-aware language propagation system
   - Environment variable `GOREV_LANG` now properly propagates through all layers (CLI, MCP, API)

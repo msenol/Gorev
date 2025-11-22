@@ -1,8 +1,8 @@
-# MCP Araçları Referansı - v0.16.3
+# MCP Araçları Referansı - v0.17.0
 
 **24 optimize MCP aracı** için eksiksiz referans (v0.16.0'da 45 araçtan birleştirildi).
 
-**Son Güncelleme:** 6 Ekim 2025 | **Sürüm:** v0.16.3 | **Test Durumu:** ✅ %100 Başarı
+**Son Güncelleme:** 22 Kasım 2025 | **Sürüm:** v0.17.0 | **Test Durumu:** ✅ %100 Başarı
 
 ---
 
