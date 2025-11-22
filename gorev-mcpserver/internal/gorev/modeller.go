@@ -72,6 +72,9 @@ type GorevTemplate struct {
 	SampleValues        map[string]string `json:"sample_values"`
 	Category            string            `json:"category"`
 	Active              bool              `json:"active"`
+	// Multi-language support
+	LanguageCode   string  `json:"language_code"`    // tr, en, etc.
+	BaseTemplateID *string `json:"base_template_id"` // Groups templates by language
 }
 
 // TemplateAlan template'deki özelleştirilebilir alanlar (customizable template fields)

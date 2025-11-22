@@ -29,13 +29,25 @@ func (vy *VeriYonetici) TemplateOlustur(ctx context.Context, template *GorevTemp
 		return fmt.Errorf(i18n.T("error.exampleValuesJsonFailed", map[string]interface{}{"Error": err}))
 	}
 
-	sorgu := `INSERT INTO gorev_templateleri 
-		(id, name, definition, alias, default_title, description_template, fields, sample_values, category, active)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	sorgu := `INSERT INTO gorev_templateleri
+		(id, name, definition, alias, default_title, description_template, fields, sample_values, category, active, language_code, base_template_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	// Ensure required fields have defaults
+	languageCode := template.LanguageCode
+	if languageCode == "" {
+		languageCode = "tr"
+	}
+
+	baseTemplateID := template.BaseTemplateID
+	if baseTemplateID == nil {
+		baseTemplateID = &template.ID
+	}
 
 	_, err = vy.db.Exec(sorgu, template.ID, template.Name, template.Definition, template.Alias,
 		template.DefaultTitle, template.DescriptionTemplate,
-		string(alanlarJSON), string(ornekDegerlerJSON), template.Category, template.Active)
+		string(alanlarJSON), string(ornekDegerlerJSON), template.Category, template.Active,
+		languageCode, baseTemplateID)
 
 	if err != nil {
 		return fmt.Errorf(i18n.TCreateFailed(i18n.FromContext(ctx), "template", err))
@@ -44,20 +56,26 @@ func (vy *VeriYonetici) TemplateOlustur(ctx context.Context, template *GorevTemp
 	return nil
 }
 
-// TemplateListele tüm active template'leri listeler
+// TemplateListele tüm active template'leri listeler (language-aware)
 func (vy *VeriYonetici) TemplateListele(ctx context.Context, category string) ([]*GorevTemplate, error) {
+	lang := i18n.FromContext(ctx)
+	if lang == "" {
+		lang = "tr"
+	}
+
 	var sorgu string
 	var args []interface{}
 
 	if category != "" {
-		sorgu = `SELECT id, name, definition, alias, default_title, description_template, 
-				fields, sample_values, category, active 
-				FROM gorev_templateleri WHERE active = 1 AND category = ? ORDER BY name`
-		args = append(args, category)
+		sorgu = `SELECT id, name, definition, alias, default_title, description_template,
+				fields, sample_values, category, active, language_code, base_template_id
+				FROM gorev_templateleri WHERE active = 1 AND category = ? AND language_code = ? ORDER BY name`
+		args = append(args, category, lang)
 	} else {
-		sorgu = `SELECT id, name, definition, alias, default_title, description_template, 
-				fields, sample_values, category, active 
-				FROM gorev_templateleri WHERE active = 1 ORDER BY category, name`
+		sorgu = `SELECT id, name, definition, alias, default_title, description_template,
+				fields, sample_values, category, active, language_code, base_template_id
+				FROM gorev_templateleri WHERE active = 1 AND language_code = ? ORDER BY category, name`
+		args = append(args, lang)
 	}
 
 	rows, err := vy.db.Query(sorgu, args...)
@@ -77,7 +95,8 @@ func (vy *VeriYonetici) TemplateListele(ctx context.Context, category string) ([
 
 		err := rows.Scan(&template.ID, &template.Name, &template.Definition, &template.Alias,
 			&template.DefaultTitle, &template.DescriptionTemplate,
-			&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active)
+			&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active,
+			&template.LanguageCode, &template.BaseTemplateID)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.T("error.templateReadFailed", map[string]interface{}{"Error": err}))
 		}
@@ -103,14 +122,15 @@ func (vy *VeriYonetici) TemplateGetir(ctx context.Context, templateID string) (*
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
 
-	sorgu := `SELECT id, name, definition, alias, default_title, description_template, 
-			fields, sample_values, category, active 
+	sorgu := `SELECT id, name, definition, alias, default_title, description_template,
+			fields, sample_values, category, active, language_code, base_template_id
 			FROM gorev_templateleri WHERE id = ?`
 
 	err := vy.db.QueryRow(sorgu, templateID).Scan(
 		&template.ID, &template.Name, &template.Definition, &template.Alias,
 		&template.DefaultTitle, &template.DescriptionTemplate,
-		&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active)
+		&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active,
+		&template.LanguageCode, &template.BaseTemplateID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -132,19 +152,25 @@ func (vy *VeriYonetici) TemplateGetir(ctx context.Context, templateID string) (*
 	return template, nil
 }
 
-// TemplateAliasIleGetir alias ile template getirir
+// TemplateAliasIleGetir alias ile template getirir (language-aware)
 func (vy *VeriYonetici) TemplateAliasIleGetir(ctx context.Context, alias string) (*GorevTemplate, error) {
+	lang := i18n.FromContext(ctx)
+	if lang == "" {
+		lang = "tr"
+	}
+
 	template := &GorevTemplate{}
 	var alanlarJSON, ornekDegerlerJSON string
 
-	sorgu := `SELECT id, name, definition, alias, default_title, description_template, 
-			fields, sample_values, category, active 
-			FROM gorev_templateleri WHERE alias = ? AND active = 1`
+	sorgu := `SELECT id, name, definition, alias, default_title, description_template,
+			fields, sample_values, category, active, language_code, base_template_id
+			FROM gorev_templateleri WHERE alias = ? AND active = 1 AND language_code = ?`
 
-	err := vy.db.QueryRow(sorgu, alias).Scan(
+	err := vy.db.QueryRow(sorgu, alias, lang).Scan(
 		&template.ID, &template.Name, &template.Definition, &template.Alias,
 		&template.DefaultTitle, &template.DescriptionTemplate,
-		&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active)
+		&alanlarJSON, &ornekDegerlerJSON, &template.Category, &template.Active,
+		&template.LanguageCode, &template.BaseTemplateID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -282,15 +308,23 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(ctx context.Context, templateID 
 	return gorev, nil
 }
 
-// VarsayilanTemplateleriOlustur varsayılan template'leri oluşturur
+// VarsayilanTemplateleriOlustur varsayılan template'leri TR/EN çifti olarak oluşturur
 func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error {
-	templates := []*GorevTemplate{
+	// Define all template groups with base IDs
+	templateGroups := []struct {
+		BaseTemplateID string
+		TR             *GorevTemplate
+		EN             *GorevTemplate
+	}{
+		// Bug Report Template
 		{
-			Name:         "Bug Raporu",
-			Definition:   "Yazılım hatası bildirimi için detaylı template",
-			Alias:        "bug",
-			DefaultTitle: "🐛 [{{module}}] {{title}}",
-			DescriptionTemplate: `## 🐛 Hata Açıklaması
+			BaseTemplateID: "bug-report",
+			TR: &GorevTemplate{
+				Name:         "Bug Raporu",
+				Definition:   "Yazılım hatası bildirimi için detaylı template",
+				Alias:        "bug",
+				DefaultTitle: "🐛 [{{module}}] {{title}}",
+				DescriptionTemplate: `## 🐛 Hata Açıklaması
 {{description}}
 
 ## 📍 Nerede Oluşuyor?
@@ -314,28 +348,77 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 
 ## 📊 Öncelik: {{priority}}
 ## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "title", Type: "text", Required: true},
-				{Name: "description", Type: "text", Required: true},
-				{Name: "module", Type: "text", Required: true},
-				{Name: "environment", Type: "select", Required: true, Options: constants.ValidEnvironments},
-				{Name: "steps", Type: "text", Required: true},
-				{Name: "expected", Type: "text", Required: true},
-				{Name: "actual", Type: "text", Required: true},
-				{Name: "attachments", Type: "text", Required: false},
-				{Name: "solution", Type: "text", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "bug"},
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "module", Type: "text", Required: true},
+					{Name: "environment", Type: "select", Required: true, Options: constants.ValidEnvironments},
+					{Name: "steps", Type: "text", Required: true},
+					{Name: "expected", Type: "text", Required: true},
+					{Name: "actual", Type: "text", Required: true},
+					{Name: "attachments", Type: "text", Required: false},
+					{Name: "solution", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "bug"},
+				},
+				Category: "Teknik",
+				Active:   true,
 			},
-			Category: "Teknik",
-			Active:   true,
+			EN: &GorevTemplate{
+				Name:         "Bug Report",
+				Definition:   "Detailed template for software bug reporting",
+				Alias:        "bug",
+				DefaultTitle: "🐛 [{{module}}] {{title}}",
+				DescriptionTemplate: `## 🐛 Bug Description
+{{description}}
+
+## 📍 Where Does It Occur?
+**Module/Component:** {{module}}
+**Environment:** {{environment}}
+
+## 🔄 Reproduction Steps
+{{steps}}
+
+## ✅ Expected Behavior
+{{expected}}
+
+## ❌ Actual Behavior
+{{actual}}
+
+## 📸 Screenshots/Logs
+{{attachments}}
+
+## 🔧 Possible Solution
+{{solution}}
+
+## 📊 Priority: {{priority}}
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "module", Type: "text", Required: true},
+					{Name: "environment", Type: "select", Required: true, Options: constants.ValidEnvironments},
+					{Name: "steps", Type: "text", Required: true},
+					{Name: "expected", Type: "text", Required: true},
+					{Name: "actual", Type: "text", Required: true},
+					{Name: "attachments", Type: "text", Required: false},
+					{Name: "solution", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "bug"},
+				},
+				Category: "Technical",
+				Active:   true,
+			},
 		},
+		// Feature Request Template
 		{
-			Name:         "Özellik İsteği",
-			Definition:   "Yeni özellik veya geliştirme isteği için template",
-			Alias:        "feature",
-			DefaultTitle: "✨ {{title}}",
-			DescriptionTemplate: `## ✨ Özellik Açıklaması
+			BaseTemplateID: "feature-request",
+			TR: &GorevTemplate{
+				Name:         "Özellik İsteği",
+				Definition:   "Yeni özellik veya geliştirme isteği için template",
+				Alias:        "feature",
+				DefaultTitle: "✨ {{title}}",
+				DescriptionTemplate: `## ✨ Özellik Açıklaması
 {{description}}
 
 ## 🎯 Amaç ve Faydalar
@@ -357,28 +440,75 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 {{effort}}
 
 ## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "title", Type: "text", Required: true},
-				{Name: "description", Type: "text", Required: true},
-				{Name: "purpose", Type: "text", Required: true},
-				{Name: "users", Type: "text", Required: true},
-				{Name: "criteria", Type: "text", Required: true},
-				{Name: "ui_ux", Type: "text", Required: false},
-				{Name: "related", Type: "text", Required: false},
-				{Name: "effort", Type: "select", Required: false, Options: constants.ValidEffortLevels},
-				{Name: "due_date", Type: "date", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "özellik"},
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "purpose", Type: "text", Required: true},
+					{Name: "users", Type: "text", Required: true},
+					{Name: "criteria", Type: "text", Required: true},
+					{Name: "ui_ux", Type: "text", Required: false},
+					{Name: "related", Type: "text", Required: false},
+					{Name: "effort", Type: "select", Required: false, Options: constants.ValidEffortLevels},
+					{Name: "due_date", Type: "date", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "özellik"},
+				},
+				Category: "Özellik",
+				Active:   true,
 			},
-			Category: "Özellik",
-			Active:   true,
+			EN: &GorevTemplate{
+				Name:         "Feature Request",
+				Definition:   "Template for new feature or enhancement requests",
+				Alias:        "feature",
+				DefaultTitle: "✨ {{title}}",
+				DescriptionTemplate: `## ✨ Feature Description
+{{description}}
+
+## 🎯 Purpose and Benefits
+{{purpose}}
+
+## 👥 Target Users
+{{users}}
+
+## 📋 Acceptance Criteria
+{{criteria}}
+
+## 🎨 UI/UX Thoughts
+{{ui_ux}}
+
+## 🔗 Related Features/Modules
+{{related}}
+
+## 📊 Estimated Effort
+{{effort}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "purpose", Type: "text", Required: true},
+					{Name: "users", Type: "text", Required: true},
+					{Name: "criteria", Type: "text", Required: true},
+					{Name: "ui_ux", Type: "text", Required: false},
+					{Name: "related", Type: "text", Required: false},
+					{Name: "effort", Type: "select", Required: false, Options: constants.ValidEffortLevels},
+					{Name: "due_date", Type: "date", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "feature"},
+				},
+				Category: "Feature",
+				Active:   true,
+			},
 		},
+		// Technical Debt Template (old version, Turkish only, no English translation needed for legacy)
 		{
-			Name:         "Teknik Borç",
-			Definition:   "Refaktöring veya teknik iyileştirme için template",
-			Alias:        "debt",
-			DefaultTitle: "🔧 [{{alan}}] {{title}}",
-			DescriptionTemplate: `## 🔧 Teknik Borç Açıklaması
+			BaseTemplateID: "technical-debt",
+			TR: &GorevTemplate{
+				Name:         "Teknik Borç",
+				Definition:   "Refaktöring veya teknik iyileştirme için template",
+				Alias:        "debt",
+				DefaultTitle: "🔧 [{{alan}}] {{title}}",
+				DescriptionTemplate: `## 🔧 Teknik Borç Açıklaması
 {{description}}
 
 ## 📍 Etkilenen Alan
@@ -402,29 +532,34 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 
 ## ⏱️ Tahmini Süre: {{sure}}
 ## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "title", Type: "text", Required: true},
-				{Name: "description", Type: "text", Required: true},
-				{Name: "alan", Type: "text", Required: true},
-				{Name: "dosyalar", Type: "text", Required: false},
-				{Name: "neden", Type: "text", Required: true},
-				{Name: "analiz", Type: "text", Required: true},
-				{Name: "cozum", Type: "text", Required: true},
-				{Name: "riskler", Type: "text", Required: false},
-				{Name: "iyilestirmeler", Type: "text", Required: true},
-				{Name: "sure", Type: "select", Required: false, Options: []string{"1 gün", "2-3 gün", "1 hafta", "2+ hafta"}},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "teknik-borç,refaktöring"},
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "alan", Type: "text", Required: true},
+					{Name: "dosyalar", Type: "text", Required: false},
+					{Name: "neden", Type: "text", Required: true},
+					{Name: "analiz", Type: "text", Required: true},
+					{Name: "cozum", Type: "text", Required: true},
+					{Name: "riskler", Type: "text", Required: false},
+					{Name: "iyilestirmeler", Type: "text", Required: true},
+					{Name: "sure", Type: "select", Required: false, Options: []string{"1 gün", "2-3 gün", "1 hafta", "2+ hafta"}},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "teknik-borç,refaktöring"},
+				},
+				Category: "Teknik",
+				Active:   true,
 			},
-			Category: "Teknik",
-			Active:   true,
+			EN: nil, // No English translation for legacy templates
 		},
+		// Research Template (old version, Turkish only)
 		{
-			Name:         "Araştırma Görevi",
-			Definition:   "Teknoloji veya çözüm araştırması için template",
-			Alias:        "research",
-			DefaultTitle: "🔍 {{topic}} Araştırması",
-			DescriptionTemplate: `## 🔍 Araştırma Konusu
+			BaseTemplateID: "research-task",
+			TR: &GorevTemplate{
+				Name:         "Araştırma Görevi",
+				Definition:   "Teknoloji veya çözüm araştırması için template",
+				Alias:        "research",
+				DefaultTitle: "🔍 {{topic}} Araştırması",
+				DescriptionTemplate: `## 🔍 Araştırma Konusu
 {{topic}}
 
 ## 🎯 Araştırma Amacı
@@ -444,295 +579,55 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 
 ## 📅 Bitiş Tarihi: {{due_date}}
 ## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "topic", Type: "text", Required: true},
-				{Name: "purpose", Type: "text", Required: true},
-				{Name: "questions", Type: "text", Required: true},
-				{Name: "sources", Type: "text", Required: false},
-				{Name: "alternatives", Type: "text", Required: false},
-				{Name: "criteria", Type: "text", Required: true},
-				{Name: "due_date", Type: "date", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "araştırma"},
+				Fields: []TemplateAlan{
+					{Name: "topic", Type: "text", Required: true},
+					{Name: "purpose", Type: "text", Required: true},
+					{Name: "questions", Type: "text", Required: true},
+					{Name: "sources", Type: "text", Required: false},
+					{Name: "alternatives", Type: "text", Required: false},
+					{Name: "criteria", Type: "text", Required: true},
+					{Name: "due_date", Type: "date", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "araştırma"},
+				},
+				Category: "Araştırma",
+				Active:   true,
 			},
-			Category: "Araştırma",
-			Active:   true,
-		},
-		// Yeni template'ler - Template zorunluluğu için eklendi
-		{
-			Name:         "Bug Raporu v2",
-			Definition:   "Gelişmiş bug raporu - detaylı adımlar ve environment bilgisi",
-			Alias:        "bug2",
-			DefaultTitle: "🐛 [{{severity}}] {{modul}}: {{title}}",
-			DescriptionTemplate: `## 🐛 Hata Özeti
-{{description}}
-
-## 🔄 Tekrar Üretme Adımları
-{{steps_to_reproduce}}
-
-## ✅ Beklenen Davranış
-{{expected_behavior}}
-
-## ❌ Gerçekleşen Davranış
-{{actual_behavior}}
-
-## 💻 Ortam Bilgileri
-- **İşletim Sistemi:** {{os_version}}
-- **Tarayıcı/Client:** {{client_info}}
-- **Server Version:** {{server_version}}
-- **Database:** {{db_info}}
-
-## 🚨 Hata Derecesi
-**Severity:** {{severity}}
-**Etkilenen Kullanıcı Sayısı:** {{affected_users}}
-
-## 📸 Ekler
-{{attachments}}
-
-## 🔧 Geçici Çözüm
-{{workaround}}`,
-			Fields: []TemplateAlan{
-				{Name: "title", Type: "text", Required: true},
-				{Name: "description", Type: "text", Required: true},
-				{Name: "modul", Type: "text", Required: true},
-				{Name: "steps_to_reproduce", Type: "text", Required: true},
-				{Name: "expected_behavior", Type: "text", Required: true},
-				{Name: "actual_behavior", Type: "text", Required: true},
-				{Name: "os_version", Type: "text", Required: true},
-				{Name: "client_info", Type: "text", Required: true},
-				{Name: "server_version", Type: "text", Required: true},
-				{Name: "db_info", Type: "text", Required: false},
-				{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
-				{Name: "affected_users", Type: "text", Required: true},
-				{Name: "attachments", Type: "text", Required: false},
-				{Name: "workaround", Type: "text", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "bug,production"},
-			},
-			Category: "Bug",
-			Active:   true,
-		},
-		{
-			Name:         "Spike Araştırma",
-			Definition:   "Time-boxed teknik araştırma ve proof-of-concept çalışmaları",
-			Alias:        "spike",
-			DefaultTitle: "🔬 [SPIKE] {{research_question}}",
-			DescriptionTemplate: `## 🔬 Araştırma Sorusu
-{{research_question}}
-
-## 🎯 Başarı Kriterleri
-{{success_criteria}}
-
-## ⏰ Time Box
-**Maksimum Süre:** {{time_box}}
-**Karar Tarihi:** {{decision_deadline}}
-
-## 🔍 Araştırma Planı
-{{research_plan}}
-
-## 📊 Beklenen Çıktılar
-{{expected_outputs}}
-
-## ⚡ Riskler ve Varsayımlar
-{{risks_assumptions}}
-
-## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "research_question", Type: "text", Required: true},
-				{Name: "success_criteria", Type: "text", Required: true},
-				{Name: "time_box", Type: "select", Required: true, Options: []string{"4 saat", "1 gün", "2 gün", "3 gün", "1 hafta"}},
-				{Name: "decision_deadline", Type: "date", Required: true},
-				{Name: "research_plan", Type: "text", Required: true},
-				{Name: "expected_outputs", Type: "text", Required: true},
-				{Name: "risks_assumptions", Type: "text", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "spike,research,poc"},
-			},
-			Category: "Araştırma",
-			Active:   true,
-		},
-		{
-			Name:         "Performans Sorunu",
-			Definition:   "Performans problemleri ve optimizasyon görevleri",
-			Alias:        "performance",
-			DefaultTitle: "⚡ [PERF] {{metric_affected}}: {{title}}",
-			DescriptionTemplate: `## ⚡ Performans Sorunu
-{{description}}
-
-## 📊 Etkilenen Metrik
-**Metrik:** {{metric_affected}}
-**Mevcut Değer:** {{current_value}}
-**Hedef Değer:** {{target_value}}
-**Kabul Edilebilir Değer:** {{acceptable_value}}
-
-## 📏 Ölçüm Yöntemi
-{{measurement_method}}
-
-## 👥 Kullanıcı Etkisi
-{{user_impact}}
-
-## 🔍 Kök Neden Analizi
-{{root_cause}}
-
-## 💡 Önerilen Çözümler
-{{proposed_solutions}}
-
-## ⚠️ Trade-offs
-{{tradeoffs}}
-
-## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "title", Type: "text", Required: true},
-				{Name: "description", Type: "text", Required: true},
-				{Name: "metric_affected", Type: "select", Required: true, Options: []string{"response_time", "throughput", "cpu_usage", "memory_usage", "database_query", "page_load", "api_latency"}},
-				{Name: "current_value", Type: "text", Required: true},
-				{Name: "target_value", Type: "text", Required: true},
-				{Name: "acceptable_value", Type: "text", Required: false},
-				{Name: "measurement_method", Type: "text", Required: true},
-				{Name: "user_impact", Type: "text", Required: true},
-				{Name: "root_cause", Type: "text", Required: false},
-				{Name: "proposed_solutions", Type: "text", Required: true},
-				{Name: "tradeoffs", Type: "text", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "performance,optimization"},
-			},
-			Category: "Teknik",
-			Active:   true,
-		},
-		{
-			Name:         "Güvenlik Düzeltmesi",
-			Definition:   "Güvenlik açıkları ve düzeltmeleri için özel template",
-			Alias:        "security",
-			DefaultTitle: "🔒 [SEC-{{severity}}] {{vulnerability_type}}: {{title}}",
-			DescriptionTemplate: `## 🔒 Güvenlik Açığı
-{{description}}
-
-## 🎯 Açık Tipi
-**Category:** {{vulnerability_type}}
-**CVSS Score:** {{cvss_score}}
-**Severity:** {{severity}}
-
-## 🔍 Etkilenen Bileşenler
-{{affected_components}}
-
-## 💥 Potansiyel Etki
-{{potential_impact}}
-
-## 🛡️ Azaltma Adımları
-{{mitigation_steps}}
-
-## ✅ Test Gereksinimleri
-{{testing_requirements}}
-
-## 📋 Güvenlik Kontrol Listesi
-- [ ] Güvenlik testi yapıldı
-- [ ] Penetrasyon testi gerekli mi?
-- [ ] Security review tamamlandı
-- [ ] Dokümantasyon güncellendi
-
-## 🚨 Disclosure Timeline
-{{disclosure_timeline}}
-
-## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "title", Type: "text", Required: true},
-				{Name: "description", Type: "text", Required: true},
-				{Name: "vulnerability_type", Type: "select", Required: true, Options: []string{"SQL Injection", "XSS", "CSRF", "Authentication", "Authorization", "Data Exposure", "Misconfiguration", "Dependency", "Other"}},
-				{Name: "cvss_score", Type: "text", Required: false},
-				{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
-				{Name: "affected_components", Type: "text", Required: true},
-				{Name: "potential_impact", Type: "text", Required: true},
-				{Name: "mitigation_steps", Type: "text", Required: true},
-				{Name: "testing_requirements", Type: "text", Required: true},
-				{Name: "disclosure_timeline", Type: "text", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: []string{constants.PriorityHigh}}, // Güvenlik her zaman yüksek
-				{Name: "tags", Type: "text", Required: false, Default: "security,vulnerability"},
-			},
-			Category: "Güvenlik",
-			Active:   true,
-		},
-		{
-			Name:         "Refactoring",
-			Definition:   "Kod kalitesi ve mimari iyileştirmeler",
-			Alias:        "refactor",
-			DefaultTitle: "♻️ [REFACTOR] {{code_smell}}: {{title}}",
-			DescriptionTemplate: `## ♻️ Refactoring Özeti
-{{description}}
-
-## 🦨 Code Smell Tipi
-{{code_smell_type}}
-
-## 📁 Etkilenen Dosyalar
-{{affected_files}}
-
-## 🎯 Refactoring Stratejisi
-{{refactoring_strategy}}
-
-## ✅ Başarı Kriterleri
-- [ ] Tüm testler geçiyor
-- [ ] Kod coverage düşmedi
-- [ ] Performance etkilenmedi
-- [ ] API uyumluluğu korundu
-
-## ⚠️ Risk Değerlendirmesi
-**Risk Seviyesi:** {{risk_level}}
-**Etki Alanı:** {{impact_scope}}
-
-## 🔄 Rollback Planı
-{{rollback_plan}}
-
-## 📊 Metrikler
-- **Mevcut Cyclomatic Complexity:** {{current_complexity}}
-- **Hedef Complexity:** {{target_complexity}}
-- **Mevcut Code Coverage:** {{current_coverage}}
-
-## 🏷️ Tags: {{tags}}`,
-			Fields: []TemplateAlan{
-				{Name: "title", Type: "text", Required: true},
-				{Name: "description", Type: "text", Required: true},
-				{Name: "code_smell", Type: "select", Required: true, Options: []string{"Long Method", "Large Class", "Duplicate Code", "Dead Code", "Complex Conditionals", "Feature Envy", "Data Clumps", "Primitive Obsession", "Switch Statements", "Parallel Inheritance", "Lazy Class", "Speculative Generality", "Message Chains", "Middle Man", "Other"}},
-				{Name: "code_smell_type", Type: "text", Required: true},
-				{Name: "affected_files", Type: "text", Required: true},
-				{Name: "refactoring_strategy", Type: "text", Required: true},
-				{Name: "risk_level", Type: "select", Required: true, Options: []string{"low", "medium", "high"}},
-				{Name: "impact_scope", Type: "text", Required: true},
-				{Name: "rollback_plan", Type: "text", Required: true},
-				{Name: "current_complexity", Type: "text", Required: false},
-				{Name: "target_complexity", Type: "text", Required: false},
-				{Name: "current_coverage", Type: "text", Required: false},
-				{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
-				{Name: "tags", Type: "text", Required: false, Default: "refactoring,code-quality"},
-			},
-			Category: "Teknik",
-			Active:   true,
+			EN: nil, // No English translation for legacy templates
 		},
 	}
 
-	for _, template := range templates {
-		// Generate UUID for template
-		template.ID = uuid.New().String()
+	// Create templates for each language
+	for _, group := range templateGroups {
+		// Set base_template_id for TR version
+		group.TR.BaseTemplateID = &group.BaseTemplateID
+		group.TR.LanguageCode = "tr"
+		group.TR.ID = uuid.New().String()
 
-		// Check if template with this name already exists
-		existingTemplates, err := vy.TemplateListele(ctx, "")
-		if err != nil {
-			return fmt.Errorf(i18n.TListFailed(i18n.FromContext(ctx), "template", err))
-		}
-
-		exists := false
-		for _, existing := range existingTemplates {
-			if existing.Name == template.Name {
-				exists = true
-				break
+		// Check if Turkish version exists
+		ctxTR := i18n.WithLanguage(ctx, "tr")
+		existingTR, err := vy.TemplateAliasIleGetir(ctxTR, group.TR.Alias)
+		if err != nil || existingTR == nil {
+			// Create Turkish version
+			if err := vy.TemplateOlustur(ctxTR, group.TR); err != nil {
+				return fmt.Errorf(i18n.T("error.defaultTemplateCreateFailed", map[string]interface{}{"Template": group.TR.Name, "Error": err}))
 			}
 		}
 
-		if exists {
-			// Template already exists, skip creation
-			continue
-		}
+		// Create English version if defined
+		if group.EN != nil {
+			group.EN.BaseTemplateID = &group.BaseTemplateID
+			group.EN.LanguageCode = "en"
+			group.EN.ID = uuid.New().String()
 
-		if err := vy.TemplateOlustur(ctx, template); err != nil {
-			return fmt.Errorf(i18n.T("error.defaultTemplateCreateFailed", map[string]interface{}{"Template": template.Name, "Error": err}))
+			ctxEN := i18n.WithLanguage(ctx, "en")
+			existingEN, err := vy.TemplateAliasIleGetir(ctxEN, group.EN.Alias)
+			if err != nil || existingEN == nil {
+				// Create English version
+				if err := vy.TemplateOlustur(ctxEN, group.EN); err != nil {
+					return fmt.Errorf(i18n.T("error.defaultTemplateCreateFailed", map[string]interface{}{"Template": group.EN.Name, "Error": err}))
+				}
+			}
 		}
 	}
 
