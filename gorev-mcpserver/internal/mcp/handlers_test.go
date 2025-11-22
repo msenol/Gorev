@@ -176,8 +176,8 @@ func TestMCPHandlers_Integration(t *testing.T) {
 	t.Run("Complete Task Lifecycle", func(t *testing.T) {
 		// 1. Create a project first
 		result := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-			"name":        "Test Projesi",
-			"description": "Integration test projesi",
+			"isim":     "Test Projesi",
+			"aciklama": "Integration test projesi",
 		})
 		assert.False(t, result.IsError)
 
@@ -220,7 +220,7 @@ func TestMCPHandlers_Integration(t *testing.T) {
 				"questions": "Does secondary functionality work?",
 				"criteria":  "Secondary tests must pass",
 				"priority":  constants.PriorityLow,
-				"etiketler": "test,secondary",
+				"tags":      "test,secondary",
 			},
 		}
 
@@ -463,8 +463,8 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 	t.Run("Project Lifecycle", func(t *testing.T) {
 		// Create multiple projects
 		projects := []map[string]interface{}{
-			{"name": "Proje A", "description": "İlk test projesi"},
-			{"name": "Proje B", "description": "İkinci test projesi"},
+			{"isim": "Proje A", "aciklama": "İlk test projesi"},
+			{"isim": "Proje B", "aciklama": "İkinci test projesi"},
 		}
 
 		var projectIDs []string
@@ -902,7 +902,7 @@ func TestTemplateHandlers(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title":       "Login button not working",
-				"description": "Users can't log in when clicking the login button",
+				"aciklama":    "Users can't log in when clicking the login button",
 				"module":      "Authentication",
 				"environment": "production",
 				"steps":       "1. Go to login page\n2. Enter credentials\n3. Click login button",
@@ -1046,8 +1046,8 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create a project for the feature
 		projectResult := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-			"name":        "Mobile App",
-			"description": "Mobile application project",
+			"isim":     "Mobile App",
+			"aciklama": "Mobile application project",
 		})
 		assert.False(t, projectResult.IsError)
 
@@ -1064,18 +1064,18 @@ func TestTemplateHandlers(t *testing.T) {
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: featureTemplateID,
 			constants.ParamValues: map[string]interface{}{
-				"title":       "Dark mode support",
-				"description": "Add dark mode theme to the mobile app",
-				"purpose":     "Improve user experience in low-light conditions and save battery",
-				"users":       "All mobile app users",
-				"criteria":    "- Theme toggle in settings\n- Persistent preference\n- Smooth transition",
-				"ui_ux":       "Material Design 3 dark theme guidelines",
-				"ilgili":      "Settings module, Theme manager",
-				"efor":        constants.PriorityMedium,
-				"priority":    constants.PriorityMedium,
-				"tags":        "özellik,ui,mobile",
-				"project_id":  projectID,
-				"due_date":    "2025-08-15",
+				"title":      "Dark mode support",
+				"aciklama":   "Add dark mode theme to the mobile app",
+				"purpose":    "Improve user experience in low-light conditions and save battery",
+				"users":      "All mobile app users",
+				"criteria":   "- Theme toggle in settings\n- Persistent preference\n- Smooth transition",
+				"ui_ux":      "Material Design 3 dark theme guidelines",
+				"ilgili":     "Settings module, Theme manager",
+				"efor":       constants.PriorityMedium,
+				"priority":   constants.PriorityMedium,
+				"tags":       "özellik,ui,mobile",
+				"project_id": projectID,
+				"due_date":   "2025-08-15",
 			},
 		})
 		assert.False(t, result.IsError)
@@ -1140,18 +1140,18 @@ func TestTemplateHandlers(t *testing.T) {
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: techDebtTemplateID,
 			constants.ParamValues: map[string]interface{}{
-				"title":          "Database query optimization",
-				"description":    "Optimize slow database queries in user listing",
-				"alan":           "Backend/Database",
-				"dosyalar":       "user_repository.go, user_queries.sql",
-				"neden":          "Page load time exceeds 5 seconds for user list",
-				"analiz":         "N+1 query problem, missing indexes",
-				"cozum":          "Add composite indexes, use JOIN instead of multiple queries",
-				"riskler":        "Potential data inconsistency during migration",
-				"iyilestirmeler": constants.TestPerformanceImprovement,
-				"sure":           "2-3 gün",
-				"priority":       constants.PriorityHigh,
-				"tags":           "teknik-borç,performance,database",
+				"title":        "Database query optimization",
+				"aciklama":     "Optimize slow database queries in user listing",
+				"module":       "Backend/Database",
+				"files":        "user_repository.go, user_queries.sql",
+				"reason":       "Page load time exceeds 5 seconds for user list",
+				"analysis":     "N+1 query problem, missing indexes",
+				"solution":     "Add composite indexes, use JOIN instead of multiple queries",
+				"risks":        "Potential data inconsistency during migration",
+				"improvements": constants.TestPerformanceImprovement,
+				"duration":     "2-3 gün",
+				"priority":     constants.PriorityHigh,
+				"tags":         "teknik-borç,performance,database",
 			},
 		})
 		assert.False(t, result.IsError)
@@ -1292,14 +1292,14 @@ func TestTemplateConcurrency(t *testing.T) {
 				constants.ParamTemplateID: bugTemplateID,
 				constants.ParamValues: map[string]interface{}{
 					"title":       fmt.Sprintf("Concurrent Bug %d", index),
-					"description": fmt.Sprintf("Bug description %d", index),
+					"aciklama":    fmt.Sprintf("Bug description %d", index),
 					"module":      "TestModule",
 					"environment": "development",
 					"steps":       "Test steps",
 					"expected":    "Expected behavior",
 					"actual":      "Current behavior",
 					"priority":    constants.PriorityMedium,
-					"etiketler":   "test,concurrent",
+					"tags":        "test,concurrent",
 				},
 			})
 			if result.IsError {
@@ -1368,8 +1368,8 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 	// First, set up a project
 	projectResult := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-		"name":        "Template Test Project",
-		"description": "Project for testing mandatory templates",
+		"isim":     "Template Test Project",
+		"aciklama": "Project for testing mandatory templates",
 	})
 	assert.False(t, projectResult.IsError)
 
@@ -1411,14 +1411,14 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title":       "Login API fails with 500 error",
-				"description": "Users cannot login due to server error",
+				"aciklama":    "Users cannot login due to server error",
 				"module":      "Authentication",
 				"environment": "production",
 				"steps":       "1. Go to login page\n2. Enter valid credentials\n3. Click login",
 				"expected":    "User should be logged in successfully",
 				"actual":      "Server returns 500 internal server error",
 				"priority":    constants.PriorityHigh,
-				"etiketler":   "bug,login,critical",
+				"tags":        "bug,login,critical",
 			},
 		})
 		assert.False(t, taskResult.IsError)
@@ -1429,9 +1429,9 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 		// 3. Verify gorev_olustur tool was removed (would return error via callTool helper)
 		result := callTool(t, handlers, "gorev_olustur", map[string]interface{}{
-			"title":       "This should fail",
-			"description": "Old method",
-			"priority":    constants.PriorityHigh,
+			"title":    "This should fail",
+			"aciklama": "Old method",
+			"priority": constants.PriorityHigh,
 		})
 		assert.True(t, result.IsError)
 		assert.Contains(t, getResultText(result), "removed")
