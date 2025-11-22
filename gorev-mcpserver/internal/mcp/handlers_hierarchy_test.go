@@ -344,7 +344,7 @@ func TestHierarchyWithPagination(t *testing.T) {
 				"baslik":    fmt.Sprintf("Root Task %d", i),
 				"aciklama":  "Root task description",
 				"oncelik":   constants.PriorityMedium,
-				"modul":     "test-module",
+				"module":    "test-module",
 				"kullanici": "test-user",
 			},
 		})
@@ -450,7 +450,7 @@ func TestCircularDependencyPrevention(t *testing.T) {
 			"baslik":    "Task 1",
 			"aciklama":  "First",
 			"oncelik":   constants.PriorityMedium,
-			"modul":     "test",
+			"module":    "test",
 			"kullanici": "user",
 		},
 	})

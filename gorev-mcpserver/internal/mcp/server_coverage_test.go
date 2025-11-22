@@ -149,8 +149,8 @@ func TestToolStruct(t *testing.T) {
 			"type": "object",
 			"properties": map[string]interface{}{
 				"param1": map[string]interface{}{
-					"type":        "string",
-					"description": "First parameter",
+					"type":     "string",
+					"aciklama": "First parameter",
 				},
 			},
 		},

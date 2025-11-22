@@ -16,7 +16,7 @@ func TestParameterValidator(t *testing.T) {
 	err := i18n.Initialize("tr")
 	require.NoError(t, err)
 
-	validator := NewParameterValidator()
+	validator := NewParameterValidator("tr")
 
 	t.Run("ValidateRequiredString - success", func(t *testing.T) {
 		params := map[string]interface{}{
@@ -82,7 +82,7 @@ func TestParameterValidator(t *testing.T) {
 
 	t.Run("ValidateOptionalString - empty", func(t *testing.T) {
 		params := map[string]interface{}{
-			"description": "",
+			"aciklama": "",
 		}
 
 		result := validator.ValidateOptionalString(params, "description")
