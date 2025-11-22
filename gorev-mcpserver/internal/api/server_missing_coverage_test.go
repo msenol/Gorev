@@ -47,13 +47,13 @@ func setupMissingCoverageTestServer(t *testing.T) (*APIServer, string, string, f
 	degerler := map[string]string{
 		"title":       "Test Task",
 		"description": "Test Description",
-		"modul":       "API",
-		"ortam":       "development",
-		"adimlar":     "Test steps",
-		"beklenen":    "Expected result",
-		"mevcut":      "Current result",
+		"module":      "API", // Changed from "modul" to "module"
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
 		"priority":    constants.PriorityMedium,
-		"etiketler":   "test",
+		"tags":        "test",
 	}
 	gorevResult, err := isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
@@ -164,13 +164,13 @@ func TestChangeParentTask(t *testing.T) {
 	degerler := map[string]string{
 		"title":       "Parent Task",
 		"description": "Parent Description",
-		"modul":       "API",
-		"ortam":       "development",
-		"adimlar":     "Test steps",
-		"beklenen":    "Expected result",
-		"mevcut":      "Current result",
+		"module":      "API",
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
 		"priority":    constants.PriorityMedium,
-		"etiketler":   "test",
+		"tags":        "test",
 	}
 	parentResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
@@ -215,13 +215,13 @@ func TestAddDependency(t *testing.T) {
 	degerler := map[string]string{
 		"title":       "Dependent Task",
 		"description": "Dependent Description",
-		"modul":       "API",
-		"ortam":       "development",
-		"adimlar":     "Test steps",
-		"beklenen":    "Expected result",
-		"mevcut":      "Current result",
+		"module":      "API",
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
 		"priority":    constants.PriorityMedium,
-		"etiketler":   "test",
+		"tags":        "test",
 	}
 	depResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
@@ -267,13 +267,13 @@ func TestRemoveDependency(t *testing.T) {
 	degerler := map[string]string{
 		"title":       "Dependent Task",
 		"description": "Dependent Description",
-		"modul":       "API",
-		"ortam":       "development",
-		"adimlar":     "Test steps",
-		"beklenen":    "Expected result",
-		"mevcut":      "Current result",
+		"module":      "API",
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
 		"priority":    constants.PriorityMedium,
-		"etiketler":   "test",
+		"tags":        "test",
 	}
 	depResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)

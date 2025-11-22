@@ -100,7 +100,7 @@ func BenchmarkParameterValidation(b *testing.B) {
 	config := BenchmarkConfig{
 		Name: "ParameterValidation",
 		Setup: func() interface{} {
-			validator := NewParameterValidator()
+			validator := NewParameterValidator("tr")
 			params := map[string]interface{}{
 				"id":     constants.TestIDValidation,
 				"durum":  constants.TaskStatusPending,
@@ -421,7 +421,7 @@ func BenchmarkRaceConditionDetection(b *testing.B) {
 						}
 					case 2:
 						// Validator operations
-						validator := NewParameterValidator()
+						validator := NewParameterValidator("tr")
 						params := map[string]interface{}{"id": "test"}
 						_, validationError := validator.ValidateRequiredString(params, "id")
 						if validationError != nil {

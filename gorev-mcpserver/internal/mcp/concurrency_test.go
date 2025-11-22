@@ -183,7 +183,7 @@ func TestConcurrentParameterValidation(t *testing.T) {
 	config := ConcurrencyTestConfig{
 		Name: "ConcurrentParameterValidation",
 		Setup: func() interface{} {
-			validator := NewParameterValidator()
+			validator := NewParameterValidator("tr")
 			return validator
 		},
 		Cleanup: func() {},
@@ -388,7 +388,7 @@ func TestStressConcurrencyMixed(t *testing.T) {
 		Setup: func() interface{} {
 			return map[string]interface{}{
 				"handlers":  handlers,
-				"validator": NewParameterValidator(),
+				"validator": NewParameterValidator("tr"),
 				"formatter": NewTaskFormatter(),
 			}
 		},
