@@ -118,6 +118,27 @@
           "maximum": 65535,
           "description": "%config.apiPort%"
         },
+        "gorev.connectionMode": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "local", "docker", "remote"],
+          "enumDescriptions": [
+            "Automatically detect and start daemon",
+            "Use local gorev binary",
+            "Use Docker container",
+            "Connect to remote server"
+          ]
+        },
+        "gorev.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to gorev binary (for local mode)"
+        },
+        "gorev.dockerComposeFile": {
+          "type": "string",
+          "default": "./docker-compose.yml",
+          "description": "Path to docker-compose file (for docker mode)"
+        },
         "gorev.showStatusBar": {
           "type": "boolean",
           "default": true,

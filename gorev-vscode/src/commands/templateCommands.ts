@@ -139,24 +139,15 @@ export function registerTemplateCommands(
           return;
         }
 
-        // Get the gorev server path from configuration
-        const serverPath = vscode.workspace.getConfiguration('gorev').get<string>('serverPath');
-        
-        if (!serverPath) {
-          vscode.window.showErrorMessage(t('template.serverPathNotConfigured'));
-          return;
-        }
-        
-        // Call gorev template init command
-        const terminal = vscode.window.createTerminal('Gorev Template Init');
-        terminal.sendText(`"${serverPath}" template init`);
-        terminal.show();
-
-        // Wait a bit and refresh
-        setTimeout(async () => {
+        // Initialize templates via API
+        try {
+          await apiClient.post('/api/v1/template/init', {});
           await providers.templateTreeProvider.refresh();
           vscode.window.showInformationMessage(t('template.defaultsLoaded'));
-        }, 2000);
+        } catch (error) {
+          Logger.error('Failed to initialize templates via API:', error);
+          vscode.window.showErrorMessage(t('template.initFailed'));
+        }
       } catch (error) {
         Logger.error('Failed to initialize templates:', error);
         vscode.window.showErrorMessage(t('template.initFailed'));

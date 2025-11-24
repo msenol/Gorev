@@ -291,6 +291,11 @@ export class ApiClient extends EventEmitter {
     return response.data as ApiResponse<Task>;
   }
 
+  async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
+    const response = await this.axiosInstance.post(endpoint, data);
+    return response.data as ApiResponse<T>;
+  }
+
   async updateTask(id: string, updates: Partial<Task>): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.put(`/tasks/${id}`, updates);
     return response.data as ApiResponse<Task>;

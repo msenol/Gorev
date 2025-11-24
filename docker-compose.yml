@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  gorev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gorev:latest
+    container_name: gorev-server
+    ports:
+      - "5082:5082"
+    volumes:
+      - ./workspace:/workspace
+      - ./data:/data
+    environment:
+      - GOREV_LANG=tr
+      - GOREV_DB_PATH=/data/gorev.db
+    command: ["gorev", "serve", "--api-port", "5082"]
+    restart: unless-stopped

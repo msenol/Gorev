@@ -153,6 +153,7 @@ func (s *APIServer) setupRoutes() {
 
 	// Template routes
 	api.Get("/templates", s.getTemplates)
+	api.Post("/template/init", s.initializeTemplates)
 
 	// Summary routes
 	api.Get("/summary", s.getSummary)
@@ -539,6 +540,22 @@ func (s *APIServer) getTemplates(c *fiber.Ctx) error {
 		"success": true,
 		"data":    templateler,
 		"total":   len(templateler),
+	})
+}
+
+// initializeTemplates creates default templates (TR/EN pairs) in the database
+func (s *APIServer) initializeTemplates(c *fiber.Ctx) error {
+	iy := s.getIsYoneticiFromContext(c)
+	ctx := s.getContextFromRequest(c)
+
+	// Call the business logic to initialize templates
+	if err := iy.VeriYonetici().VarsayilanTemplateleriOlustur(ctx); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to initialize templates: %v", err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Default templates initialized successfully",
 	})
 }
 

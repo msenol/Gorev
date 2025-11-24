@@ -1,40 +1,31 @@
-# Build aşaması
 FROM golang:1.23-alpine AS builder
-
-# Build dependencies
-RUN apk add --no-cache gcc musl-dev sqlite-dev git
 
 WORKDIR /app
 
-# Go modüllerini önce kopyala (cache için)
+# Install build dependencies
+RUN apk add --no-cache git
+
+# Copy go mod files
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Kaynak kodları kopyala
+# Copy source code
 COPY . .
 
-# Binary'yi derle
-RUN CGO_ENABLED=1 GOOS=linux go build -mod=mod -buildvcs=false -a -installsuffix cgo -ldflags '-extldflags "-static"' -o gorev ./cmd/gorev
+# Build the binary
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o gorev ./cmd/gorev
 
-# Final aşama
+# Final stage
 FROM alpine:latest
+RUN apk add --no-cache ca-certificates && adduser -D -g '' gorev
 
-RUN apk --no-cache add ca-certificates
+# Create directories
+RUN mkdir -p /workspace /data && chown -R gorev:gorev /workspace /data
 
-WORKDIR /app
-
-# Binary'yi kopyala
-COPY --from=builder /app/gorev .
-
-# Migration dosyalarını kopyala
-COPY --from=builder /app/internal/veri/migrations ./internal/veri/migrations
-
-# Veri dizini oluştur
-RUN mkdir -p /app/data
-
-# Çalışma portu (MCP stdio kullandığı için port gerekmez)
-# EXPOSE değeri yok
-
-# Varsayılan komut
-ENTRYPOINT ["./gorev"]
-CMD ["serve"]
+# Copy binary
+COPY --from=builder /app/gorev /usr/local/bin/gorev
+USER gorev
+WORKDIR /workspace
+EXPOSE 5082
+VOLUME ["/data", "/workspace"]
+CMD ["gorev", "daemon", "--detach"]
