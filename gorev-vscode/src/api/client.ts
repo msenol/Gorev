@@ -45,32 +45,80 @@ export interface Task {
   bu_goreve_bagimli_sayisi?: number;
 }
 
+// API response with English field names (v0.17.0+)
+interface ApiTask {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  updated_at: string;
+  due_date?: string;
+  project_id?: string;
+  proje_id?: string; // Some endpoints still use this
+  proje_name?: string;
+  parent_id?: string;
+  workspace_id?: string;
+  tags?: { id: string; name: string }[];
+  dependency_count?: number;
+  uncompleted_dependency_count?: number;
+  dependent_on_this_count?: number;
+}
+
+// Map API task (English fields) to frontend Task (Turkish fields)
+function mapApiTaskToTask(apiTask: ApiTask): Task {
+  return {
+    id: apiTask.id,
+    baslik: apiTask.title,
+    aciklama: apiTask.description,
+    durum: apiTask.status as Task['durum'],
+    oncelik: apiTask.priority as Task['oncelik'],
+    olusturma_tarihi: apiTask.created_at,
+    guncelleme_tarihi: apiTask.updated_at,
+    son_tarih: apiTask.due_date,
+    proje_id: apiTask.project_id || apiTask.proje_id,
+    proje_name: apiTask.proje_name,
+    parent_id: apiTask.parent_id,
+    etiketler: apiTask.tags?.map(t => ({ id: t.id, isim: t.name })),
+    bagimli_gorev_sayisi: apiTask.dependency_count,
+    tamamlanmamis_bagimlilik_sayisi: apiTask.uncompleted_dependency_count,
+    bu_goreve_bagimli_sayisi: apiTask.dependent_on_this_count,
+  };
+}
+
 export interface Project {
   id: string;
-  isim: string;
-  tanim?: string;
-  olusturma_tarihi: string;
-  is_active: boolean;
-  gorev_sayisi: number;
+  name: string;
+  definition?: string;
+  created_at: string;
+  updated_at?: string;
+  is_active?: boolean;
+  task_count: number;
 }
 
 export interface Template {
   id: string;
-  isim: string;
-  tanim: string;
+  name: string;
+  definition: string;
   alias?: string;
-  kategori: string;
-  alanlar: TemplateField[];
-  aktif: boolean;
+  default_title?: string;
+  description_template?: string;
+  category: string;
+  fields: TemplateField[];
+  sample_values?: Record<string, string> | null;
+  active: boolean;
+  language_code?: string;
+  base_template_id?: string;
 }
 
 export interface TemplateField {
-  isim: string;
-  tip: 'text' | 'select' | 'date';
-  zorunlu: boolean;
-  varsayilan?: string;
-  secenekler?: string[];
-  aciklama?: string;
+  name: string;
+  type: 'text' | 'select' | 'date';
+  required: boolean;
+  default?: string;
+  options?: string[] | null;
+  description?: string;
 }
 
 export interface CreateTaskFromTemplateRequest {
@@ -278,17 +326,35 @@ export class ApiClient extends EventEmitter {
     if (filters?.tum_projeler) params.append('tum_projeler', 'true');
 
     const response = await this.axiosInstance.get(`/tasks?${params.toString()}`);
-    return response.data as ApiResponse<Task[]>;
+    const apiResponse = response.data as ApiResponse<ApiTask[]>;
+
+    // Map API response (English fields) to frontend format (Turkish fields)
+    return {
+      ...apiResponse,
+      data: apiResponse.data?.map(mapApiTaskToTask) || []
+    };
   }
 
   async getTask(id: string): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.get(`/tasks/${id}`);
-    return response.data as ApiResponse<Task>;
+    const apiResponse = response.data as ApiResponse<ApiTask>;
+
+    // Map API response (English fields) to frontend format (Turkish fields)
+    return {
+      ...apiResponse,
+      data: apiResponse.data ? mapApiTaskToTask(apiResponse.data) : apiResponse.data as unknown as Task
+    };
   }
 
   async createTaskFromTemplate(request: CreateTaskFromTemplateRequest): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.post('/tasks/from-template', request);
-    return response.data as ApiResponse<Task>;
+    const apiResponse = response.data as ApiResponse<ApiTask>;
+
+    // Map API response (English fields) to frontend format (Turkish fields)
+    return {
+      ...apiResponse,
+      data: apiResponse.data ? mapApiTaskToTask(apiResponse.data) : apiResponse.data as unknown as Task
+    };
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
@@ -298,7 +364,13 @@ export class ApiClient extends EventEmitter {
 
   async updateTask(id: string, updates: Partial<Task>): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.put(`/tasks/${id}`, updates);
-    return response.data as ApiResponse<Task>;
+    const apiResponse = response.data as ApiResponse<ApiTask>;
+
+    // Map API response (English fields) to frontend format (Turkish fields)
+    return {
+      ...apiResponse,
+      data: apiResponse.data ? mapApiTaskToTask(apiResponse.data) : apiResponse.data as unknown as Task
+    };
   }
 
   async deleteTask(id: string): Promise<ApiResponse<void>> {
@@ -329,7 +401,13 @@ export class ApiClient extends EventEmitter {
     if (filters?.oncelik) params.append('oncelik', filters.oncelik);
 
     const response = await this.axiosInstance.get(`/projects/${projectId}/tasks?${params.toString()}`);
-    return response.data as ApiResponse<Task[]>;
+    const apiResponse = response.data as ApiResponse<ApiTask[]>;
+
+    // Map API response (English fields) to frontend format (Turkish fields)
+    return {
+      ...apiResponse,
+      data: apiResponse.data?.map(mapApiTaskToTask) || []
+    };
   }
 
   async activateProject(id: string): Promise<ApiResponse<Project>> {
@@ -374,15 +452,35 @@ export class ApiClient extends EventEmitter {
 
   // Subtask API
   async createSubtask(parentId: string, data: SubtaskData): Promise<ApiResponse<Task>> {
-    const response = await this.axiosInstance.post(`/tasks/${parentId}/subtasks`, data);
-    return response.data as ApiResponse<Task>;
+    // Map Turkish field names to English for API (v0.17.0+ migration)
+    const apiData = {
+      title: data.baslik,
+      description: data.aciklama,
+      priority: data.oncelik,
+      due_date: data.son_tarih,
+      etiketler: data.etiketler // Backend still uses Turkish for tags
+    };
+    const response = await this.axiosInstance.post(`/tasks/${parentId}/subtasks`, apiData);
+    const apiResponse = response.data as ApiResponse<ApiTask>;
+
+    // Map API response (English fields) to frontend format (Turkish fields)
+    return {
+      ...apiResponse,
+      data: apiResponse.data ? mapApiTaskToTask(apiResponse.data) : apiResponse.data as unknown as Task
+    };
   }
 
   async changeParent(taskId: string, newParentId: string): Promise<ApiResponse<Task>> {
     const response = await this.axiosInstance.put(`/tasks/${taskId}/parent`, {
       new_parent_id: newParentId
     });
-    return response.data as ApiResponse<Task>;
+    const apiResponse = response.data as ApiResponse<ApiTask>;
+
+    // Map API response (English fields) to frontend format (Turkish fields)
+    return {
+      ...apiResponse,
+      data: apiResponse.data ? mapApiTaskToTask(apiResponse.data) : apiResponse.data as unknown as Task
+    };
   }
 
   async getHierarchy(taskId: string): Promise<ApiResponse<TaskHierarchy>> {
@@ -454,9 +552,64 @@ export class ApiClient extends EventEmitter {
           );
           return this.convertToMCPFormat(result);
 
+        case 'gorev_duzenle': {
+          // General task update - can update proje_id, durum, oncelik, etc.
+          const { id, ...updateFields } = params as { id: string; proje_id?: string; durum?: string; oncelik?: string };
+          result = await this.updateTask(id, updateFields as Partial<Task>);
+          return this.convertToMCPFormat(result);
+        }
+
         case 'gorev_sil':
           result = await this.deleteTask((params as { id: string }).id);
           return this.convertToMCPFormat(result);
+
+        case 'gorev_ust_gorev_degistir': {
+          // Change parent task
+          const changeParentParams = params as { gorev_id: string; yeni_ust_gorev_id: string };
+          result = await this.changeParent(changeParentParams.gorev_id, changeParentParams.yeni_ust_gorev_id);
+          return this.convertToMCPFormat(result);
+        }
+
+        case 'gorev_bagimlilik_ekle': {
+          // Add dependency - hedef_id is the task that will have the dependency, kaynak_id is the source
+          const depParams = params as { kaynak_id: string; hedef_id: string; baglanti_tipi?: string };
+          result = await this.addDependency(depParams.hedef_id, {
+            kaynak_id: depParams.kaynak_id,
+            baglanti_tipi: depParams.baglanti_tipi
+          });
+          return this.convertToMCPFormat(result);
+        }
+
+        case 'alt_gorev_olustur': {
+          // Create subtask (legacy parameter names)
+          const subtaskParams = params as { ust_gorev_id: string; baslik: string; aciklama?: string; oncelik?: string };
+          result = await this.createSubtask(subtaskParams.ust_gorev_id, {
+            baslik: subtaskParams.baslik,
+            aciklama: subtaskParams.aciklama,
+            oncelik: subtaskParams.oncelik
+          });
+          return this.convertToMCPFormat(result);
+        }
+
+        case 'gorev_altgorev_olustur': {
+          // Create subtask (current MCP tool name)
+          const subtaskParams = params as {
+            parent_id: string;
+            baslik: string;
+            aciklama?: string;
+            oncelik?: string;
+            son_tarih?: string;
+            tags?: string;
+          };
+          result = await this.createSubtask(subtaskParams.parent_id, {
+            baslik: subtaskParams.baslik,
+            aciklama: subtaskParams.aciklama,
+            oncelik: subtaskParams.oncelik,
+            son_tarih: subtaskParams.son_tarih,
+            etiketler: subtaskParams.tags
+          });
+          return this.convertToMCPFormat(result);
+        }
 
         case 'proje_olustur':
           result = await this.createProject(params as { isim: string; tanim?: string });
@@ -477,6 +630,20 @@ export class ApiClient extends EventEmitter {
         case 'gorev_import':
           result = await this.importData(params as unknown as ImportRequest);
           return this.convertToMCPFormat(result);
+
+        // MCP-only tools (no REST API endpoints)
+        case 'gorev_set_active':
+        case 'gorev_get_active':
+        case 'gorev_nlp_query':
+        case 'gorev_context_summary':
+        case 'gorev_batch_update':
+          Logger.warn(`[ApiClient] Tool '${name}' is MCP-only and not available via REST API`);
+          return {
+            content: [{
+              type: 'text',
+              text: `Tool '${name}' is only available via MCP protocol, not REST API. Skipping.`
+            }]
+          };
 
         default:
           throw new Error(`Unsupported tool: ${name}`);
@@ -513,11 +680,11 @@ export class ApiClient extends EventEmitter {
       if (data[0]?.baslik) {
         // Tasks
         return this.formatTasks(data);
-      } else if (data[0]?.isim && data[0]?.gorev_sayisi !== undefined) {
-        // Projects
+      } else if (data[0]?.name && data[0]?.task_count !== undefined) {
+        // Projects (use English field names from API)
         return this.formatProjects(data);
-      } else if (data[0]?.alanlar) {
-        // Templates
+      } else if (data[0]?.fields) {
+        // Templates (use English field name from API)
         return this.formatTemplates(data);
       }
     }
@@ -623,11 +790,11 @@ export class ApiClient extends EventEmitter {
     let output = '## Proje Listesi\n\n';
 
     for (const project of projects) {
-      output += `### ${project.isim}\n`;
-      if (project.tanim) {
-        output += `${project.tanim}\n`;
+      output += `### ${project.name}\n`;
+      if (project.definition) {
+        output += `${project.definition}\n`;
       }
-      output += `📊 ${project.gorev_sayisi} görev\n`;
+      output += `📊 ${project.task_count} görev\n`;
       if (project.is_active) {
         output += '🟢 Aktif proje\n';
       }
@@ -641,18 +808,18 @@ export class ApiClient extends EventEmitter {
     let output = '## 📋 Görev Template\'leri\n\n';
 
     const grouped = templates.reduce((acc, template) => {
-      if (!acc[template.kategori]) acc[template.kategori] = [];
-      acc[template.kategori].push(template);
+      if (!acc[template.category]) acc[template.category] = [];
+      acc[template.category].push(template);
       return acc;
     }, {} as Record<string, Template[]>);
 
-    for (const [kategori, templates] of Object.entries(grouped)) {
-      output += `### ${kategori}\n\n`;
+    for (const [category, categoryTemplates] of Object.entries(grouped)) {
+      output += `### ${category}\n\n`;
 
-      for (const template of templates) {
-        output += `#### ${template.isim}\n`;
+      for (const template of categoryTemplates) {
+        output += `#### ${template.name}\n`;
         output += `- **ID:** \`${template.id}\`\n`;
-        output += `- **Açıklama:** ${template.tanim}\n`;
+        output += `- **Açıklama:** ${template.definition}\n`;
         if (template.alias) {
           output += `- **Alias:** ${template.alias}\n`;
         }

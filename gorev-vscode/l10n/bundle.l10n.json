@@ -735,8 +735,8 @@
   "common.back": "Back",
   "common.close": "Close",
 
-  "config.databaseMode": "Database storage mode: auto (detect workspace), workspace (project-local), or global (shared)"
-}  ,"connection.modeNotConfigured": "Gorev server is not running. Please choose how to connect:",
+  "config.databaseMode": "Database storage mode: auto (detect workspace), workspace (project-local), or global (shared)",
+  "connection.modeNotConfigured": "Gorev server is not running. Please choose how to connect:",
   "connection.serverNotRunning": "Gorev server is not running at {host}:{port}",
   "connection.remoteNotConnected": "Cannot connect to remote server at {host}:{port}",
   "connection.dockerNotFound": "Docker or docker-compose not found",
@@ -762,3 +762,4 @@
   "wizard.commandCopied": "✅ Install command copied to clipboard",
   "wizard.dockerGuide": "https://github.com/msenol/Gorev/blob/main/docs/docker/README.md",
   "wizard.remoteSetup": "https://github.com/msenol/Gorev/blob/main/docs/remote-setup.md"
+}

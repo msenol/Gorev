@@ -119,15 +119,16 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
 
   /**
    * Convert API Project to internal Proje model
+   * Maps English API field names to Turkish internal model
    */
   private convertProjectToProje(project: Project): Proje {
     return {
       id: project.id,
-      isim: project.isim,
-      tanim: project.tanim || '',
-      gorev_sayisi: project.gorev_sayisi,
-      olusturma_tarihi: project.olusturma_tarihi,
-      guncelleme_tarihi: project.olusturma_tarihi, // API doesn't return update date for projects
+      isim: project.name,
+      tanim: project.definition || '',
+      gorev_sayisi: project.task_count,
+      olusturma_tarihi: project.created_at,
+      guncelleme_tarihi: project.updated_at || project.created_at,
       // Task statistics not available from API Project type yet
       // These would need to be fetched separately or added to API response
     };

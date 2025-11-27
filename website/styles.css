@@ -59,10 +59,49 @@ body {
     padding: 0 var(--spacing-md);
 }
 
+/* Heavy Development Warning Banner */
+.warning-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to right, #f59e0b, #ea580c, #dc2626);
+    color: white;
+    padding: var(--spacing-xs) 0;
+    text-align: center;
+    z-index: 2000;
+    box-shadow: var(--shadow-md);
+}
+
+.warning-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.warning-icon {
+    font-size: 1.25rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@media (max-width: 640px) {
+    .warning-text {
+        font-size: 0.75rem;
+    }
+}
+
 /* Navigation */
 .navbar {
     position: fixed;
-    top: 0;
+    top: 40px; /* Account for warning banner height */
     width: 100%;
     background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(10px);
@@ -112,7 +151,7 @@ body {
 
 /* Hero Section */
 .hero {
-    padding: var(--spacing-2xl) 0 var(--spacing-xl);
+    padding: calc(var(--spacing-2xl) + 60px) 0 var(--spacing-xl); /* Extra 60px for navbar + banner */
     background: var(--accent-gradient);
     position: relative;
     overflow: hidden;

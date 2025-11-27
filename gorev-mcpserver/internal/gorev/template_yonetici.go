@@ -255,12 +255,20 @@ func (vy *VeriYonetici) TemplatedenGorevOlustur(ctx context.Context, templateID 
 		}
 	}
 
+	// Get workspace_id if injected by IsYonetici
+	workspaceID := ""
+	if val, ok := degerler["_workspace_id"]; ok {
+		workspaceID = val
+		delete(degerler, "_workspace_id") // Clean up internal key
+	}
+
 	// Görev oluştur
 	gorev := &Gorev{
 		Title:       baslik,
 		Description: aciklama,
 		Priority:    oncelik,
 		Status:      constants.TaskStatusPending,
+		WorkspaceID: workspaceID,
 	}
 
 	// ProjeID'yi ayarla
@@ -549,9 +557,54 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				Category: "Teknik",
 				Active:   true,
 			},
-			EN: nil, // No English translation for legacy templates
+			EN: &GorevTemplate{
+				Name:         "Technical Debt",
+				Definition:   "Template for refactoring or technical improvements",
+				Alias:        "debt",
+				DefaultTitle: "🔧 [{{alan}}] {{title}}",
+				DescriptionTemplate: `## 🔧 Technical Debt Description
+{{description}}
+
+## 📍 Affected Area
+**Area/Module:** {{alan}}
+**Files:** {{dosyalar}}
+
+## ❓ Why Is It Needed?
+{{neden}}
+
+## 📊 Current State Analysis
+{{analiz}}
+
+## 🎯 Proposed Solution
+{{cozum}}
+
+## ⚠️ Risks
+{{riskler}}
+
+## 📈 Expected Improvements
+{{iyilestirmeler}}
+
+## ⏱️ Estimated Time: {{sure}}
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "alan", Type: "text", Required: true},
+					{Name: "dosyalar", Type: "text", Required: false},
+					{Name: "neden", Type: "text", Required: true},
+					{Name: "analiz", Type: "text", Required: true},
+					{Name: "cozum", Type: "text", Required: true},
+					{Name: "riskler", Type: "text", Required: false},
+					{Name: "iyilestirmeler", Type: "text", Required: true},
+					{Name: "sure", Type: "select", Required: false, Options: []string{"1 day", "2-3 days", "1 week", "2+ weeks"}},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "tech-debt,refactoring"},
+				},
+				Category: "Technical",
+				Active:   true,
+			},
 		},
-		// Research Template (old version, Turkish only)
+		// Research Template
 		{
 			BaseTemplateID: "research-task",
 			TR: &GorevTemplate{
@@ -593,7 +646,559 @@ func (vy *VeriYonetici) VarsayilanTemplateleriOlustur(ctx context.Context) error
 				Category: "Araştırma",
 				Active:   true,
 			},
-			EN: nil, // No English translation for legacy templates
+			EN: &GorevTemplate{
+				Name:         "Research Task",
+				Definition:   "Template for technology or solution research",
+				Alias:        "research",
+				DefaultTitle: "🔍 {{topic}} Research",
+				DescriptionTemplate: `## 🔍 Research Topic
+{{topic}}
+
+## 🎯 Research Purpose
+{{purpose}}
+
+## ❓ Questions to Answer
+{{questions}}
+
+## 📚 Sources to Research
+{{sources}}
+
+## 🔄 Alternatives
+{{alternatives}}
+
+## ⚖️ Evaluation Criteria
+{{criteria}}
+
+## 📅 Due Date: {{due_date}}
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "topic", Type: "text", Required: true},
+					{Name: "purpose", Type: "text", Required: true},
+					{Name: "questions", Type: "text", Required: true},
+					{Name: "sources", Type: "text", Required: false},
+					{Name: "alternatives", Type: "text", Required: false},
+					{Name: "criteria", Type: "text", Required: true},
+					{Name: "due_date", Type: "date", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "research"},
+				},
+				Category: "Research",
+				Active:   true,
+			},
+		},
+		// Bug Report v2 Template (Enhanced)
+		{
+			BaseTemplateID: "bug-report-v2",
+			TR: &GorevTemplate{
+				Name:         "Bug Raporu v2",
+				Definition:   "Gelişmiş bug raporu - detaylı adımlar ve environment bilgisi",
+				Alias:        "bug2",
+				DefaultTitle: "🐛 [{{severity}}] {{modul}}: {{title}}",
+				DescriptionTemplate: `## 🐛 Hata Özeti
+{{description}}
+
+## 🔄 Tekrar Üretme Adımları
+{{steps_to_reproduce}}
+
+## ✅ Beklenen Davranış
+{{expected_behavior}}
+
+## ❌ Gerçekleşen Davranış
+{{actual_behavior}}
+
+## 💻 Ortam Bilgileri
+- **İşletim Sistemi:** {{os_version}}
+- **Tarayıcı/Client:** {{client_info}}
+- **Server Version:** {{server_version}}
+- **Database:** {{db_info}}
+
+## 🚨 Hata Derecesi
+**Severity:** {{severity}}
+**Etkilenen Kullanıcı Sayısı:** {{affected_users}}
+
+## 📸 Ekler
+{{attachments}}
+
+## 🔧 Geçici Çözüm
+{{workaround}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "modul", Type: "text", Required: true},
+					{Name: "steps_to_reproduce", Type: "text", Required: true},
+					{Name: "expected_behavior", Type: "text", Required: true},
+					{Name: "actual_behavior", Type: "text", Required: true},
+					{Name: "os_version", Type: "text", Required: true},
+					{Name: "client_info", Type: "text", Required: true},
+					{Name: "server_version", Type: "text", Required: true},
+					{Name: "db_info", Type: "text", Required: false},
+					{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
+					{Name: "affected_users", Type: "text", Required: true},
+					{Name: "attachments", Type: "text", Required: false},
+					{Name: "workaround", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "bug,production"},
+				},
+				Category: "Bug",
+				Active:   true,
+			},
+			EN: &GorevTemplate{
+				Name:         "Bug Report v2",
+				Definition:   "Enhanced bug report - detailed steps and environment info",
+				Alias:        "bug2",
+				DefaultTitle: "🐛 [{{severity}}] {{modul}}: {{title}}",
+				DescriptionTemplate: `## 🐛 Bug Summary
+{{description}}
+
+## 🔄 Steps to Reproduce
+{{steps_to_reproduce}}
+
+## ✅ Expected Behavior
+{{expected_behavior}}
+
+## ❌ Actual Behavior
+{{actual_behavior}}
+
+## 💻 Environment Info
+- **Operating System:** {{os_version}}
+- **Browser/Client:** {{client_info}}
+- **Server Version:** {{server_version}}
+- **Database:** {{db_info}}
+
+## 🚨 Bug Severity
+**Severity:** {{severity}}
+**Affected Users:** {{affected_users}}
+
+## 📸 Attachments
+{{attachments}}
+
+## 🔧 Workaround
+{{workaround}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "modul", Type: "text", Required: true},
+					{Name: "steps_to_reproduce", Type: "text", Required: true},
+					{Name: "expected_behavior", Type: "text", Required: true},
+					{Name: "actual_behavior", Type: "text", Required: true},
+					{Name: "os_version", Type: "text", Required: true},
+					{Name: "client_info", Type: "text", Required: true},
+					{Name: "server_version", Type: "text", Required: true},
+					{Name: "db_info", Type: "text", Required: false},
+					{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
+					{Name: "affected_users", Type: "text", Required: true},
+					{Name: "attachments", Type: "text", Required: false},
+					{Name: "workaround", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "bug,production"},
+				},
+				Category: "Bug",
+				Active:   true,
+			},
+		},
+		// Spike Research Template
+		{
+			BaseTemplateID: "spike-research",
+			TR: &GorevTemplate{
+				Name:         "Spike Araştırma",
+				Definition:   "Time-boxed teknik araştırma ve proof-of-concept çalışmaları",
+				Alias:        "spike",
+				DefaultTitle: "🔬 [SPIKE] {{research_question}}",
+				DescriptionTemplate: `## 🔬 Araştırma Sorusu
+{{research_question}}
+
+## 🎯 Başarı Kriterleri
+{{success_criteria}}
+
+## ⏰ Time Box
+**Maksimum Süre:** {{time_box}}
+**Karar Tarihi:** {{decision_deadline}}
+
+## 🔍 Araştırma Planı
+{{research_plan}}
+
+## 📊 Beklenen Çıktılar
+{{expected_outputs}}
+
+## ⚡ Riskler ve Varsayımlar
+{{risks_assumptions}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "research_question", Type: "text", Required: true},
+					{Name: "success_criteria", Type: "text", Required: true},
+					{Name: "time_box", Type: "select", Required: true, Options: []string{"4 saat", "1 gün", "2 gün", "3 gün", "1 hafta"}},
+					{Name: "decision_deadline", Type: "date", Required: true},
+					{Name: "research_plan", Type: "text", Required: true},
+					{Name: "expected_outputs", Type: "text", Required: true},
+					{Name: "risks_assumptions", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "spike,research,poc"},
+				},
+				Category: "Araştırma",
+				Active:   true,
+			},
+			EN: &GorevTemplate{
+				Name:         "Spike Research",
+				Definition:   "Time-boxed technical research and proof-of-concept work",
+				Alias:        "spike",
+				DefaultTitle: "🔬 [SPIKE] {{research_question}}",
+				DescriptionTemplate: `## 🔬 Research Question
+{{research_question}}
+
+## 🎯 Success Criteria
+{{success_criteria}}
+
+## ⏰ Time Box
+**Maximum Duration:** {{time_box}}
+**Decision Deadline:** {{decision_deadline}}
+
+## 🔍 Research Plan
+{{research_plan}}
+
+## 📊 Expected Outputs
+{{expected_outputs}}
+
+## ⚡ Risks and Assumptions
+{{risks_assumptions}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "research_question", Type: "text", Required: true},
+					{Name: "success_criteria", Type: "text", Required: true},
+					{Name: "time_box", Type: "select", Required: true, Options: []string{"4 hours", "1 day", "2 days", "3 days", "1 week"}},
+					{Name: "decision_deadline", Type: "date", Required: true},
+					{Name: "research_plan", Type: "text", Required: true},
+					{Name: "expected_outputs", Type: "text", Required: true},
+					{Name: "risks_assumptions", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "spike,research,poc"},
+				},
+				Category: "Research",
+				Active:   true,
+			},
+		},
+		// Performance Issue Template
+		{
+			BaseTemplateID: "performance-issue",
+			TR: &GorevTemplate{
+				Name:         "Performans Sorunu",
+				Definition:   "Performans problemleri ve optimizasyon görevleri",
+				Alias:        "performance",
+				DefaultTitle: "⚡ [PERF] {{metric_affected}}: {{title}}",
+				DescriptionTemplate: `## ⚡ Performans Sorunu
+{{description}}
+
+## 📊 Etkilenen Metrik
+**Metrik:** {{metric_affected}}
+**Mevcut Değer:** {{current_value}}
+**Hedef Değer:** {{target_value}}
+**Kabul Edilebilir Değer:** {{acceptable_value}}
+
+## 📏 Ölçüm Yöntemi
+{{measurement_method}}
+
+## 👥 Kullanıcı Etkisi
+{{user_impact}}
+
+## 🔍 Kök Neden Analizi
+{{root_cause}}
+
+## 💡 Önerilen Çözümler
+{{proposed_solutions}}
+
+## ⚠️ Trade-offs
+{{tradeoffs}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "metric_affected", Type: "select", Required: true, Options: []string{"response_time", "throughput", "cpu_usage", "memory_usage", "database_query", "page_load", "api_latency"}},
+					{Name: "current_value", Type: "text", Required: true},
+					{Name: "target_value", Type: "text", Required: true},
+					{Name: "acceptable_value", Type: "text", Required: false},
+					{Name: "measurement_method", Type: "text", Required: true},
+					{Name: "user_impact", Type: "text", Required: true},
+					{Name: "root_cause", Type: "text", Required: false},
+					{Name: "proposed_solutions", Type: "text", Required: true},
+					{Name: "tradeoffs", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "performance,optimization"},
+				},
+				Category: "Teknik",
+				Active:   true,
+			},
+			EN: &GorevTemplate{
+				Name:         "Performance Issue",
+				Definition:   "Performance problems and optimization tasks",
+				Alias:        "performance",
+				DefaultTitle: "⚡ [PERF] {{metric_affected}}: {{title}}",
+				DescriptionTemplate: `## ⚡ Performance Issue
+{{description}}
+
+## 📊 Affected Metric
+**Metric:** {{metric_affected}}
+**Current Value:** {{current_value}}
+**Target Value:** {{target_value}}
+**Acceptable Value:** {{acceptable_value}}
+
+## 📏 Measurement Method
+{{measurement_method}}
+
+## 👥 User Impact
+{{user_impact}}
+
+## 🔍 Root Cause Analysis
+{{root_cause}}
+
+## 💡 Proposed Solutions
+{{proposed_solutions}}
+
+## ⚠️ Trade-offs
+{{tradeoffs}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "metric_affected", Type: "select", Required: true, Options: []string{"response_time", "throughput", "cpu_usage", "memory_usage", "database_query", "page_load", "api_latency"}},
+					{Name: "current_value", Type: "text", Required: true},
+					{Name: "target_value", Type: "text", Required: true},
+					{Name: "acceptable_value", Type: "text", Required: false},
+					{Name: "measurement_method", Type: "text", Required: true},
+					{Name: "user_impact", Type: "text", Required: true},
+					{Name: "root_cause", Type: "text", Required: false},
+					{Name: "proposed_solutions", Type: "text", Required: true},
+					{Name: "tradeoffs", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "performance,optimization"},
+				},
+				Category: "Technical",
+				Active:   true,
+			},
+		},
+		// Security Fix Template
+		{
+			BaseTemplateID: "security-fix",
+			TR: &GorevTemplate{
+				Name:         "Güvenlik Düzeltmesi",
+				Definition:   "Güvenlik açıkları ve düzeltmeleri için özel template",
+				Alias:        "security",
+				DefaultTitle: "🔒 [SEC-{{severity}}] {{vulnerability_type}}: {{title}}",
+				DescriptionTemplate: `## 🔒 Güvenlik Açığı
+{{description}}
+
+## 🎯 Açık Tipi
+**Category:** {{vulnerability_type}}
+**CVSS Score:** {{cvss_score}}
+**Severity:** {{severity}}
+
+## 🔍 Etkilenen Bileşenler
+{{affected_components}}
+
+## 💥 Potansiyel Etki
+{{potential_impact}}
+
+## 🛡️ Azaltma Adımları
+{{mitigation_steps}}
+
+## ✅ Test Gereksinimleri
+{{testing_requirements}}
+
+## 📋 Güvenlik Kontrol Listesi
+- [ ] Güvenlik testi yapıldı
+- [ ] Penetrasyon testi gerekli mi?
+- [ ] Security review tamamlandı
+- [ ] Dokümantasyon güncellendi
+
+## 🚨 Disclosure Timeline
+{{disclosure_timeline}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "vulnerability_type", Type: "select", Required: true, Options: []string{"SQL Injection", "XSS", "CSRF", "Authentication", "Authorization", "Data Exposure", "Misconfiguration", "Dependency", "Other"}},
+					{Name: "cvss_score", Type: "text", Required: false},
+					{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
+					{Name: "affected_components", Type: "text", Required: true},
+					{Name: "potential_impact", Type: "text", Required: true},
+					{Name: "mitigation_steps", Type: "text", Required: true},
+					{Name: "testing_requirements", Type: "text", Required: true},
+					{Name: "disclosure_timeline", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: []string{constants.PriorityHigh}},
+					{Name: "tags", Type: "text", Required: false, Default: "security,vulnerability"},
+				},
+				Category: "Güvenlik",
+				Active:   true,
+			},
+			EN: &GorevTemplate{
+				Name:         "Security Fix",
+				Definition:   "Special template for security vulnerabilities and fixes",
+				Alias:        "security",
+				DefaultTitle: "🔒 [SEC-{{severity}}] {{vulnerability_type}}: {{title}}",
+				DescriptionTemplate: `## 🔒 Security Vulnerability
+{{description}}
+
+## 🎯 Vulnerability Type
+**Category:** {{vulnerability_type}}
+**CVSS Score:** {{cvss_score}}
+**Severity:** {{severity}}
+
+## 🔍 Affected Components
+{{affected_components}}
+
+## 💥 Potential Impact
+{{potential_impact}}
+
+## 🛡️ Mitigation Steps
+{{mitigation_steps}}
+
+## ✅ Testing Requirements
+{{testing_requirements}}
+
+## 📋 Security Checklist
+- [ ] Security testing completed
+- [ ] Penetration testing required?
+- [ ] Security review completed
+- [ ] Documentation updated
+
+## 🚨 Disclosure Timeline
+{{disclosure_timeline}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "vulnerability_type", Type: "select", Required: true, Options: []string{"SQL Injection", "XSS", "CSRF", "Authentication", "Authorization", "Data Exposure", "Misconfiguration", "Dependency", "Other"}},
+					{Name: "cvss_score", Type: "text", Required: false},
+					{Name: "severity", Type: "select", Required: true, Options: []string{"critical", "high", "medium", "low"}},
+					{Name: "affected_components", Type: "text", Required: true},
+					{Name: "potential_impact", Type: "text", Required: true},
+					{Name: "mitigation_steps", Type: "text", Required: true},
+					{Name: "testing_requirements", Type: "text", Required: true},
+					{Name: "disclosure_timeline", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityHigh, Options: []string{constants.PriorityHigh}},
+					{Name: "tags", Type: "text", Required: false, Default: "security,vulnerability"},
+				},
+				Category: "Security",
+				Active:   true,
+			},
+		},
+		// Refactoring Template
+		{
+			BaseTemplateID: "refactoring",
+			TR: &GorevTemplate{
+				Name:         "Yeniden Düzenleme",
+				Definition:   "Kod kalitesi ve mimari iyileştirmeler",
+				Alias:        "refactor",
+				DefaultTitle: "♻️ [REFACTOR] {{code_smell}}: {{title}}",
+				DescriptionTemplate: `## ♻️ Refactoring Özeti
+{{description}}
+
+## 🦨 Code Smell Tipi
+{{code_smell_type}}
+
+## 📁 Etkilenen Dosyalar
+{{affected_files}}
+
+## 🎯 Refactoring Stratejisi
+{{refactoring_strategy}}
+
+## ✅ Başarı Kriterleri
+- [ ] Tüm testler geçiyor
+- [ ] Kod coverage düşmedi
+- [ ] Performance etkilenmedi
+- [ ] API uyumluluğu korundu
+
+## ⚠️ Risk Değerlendirmesi
+**Risk Seviyesi:** {{risk_level}}
+**Etki Alanı:** {{impact_scope}}
+
+## 🔄 Rollback Planı
+{{rollback_plan}}
+
+## 📊 Metrikler
+- **Mevcut Cyclomatic Complexity:** {{current_complexity}}
+- **Hedef Complexity:** {{target_complexity}}
+- **Mevcut Code Coverage:** {{current_coverage}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "code_smell", Type: "select", Required: true, Options: []string{"Long Method", "Large Class", "Duplicate Code", "Dead Code", "Complex Conditionals", "Feature Envy", "Data Clumps", "Primitive Obsession", "Switch Statements", "Parallel Inheritance", "Lazy Class", "Speculative Generality", "Message Chains", "Middle Man", "Other"}},
+					{Name: "code_smell_type", Type: "text", Required: true},
+					{Name: "affected_files", Type: "text", Required: true},
+					{Name: "refactoring_strategy", Type: "text", Required: true},
+					{Name: "risk_level", Type: "select", Required: true, Options: []string{"low", "medium", "high"}},
+					{Name: "impact_scope", Type: "text", Required: true},
+					{Name: "rollback_plan", Type: "text", Required: true},
+					{Name: "current_complexity", Type: "text", Required: false},
+					{Name: "target_complexity", Type: "text", Required: false},
+					{Name: "current_coverage", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "refactoring,code-quality"},
+				},
+				Category: "Teknik",
+				Active:   true,
+			},
+			EN: &GorevTemplate{
+				Name:         "Refactoring",
+				Definition:   "Code quality and architectural improvements",
+				Alias:        "refactor",
+				DefaultTitle: "♻️ [REFACTOR] {{code_smell}}: {{title}}",
+				DescriptionTemplate: `## ♻️ Refactoring Summary
+{{description}}
+
+## 🦨 Code Smell Type
+{{code_smell_type}}
+
+## 📁 Affected Files
+{{affected_files}}
+
+## 🎯 Refactoring Strategy
+{{refactoring_strategy}}
+
+## ✅ Success Criteria
+- [ ] All tests passing
+- [ ] Code coverage not decreased
+- [ ] Performance not affected
+- [ ] API compatibility maintained
+
+## ⚠️ Risk Assessment
+**Risk Level:** {{risk_level}}
+**Impact Scope:** {{impact_scope}}
+
+## 🔄 Rollback Plan
+{{rollback_plan}}
+
+## 📊 Metrics
+- **Current Cyclomatic Complexity:** {{current_complexity}}
+- **Target Complexity:** {{target_complexity}}
+- **Current Code Coverage:** {{current_coverage}}
+
+## 🏷️ Tags: {{tags}}`,
+				Fields: []TemplateAlan{
+					{Name: "title", Type: "text", Required: true},
+					{Name: "description", Type: "text", Required: true},
+					{Name: "code_smell", Type: "select", Required: true, Options: []string{"Long Method", "Large Class", "Duplicate Code", "Dead Code", "Complex Conditionals", "Feature Envy", "Data Clumps", "Primitive Obsession", "Switch Statements", "Parallel Inheritance", "Lazy Class", "Speculative Generality", "Message Chains", "Middle Man", "Other"}},
+					{Name: "code_smell_type", Type: "text", Required: true},
+					{Name: "affected_files", Type: "text", Required: true},
+					{Name: "refactoring_strategy", Type: "text", Required: true},
+					{Name: "risk_level", Type: "select", Required: true, Options: []string{"low", "medium", "high"}},
+					{Name: "impact_scope", Type: "text", Required: true},
+					{Name: "rollback_plan", Type: "text", Required: true},
+					{Name: "current_complexity", Type: "text", Required: false},
+					{Name: "target_complexity", Type: "text", Required: false},
+					{Name: "current_coverage", Type: "text", Required: false},
+					{Name: "priority", Type: "select", Required: true, Default: constants.PriorityMedium, Options: constants.GetValidPriorities()},
+					{Name: "tags", Type: "text", Required: false, Default: "refactoring,code-quality"},
+				},
+				Category: "Technical",
+				Active:   true,
+			},
 		},
 	}
 

@@ -894,8 +894,8 @@ export class GroupTreeViewItem extends vscode.TreeItem {
         // Proje gruplandırması için proje ismini kullan
         if (groupType === GroupingStrategy.ByProject && projects && groupKey !== 'no-project') {
             const project = projects.get(groupKey);
-            if (project && project.isim) {
-                label = project.isim;
+            if (project && project.name) {
+                label = project.name;
             }
         }
         

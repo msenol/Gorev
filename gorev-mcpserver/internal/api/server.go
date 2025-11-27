@@ -298,13 +298,34 @@ func (s *APIServer) updateTask(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	// Handle status update - use GorevGuncelle with params map and workspace context
+	// Handle task updates - use GorevGuncelle with params map and workspace context
+	// Note: API accepts Turkish field names but DB columns are English since v0.17.0
+	// Mapping: durum -> status, proje_id -> project_id, oncelik -> priority
 	iy := s.getIsYoneticiFromContext(c)
 	ctx := s.getContextFromRequest(c)
+
+	// Build update params with proper field name mapping
+	params := make(map[string]interface{})
+
 	if durum, ok := req["durum"].(string); ok {
-		params := map[string]interface{}{"durum": durum}
+		params["status"] = durum
+	}
+	if projeID, ok := req["proje_id"].(string); ok {
+		params["project_id"] = projeID
+	}
+	if oncelik, ok := req["oncelik"].(string); ok {
+		params["priority"] = oncelik
+	}
+	if baslik, ok := req["baslik"].(string); ok {
+		params["title"] = baslik
+	}
+	if aciklama, ok := req["aciklama"].(string); ok {
+		params["description"] = aciklama
+	}
+
+	if len(params) > 0 {
 		if err := iy.VeriYonetici().GorevGuncelle(ctx, id, params); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update task %s with status %s: %v", id, durum, err))
+			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update task %s: %v", id, err))
 		}
 	}
 

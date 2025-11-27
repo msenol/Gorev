@@ -310,6 +310,7 @@ func (vy *VeriYonetici) GorevListele(ctx context.Context, filters map[string]int
 	status := ""
 	sirala := ""
 	filtre := ""
+	workspaceID := ""
 
 	if v, ok := filters["status"]; ok {
 		if s, ok := v.(string); ok {
@@ -326,8 +327,13 @@ func (vy *VeriYonetici) GorevListele(ctx context.Context, filters map[string]int
 			filtre = s
 		}
 	}
+	if v, ok := filters["workspace_id"]; ok {
+		if s, ok := v.(string); ok {
+			workspaceID = s
+		}
+	}
 
-	return vy.GorevleriGetir(ctx, status, sirala, filtre)
+	return vy.GorevleriGetirWithWorkspace(ctx, status, sirala, filtre, workspaceID)
 }
 
 // GorevOlustur creates a new task
@@ -501,8 +507,14 @@ func (vy *VeriYonetici) GorevOlusturBasit(ctx context.Context, title, descriptio
 }
 
 func (vy *VeriYonetici) GorevKaydet(ctx context.Context, gorev *Gorev) error {
-	sorgu := `INSERT INTO gorevler (id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date)
-	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	sorgu := `INSERT INTO gorevler (id, title, description, status, priority, project_id, parent_id, workspace_id, created_at, updated_at, due_date)
+	          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	// Use workspace_id from gorev or fallback to 'default'
+	workspaceID := gorev.WorkspaceID
+	if workspaceID == "" {
+		workspaceID = "default"
+	}
 
 	// Use retry logic for better concurrent write handling
 	err := retryOnBusy(func() error {
@@ -514,6 +526,7 @@ func (vy *VeriYonetici) GorevKaydet(ctx context.Context, gorev *Gorev) error {
 			gorev.Priority,
 			sql.NullString{String: gorev.ProjeID, Valid: gorev.ProjeID != ""},
 			sql.NullString{String: gorev.ParentID, Valid: gorev.ParentID != ""},
+			workspaceID,
 			gorev.CreatedAt,
 			gorev.UpdatedAt,
 			gorev.DueDate,
@@ -587,10 +600,21 @@ func (vy *VeriYonetici) GorevGetir(ctx context.Context, id string) (*Gorev, erro
 }
 
 func (vy *VeriYonetici) GorevleriGetir(ctx context.Context, status, sirala, filtre string) ([]*Gorev, error) {
-	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, created_at, updated_at, due_date
+	return vy.GorevleriGetirWithWorkspace(ctx, status, sirala, filtre, "")
+}
+
+// GorevleriGetirWithWorkspace retrieves tasks with optional workspace filtering
+func (vy *VeriYonetici) GorevleriGetirWithWorkspace(ctx context.Context, status, sirala, filtre, workspaceID string) ([]*Gorev, error) {
+	sorgu := `SELECT id, title, description, status, priority, project_id, parent_id, workspace_id, created_at, updated_at, due_date
 	          FROM gorevler`
 	args := []interface{}{}
 	whereClauses := []string{}
+
+	// Add workspace filter if provided (centralized mode)
+	if workspaceID != "" {
+		whereClauses = append(whereClauses, "workspace_id = ?")
+		args = append(args, workspaceID)
+	}
 
 	if status != "" {
 		whereClauses = append(whereClauses, "status = ?")
@@ -629,7 +653,7 @@ func (vy *VeriYonetici) GorevleriGetir(ctx context.Context, status, sirala, filt
 	var gorevler []*Gorev
 	for rows.Next() {
 		gorev := &Gorev{}
-		var projeID, parentID sql.NullString
+		var projeID, parentID, wsID sql.NullString
 
 		err := rows.Scan(
 			&gorev.ID,
@@ -639,6 +663,7 @@ func (vy *VeriYonetici) GorevleriGetir(ctx context.Context, status, sirala, filt
 			&gorev.Priority,
 			&projeID,
 			&parentID,
+			&wsID,
 			&gorev.CreatedAt,
 			&gorev.UpdatedAt,
 			&gorev.DueDate,
@@ -653,6 +678,10 @@ func (vy *VeriYonetici) GorevleriGetir(ctx context.Context, status, sirala, filt
 
 		if parentID.Valid {
 			gorev.ParentID = parentID.String
+		}
+
+		if wsID.Valid {
+			gorev.WorkspaceID = wsID.String
 		}
 
 		// Etiketleri getir
@@ -813,13 +842,20 @@ func (vy *VeriYonetici) GorevGuncelle(ctx context.Context, taskID string, params
 }
 
 func (vy *VeriYonetici) ProjeKaydet(ctx context.Context, proje *Proje) error {
-	sorgu := `INSERT INTO projeler (id, name, definition, created_at, updated_at)
-	          VALUES (?, ?, ?, ?, ?)`
+	sorgu := `INSERT INTO projeler (id, name, definition, workspace_id, created_at, updated_at)
+	          VALUES (?, ?, ?, ?, ?, ?)`
+
+	// Use workspace_id from proje or fallback to 'default'
+	workspaceID := proje.WorkspaceID
+	if workspaceID == "" {
+		workspaceID = "default"
+	}
 
 	_, err := vy.db.Exec(sorgu,
 		proje.ID,
 		proje.Name,
 		proje.Definition,
+		workspaceID,
 		proje.CreatedAt,
 		proje.UpdatedAt,
 	)

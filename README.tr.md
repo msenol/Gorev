@@ -2,7 +2,13 @@
 
 <div align="center">
 
-**Last Updated:** October 6, 2025 | **Version:** v0.16.3
+> ⚠️ **UYARI: AKTİF GELİŞTİRME** ⚠️
+>
+> Bu proje şu anda **aktif geliştirme** altındadır. Sık sık breaking changes, API değişiklikleri ve özellik güncellemeleri olabilir. Üretim ortamlarında dikkatli kullanın.
+>
+> **Last Updated:** November 27, 2025 | **Version:** v0.17.0
+
+
 
 [🇺🇸 English](README.en.md) | [🇹🇷 Türkçe](README.md)
 

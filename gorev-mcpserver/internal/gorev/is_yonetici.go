@@ -12,12 +12,40 @@ import (
 
 type IsYonetici struct {
 	veriYonetici VeriYoneticiInterface
+	workspaceID  string // Workspace ID for centralized mode filtering
 }
 
 func YeniIsYonetici(veriYonetici VeriYoneticiInterface) *IsYonetici {
 	return &IsYonetici{
 		veriYonetici: veriYonetici,
+		workspaceID:  "", // Empty means no workspace filtering (local mode)
 	}
+}
+
+// YeniIsYoneticiWithWorkspaceID creates a new IsYonetici with workspace ID filtering
+// Used in centralized mode where all data is in a single database
+func YeniIsYoneticiWithWorkspaceID(veriYonetici VeriYoneticiInterface, workspaceID string) *IsYonetici {
+	return &IsYonetici{
+		veriYonetici: veriYonetici,
+		workspaceID:  workspaceID,
+	}
+}
+
+// GetWorkspaceID returns the workspace ID for this manager
+func (iy *IsYonetici) GetWorkspaceID() string {
+	return iy.workspaceID
+}
+
+// addWorkspaceFilter adds workspace_id to filters if in centralized mode
+func (iy *IsYonetici) addWorkspaceFilter(filters map[string]interface{}) map[string]interface{} {
+	if iy.workspaceID == "" {
+		return filters
+	}
+	if filters == nil {
+		filters = make(map[string]interface{})
+	}
+	filters["workspace_id"] = iy.workspaceID
+	return filters
 }
 
 // VeriYonetici returns the data manager interface
@@ -42,6 +70,7 @@ func (iy *IsYonetici) GorevOlustur(ctx context.Context, baslik, aciklama, onceli
 		Priority:    oncelik,
 		Status:      constants.TaskStatusPending,
 		ProjeID:     projeID,
+		WorkspaceID: iy.workspaceID, // Set workspace ID for centralized mode
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		DueDate:     sonTarih,
@@ -66,6 +95,9 @@ func (iy *IsYonetici) GorevOlustur(ctx context.Context, baslik, aciklama, onceli
 }
 
 func (iy *IsYonetici) GorevListele(ctx context.Context, filters map[string]interface{}) ([]*Gorev, error) {
+	// Add workspace filter for centralized mode
+	filters = iy.addWorkspaceFilter(filters)
+
 	gorevler, err := iy.veriYonetici.GorevListele(ctx, filters)
 	if err != nil {
 		return nil, err
@@ -184,11 +216,12 @@ func (iy *IsYonetici) GorevDurumGuncelle(ctx context.Context, id, durum string) 
 
 func (iy *IsYonetici) ProjeOlustur(ctx context.Context, isim, tanim string) (*Proje, error) {
 	proje := &Proje{
-		ID:         uuid.New().String(),
-		Name:       isim,
-		Definition: tanim,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		ID:          uuid.New().String(),
+		Name:        isim,
+		Definition:  tanim,
+		WorkspaceID: iy.workspaceID, // Set workspace ID for centralized mode
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	if err := iy.veriYonetici.ProjeKaydet(ctx, proje); err != nil {
@@ -489,6 +522,13 @@ func (iy *IsYonetici) TemplateListele(ctx context.Context, kategori string) ([]*
 
 // TemplatedenGorevOlustur template kullanarak görev oluşturur
 func (iy *IsYonetici) TemplatedenGorevOlustur(ctx context.Context, templateID string, degerler map[string]string) (*Gorev, error) {
+	// Inject workspace_id for centralized mode
+	if iy.workspaceID != "" {
+		if degerler == nil {
+			degerler = make(map[string]string)
+		}
+		degerler["_workspace_id"] = iy.workspaceID
+	}
 	return iy.veriYonetici.TemplatedenGorevOlustur(ctx, templateID, degerler)
 }
 
@@ -517,6 +557,7 @@ func (iy *IsYonetici) AltGorevOlustur(ctx context.Context, parentID, baslik, aci
 		Status:      constants.TaskStatusPending,
 		ProjeID:     parent.ProjeID, // Alt görev aynı projede olmalı
 		ParentID:    parentID,
+		WorkspaceID: iy.workspaceID, // Set workspace ID for centralized mode
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		DueDate:     sonTarih,

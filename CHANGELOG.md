@@ -5,7 +5,7 @@ All notable changes to Gorev will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.17.0] - 2025-11-28
 
 ### Added
 
@@ -35,7 +35,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **VS Code Extension**: Refactored 13 TypeScript files for type safety
   - Updated `ui/taskDetailPanel.ts`, `providers/*.ts`, `commands/*.ts` with proper typing
   - Maintained 100% test pass rate (104/104 tests) throughout refactoring
-- **Version Alignment**: Updated `gorev-web` to v0.17.0 for consistency across modules
+- **Version Alignment**: Updated all modules to v0.17.0 for consistency
+
+### Fixed
+
+- **Critical Workspace Isolation Bug**: Fixed workspace_id not being set on task creation
+  - Template-based task creation now properly assigns workspace_id
+  - Subtask creation now includes workspace_id from parent task
+  - Project creation now stores workspace_id in database
+  - Files: `internal/gorev/is_yonetici.go`, `internal/gorev/template_yonetici.go`, `internal/gorev/veri_yonetici.go`
+
+- **API Field Mapping**: Fixed English→Turkish field mapping for v0.17.0 API
+  - Added `mapApiTaskToTask()` function in VS Code API client
+  - All task operations now properly map: title→baslik, description→aciklama, status→durum, priority→oncelik
+  - Fixed getTasks(), getTask(), createTaskFromTemplate(), updateTask(), createSubtask()
+  - File: `gorev-vscode/src/api/client.ts`
+
+- **VS Code Extension**: Added gorev_altgorev_olustur tool support
+  - Added missing case in callTool switch
+  - Fixed parameter name mapping: etiketler→tags for subtask creation
+  - Added graceful handling for MCP-only tools (set_active, nlp_query, context_summary, batch_update)
+  - Files: `gorev-vscode/src/api/client.ts`, `gorev-vscode/src/debug/testDataSeeder.ts`
+
+### Added
+
+- **Heavy Development Warnings**: Added prominent warnings across all platforms
+  - Added warning banners to README.md (English) and README.tr.md (Turkish)
+  - Added warning banner to public website https://gorev.work
+  - Added warning banner to embedded web UI with animated CSS styling
+  - All warnings clearly state project is under active development
+
+### Changed
+
+- **Website**: Updated to v0.17.0 with warning banner
+  - New warning banner at top of site with pulse animation
+  - Updated version badge to v0.17.0
+  - Enhanced contrast and visibility of warning message
 
 ## [0.16.3] - 2025-10-07
 

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/api"
+	"github.com/msenol/gorev/internal/config"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	"github.com/msenol/gorev/internal/mcp"
@@ -20,13 +21,15 @@ import (
 )
 
 var (
-	version     = "v0.17.0"
-	buildTime   = "unknown"
-	gitCommit   = "unknown"
-	langFlag    string
-	debugFlag   bool
-	apiPortFlag string
-	noAPIFlag   bool
+	version       = "v0.17.0"
+	buildTime     = "unknown"
+	gitCommit     = "unknown"
+	langFlag      string
+	debugFlag     bool
+	apiPortFlag   string
+	noAPIFlag     bool
+	serverModeFlag string
+	dbPathFlag    string
 )
 
 // getMigrationsPath returns the correct path to migrations folder
@@ -276,12 +279,29 @@ func main() {
 					return fmt.Errorf("failed to set language to %s: %w", langFlag, err)
 				}
 			}
+
+			// Setup server configuration
+			cfg := config.DefaultConfig()
+			if serverModeFlag != "" {
+				cfg.Mode = config.ServerMode(serverModeFlag)
+			}
+			if dbPathFlag != "" {
+				cfg.CentralizedDBPath = dbPathFlag
+			}
+			cfg.Port = apiPortFlag
+			cfg.AllowLocalPaths = cfg.Mode == config.ModeLocal
+			config.SetGlobalConfig(cfg)
+
+			log.Printf("🚀 Starting Gorev Server (mode: %s)...", cfg.Mode)
+
 			return runServer()
 		},
 	}
 	serveCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, i18n.T("cli.debug"))
 	serveCmd.PersistentFlags().StringVar(&apiPortFlag, "api-port", "5082", "API server port")
 	serveCmd.PersistentFlags().BoolVar(&noAPIFlag, "no-api", false, "Disable API server (MCP only)")
+	serveCmd.PersistentFlags().StringVar(&serverModeFlag, "mode", "", "Server mode: local (default) or centralized")
+	serveCmd.PersistentFlags().StringVar(&dbPathFlag, "db-path", "", "Database path (for centralized mode)")
 
 	versionCmd := &cobra.Command{
 		Use:   "version",
@@ -410,7 +430,19 @@ func runServer() error {
 	defer func() { _ = veriYonetici.Kapat() }()
 
 	// İş mantığı servisini oluştur
-	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+	// Centralized modda: default workspace_id ile IsYonetici oluştur
+	var isYonetici *gorev.IsYonetici
+	cfg := config.GetGlobalConfig()
+	if cfg.Mode == config.ModeCentralized {
+		defaultWorkspaceID := os.Getenv("GOREV_WORKSPACE_ID")
+		if defaultWorkspaceID == "" {
+			defaultWorkspaceID = "default"
+		}
+		log.Printf("📦 Centralized mode: using workspace_id=%s", defaultWorkspaceID)
+		isYonetici = gorev.YeniIsYoneticiWithWorkspaceID(veriYonetici, defaultWorkspaceID)
+	} else {
+		isYonetici = gorev.YeniIsYonetici(veriYonetici)
+	}
 
 	// IDE extension durumunu kontrol et (background'da)
 	if !debugFlag {

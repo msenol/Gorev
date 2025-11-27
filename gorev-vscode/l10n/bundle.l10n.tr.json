@@ -735,8 +735,8 @@
   "common.back": "Geri",
   "common.close": "Kapat",
 
-  "config.databaseMode": "Veritabanı saklama modu: auto (workspace algıla), workspace (proje-yerel), veya global (paylaşımlı)"
-}  ,"connection.modeNotConfigured": "Gorev sunucusu çalışmıyor. Lütfen bağlanma yöntemi seçin:",
+  "config.databaseMode": "Veritabanı saklama modu: auto (workspace algıla), workspace (proje-yerel), veya global (paylaşımlı)",
+  "connection.modeNotConfigured": "Gorev sunucusu çalışmıyor. Lütfen bağlanma yöntemi seçin:",
   "connection.serverNotRunning": "Gorev sunucusu {host}:{port} adresinde çalışmıyor",
   "connection.remoteNotConnected": "Uzak sunucuya bağlanılamadı: {host}:{port}",
   "connection.dockerNotFound": "Docker veya docker-compose bulunamadı",
@@ -762,3 +762,4 @@
   "wizard.commandCopied": "✅ Kurulum komutu panoya kopyalandı",
   "wizard.dockerGuide": "https://github.com/msenol/Gorev/blob/main/docs/docker/README.tr.md",
   "wizard.remoteSetup": "https://github.com/msenol/Gorev/blob/main/docs/remote-setup.tr.md"
+}

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ApiClient, Template } from '../api/client';
+import { ApiClient, Template, TemplateField } from '../api/client';
 import { Logger } from '../utils/logger';
 
 /**
@@ -118,9 +118,9 @@ export class TemplateWizard {
             const templates = result.success && result.data ? result.data : [];
 
             const filtered = templates.filter(t =>
-                t.isim.toLowerCase().includes(query.toLowerCase()) ||
-                t.tanim?.toLowerCase().includes(query.toLowerCase()) ||
-                t.kategori?.toLowerCase().includes(query.toLowerCase())
+                t.name.toLowerCase().includes(query.toLowerCase()) ||
+                t.definition?.toLowerCase().includes(query.toLowerCase()) ||
+                t.category?.toLowerCase().includes(query.toLowerCase())
             );
             
             await this.panel.webview.postMessage({
@@ -162,9 +162,9 @@ export class TemplateWizard {
 
         try {
             // Validate required fields
-            const missingFields = this.template.alanlar
-                .filter(field => field.zorunlu && !values[field.isim])
-                .map(field => field.isim);
+            const missingFields = this.template.fields
+                .filter((field: TemplateField) => field.required && !values[field.name])
+                .map((field: TemplateField) => field.name);
 
             if (missingFields.length > 0) {
                 await this.panel.webview.postMessage({
@@ -229,9 +229,9 @@ export class TemplateWizard {
         }
 
         // Add custom fields
-        template.alanlar.forEach(field => {
-            if (values[field.isim] && !['baslik', 'aciklama', 'oncelik', 'son_tarih', 'etiketler'].includes(field.isim)) {
-                preview += `- **${field.isim}:** ${values[field.isim]}\n`;
+        template.fields.forEach((field: TemplateField) => {
+            if (values[field.name] && !['baslik', 'aciklama', 'oncelik', 'son_tarih', 'etiketler'].includes(field.name)) {
+                preview += `- **${field.name}:** ${values[field.name]}\n`;
             }
         });
 

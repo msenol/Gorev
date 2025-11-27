@@ -186,7 +186,7 @@ export class FilterToolbar {
             const projectResult = await this.apiClient.getProjects();
             if (projectResult.success && projectResult.data) {
                 items.push(...projectResult.data.map(project => ({
-                    label: `$(folder) ${project.isim}`,
+                    label: `$(folder) ${project.name}`,
                     description: t('filterToolbar.project'),
                     value: { projeId: project.id },
                     filterType: 'proje' as const,

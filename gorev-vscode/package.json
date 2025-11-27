@@ -139,6 +139,16 @@
           "default": "./docker-compose.yml",
           "description": "Path to docker-compose file (for docker mode)"
         },
+        "gorev.serverUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Full server URL (e.g., http://localhost:5082). Overrides apiHost and apiPort when set."
+        },
+        "gorev.workspaceId": {
+          "type": "string",
+          "default": "",
+          "description": "Workspace ID for task isolation. Auto-generated on first connection and saved here. Only set manually to share tasks across machines."
+        },
         "gorev.showStatusBar": {
           "type": "boolean",
           "default": true,

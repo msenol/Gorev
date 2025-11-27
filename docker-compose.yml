@@ -1,4 +1,18 @@
-version: '3.8'
+# Gorev Server - Centralized Mode
+#
+# This configuration runs Gorev in centralized mode where:
+# - Single database stores all workspaces' data
+# - Workspaces are isolated by workspace_id
+# - VS Code extensions connect remotely
+#
+# Usage:
+#   docker-compose up -d          # Start server
+#   docker-compose logs -f        # View logs
+#   docker-compose down           # Stop server
+#   docker-compose down -v        # Stop and remove data
+#
+# Test with: ./scripts/test-e2e.sh
+
 services:
   gorev:
     build:
@@ -9,10 +23,30 @@ services:
     ports:
       - "5082:5082"
     volumes:
-      - ./workspace:/workspace
-      - ./data:/data
+      - gorev-data:/data
     environment:
+      # Language: tr (Turkish) or en (English)
       - GOREV_LANG=tr
+      # Server mode: centralized (single DB) or local (per-workspace DB)
+      - GOREV_MODE=centralized
+      # Database path for centralized mode
       - GOREV_DB_PATH=/data/gorev.db
-    command: ["gorev", "serve", "--api-port", "5082"]
+      # Default workspace ID for MCP connections (optional)
+      # - GOREV_WORKSPACE_ID=default
+    command: >
+      gorev serve
+      --mode centralized
+      --db-path /data/gorev.db
+      --api-port 5082
+      --debug
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5082/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  gorev-data:
+    name: gorev-centralized-data

@@ -53,7 +53,7 @@ function App() {
   // Show loading state while workspace is loading
   if (workspaceLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-gray-50 pt-12">
         <div className="text-center">
           <div className="text-6xl mb-4">⏳</div>
           <h2 className="text-xl font-semibold text-gray-700">Loading workspace...</h2>
@@ -65,7 +65,7 @@ function App() {
   // Show error if workspace failed to load
   if (workspaceError) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-gray-50 pt-12">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Workspace Error</h2>
@@ -77,6 +77,19 @@ function App() {
 
   return (
     <div className="h-screen flex bg-gray-50">
+      {/* Heavy Development Warning Banner */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white shadow-lg">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center justify-center space-x-3">
+            <span className="text-xl">⚠️</span>
+            <p className="font-bold text-sm md:text-base">
+              WARNING: This project is under heavy development. Breaking changes may occur.
+            </p>
+            <span className="text-xl">⚠️</span>
+          </div>
+        </div>
+      </div>
+
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -89,7 +102,7 @@ function App() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden pt-12">
         {/* Header */}
         <Header
           selectedProject={selectedProject}

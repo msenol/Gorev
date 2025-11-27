@@ -109,24 +109,25 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
 
   /**
    * Convert API Template to internal GorevTemplate model
+   * Maps English API field names to Turkish internal model
    */
   private convertTemplateToGorevTemplate(template: Template): GorevTemplate {
     return {
       id: template.id,
-      isim: template.isim,
-      tanim: template.tanim,
-      varsayilan_baslik: '', // Not provided by API
-      aciklama_template: template.tanim,
-      alanlar: template.alanlar.map(field => ({
-        isim: field.isim,
-        tur: this.mapFieldType(field.tip),
-        zorunlu: field.zorunlu,
-        varsayilan: field.varsayilan,
-        secenekler: field.secenekler,
+      isim: template.name,
+      tanim: template.definition,
+      varsayilan_baslik: template.default_title || '',
+      aciklama_template: template.description_template || template.definition,
+      alanlar: template.fields.map(field => ({
+        isim: field.name,
+        tur: this.mapFieldType(field.type),
+        zorunlu: field.required,
+        varsayilan: field.default,
+        secenekler: field.options || undefined,
       })),
-      ornek_degerler: {}, // Not provided by current API
-      kategori: template.kategori as TemplateKategori,
-      aktif: template.aktif,
+      ornek_degerler: template.sample_values || {},
+      kategori: template.category as TemplateKategori,
+      aktif: template.active,
     };
   }
 

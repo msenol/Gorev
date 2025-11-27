@@ -12,6 +12,7 @@ type Gorev struct {
 	ProjeID     string     `json:"proje_id,omitempty"`
 	ProjeName   string     `json:"proje_name,omitempty"` // Project name for Web UI/VS Code
 	ParentID    string     `json:"parent_id,omitempty"`
+	WorkspaceID string     `json:"workspace_id,omitempty"` // Workspace ID for centralized mode
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
 	DueDate     *time.Time `json:"due_date,omitempty"`
@@ -32,12 +33,13 @@ type Etiket struct {
 
 // Proje görevleri gruplamak için kullanılır (project for grouping tasks)
 type Proje struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	Definition string    `json:"definition"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	TaskCount  int       `json:"task_count"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Definition  string    `json:"definition"`
+	WorkspaceID string    `json:"workspace_id,omitempty"` // Workspace ID for centralized mode
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	TaskCount   int       `json:"task_count"`
 }
 
 // Ozet sistem durumu özeti (summary of system status)
