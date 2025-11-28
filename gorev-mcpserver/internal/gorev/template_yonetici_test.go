@@ -7,11 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/msenol/gorev/internal/constants"
+	"github.com/msenol/gorev/internal/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateOperationsSimple(t *testing.T) {
+	// Initialize i18n for testing
+	_ = i18n.Initialize(constants.DefaultTestLanguage)
+
 	t.Run("Template Validation", func(t *testing.T) {
 		tempDB := "test_validation_" + strings.ReplaceAll(time.Now().Format("2006-01-02T15:04:05.000000000Z"), ":", "-") + ".db"
 		defer os.Remove(tempDB)

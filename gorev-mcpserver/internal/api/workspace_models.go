@@ -30,8 +30,9 @@ type WorkspaceContext struct {
 
 // WorkspaceRegistration represents a workspace registration request
 type WorkspaceRegistration struct {
-	Path string `json:"path"` // Absolute path to workspace folder
-	Name string `json:"name"` // Optional display name (defaults to folder name)
+	Path        string `json:"path"`         // Absolute path to workspace folder (required in local mode)
+	Name        string `json:"name"`         // Optional display name (defaults to folder name)
+	WorkspaceID string `json:"workspace_id"` // Explicit workspace ID (for centralized mode)
 }
 
 // WorkspaceInfo is a lightweight representation of a workspace for API responses

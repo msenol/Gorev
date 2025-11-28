@@ -22,33 +22,32 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
   }
 
   async getChildren(element?: TemplateTreeItem | TemplateCategoryItem): Promise<(TemplateTreeItem | TemplateCategoryItem)[]> {
-    console.log('[TemplateTreeProvider] getChildren called with element:', element);
-    
+    Logger.debug(`[TemplateTreeProvider] getChildren called with element: ${element?.label}`);
+
     if (!this.apiClient.isConnected()) {
-      console.log('[TemplateTreeProvider] MCP client not connected');
+      Logger.debug('[TemplateTreeProvider] MCP client not connected');
       return [];
     }
 
     if (!element) {
       // Root level - return categories
-      console.log('[TemplateTreeProvider] Loading root categories...');
+      Logger.debug('[TemplateTreeProvider] Loading root categories...');
       try {
         await this.loadTemplates();
         const categories = this.getCategories();
-        console.log('[TemplateTreeProvider] Returning', categories.length, 'categories');
+        Logger.debug(`[TemplateTreeProvider] Returning ${categories.length} categories`);
         return categories;
       } catch (error) {
         Logger.error('Failed to load templates:', error);
-        console.error('[TemplateTreeProvider] Error loading templates:', error);
         return [];
       }
     } else if (element instanceof TemplateCategoryItem) {
       // Return templates for this category
-      console.log('[TemplateTreeProvider] Loading templates for category:', element.category);
+      Logger.debug(`[TemplateTreeProvider] Loading templates for category: ${element.category}`);
       const templates = this.templates
         .filter((template) => template.kategori === element.category)
         .map((template) => new TemplateTreeItem(template));
-      console.log('[TemplateTreeProvider] Returning', templates.length, 'templates');
+      Logger.debug(`[TemplateTreeProvider] Returning ${templates.length} templates`);
       return templates;
     }
 
@@ -110,24 +109,25 @@ export class TemplateTreeProvider implements vscode.TreeDataProvider<TemplateTre
 
   /**
    * Convert API Template to internal GorevTemplate model
+   * Maps English API field names to Turkish internal model
    */
   private convertTemplateToGorevTemplate(template: Template): GorevTemplate {
     return {
       id: template.id,
-      isim: template.isim,
-      tanim: template.tanim,
-      varsayilan_baslik: '', // Not provided by API
-      aciklama_template: template.tanim,
-      alanlar: template.alanlar.map(field => ({
-        isim: field.isim,
-        tur: this.mapFieldType(field.tip),
-        zorunlu: field.zorunlu,
-        varsayilan: field.varsayilan,
-        secenekler: field.secenekler,
+      isim: template.name,
+      tanim: template.definition,
+      varsayilan_baslik: template.default_title || '',
+      aciklama_template: template.description_template || template.definition,
+      alanlar: template.fields.map(field => ({
+        isim: field.name,
+        tur: this.mapFieldType(field.type),
+        zorunlu: field.required,
+        varsayilan: field.default,
+        secenekler: field.options || undefined,
       })),
-      ornek_degerler: {}, // Not provided by current API
-      kategori: template.kategori as TemplateKategori,
-      aktif: template.aktif,
+      ornek_degerler: template.sample_values || {},
+      kategori: template.category as TemplateKategori,
+      aktif: template.active,
     };
   }
 

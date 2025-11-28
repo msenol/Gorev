@@ -23,27 +23,26 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
   }
 
   async getChildren(element?: ProjeTreeItem): Promise<ProjeTreeItem[]> {
-    console.log('[ProjeTreeProvider] getChildren called with element:', element);
-    
+    Logger.debug(`[ProjeTreeProvider] getChildren called with element: ${element?.label}`);
+
     if (!this.apiClient.isConnected()) {
-      console.log('[ProjeTreeProvider] MCP client not connected');
+      Logger.debug('[ProjeTreeProvider] MCP client not connected');
       return [];
     }
 
     if (!element) {
       // Root level - return all projects
-      console.log('[ProjeTreeProvider] Loading root projects...');
+      Logger.debug('[ProjeTreeProvider] Loading root projects...');
       try {
         await this.loadProjects();
         await this.loadActiveProject();
         const items = this.projects.map((project) => 
           new ProjeTreeItem(project, project.id === this.activeProjectId)
         );
-        console.log('[ProjeTreeProvider] Returning', items.length, 'project items');
+        Logger.debug(`[ProjeTreeProvider] Returning ${items.length} project items`);
         return items;
       } catch (error) {
         Logger.error('Failed to load projects:', error);
-        console.error('[ProjeTreeProvider] Error loading projects:', error);
         return [];
       }
     }
@@ -120,15 +119,16 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
 
   /**
    * Convert API Project to internal Proje model
+   * Maps English API field names to Turkish internal model
    */
   private convertProjectToProje(project: Project): Proje {
     return {
       id: project.id,
-      isim: project.isim,
-      tanim: project.tanim || '',
-      gorev_sayisi: project.gorev_sayisi,
-      olusturma_tarihi: project.olusturma_tarihi,
-      guncelleme_tarihi: project.olusturma_tarihi, // API doesn't return update date for projects
+      isim: project.name,
+      tanim: project.definition || '',
+      gorev_sayisi: project.task_count,
+      olusturma_tarihi: project.created_at,
+      guncelleme_tarihi: project.updated_at || project.created_at,
       // Task statistics not available from API Project type yet
       // These would need to be fetched separately or added to API response
     };
@@ -139,7 +139,7 @@ export class ProjeTreeProvider implements vscode.TreeDataProvider<ProjeTreeItem>
 export class ProjeTreeItem extends vscode.TreeItem {
   constructor(
     public readonly project: Proje,
-    public readonly isActive: boolean = false,
+    public readonly isActive = false,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.None
   ) {
     super(project.isim, collapsibleState);

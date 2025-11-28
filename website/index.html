@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-Powered Task Management for MCP-compatible editors. Connect Gorev to Claude, VS Code, Windsurf, and more.">
+    <meta name="keywords" content="task management, MCP, AI, development, productivity">
+    <title>Gorev - AI-Powered Task Management for Modern Development</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+    <!-- Heavy Development Warning Banner -->
+    <div class="warning-banner">
+        <div class="warning-content">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">WARNING: This project is under heavy development. Breaking changes may occur frequently.</span>
+            <span class="warning-icon">⚠️</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M9 9h6m-6 4h6"/>
+                </svg>
+                <span class="logo-text">Gorev</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#demo">Demo</a>
+                <a href="https://github.com/msenol/Gorev" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    AI-Powered Task Management
+                    <span class="gradient-text">for Modern Development</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Connect Gorev to any MCP-compatible AI editor and manage tasks with natural language.
+                    Built for developers who work with AI assistants.
+                </p>
+                <div class="hero-actions">
+                    <a href="https://github.com/msenol/Gorev" target="_blank" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                        </svg>
+                        View on GitHub
+                    </a>
+                    <a href="#demo" class="btn btn-secondary">See Demo</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="code-mockup">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="code-title">terminal</span>
+                    </div>
+                    <div class="code-content">
+                        <div class="code-line">
+                            <span class="prompt">$</span>
+                            <span class="command">gorev create task --title "Fix authentication bug"</span>
+                        </div>
+                        <div class="code-line output">
+                            ✓ Created task #142: Fix authentication bug
+                        </div>
+                        <div class="code-line">
+                            <span class="prompt">$</span>
+                            <span class="command">gorev list --status pending</span>
+                        </div>
+                        <div class="code-line output">
+                            #142 Fix authentication bug <span class="status">[pending]</span><br>
+                            #141 Review API documentation <span class="status">[in-progress]</span><br>
+                            #140 Update deployment scripts <span class="status">[completed]</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="prompt">$</span>
+                            <span class="command cursor"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Built for AI-First Development</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
+                    </div>
+                    <h3>MCP Integration</h3>
+                    <p>Connect to Claude, VS Code, Windsurf, Cursor, and more through the Model Context Protocol. One server, multiple AI editors.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z"/>
+                            <path d="M12 22V12"/>
+                            <path d="M22 7L12 12L2 7"/>
+                        </svg>
+                    </div>
+                    <h3>Smart Hierarchy</h3>
+                    <p>Create unlimited subtasks and dependencies with an intuitive hierarchy system. Organize complex projects effortlessly.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <h3>AI Context</h3>
+                    <p>Keep track of what AI assistants create and modify with built-in context management. Never lose track of AI-generated tasks.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GitHub Section -->
+    <section class="github">
+        <div class="container">
+            <div class="github-content">
+                <div class="github-info">
+                    <h2>Open Source & Production Ready</h2>
+                    <p>Gorev is actively maintained and used by developers worldwide. Built with Go, TypeScript, and modern web technologies.</p>
+                    <div class="github-stats" id="github-stats">
+                        <div class="stat">
+                            <div class="stat-number" id="stars">⭐ Loading...</div>
+                            <div class="stat-label">Stars</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number" id="forks">🍴 Loading...</div>
+                            <div class="stat-label">Forks</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number" id="issues">🐛 Loading...</div>
+                            <div class="stat-label">Open Issues</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="github-cta">
+                    <a href="https://github.com/msenol/Gorev" target="_blank" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                        </svg>
+                        Star on GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 9h6m-6 4h6"/>
+                    </svg>
+                    <span>Gorev</span>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/msenol/Gorev" target="_blank">GitHub</a>
+                    <a href="#features">Features</a>
+                    <a href="https://github.com/msenol/Gorev/issues" target="_blank">Issues</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>&copy; 2025 Gorev. Open source project.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

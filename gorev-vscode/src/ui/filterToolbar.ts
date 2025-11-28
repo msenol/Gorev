@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ApiClient } from '../api/client';
 import { GorevDurum, GorevOncelik } from '../models/common';
-import { TaskFilter, SortingCriteria } from '../models/treeModels';
+import { TaskFilter } from '../models/treeModels';
 import { Logger } from '../utils/logger';
 import { t } from '../utils/l10n';
 
@@ -186,7 +186,7 @@ export class FilterToolbar {
             const projectResult = await this.apiClient.getProjects();
             if (projectResult.success && projectResult.data) {
                 items.push(...projectResult.data.map(project => ({
-                    label: `$(folder) ${project.isim}`,
+                    label: `$(folder) ${project.name}`,
                     description: t('filterToolbar.project'),
                     value: { projeId: project.id },
                     filterType: 'proje' as const,

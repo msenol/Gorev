@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as fs from 'fs';
 import * as path from 'path';
+import { spawn } from 'child_process';
 import { getDebugConfig, showDebugInfo } from '../debug/debugConfig';
 
 export function registerMCPDebugCommands(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel) {
@@ -128,7 +129,6 @@ export function registerMCPDebugCommands(context: vscode.ExtensionContext, outpu
             
             // Try a simple MCP call
             try {
-                const { spawn } = require('child_process');
                 const testProcess = spawn(serverPath, ['serve'], {
                     stdio: ['pipe', 'pipe', 'pipe']
                 });

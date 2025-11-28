@@ -118,6 +118,42 @@
           "maximum": 65535,
           "description": "%config.apiPort%"
         },
+        "gorev.connectionMode": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "local",
+            "docker",
+            "remote"
+          ],
+          "enumDescriptions": [
+            "Automatically detect and start daemon",
+            "Use local gorev binary",
+            "Use Docker container",
+            "Connect to remote server"
+          ]
+        },
+        "gorev.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to gorev binary (for local mode)"
+        },
+        "gorev.dockerComposeFile": {
+          "type": "string",
+          "default": "./docker-compose.yml",
+          "description": "Path to docker-compose file (for docker mode)"
+        },
+        "gorev.serverUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Full server URL (e.g., http://localhost:5082). Overrides apiHost and apiPort when set."
+        },
+        "gorev.workspaceId": {
+          "type": "string",
+          "default": "",
+          "description": "Workspace ID for task isolation. Auto-generated on first connection and saved here. Only set manually to share tasks across machines."
+        },
         "gorev.showStatusBar": {
           "type": "boolean",
           "default": true,
@@ -1066,10 +1102,18 @@
     "test-watch": "npm run compile && node ./test/runTest.js --watch",
     "test-coverage": "node test-coverage.js",
     "coverage": "node test-coverage.js",
+    "test:ui": "playwright test",
+    "test:ui:headed": "playwright test --headed",
+    "test:ui:debug": "playwright test --debug",
+    "test:api": "playwright test api-integration.spec.ts",
+    "test:workflow": "playwright test task-workflow.spec.ts",
+    "test:serve": "http-server ../gorev-web/dist -p 5001 -c-1",
     "package": "vsce package",
     "publish": "vsce publish"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/express": "^5.0.5",
     "@types/mocha": "^10.0.6",
     "@types/node": "20.x",
     "@types/sinon": "^17.0.2",
@@ -1082,6 +1126,7 @@
     "axios-mock-adapter": "^2.1.0",
     "c8": "^9.0.0",
     "eslint": "^9.0.0",
+    "express": "^5.1.0",
     "glob": "^10.3.10",
     "mocha": "^10.2.0",
     "sinon": "^17.0.1",

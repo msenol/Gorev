@@ -38,7 +38,7 @@ func TestDRYPatternsBasic(t *testing.T) {
 
 	// Test validation DRY helpers
 	t.Run("ValidationHelpers", func(t *testing.T) {
-		validator := NewParameterValidator()
+		validator := NewParameterValidator("tr")
 		if validator == nil {
 			t.Fatal("NewParameterValidator should not return nil")
 		}

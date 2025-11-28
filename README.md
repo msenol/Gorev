@@ -2,7 +2,11 @@
 
 <div align="center">
 
-**Last Updated:** October 6, 2025 | **Version:** v0.17.0
+> ⚠️ **WARNING: HEAVY DEVELOPMENT** ⚠️
+>
+> This project is currently under **active development**. Breaking changes, API modifications, and feature updates may occur frequently. Use with caution in production environments.
+>
+> **Last Updated:** November 28, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](README.md) | [🇹🇷 Türkçe](README.tr.md)
 

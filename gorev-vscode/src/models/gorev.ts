@@ -11,7 +11,7 @@ export interface Gorev extends Timestamp {
   proje_id?: string;
   parent_id?: string;
   son_tarih?: string;
-  etiketler?: Array<{ id: string; isim: string }>;
+  etiketler?: { id: string; isim: string }[];
   proje_name?: string;
   bagimliliklar?: Bagimlilik[];
   alt_gorevler?: Gorev[];

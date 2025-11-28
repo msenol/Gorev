@@ -172,13 +172,13 @@ func TestBuildIDDescription(t *testing.T) {
 			name:     "Unique ID description",
 			entity:   "task",
 			idType:   "unique",
-			expected: "common.fields.task_id", // Returns key if not found
+			expected: "görevin benzersiz ID ID'si", // Properly translated in Phase 3
 		},
 		{
 			name:     "Regular ID description",
 			entity:   "project",
 			idType:   "regular",
-			expected: "common.fields.task_id",
+			expected: "görevin regular ID'si", // Properly translated in Phase 3
 		},
 	}
 

@@ -29,7 +29,7 @@ export interface Timestamp {
 export interface MCPError {
   code: number;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface MCPToolResult {

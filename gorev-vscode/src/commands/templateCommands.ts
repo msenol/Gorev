@@ -8,6 +8,7 @@ import { GorevTemplate } from '../models/template';
 import { Logger } from '../utils/logger';
 import { COMMANDS } from '../utils/constants';
 import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from '../managers/refreshManager';
+import { TemplateKategori } from '../models/common';
 
 export function registerTemplateCommands(
   context: vscode.ExtensionContext,
@@ -58,23 +59,23 @@ export function registerTemplateCommands(
           return;
         }
 
-        // Convert API templates to internal model
+        // Convert API templates to internal model (map English API fields to Turkish internal model)
         const templates: GorevTemplate[] = response.data.map(template => ({
           id: template.id,
-          isim: template.isim,
-          tanim: template.tanim,
-          varsayilan_baslik: '',
-          aciklama_template: template.tanim,
-          alanlar: template.alanlar.map(field => ({
-            isim: field.isim,
-            tur: mapFieldType(field.tip),
-            zorunlu: field.zorunlu,
-            varsayilan: field.varsayilan,
-            secenekler: field.secenekler,
+          isim: template.name,
+          tanim: template.definition,
+          varsayilan_baslik: template.default_title || '',
+          aciklama_template: template.description_template || template.definition,
+          alanlar: template.fields.map(field => ({
+            isim: field.name,
+            tur: mapFieldType(field.type),
+            zorunlu: field.required,
+            varsayilan: field.default,
+            secenekler: field.options || undefined,
           })),
-          ornek_degerler: {},
-          kategori: template.kategori as any,
-          aktif: template.aktif,
+          ornek_degerler: template.sample_values || {},
+          kategori: template.category as TemplateKategori,
+          aktif: template.active,
         }));
 
         // Show quick pick
@@ -138,24 +139,15 @@ export function registerTemplateCommands(
           return;
         }
 
-        // Get the gorev server path from configuration
-        const serverPath = vscode.workspace.getConfiguration('gorev').get<string>('serverPath');
-        
-        if (!serverPath) {
-          vscode.window.showErrorMessage(t('template.serverPathNotConfigured'));
-          return;
-        }
-        
-        // Call gorev template init command
-        const terminal = vscode.window.createTerminal('Gorev Template Init');
-        terminal.sendText(`"${serverPath}" template init`);
-        terminal.show();
-
-        // Wait a bit and refresh
-        setTimeout(async () => {
+        // Initialize templates via API
+        try {
+          await apiClient.post('/api/v1/template/init', {});
           await providers.templateTreeProvider.refresh();
           vscode.window.showInformationMessage(t('template.defaultsLoaded'));
-        }, 2000);
+        } catch (error) {
+          Logger.error('Failed to initialize templates via API:', error);
+          vscode.window.showErrorMessage(t('template.initFailed'));
+        }
       } catch (error) {
         Logger.error('Failed to initialize templates:', error);
         vscode.window.showErrorMessage(t('template.initFailed'));

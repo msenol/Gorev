@@ -566,23 +566,23 @@ func (m *MockVeriYonetici) GorevGuncelle(ctx context.Context, taskID string, par
 	if updateParams, ok := params.(map[string]interface{}); ok {
 		for key, value := range updateParams {
 			switch key {
-			case "baslik":
+			case "title":
 				if val, ok := value.(string); ok {
 					gorev.Title = val
 				}
-			case "aciklama":
+			case "description":
 				if val, ok := value.(string); ok {
 					gorev.Description = val
 				}
-			case "durum":
+			case "status":
 				if val, ok := value.(string); ok {
 					gorev.Status = val
 				}
-			case "oncelik":
+			case "priority":
 				if val, ok := value.(string); ok {
 					gorev.Priority = val
 				}
-			case "proje_id":
+			case "project_id":
 				if val, ok := value.(string); ok {
 					gorev.ProjeID = val
 				}

@@ -24,7 +24,7 @@ export interface TemplateAlan {
 
 export interface TemplateOlusturParams {
   template_id: string;
-  degerler: Record<string, any>;
+  degerler: Record<string, unknown>;
 }
 
 export interface TemplateListeleParams {

@@ -7,9 +7,8 @@ import { TemplateTreeProvider } from './providers/templateTreeProvider';
 import { registerCommands } from './commands';
 import { StatusBarManager } from './ui/statusBar';
 import { FilterToolbar } from './ui/filterToolbar';
-import { Logger, LogLevel } from './utils/logger';
+import { Logger } from './utils/logger';
 import { Config } from './utils/config';
-import { COMMANDS } from './utils/constants';
 import { initializeL10n } from './utils/l10n';
 import { RefreshManager, RefreshTarget, RefreshReason, RefreshPriority } from './managers/refreshManager';
 import { measureAsync } from './utils/performance';
@@ -45,9 +44,29 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   // Initialize configuration
   Config.initialize(context);
 
-  // Create UnifiedServerManager
-  const apiHost = Config.get<string>('apiHost') || 'localhost';
-  const apiPort = Config.get<number>('apiPort') || 5082;
+  // Create UnifiedServerManager with serverUrl or apiHost/apiPort
+  const serverUrl = Config.get<string>('serverUrl');
+  let apiHost: string;
+  let apiPort: number;
+
+  if (serverUrl) {
+    // Parse serverUrl to extract host and port
+    try {
+      const url = new URL(serverUrl);
+      apiHost = url.hostname;
+      apiPort = parseInt(url.port, 10) || 5082;
+      Logger.info(`[Extension] Using serverUrl: ${serverUrl}`);
+    } catch {
+      Logger.warn(`[Extension] Invalid serverUrl: ${serverUrl}, falling back to apiHost/apiPort`);
+      apiHost = Config.get<string>('apiHost') || 'localhost';
+      apiPort = Config.get<number>('apiPort') || 5082;
+    }
+  } else {
+    apiHost = Config.get<string>('apiHost') || 'localhost';
+    apiPort = Config.get<number>('apiPort') || 5082;
+  }
+
+  // Create UnifiedServerManager - workspaceId is auto-managed via workspace settings
   serverManager = new UnifiedServerManager(apiHost, apiPort);
 
   // Initialize RefreshManager first
@@ -128,7 +147,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
     statusBarManager.setConnectionStatus(false, 'api');
   });
 
-  apiClient.on('error', (error: any) => {
+  apiClient.on('error', (error: unknown) => {
     Logger.error('[Extension] API error:', error);
   });
 

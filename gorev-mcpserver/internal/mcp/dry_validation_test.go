@@ -71,7 +71,7 @@ func TestDRYi18nPatterns(t *testing.T) {
 
 // TestValidationDRYPatterns tests validation helper patterns
 func TestValidationDRYPatterns(t *testing.T) {
-	validator := NewParameterValidator()
+	validator := NewParameterValidator("tr")
 	if validator == nil {
 		t.Fatal("NewParameterValidator should not return nil")
 	}
@@ -261,12 +261,12 @@ func BenchmarkDRYValidationPatterns(b *testing.B) {
 
 	b.Run("ValidatorCreate", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewParameterValidator()
+			NewParameterValidator("tr")
 		}
 	})
 
 	b.Run("ValidatorValidateString", func(b *testing.B) {
-		validator := NewParameterValidator()
+		validator := NewParameterValidator("tr")
 		params := map[string]interface{}{"id": "test"}
 
 		b.ResetTimer()

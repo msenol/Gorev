@@ -11,7 +11,7 @@ import (
 
 // TestParameterValidationTableDriven demonstrates table-driven testing with DRY patterns
 func TestParameterValidationTableDriven(t *testing.T) {
-	validator := NewParameterValidator()
+	validator := NewParameterValidator("tr")
 
 	// Use DRY test helper to run all common parameter validation tests
 	ValidationTestRunner(t, validator, ParameterTestCases())
@@ -248,7 +248,7 @@ func TestI18nHelperFunctionsTableDriven(t *testing.T) {
 	testCases := []TestCase{
 		{
 			Name:  "TParamWithExistingKey",
-			Input: "id",
+			Input: "id_field",
 			Expected: func() string {
 				return i18n.TParam("tr", "id_field")
 			}(),
@@ -388,7 +388,7 @@ func BenchmarkDRYPatterns(b *testing.B) {
 		{
 			Name: "ParameterValidation",
 			Setup: func() interface{} {
-				return NewParameterValidator()
+				return NewParameterValidator("tr")
 			},
 			Cleanup: func() {},
 			Operation: func(data interface{}) error {

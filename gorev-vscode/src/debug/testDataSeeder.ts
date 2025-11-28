@@ -1,4 +1,4 @@
-import { ApiClient } from '../api/client';
+import { ApiClient, MCPToolResult } from '../api/client';
 import { t } from '../utils/l10n';
 import { GorevDurum, GorevOncelik } from '../models/common';
 import { Logger } from '../utils/logger';
@@ -7,17 +7,44 @@ import * as vscode from 'vscode';
 /**
  * Debug için zengin test verileri oluşturur
  * Updated to use templates instead of deprecated gorev_olustur
+ * Template IDs are now dynamically fetched by alias
  */
 export class TestDataSeeder {
-    // Template IDs from database
-    private readonly TEMPLATE_IDS = {
-        BUG_RAPORU: '4dd56a2a-caf4-472c-8c0f-276bc8a1f880',
-        OZELLIK_ISTEGI: '6b083358-9c4d-4f4e-b041-9288c05a1bb7',
-        TEKNIK_BORC: '69e2b237-7c2e-4459-9d46-ea6c05aba39a',
-        ARASTIRMA_GOREVI: '13f04fe2-b5b6-4fd6-8684-5eca5dc2770d'
-    };
+    // Template IDs will be fetched dynamically
+    private templateIds: Record<string, string> = {};
 
     constructor(private apiClient: ApiClient) {}
+
+    /**
+     * Fetch template IDs by alias from the API
+     */
+    private async fetchTemplateIds(): Promise<void> {
+        try {
+            const result = await this.apiClient.getTemplates();
+            if (result.success && result.data) {
+                for (const template of result.data) {
+                    if (template.alias) {
+                        this.templateIds[template.alias] = template.id;
+                    }
+                }
+            }
+            Logger.info('[TestDataSeeder] Fetched template IDs:', this.templateIds);
+        } catch (error) {
+            Logger.error('[TestDataSeeder] Failed to fetch template IDs:', error);
+            throw new Error('Failed to fetch templates. Make sure the server is running.');
+        }
+    }
+
+    /**
+     * Get template ID by alias, throws if not found
+     */
+    private getTemplateId(alias: string): string {
+        const id = this.templateIds[alias];
+        if (!id) {
+            throw new Error(`Template with alias '${alias}' not found. Available: ${Object.keys(this.templateIds).join(', ')}`);
+        }
+        return id;
+    }
 
     /**
      * Test verilerini oluştur
@@ -39,6 +66,10 @@ export class TestDataSeeder {
                 title: t('testData.creating'),
                 cancellable: false
             }, async (progress) => {
+                // 0. Fetch template IDs first
+                progress.report({ increment: 5, message: 'Fetching templates...' });
+                await this.fetchTemplateIds();
+
                 // 1. Test projeleri oluştur
                 progress.report({ increment: 10, message: t('testData.creatingProjects') });
                 const projectIds = await this.createTestProjects();
@@ -69,13 +100,11 @@ export class TestDataSeeder {
                 progress.report({ increment: 10, message: t('testData.creatingExamples') });
                 await this.createAdditionalTemplateExamples(projectIds);
 
-                // 8. Bazı görevleri tamamla ve AI interaksiyonları ekle
-                progress.report({ increment: 5, message: t('testData.updatingStatuses') });
+                // 8. Bazı görevleri tamamla
+                progress.report({ increment: 10, message: t('testData.updatingStatuses') });
                 await this.updateSomeTaskStatuses(taskIds);
 
-                // 9. AI context oluştur
-                progress.report({ increment: 5, message: t('testData.creatingAIContext') });
-                await this.setupAIContext(taskIds);
+                // Note: AI context tools are MCP-only, skipped for VS Code extension testing
 
                 progress.report({ increment: 10, message: t('testData.completed') });
             });
@@ -139,7 +168,7 @@ export class TestDataSeeder {
 
         // İlk projeyi aktif yap
         if (projectIds.length > 0) {
-            await this.apiClient.callTool('proje_aktif_yap', { proje_id: projectIds[0] });
+            await this.apiClient.callTool('aktif_proje_ayarla', { proje_id: projectIds[0] });
         }
 
         return projectIds;
@@ -151,231 +180,231 @@ export class TestDataSeeder {
     private async createTestTasks(projectIds: string[]): Promise<string[]> {
         const taskIds: string[] = [];
 
-        // Create Bug Report tasks using template
+        // Create Bug Report tasks using template (English field names)
         const bugTasks = [
             {
-                templateId: this.TEMPLATE_IDS.BUG_RAPORU,
+                templateId: this.getTemplateId('bug'),
                 projectId: projectIds[0],
                 degerler: {
-                    baslik: 'Login sayfası 404 hatası veriyor',
-                    aciklama: 'Production ortamında /login URL\'ine gittiğimizde 404 hatası alıyoruz',
-                    modul: 'Authentication',
-                    ortam: 'production',
-                    adimlar: '1. Production URL\'ine git\n2. /login sayfasına git\n3. 404 hatası görünüyor',
-                    beklenen: 'Login sayfası açılmalı',
-                    mevcut: '404 Not Found hatası',
-                    cozum: 'Routing konfigürasyonu kontrol edilmeli',
-                    oncelik: 'yuksek',
-                    etiketler: 'bug,critical,production'
+                    title: 'Login sayfası 404 hatası veriyor',
+                    description: 'Production ortamında /login URL\'ine gittiğimizde 404 hatası alıyoruz',
+                    module: 'Authentication',
+                    environment: 'production',
+                    steps: '1. Production URL\'ine git\n2. /login sayfasına git\n3. 404 hatası görünüyor',
+                    expected: 'Login sayfası açılmalı',
+                    actual: '404 Not Found hatası',
+                    solution: 'Routing konfigürasyonu kontrol edilmeli',
+                    priority: 'yuksek',
+                    tags: 'bug,critical,production'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.BUG_RAPORU,
+                templateId: this.getTemplateId('bug'),
                 projectId: projectIds[1],
                 degerler: {
-                    baslik: 'Push notification Android\'de çalışmıyor',
-                    aciklama: 'Firebase Cloud Messaging entegrasyonu iOS\'ta çalışıyor ama Android\'de bildirimler gelmiyor',
-                    modul: 'Mobile/Notifications',
-                    ortam: 'production',
-                    adimlar: '1. Android cihazda uygulamayı aç\n2. Bildirim izni ver\n3. Test bildirimi gönder',
-                    beklenen: 'Push notification alınmalı',
-                    mevcut: 'Bildirimler Android\'de alınmıyor',
-                    oncelik: 'yuksek',
-                    etiketler: 'mobile,bug,firebase'
+                    title: 'Push notification Android\'de çalışmıyor',
+                    description: 'Firebase Cloud Messaging entegrasyonu iOS\'ta çalışıyor ama Android\'de bildirimler gelmiyor',
+                    module: 'Mobile/Notifications',
+                    environment: 'production',
+                    steps: '1. Android cihazda uygulamayı aç\n2. Bildirim izni ver\n3. Test bildirimi gönder',
+                    expected: 'Push notification alınmalı',
+                    actual: 'Bildirimler Android\'de alınmıyor',
+                    priority: 'yuksek',
+                    tags: 'mobile,bug,firebase'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.BUG_RAPORU,
+                templateId: this.getTemplateId('bug'),
                 projectId: projectIds[4],
                 degerler: {
-                    baslik: 'SSL sertifikası expire olmuş',
-                    aciklama: 'Ana domain ve subdomain\'lerde SSL sertifikası süresi dolmuş',
-                    modul: 'Infrastructure',
-                    ortam: 'production',
-                    adimlar: '1. HTTPS ile siteye git\n2. Sertifika uyarısı görünüyor',
-                    beklenen: 'Valid SSL sertifikası',
-                    mevcut: 'NET::ERR_CERT_DATE_INVALID',
-                    oncelik: 'yuksek',
-                    etiketler: 'security,infrastructure,urgent'
+                    title: 'SSL sertifikası expire olmuş',
+                    description: 'Ana domain ve subdomain\'lerde SSL sertifikası süresi dolmuş',
+                    module: 'Infrastructure',
+                    environment: 'production',
+                    steps: '1. HTTPS ile siteye git\n2. Sertifika uyarısı görünüyor',
+                    expected: 'Valid SSL sertifikası',
+                    actual: 'NET::ERR_CERT_DATE_INVALID',
+                    priority: 'yuksek',
+                    tags: 'security,infrastructure,urgent'
                 }
             }
         ];
 
-        // Create Feature Request tasks using template
+        // Create Feature Request tasks using template (English field names)
         const featureTasks = [
             {
-                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                templateId: this.getTemplateId('feature'),
                 projectId: projectIds[0],
                 degerler: {
-                    baslik: 'Ana sayfa tasarımını tamamla',
-                    aciklama: 'Modern ve responsive ana sayfa tasarımı yapılacak',
-                    amac: 'Kullanıcı deneyimini iyileştirmek ve dönüşüm oranını artırmak',
-                    kullanicilar: 'Tüm web sitesi ziyaretçileri',
-                    kriterler: '1. Hero section\n2. Özellikler bölümü\n3. Footer\n4. Mobile responsive',
+                    title: 'Ana sayfa tasarımını tamamla',
+                    description: 'Modern ve responsive ana sayfa tasarımı yapılacak',
+                    purpose: 'Kullanıcı deneyimini iyileştirmek ve dönüşüm oranını artırmak',
+                    users: 'Tüm web sitesi ziyaretçileri',
+                    criteria: '1. Hero section\n2. Özellikler bölümü\n3. Footer\n4. Mobile responsive',
                     ui_ux: 'Modern, minimal tasarım. Hızlı yükleme.',
-                    efor: 'orta',
-                    oncelik: 'yuksek',
-                    etiketler: 'design,frontend,urgent'
+                    effort: 'orta',
+                    priority: 'yuksek',
+                    tags: 'design,frontend,urgent'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                templateId: this.getTemplateId('feature'),
                 projectId: projectIds[0],
                 degerler: {
-                    baslik: 'Kullanıcı giriş sistemi',
-                    aciklama: 'JWT tabanlı authentication sistemi kurulacak',
-                    amac: 'Güvenli kullanıcı kimlik doğrulama sistemi',
-                    kullanicilar: 'Kayıtlı kullanıcılar',
-                    kriterler: '1. JWT token\n2. Login/Register/Forgot password\n3. Session management',
+                    title: 'Kullanıcı giriş sistemi',
+                    description: 'JWT tabanlı authentication sistemi kurulacak',
+                    purpose: 'Güvenli kullanıcı kimlik doğrulama sistemi',
+                    users: 'Kayıtlı kullanıcılar',
+                    criteria: '1. JWT token\n2. Login/Register/Forgot password\n3. Session management',
                     ui_ux: 'Clean login forms, social login options',
-                    efor: 'büyük',
-                    oncelik: 'yuksek',
-                    etiketler: 'backend,security,feature'
+                    effort: 'büyük',
+                    priority: 'yuksek',
+                    tags: 'backend,security,feature'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                templateId: this.getTemplateId('feature'),
                 projectId: projectIds[1],
                 degerler: {
-                    baslik: 'Dark mode tema',
-                    aciklama: 'Sistem ayarlarına göre otomatik tema değişimi',
-                    amac: 'Kullanıcı deneyimini iyileştirmek ve göz yorgunluğunu azaltmak',
-                    kullanicilar: 'Tüm mobil uygulama kullanıcıları',
-                    kriterler: '1. Sistem temasını takip et\n2. Manuel toggle\n3. Tercih kaydetme',
+                    title: 'Dark mode tema',
+                    description: 'Sistem ayarlarına göre otomatik tema değişimi',
+                    purpose: 'Kullanıcı deneyimini iyileştirmek ve göz yorgunluğunu azaltmak',
+                    users: 'Tüm mobil uygulama kullanıcıları',
+                    criteria: '1. Sistem temasını takip et\n2. Manuel toggle\n3. Tercih kaydetme',
                     ui_ux: 'Settings sayfasında toggle switch',
-                    efor: 'küçük',
-                    oncelik: 'dusuk',
-                    etiketler: 'mobile,ui,enhancement'
+                    effort: 'küçük',
+                    priority: 'dusuk',
+                    tags: 'mobile,ui,enhancement'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                templateId: this.getTemplateId('feature'),
                 projectId: projectIds[3],
                 degerler: {
-                    baslik: 'Dashboard prototype',
-                    aciklama: 'Figma\'da interaktif dashboard prototipi',
-                    amac: 'Veri görselleştirme için kullanıcı dostu arayüz',
-                    kullanicilar: 'Data analysts, managers',
-                    kriterler: '1. Real-time updates\n2. Customizable widgets\n3. Export',
+                    title: 'Dashboard prototype',
+                    description: 'Figma\'da interaktif dashboard prototipi',
+                    purpose: 'Veri görselleştirme için kullanıcı dostu arayüz',
+                    users: 'Data analysts, managers',
+                    criteria: '1. Real-time updates\n2. Customizable widgets\n3. Export',
                     ui_ux: 'Clean, modern dashboard with drag-drop',
-                    efor: 'büyük',
-                    oncelik: 'yuksek',
-                    etiketler: 'design,analytics,prototype'
+                    effort: 'büyük',
+                    priority: 'yuksek',
+                    tags: 'design,analytics,prototype'
                 }
             }
         ];
 
-        // Create Technical Debt tasks using template
+        // Create Technical Debt tasks using template (mixed English/Turkish field names per template)
         const techDebtTasks = [
             {
-                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                templateId: this.getTemplateId('debt'),
                 projectId: projectIds[2],
                 degerler: {
-                    baslik: 'Redis cache entegrasyonu',
-                    aciklama: 'Performans artışı için Redis cache katmanı',
+                    title: 'Redis cache entegrasyonu',
+                    description: 'Performans artışı için Redis cache katmanı',
                     alan: 'Backend/Performance',
                     neden: 'API response time\'ları yüksek',
                     analiz: 'Ortalama response time 800ms',
                     cozum: 'Redis ile cache layer ekle',
                     iyilestirmeler: '%70 performans artışı bekleniyor',
                     sure: '1 hafta',
-                    oncelik: 'orta',
-                    etiketler: 'backend,performance,redis'
+                    priority: 'orta',
+                    tags: 'backend,performance,redis'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                templateId: this.getTemplateId('debt'),
                 projectId: projectIds[2],
                 degerler: {
-                    baslik: 'API rate limiting',
-                    aciklama: 'API güvenliği için rate limiting',
+                    title: 'API rate limiting',
+                    description: 'API güvenliği için rate limiting',
                     alan: 'Backend/Security',
                     neden: 'DDoS ve abuse riski var',
                     analiz: 'Rate limiting yok',
                     cozum: 'Redis-based rate limiting ekle',
                     iyilestirmeler: 'Güvenlik artışı',
                     sure: '2-3 gün',
-                    oncelik: 'yuksek',
-                    etiketler: 'backend,security,performance'
+                    priority: 'yuksek',
+                    tags: 'backend,security,performance'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                templateId: this.getTemplateId('debt'),
                 projectId: projectIds[3],
                 degerler: {
-                    baslik: 'ETL pipeline modernizasyonu',
-                    aciklama: 'Apache Airflow ile veri pipeline',
+                    title: 'ETL pipeline modernizasyonu',
+                    description: 'Apache Airflow ile veri pipeline',
                     alan: 'Data Engineering',
                     neden: 'Mevcut cron jobs unreliable',
                     analiz: 'Manuel müdahale gerekiyor',
                     cozum: 'Airflow DAGs ile otomatize et',
                     iyilestirmeler: 'Better reliability ve monitoring',
                     sure: '2+ hafta',
-                    oncelik: 'yuksek',
-                    etiketler: 'data,backend,infrastructure'
+                    priority: 'yuksek',
+                    tags: 'data,backend,infrastructure'
                 }
             }
         ];
 
-        // Create Research tasks using template
+        // Create Research tasks using template (English field names)
         const researchTasks = [
             {
-                templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
+                templateId: this.getTemplateId('research'),
                 projectId: projectIds[0],
                 degerler: {
-                    konu: 'SEO optimizasyonu',
-                    amac: 'Web sitesi SEO performansını artırmak',
-                    sorular: '1. Core Web Vitals?\n2. Meta tags?\n3. Sitemap?',
-                    kriterler: 'Google PageSpeed, Lighthouse scores',
-                    son_tarih: this.getDateString(14),
-                    oncelik: 'orta',
-                    etiketler: 'seo,performance,research'
+                    topic: 'SEO optimizasyonu',
+                    purpose: 'Web sitesi SEO performansını artırmak',
+                    questions: '1. Core Web Vitals?\n2. Meta tags?\n3. Sitemap?',
+                    criteria: 'Google PageSpeed, Lighthouse scores',
+                    due_date: this.getDateString(14),
+                    priority: 'orta',
+                    tags: 'seo,performance,research'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
+                templateId: this.getTemplateId('research'),
                 projectId: projectIds[4],
                 degerler: {
-                    konu: 'Penetrasyon testi metodolojisi',
-                    amac: 'OWASP Top 10 güvenlik testleri',
-                    sorular: '1. Hangi açıklar var?\n2. Risk seviyeleri?\n3. Çözüm önerileri?',
-                    kriterler: 'OWASP guidelines, security best practices',
-                    son_tarih: this.getDateString(7),
-                    oncelik: 'yuksek',
-                    etiketler: 'security,testing,critical'
+                    topic: 'Penetrasyon testi metodolojisi',
+                    purpose: 'OWASP Top 10 güvenlik testleri',
+                    questions: '1. Hangi açıklar var?\n2. Risk seviyeleri?\n3. Çözüm önerileri?',
+                    criteria: 'OWASP guidelines, security best practices',
+                    due_date: this.getDateString(7),
+                    priority: 'yuksek',
+                    tags: 'security,testing,critical'
                 }
             }
         ];
 
-        // Additional tasks using general templates
+        // Additional tasks using general templates (English field names)
         const additionalTasks = [
             {
-                templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
+                templateId: this.getTemplateId('research'),
                 projectId: projectIds[0],
                 degerler: {
-                    konu: 'Team meeting hazırlığı',
-                    amac: 'Haftalık geliştirici toplantısı için sunum hazırla',
-                    sorular: '1. Hangi konular ele alınacak?\n2. Sprint progress nasıl?\n3. Blockerlar neler?',
-                    kriterler: 'Toplantı sunumu hazır ve agenda belirlenmiş',
-                    son_tarih: this.getDateString(1),
-                    oncelik: 'orta',
-                    etiketler: 'meeting,planning'
+                    topic: 'Team meeting hazırlığı',
+                    purpose: 'Haftalık geliştirici toplantısı için sunum hazırla',
+                    questions: '1. Hangi konular ele alınacak?\n2. Sprint progress nasıl?\n3. Blockerlar neler?',
+                    criteria: 'Toplantı sunumu hazır ve agenda belirlenmiş',
+                    due_date: this.getDateString(1),
+                    priority: 'orta',
+                    tags: 'meeting,planning'
                 }
             },
             {
-                templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
+                templateId: this.getTemplateId('debt'),
                 projectId: projectIds[0],
                 degerler: {
-                    baslik: 'Code review yapılacak PR\'lar',
-                    aciklama: '5 adet bekleyen pull request incelenecek',
+                    title: 'Code review yapılacak PR\'lar',
+                    description: '5 adet bekleyen pull request incelenecek',
                     alan: 'Code Quality',
                     neden: 'Kod kalitesi ve takım standartları',
                     analiz: 'Bekleyen PR\'ların durumu',
                     cozum: 'Systematic code review process',
                     iyilestirmeler: 'Better code quality and team alignment',
                     sure: '1 gün',
-                    oncelik: 'yuksek',
-                    etiketler: 'review,git,urgent'
+                    priority: 'yuksek',
+                    tags: 'review,git,urgent'
                 }
             }
         ];
@@ -494,21 +523,21 @@ export class TestDataSeeder {
                     baslik: 'Hero section mockup',
                     aciklama: 'Ana sayfa hero bölümü için Figma mockup hazırla',
                     oncelik: GorevOncelik.Yuksek,
-                    etiketler: 'design,ui,mockup'
+                    tags: 'design,ui,mockup'
                 },
                 {
                     parent_id: parentTaskIds[3],
                     baslik: 'Responsive grid sistemi',
                     aciklama: 'Bootstrap 5 veya Tailwind CSS ile responsive grid',
                     oncelik: GorevOncelik.Orta,
-                    etiketler: 'frontend,css,responsive'
+                    tags: 'frontend,css,responsive'
                 },
                 {
                     parent_id: parentTaskIds[3],
                     baslik: 'Animation ve transitions',
                     aciklama: 'Smooth scroll ve hover effect animasyonları',
                     oncelik: GorevOncelik.Dusuk,
-                    etiketler: 'frontend,animation,ux'
+                    tags: 'frontend,animation,ux'
                 }
             ];
 
@@ -526,7 +555,7 @@ export class TestDataSeeder {
                                 baslik: 'Color palette seçimi',
                                 aciklama: 'Brand guidelines\'a uygun renk paleti',
                                 oncelik: GorevOncelik.Yuksek,
-                                etiketler: 'design,branding'
+                                tags: 'design,branding'
                             });
                         }
                     }
@@ -545,14 +574,14 @@ export class TestDataSeeder {
                     aciklama: 'Access ve refresh token yönetimi',
                     oncelik: GorevOncelik.Yuksek,
                     son_tarih: this.getDateString(3),
-                    etiketler: 'backend,security,jwt'
+                    tags: 'backend,security,jwt'
                 },
                 {
                     parent_id: parentTaskIds[4],
                     baslik: 'Password reset flow',
                     aciklama: 'Email ile şifre sıfırlama akışı',
                     oncelik: GorevOncelik.Orta,
-                    etiketler: 'backend,email,feature'
+                    tags: 'backend,email,feature'
                 }
             ];
 
@@ -567,34 +596,34 @@ export class TestDataSeeder {
     }
 
     /**
-     * Template'lerden extra görevler oluştur
+     * Template'lerden extra görevler oluştur (English field names)
      */
     private async createAdditionalTemplateExamples(projectIds: string[]): Promise<void> {
         try {
             // Example of using different template variations
             const additionalTasks = [
                 {
-                    templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
+                    templateId: this.getTemplateId('feature'),
                     degerler: {
-                        baslik: 'GraphQL API endpoint',
-                        aciklama: 'REST API yanında GraphQL desteği',
-                        amac: 'Flexible data fetching için GraphQL layer',
-                        kullanicilar: 'Frontend developers, API consumers',
-                        kriterler: '1. Schema definition\n2. Resolvers\n3. Subscriptions',
-                        efor: 'büyük',
-                        oncelik: 'orta',
-                        etiketler: 'backend,api,feature'
+                        title: 'GraphQL API endpoint',
+                        description: 'REST API yanında GraphQL desteği',
+                        purpose: 'Flexible data fetching için GraphQL layer',
+                        users: 'Frontend developers, API consumers',
+                        criteria: '1. Schema definition\n2. Resolvers\n3. Subscriptions',
+                        effort: 'büyük',
+                        priority: 'orta',
+                        tags: 'backend,api,feature'
                     }
                 },
                 {
-                    templateId: this.TEMPLATE_IDS.ARASTIRMA_GOREVI,
+                    templateId: this.getTemplateId('research'),
                     degerler: {
-                        konu: 'Makine öğrenmesi için framework',
-                        amac: 'Churn prediction modeli için ML framework seçimi',
-                        sorular: '1. TensorFlow vs PyTorch?\n2. Deployment options?\n3. Performance?',
-                        kriterler: 'Ease of use, community, deployment',
-                        oncelik: 'orta',
-                        etiketler: 'ml,data-science,research'
+                        topic: 'Makine öğrenmesi için framework',
+                        purpose: 'Churn prediction modeli için ML framework seçimi',
+                        questions: '1. TensorFlow vs PyTorch?\n2. Deployment options?\n3. Performance?',
+                        criteria: 'Ease of use, community, deployment',
+                        priority: 'orta',
+                        tags: 'ml,data-science,research'
                     }
                 }
             ];
@@ -605,7 +634,7 @@ export class TestDataSeeder {
                         template_id: task.templateId,
                         degerler: task.degerler
                     });
-                    
+
                     // Assign to appropriate project if needed
                     if (projectIds.length > 2) {
                         const responseText = result.content[0].text;
@@ -626,47 +655,9 @@ export class TestDataSeeder {
         }
     }
 
-    /**
-     * AI context ve interaksiyonları oluştur
-     */
-    private async setupAIContext(taskIds: string[]): Promise<void> {
-        // Bazı görevleri AI için aktif yap
-        if (taskIds.length > 0) {
-            try {
-                // İlk görevi aktif yap
-                await this.apiClient.callTool('gorev_set_active', {
-                    task_id: taskIds[0]
-                });
-                Logger.info('Set active task for AI context');
-
-                // Doğal dil sorgusu test et
-                const nlpResults = [
-                    await this.apiClient.callTool('gorev_nlp_query', { query: 'bugün yapılacak görevler' }),
-                    await this.apiClient.callTool('gorev_nlp_query', { query: 'yüksek öncelikli görevler' }),
-                    await this.apiClient.callTool('gorev_nlp_query', { query: 'etiket:bug' })
-                ];
-
-                Logger.info('Tested NLP queries');
-
-                // Context summary al
-                const contextSummary = await this.apiClient.callTool('gorev_context_summary', {});
-                Logger.info('Generated AI context summary');
-
-                // Batch update test et - bazı görevlerin durumunu toplu güncelle
-                if (taskIds.length > 5) {
-                    await this.apiClient.callTool('gorev_batch_update', {
-                        updates: [
-                            { id: taskIds[2], updates: { durum: 'devam_ediyor' } },
-                            { id: taskIds[3], updates: { durum: 'devam_ediyor' } }
-                        ]
-                    });
-                    Logger.info('Performed batch update');
-                }
-            } catch (error) {
-                Logger.error('Failed to setup AI context:', error);
-            }
-        }
-    }
+    // Note: AI context tools (gorev_set_active, gorev_nlp_query, gorev_context_summary,
+    // gorev_batch_update) are MCP-only and not available via REST API.
+    // They are used by AI assistants (Claude, Cursor, etc.), not by VS Code extension.
 
     /**
      * Bugünden itibaren belirtilen gün sayısı kadar sonraki tarihi döndür
@@ -727,23 +718,27 @@ export class TestDataSeeder {
 
     /**
      * Create large number of tasks for pagination testing
+     * Uses feature template with English field names
      */
     private async createPaginationTestTasks(projectIds: string[]): Promise<string[]> {
         const taskIds: string[] = [];
         const targetTaskCount = 150; // To test pagination (pageSize is 100)
+        const priorities = ['dusuk', 'orta', 'yuksek'];
 
         Logger.info(`[TestDataSeeder] Creating ${targetTaskCount} tasks for pagination testing...`);
 
         for (let i = 0; i < targetTaskCount; i++) {
             try {
                 const taskData = {
-                    templateId: this.TEMPLATE_IDS.BUG_RAPORU,
-                    projectId: projectIds[i % projectIds.length],
+                    template_id: this.getTemplateId('feature'),
                     degerler: {
-                        baslik: `Pagination Test Task ${i + 1}`,
-                        aciklama: `This is test task #${i + 1} created for pagination testing. It helps verify that the VS Code extension can handle large numbers of tasks properly.`,
-                        oncelik: ['dusuk', 'orta', 'yuksek'][i % 3],
-                        etiketler: [`pagination-test`, `batch-${Math.floor(i / 50) + 1}`]
+                        title: `Pagination Test Task ${i + 1}`,
+                        description: `This is test task #${i + 1} created for pagination testing. It helps verify that the VS Code extension can handle large numbers of tasks properly.`,
+                        purpose: 'Pagination testing for VS Code extension',
+                        users: 'Extension developers and testers',
+                        criteria: '1. Task loads correctly\n2. Pagination works\n3. No performance issues',
+                        priority: priorities[i % 3],
+                        tags: `pagination-test,batch-${Math.floor(i / 50) + 1}`
                     }
                 };
 
@@ -751,6 +746,19 @@ export class TestDataSeeder {
                 const taskId = this.extractTaskId(result);
                 if (taskId) {
                     taskIds.push(taskId);
+
+                    // Assign to project
+                    const projectId = projectIds[i % projectIds.length];
+                    if (projectId) {
+                        try {
+                            await this.apiClient.callTool('gorev_duzenle', {
+                                id: taskId,
+                                proje_id: projectId
+                            });
+                        } catch {
+                            // Ignore project assignment errors
+                        }
+                    }
                 }
 
                 // Log progress every 25 tasks
@@ -768,28 +776,38 @@ export class TestDataSeeder {
 
     /**
      * Create tasks with complex hierarchy for hierarchy testing
+     * Uses feature template with English field names
      */
     private async createHierarchyTestTasks(projectIds: string[]): Promise<string[]> {
         const taskIds: string[] = [];
 
         Logger.info('[TestDataSeeder] Creating hierarchy test tasks...');
 
-        // Create parent tasks first
+        // Create parent tasks first (using feature template)
         const parentTasks = [
             {
-                baslik: 'Feature: User Management System',
-                aciklama: 'Complete user management system with authentication and authorization',
-                oncelik: 'yuksek'
+                title: 'Feature: User Management System',
+                description: 'Complete user management system with authentication and authorization',
+                purpose: 'Enable secure user authentication and role-based access',
+                users: 'All application users',
+                criteria: '1. Login/Register\n2. Role management\n3. Session handling',
+                priority: 'yuksek'
             },
             {
-                baslik: 'Feature: Reporting Dashboard',
-                aciklama: 'Advanced reporting dashboard with charts and export functionality',
-                oncelik: 'orta'
+                title: 'Feature: Reporting Dashboard',
+                description: 'Advanced reporting dashboard with charts and export functionality',
+                purpose: 'Provide business insights through visual analytics',
+                users: 'Managers and analysts',
+                criteria: '1. Charts\n2. Filters\n3. Export to PDF/Excel',
+                priority: 'orta'
             },
             {
-                baslik: 'Infrastructure: Database Migration',
-                aciklama: 'Migrate from old database schema to new optimized structure',
-                oncelik: 'yuksek'
+                title: 'Infrastructure: Database Migration',
+                description: 'Migrate from old database schema to new optimized structure',
+                purpose: 'Improve database performance and maintainability',
+                users: 'Development team',
+                criteria: '1. Zero downtime\n2. Data integrity\n3. Rollback plan',
+                priority: 'yuksek'
             }
         ];
 
@@ -798,11 +816,10 @@ export class TestDataSeeder {
         for (const parentTaskData of parentTasks) {
             try {
                 const taskData = {
-                    templateId: this.TEMPLATE_IDS.OZELLIK_ISTEGI,
-                    projectId: projectIds[0],
+                    template_id: this.getTemplateId('feature'),
                     degerler: {
                         ...parentTaskData,
-                        etiketler: ['hierarchy-test', 'parent-task']
+                        tags: 'hierarchy-test,parent-task'
                     }
                 };
 
@@ -811,20 +828,32 @@ export class TestDataSeeder {
                 if (taskId) {
                     parentTaskIds.push(taskId);
                     taskIds.push(taskId);
-                    Logger.info(`Created parent task: ${parentTaskData.baslik} (${taskId})`);
+
+                    // Assign to project
+                    if (projectIds[0]) {
+                        try {
+                            await this.apiClient.callTool('gorev_duzenle', {
+                                id: taskId,
+                                proje_id: projectIds[0]
+                            });
+                        } catch {
+                            // Ignore project assignment errors
+                        }
+                    }
+                    Logger.info(`Created parent task: ${parentTaskData.title} (${taskId})`);
                 }
             } catch (error) {
-                Logger.error(`Failed to create parent task: ${parentTaskData.baslik}`, error);
+                Logger.error(`Failed to create parent task: ${parentTaskData.title}`, error);
             }
         }
 
-        // Create subtasks for each parent
+        // Create subtasks for each parent (using feature template)
         const subtaskTemplates = [
-            { baslik: 'Design Phase', aciklama: 'Design user interface and user experience' },
-            { baslik: 'Backend Implementation', aciklama: 'Implement backend API and business logic' },
-            { baslik: 'Frontend Implementation', aciklama: 'Create frontend components and pages' },
-            { baslik: 'Testing Phase', aciklama: 'Write and execute comprehensive tests' },
-            { baslik: 'Documentation', aciklama: 'Create user and technical documentation' }
+            { title: 'Design Phase', description: 'Design user interface and user experience' },
+            { title: 'Backend Implementation', description: 'Implement backend API and business logic' },
+            { title: 'Frontend Implementation', description: 'Create frontend components and pages' },
+            { title: 'Testing Phase', description: 'Write and execute comprehensive tests' },
+            { title: 'Documentation', description: 'Create user and technical documentation' }
         ];
 
         for (let i = 0; i < parentTaskIds.length; i++) {
@@ -833,13 +862,15 @@ export class TestDataSeeder {
             for (const subtaskTemplate of subtaskTemplates) {
                 try {
                     const taskData = {
-                        templateId: this.TEMPLATE_IDS.TEKNIK_BORC,
-                        projectId: projectIds[0],
+                        template_id: this.getTemplateId('feature'),
                         degerler: {
-                            baslik: `${subtaskTemplate.baslik} (Parent ${i + 1})`,
-                            aciklama: subtaskTemplate.aciklama,
-                            oncelik: 'orta',
-                            etiketler: ['hierarchy-test', 'subtask', `parent-${i + 1}`]
+                            title: `${subtaskTemplate.title} (Parent ${i + 1})`,
+                            description: subtaskTemplate.description,
+                            purpose: 'Part of parent feature implementation',
+                            users: 'Development team',
+                            criteria: '1. Implementation complete\n2. Code reviewed\n3. Tests passing',
+                            priority: 'orta',
+                            tags: `hierarchy-test,subtask,parent-${i + 1}`
                         }
                     };
 
@@ -848,16 +879,28 @@ export class TestDataSeeder {
                     if (taskId) {
                         taskIds.push(taskId);
 
+                        // Assign to project first
+                        if (projectIds[0]) {
+                            try {
+                                await this.apiClient.callTool('gorev_duzenle', {
+                                    id: taskId,
+                                    proje_id: projectIds[0]
+                                });
+                            } catch {
+                                // Ignore project assignment errors
+                            }
+                        }
+
                         // Set parent relationship
                         await this.apiClient.callTool('gorev_ust_gorev_degistir', {
                             gorev_id: taskId,
                             ust_gorev_id: parentId
                         });
 
-                        Logger.debug(`Created subtask: ${taskData.degerler.baslik} under parent ${parentId}`);
+                        Logger.debug(`Created subtask: ${subtaskTemplate.title} under parent ${parentId}`);
                     }
                 } catch (error) {
-                    Logger.error(`Failed to create subtask: ${subtaskTemplate.baslik}`, error);
+                    Logger.error(`Failed to create subtask: ${subtaskTemplate.title}`, error);
                 }
             }
         }
@@ -869,7 +912,7 @@ export class TestDataSeeder {
     /**
      * Extract task ID from MCP response
      */
-    private extractTaskId(result: any): string | null {
+    private extractTaskId(result: MCPToolResult): string | null {
         try {
             const responseText = result.content[0].text;
             const idMatch = responseText.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);

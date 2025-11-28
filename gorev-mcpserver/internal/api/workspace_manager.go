@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/msenol/gorev/internal/config"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	ws "github.com/msenol/gorev/internal/websocket"
@@ -17,10 +18,12 @@ import (
 
 // WorkspaceManager manages multiple workspace contexts with their database connections
 type WorkspaceManager struct {
-	workspaces   map[string]*WorkspaceContext // Keyed by workspace ID
-	migrationsFS fs.FS                        // Embedded migrations filesystem (optional)
-	wsHub        *ws.Hub                      // WebSocket hub for real-time updates
-	mu           sync.RWMutex
+	workspaces           map[string]*WorkspaceContext // Keyed by workspace ID
+	migrationsFS         fs.FS                        // Embedded migrations filesystem (optional)
+	wsHub                *ws.Hub                      // WebSocket hub for real-time updates
+	centralizedDB        *gorev.VeriYonetici          // Shared DB for centralized mode
+	centralizedDBInitMu  sync.Once                    // Ensures centralized DB is initialized once
+	mu                   sync.RWMutex
 }
 
 // NewWorkspaceManager creates a new workspace manager
@@ -35,6 +38,111 @@ func (wm *WorkspaceManager) SetMigrationsFS(migrationsFS fs.FS) {
 	wm.mu.Lock()
 	defer wm.mu.Unlock()
 	wm.migrationsFS = migrationsFS
+}
+
+// initCentralizedDB initializes the shared database for centralized mode
+func (wm *WorkspaceManager) initCentralizedDB() error {
+	var initErr error
+	wm.centralizedDBInitMu.Do(func() {
+		cfg := config.GetGlobalConfig()
+		dbPath := cfg.CentralizedDBPath
+		if dbPath == "" {
+			dbPath = "/data/gorev.db"
+		}
+
+		// Ensure parent directory exists
+		if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+			initErr = fmt.Errorf("failed to create centralized DB directory: %w", err)
+			return
+		}
+
+		// Create event emitter
+		var eventEmitter ws.EventEmitter
+		if wm.wsHub != nil {
+			eventEmitter = ws.NewHubEventEmitter(wm.wsHub)
+		} else {
+			eventEmitter = ws.NewNoOpEventEmitter()
+		}
+
+		// Initialize the centralized database
+		var err error
+		if wm.migrationsFS != nil {
+			wm.centralizedDB, err = gorev.YeniVeriYoneticiWithEmbeddedMigrationsAndEventEmitter(
+				dbPath, wm.migrationsFS, eventEmitter, "centralized",
+			)
+		} else {
+			migrationsPath := findMigrationsPath()
+			if migrationsPath == "" {
+				migrationsPath = "embedded://migrations"
+			}
+			wm.centralizedDB, err = gorev.YeniVeriYoneticiWithEventEmitter(
+				dbPath, migrationsPath, eventEmitter, "centralized",
+			)
+		}
+		if err != nil {
+			initErr = fmt.Errorf("failed to initialize centralized database: %w", err)
+		}
+	})
+	return initErr
+}
+
+// RegisterWorkspaceByID registers a workspace by ID only (for centralized mode)
+// This is used when no local path is available (Docker, remote)
+func (wm *WorkspaceManager) RegisterWorkspaceByID(workspaceID string, name string) (*WorkspaceContext, error) {
+	if !config.IsCentralizedMode() {
+		return nil, fmt.Errorf("RegisterWorkspaceByID is only available in centralized mode")
+	}
+
+	// Initialize centralized DB if not already done
+	if err := wm.initCentralizedDB(); err != nil {
+		return nil, err
+	}
+
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
+
+	// Check if workspace already registered
+	if ws, exists := wm.workspaces[workspaceID]; exists {
+		ws.LastAccessed = time.Now()
+		return ws, nil
+	}
+
+	// Set default name if not provided
+	if name == "" {
+		name = workspaceID
+	}
+
+	// Create event emitter for this workspace
+	var eventEmitter ws.EventEmitter
+	if wm.wsHub != nil {
+		eventEmitter = ws.NewHubEventEmitter(wm.wsHub)
+	} else {
+		eventEmitter = ws.NewNoOpEventEmitter()
+	}
+
+	// Create IsYonetici with the shared centralized DB
+	// The workspace_id filtering will be done at query level
+	isYonetici := gorev.YeniIsYoneticiWithWorkspaceID(wm.centralizedDB, workspaceID)
+
+	// Get task count for this workspace
+	taskCount, _ := wm.getTaskCount(isYonetici)
+
+	// Create workspace context
+	workspace := &WorkspaceContext{
+		ID:           workspaceID,
+		Name:         name,
+		Path:         "", // No local path in centralized mode
+		DatabasePath: config.GetGlobalConfig().CentralizedDBPath,
+		VeriYonetici: wm.centralizedDB, // Shared DB
+		IsYonetici:   isYonetici,
+		EventEmitter: eventEmitter,
+		LastAccessed: time.Now(),
+		CreatedAt:    time.Now(),
+		TaskCount:    taskCount,
+	}
+
+	wm.workspaces[workspaceID] = workspace
+	return workspace, nil
 }
 
 // RegisterWorkspace registers a new workspace or returns existing one

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/msenol/gorev/internal/api"
+	"github.com/msenol/gorev/internal/config"
 	"github.com/msenol/gorev/internal/daemon"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,8 @@ import (
 func createDaemonCommand() *cobra.Command {
 	var daemonPort string
 	var detach bool
+	var serverMode string
+	var dbPath string
 
 	cmd := &cobra.Command{
 		Use:   "daemon",
@@ -29,9 +32,16 @@ func createDaemonCommand() *cobra.Command {
 - Shared database connection pool
 
 The daemon runs as a single process that multiple MCP clients can connect to,
-eliminating port conflicts and reducing resource usage.`,
-		Example: `  # Start daemon in foreground
+eliminating port conflicts and reducing resource usage.
+
+Server Modes:
+- local: Each workspace uses its own .gorev/gorev.db (default for local dev)
+- centralized: Single database with workspace_id isolation (for Docker/remote)`,
+		Example: `  # Start daemon in foreground (local mode - default)
   gorev daemon
+
+  # Start daemon in centralized mode (for Docker/remote)
+  gorev daemon --mode=centralized --db-path=/data/gorev.db
 
   # Start daemon in background (detached)
   gorev daemon --detach
@@ -42,8 +52,20 @@ eliminating port conflicts and reducing resource usage.`,
   # Check daemon status
   curl http://localhost:5082/api/health`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Setup server configuration
+			cfg := config.DefaultConfig()
+			if serverMode != "" {
+				cfg.Mode = config.ServerMode(serverMode)
+			}
+			if dbPath != "" {
+				cfg.CentralizedDBPath = dbPath
+			}
+			cfg.Port = daemonPort
+			cfg.AllowLocalPaths = cfg.Mode == config.ModeLocal
+			config.SetGlobalConfig(cfg)
+
 			if detach {
-				return runDetachedDaemon(daemonPort)
+				return runDetachedDaemon(daemonPort, serverMode, dbPath)
 			}
 			return runDaemon(daemonPort)
 		},
@@ -51,12 +73,15 @@ eliminating port conflicts and reducing resource usage.`,
 
 	cmd.Flags().StringVar(&daemonPort, "port", "5082", "Daemon HTTP API port")
 	cmd.Flags().BoolVar(&detach, "detach", false, "Run as background process (daemon)")
+	cmd.Flags().StringVar(&serverMode, "mode", "", "Server mode: local (default) or centralized")
+	cmd.Flags().StringVar(&dbPath, "db-path", "", "Database path (for centralized mode)")
 
 	return cmd
 }
 
 func runDaemon(port string) error {
-	log.Printf("🚀 Starting Gorev Daemon on port %s...", port)
+	cfg := config.GetGlobalConfig()
+	log.Printf("🚀 Starting Gorev Daemon on port %s (mode: %s)...", port, cfg.Mode)
 
 	// Create lock file
 	if err := daemon.CreateLockFile(os.Getpid(), port, version); err != nil {
@@ -99,10 +124,16 @@ func runDaemon(port string) error {
 	}()
 
 	log.Printf("✅ Gorev Daemon started successfully")
+	log.Printf("📦 Mode: %s", cfg.Mode)
+	if cfg.Mode == config.ModeCentralized {
+		log.Printf("💾 Database: %s", cfg.CentralizedDBPath)
+	} else {
+		log.Printf("💾 Database: Per-workspace (.gorev/gorev.db)")
+	}
 	log.Printf("📱 Web UI: http://localhost:%s", port)
 	log.Printf("🔧 API: http://localhost:%s/api/v1", port)
 	log.Printf("🔌 WebSocket: ws://localhost:%s/ws (future)", port)
-	log.Printf("💾 Lock file: %s", daemon.GetLockFilePath())
+	log.Printf("📋 Lock file: %s", daemon.GetLockFilePath())
 	log.Printf("\nPress Ctrl+C to stop daemon")
 
 	// Wait for shutdown signal or error
@@ -126,15 +157,24 @@ func runDaemon(port string) error {
 	return nil
 }
 
-func runDetachedDaemon(port string) error {
+func runDetachedDaemon(port, mode, dbPath string) error {
 	// Get current executable path
 	exePath, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
+	// Build command arguments
+	args := []string{"daemon", "--port", port}
+	if mode != "" {
+		args = append(args, "--mode", mode)
+	}
+	if dbPath != "" {
+		args = append(args, "--db-path", dbPath)
+	}
+
 	// Fork process and run in background
-	cmd := exec.Command(exePath, "daemon", "--port", port)
+	cmd := exec.Command(exePath, args...)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	cmd.Stdin = nil
@@ -153,9 +193,15 @@ func runDetachedDaemon(port string) error {
 		return fmt.Errorf("daemon failed to start: %w", err)
 	}
 
+	modeStr := mode
+	if modeStr == "" {
+		modeStr = "local"
+	}
+
 	log.Printf("✅ Daemon started in background")
 	log.Printf("📋 PID: %d", cmd.Process.Pid)
 	log.Printf("🔗 URL: %s", daemonURL)
+	log.Printf("📦 Mode: %s", modeStr)
 	log.Printf("💾 Lock file: %s", daemon.GetLockFilePath())
 	log.Printf("\nUse 'curl %s/api/health' to check status", daemonURL)
 

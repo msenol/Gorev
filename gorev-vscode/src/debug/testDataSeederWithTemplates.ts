@@ -121,7 +121,7 @@ export class TestDataSeederWithTemplates {
 
         // İlk projeyi aktif yap
         if (projectIds.length > 0) {
-            await this.apiClient.callTool('proje_aktif_yap', { proje_id: projectIds[0] });
+            await this.apiClient.callTool('aktif_proje_ayarla', { proje_id: projectIds[0] });
         }
 
         return projectIds;
@@ -472,14 +472,14 @@ export class TestDataSeederWithTemplates {
                     baslik: 'Hero section mockup',
                     aciklama: 'Ana sayfa hero bölümü için Figma mockup hazırla',
                     oncelik: GorevOncelik.Yuksek,
-                    etiketler: 'design,ui,mockup'
+                    tags: 'design,ui,mockup'
                 },
                 {
                     parent_id: parentTaskIds[3],
                     baslik: 'Responsive grid sistemi',
                     aciklama: 'Bootstrap 5 veya Tailwind CSS ile responsive grid',
                     oncelik: GorevOncelik.Orta,
-                    etiketler: 'frontend,css,responsive'
+                    tags: 'frontend,css,responsive'
                 }
             ];
 
@@ -541,7 +541,7 @@ export class TestDataSeederWithTemplates {
                 Logger.info('Set active task for AI context');
 
                 // Context summary al
-                const contextSummary = await this.apiClient.callTool('gorev_context_summary', {});
+                await this.apiClient.callTool('gorev_context_summary', {});
                 Logger.info('Generated AI context summary');
             } catch (error) {
                 Logger.error('Failed to setup AI context:', error);

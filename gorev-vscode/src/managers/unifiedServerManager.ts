@@ -9,10 +9,10 @@
  * - Register workspace with server on activation
  * - Inject workspace headers into API requests
  * - Coordinate server lifecycle (start/stop/health checks)
+ * - Auto-persist workspaceId to workspace settings for consistency
  */
 
 import * as vscode from 'vscode';
-import * as crypto from 'crypto';
 import * as net from 'net';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -22,9 +22,7 @@ import { ApiClient } from '../api/client';
 import { Logger } from '../utils/logger';
 import {
   WorkspaceContext,
-  WorkspaceInfo,
-  WorkspaceRegistration,
-  WorkspaceRegistrationResponse
+  WorkspaceInfo
 } from '../models/workspace';
 
 export interface ServerStatus {
@@ -33,6 +31,8 @@ export interface ServerStatus {
   lastHealthCheck?: Date;
   serverVersion?: string;
 }
+
+const WORKSPACE_ID_CONFIG_KEY = 'gorev.workspaceId';
 
 export class UnifiedServerManager extends EventEmitter {
   private apiClient: ApiClient;
@@ -45,8 +45,8 @@ export class UnifiedServerManager extends EventEmitter {
   private readonly PORT_CHECK_RETRY_INTERVAL = 1000; // 1 second
 
   constructor(
-    private readonly apiHost: string = 'localhost',
-    private readonly apiPort: number = 5082
+    private readonly apiHost = 'localhost',
+    private readonly apiPort = 5082
   ) {
     super();
 
@@ -131,18 +131,32 @@ export class UnifiedServerManager extends EventEmitter {
 
   /**
    * Register workspace with server
+   *
+   * Flow:
+   * 1. Check if workspaceId already exists in workspace settings
+   * 2. If yes, use existing ID (maintains consistency across sessions)
+   * 3. If no, register with server, get returned ID, save to workspace settings
    */
   async registerWorkspace(workspaceFolder: vscode.WorkspaceFolder): Promise<WorkspaceInfo> {
     try {
       const workspacePath = workspaceFolder.uri.fsPath;
       const workspaceName = workspaceFolder.name;
 
-      Logger.info(`[UnifiedServerManager] Registering workspace: ${workspaceName} at ${workspacePath}`);
+      // Step 1: Check for existing workspaceId in workspace settings
+      let workspaceId = this.getSavedWorkspaceId();
+      const isNewWorkspace = !workspaceId;
 
-      // Call workspace registration endpoint
+      if (workspaceId) {
+        Logger.info(`[UnifiedServerManager] Using saved workspaceId: ${workspaceId}`);
+      } else {
+        Logger.info(`[UnifiedServerManager] No saved workspaceId, will register new workspace: ${workspaceName}`);
+      }
+
+      // Step 2: Call workspace registration endpoint
       const response = await this.apiClient.registerWorkspace({
         path: workspacePath,
-        name: workspaceName
+        name: workspaceName,
+        workspace_id: workspaceId // Use saved ID or let server generate one
       });
 
       if (!response.success) {
@@ -150,19 +164,26 @@ export class UnifiedServerManager extends EventEmitter {
       }
 
       const workspaceInfo = response.workspace;
+      const finalWorkspaceId = workspaceId || response.workspace_id;
+
+      // Step 3: Save workspaceId to workspace settings if this is a new registration
+      if (isNewWorkspace && finalWorkspaceId) {
+        await this.saveWorkspaceId(finalWorkspaceId);
+        Logger.info(`[UnifiedServerManager] Saved new workspaceId to workspace settings: ${finalWorkspaceId}`);
+      }
 
       // Set workspace context
       this.workspaceContext = {
-        workspaceId: response.workspace_id,
-        workspacePath: workspaceInfo.path,
-        workspaceName: workspaceInfo.name
+        workspaceId: finalWorkspaceId,
+        workspacePath: workspaceInfo.path || workspacePath,
+        workspaceName: workspaceInfo.name || workspaceName
       };
 
       // Inject workspace headers into API client
       this.apiClient.setWorkspaceHeaders(this.workspaceContext);
 
       this.serverStatus.workspaceRegistered = true;
-      Logger.info(`[UnifiedServerManager] Workspace registered successfully: ID=${response.workspace_id}`);
+      Logger.info(`[UnifiedServerManager] Workspace registered successfully: ID=${this.workspaceContext.workspaceId}`);
 
       // Emit workspace registered event
       this.emit('workspaceRegistered', workspaceInfo);
@@ -173,6 +194,34 @@ export class UnifiedServerManager extends EventEmitter {
       Logger.error('[UnifiedServerManager] Workspace registration failed:', error);
       this.serverStatus.workspaceRegistered = false;
       throw error;
+    }
+  }
+
+  /**
+   * Get saved workspaceId from workspace settings
+   */
+  private getSavedWorkspaceId(): string | undefined {
+    const config = vscode.workspace.getConfiguration();
+    const workspaceId = config.get<string>(WORKSPACE_ID_CONFIG_KEY);
+    return workspaceId && workspaceId.trim() !== '' ? workspaceId : undefined;
+  }
+
+  /**
+   * Save workspaceId to workspace settings (.vscode/settings.json)
+   */
+  private async saveWorkspaceId(workspaceId: string): Promise<void> {
+    try {
+      const config = vscode.workspace.getConfiguration();
+      // Save to workspace scope (creates/updates .vscode/settings.json)
+      await config.update(
+        WORKSPACE_ID_CONFIG_KEY,
+        workspaceId,
+        vscode.ConfigurationTarget.Workspace
+      );
+      Logger.info(`[UnifiedServerManager] WorkspaceId saved to .vscode/settings.json`);
+    } catch (error) {
+      // Log but don't fail - workspaceId will work for this session
+      Logger.warn('[UnifiedServerManager] Failed to save workspaceId to settings:', error);
     }
   }
 
@@ -255,14 +304,6 @@ export class UnifiedServerManager extends EventEmitter {
         this.emit('healthCheckFailed', error);
       }
     }, this.HEALTH_CHECK_INTERVAL);
-  }
-
-  /**
-   * Generate workspace ID from path (matches server-side logic)
-   */
-  private generateWorkspaceId(path: string): string {
-    const hash = crypto.createHash('sha256').update(path).digest('hex');
-    return hash.substring(0, 16); // First 8 bytes (16 hex chars)
   }
 
   /**
@@ -357,8 +398,6 @@ export class UnifiedServerManager extends EventEmitter {
         Logger.info(`[UnifiedServerManager] Running command: ${command} ${args.join(' ')} (port: ${this.apiPort})`);
         Logger.info(`[UnifiedServerManager] Database path: ${dbPath}`);
 
-        // Track if we've seen any output (to detect package not found)
-        let hasOutput = false;
         let errorOutput = '';
 
         this.serverProcess = spawn(command, args, {
@@ -372,7 +411,6 @@ export class UnifiedServerManager extends EventEmitter {
         // Log server output and detect errors
         if (this.serverProcess.stdout) {
           this.serverProcess.stdout.on('data', (data) => {
-            hasOutput = true;
             const output = data.toString().trim();
             Logger.info(`[Gorev Server] ${output}`);
           });
@@ -380,7 +418,6 @@ export class UnifiedServerManager extends EventEmitter {
 
         if (this.serverProcess.stderr) {
           this.serverProcess.stderr.on('data', (data) => {
-            hasOutput = true;
             const output = data.toString().trim();
             errorOutput += output + '\n';
 

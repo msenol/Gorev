@@ -15,14 +15,14 @@ async function getProjectList(apiClient: ApiClient): Promise<Proje[]> {
       return [];
     }
 
-    // Convert API Project[] to internal Proje[] model
+    // Convert API Project[] to internal Proje[] model (map English to Turkish)
     return response.data.map(project => ({
       id: project.id,
-      isim: project.isim,
-      tanim: project.tanim || '',
-      gorev_sayisi: project.gorev_sayisi,
-      olusturma_tarihi: project.olusturma_tarihi,
-      guncelleme_tarihi: project.olusturma_tarihi,
+      isim: project.name,
+      tanim: project.definition || '',
+      gorev_sayisi: project.task_count,
+      olusturma_tarihi: project.created_at,
+      guncelleme_tarihi: project.updated_at || project.created_at,
     }));
   } catch (error) {
     if (error instanceof ApiError) {

@@ -31,8 +31,8 @@ func Initialize(lang string) error {
 
 	loadSuccess := false
 
-	// Load Turkish translations (default)
-	trPath := getLocaleFilePath("tr.json")
+	// Load Turkish translations (default) - using flattened format for go-i18n compatibility
+	trPath := getLocaleFilePath("tr_flat.json")
 	if _, err := os.Stat(trPath); err == nil {
 		_, err = bundle.LoadMessageFile(trPath)
 		if err == nil {
@@ -40,8 +40,8 @@ func Initialize(lang string) error {
 		}
 	}
 
-	// Load English translations
-	enPath := getLocaleFilePath("en.json")
+	// Load English translations - using flattened format for go-i18n compatibility
+	enPath := getLocaleFilePath("en_flat.json")
 	if _, err := os.Stat(enPath); err == nil {
 		_, err = bundle.LoadMessageFile(enPath)
 		if err == nil {

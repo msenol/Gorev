@@ -25,7 +25,7 @@ export interface ChangeEvent {
     entity_id?: string;
     entity_type?: string;
     action?: string;
-    data?: Record<string, any>;
+    data?: Record<string, unknown>;
     timestamp: number;
 }
 

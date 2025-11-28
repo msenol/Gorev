@@ -8,9 +8,28 @@ coverage/
 .env
 .env.local
 *.tsbuildinfo
+
 # Test artifacts
 coverage/
 .nyc_output/
 test-results/
 *.log
 MARKETPLACE_DEPLOYMENT.md
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+playwright/.cache/
+playwright/test-results/
+**/playwright-report/
+**/test-results/
+
+# Playwright browser downloads
+.playwright/
+/ms-playwright/
+/.webkitrc
+
+# Test traces and videos
+trace.zip
+video.zip
+screenshots/

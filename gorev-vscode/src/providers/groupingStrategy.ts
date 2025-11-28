@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { GroupingStrategy, GroupTreeItem, TreeItemType } from '../models/treeModels';
+import { GroupingStrategy } from '../models/treeModels';
 import { GorevDurum, GorevOncelik } from '../models/common';
-import { ICONS, COLORS } from '../utils/constants';
+import { COLORS } from '../utils/constants';
 
 /**
  * Gruplama stratejileri için label ve icon sağlayıcı
@@ -50,7 +50,7 @@ export class GroupingStrategyProvider {
     /**
      * Grup için açıklama döndürür
      */
-    static getGroupDescription(groupKey: string, taskCount: number, metadata?: any): string {
+    static getGroupDescription(groupKey: string, taskCount: number, _metadata?: unknown): string {
         const countText = `${taskCount} görev`;
         
         switch (groupKey) {

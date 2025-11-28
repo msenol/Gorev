@@ -86,7 +86,7 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				{
 					TaskID: "task-1",
 					Updates: map[string]interface{}{
-						"durum": constants.TaskStatusInProgress,
+						"status": constants.TaskStatusInProgress,
 					},
 				},
 			},
@@ -100,7 +100,7 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				{
 					TaskID: "task-1",
 					Updates: map[string]interface{}{
-						"oncelik": constants.PriorityHigh,
+						"priority": constants.PriorityHigh,
 					},
 				},
 			},
@@ -114,7 +114,7 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				{
 					TaskID: "task-1",
 					Updates: map[string]interface{}{
-						"baslik": "Updated Title",
+						"title": "Updated Title",
 					},
 				},
 			},
@@ -128,7 +128,7 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				{
 					TaskID: "task-1",
 					Updates: map[string]interface{}{
-						"aciklama": "Updated Description",
+						"description": "Updated Description",
 					},
 				},
 			},
@@ -142,7 +142,7 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				{
 					TaskID: "task-1",
 					Updates: map[string]interface{}{
-						"son_tarih": "2024-12-31",
+						"due_date": "2024-12-31",
 					},
 				},
 			},
@@ -156,7 +156,7 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				{
 					TaskID: "non-existent",
 					Updates: map[string]interface{}{
-						"durum": constants.TaskStatusCompleted,
+						"status": constants.TaskStatusCompleted,
 					},
 				},
 			},
@@ -170,13 +170,13 @@ func TestProcessBatchUpdate_Basic(t *testing.T) {
 				{
 					TaskID: "task-1",
 					Updates: map[string]interface{}{
-						"baslik": "Valid Update",
+						"title": "Valid Update",
 					},
 				},
 				{
 					TaskID: "non-existent",
 					Updates: map[string]interface{}{
-						"baslik": "Invalid Update",
+						"title": "Invalid Update",
 					},
 				},
 			},
@@ -262,7 +262,7 @@ func TestProcessBatchUpdate_DryRun(t *testing.T) {
 			request: BatchUpdateRequest{
 				TaskID: "task-1",
 				Updates: map[string]interface{}{
-					"durum": constants.TaskStatusInProgress,
+					"status": constants.TaskStatusInProgress,
 				},
 				DryRun: true,
 			},
@@ -275,7 +275,7 @@ func TestProcessBatchUpdate_DryRun(t *testing.T) {
 			request: BatchUpdateRequest{
 				TaskID: "non-existent",
 				Updates: map[string]interface{}{
-					"durum": constants.TaskStatusInProgress,
+					"status": constants.TaskStatusInProgress,
 				},
 				DryRun: true,
 			},
@@ -336,7 +336,7 @@ func TestProcessBatchUpdate_WithWarnings(t *testing.T) {
 			request: BatchUpdateRequest{
 				TaskID: "task-1",
 				Updates: map[string]interface{}{
-					"baslik": "", // Empty title should generate warning
+					"title": "", // Empty title should generate warning
 				},
 			},
 			expectedSuccessful: 0, // No update should be made
@@ -348,7 +348,7 @@ func TestProcessBatchUpdate_WithWarnings(t *testing.T) {
 			request: BatchUpdateRequest{
 				TaskID: "task-1",
 				Updates: map[string]interface{}{
-					"baslik": "   ", // Whitespace-only title should generate warning
+					"title": "   ", // Whitespace-only title should generate warning
 				},
 			},
 			expectedSuccessful: 0,
@@ -360,7 +360,7 @@ func TestProcessBatchUpdate_WithWarnings(t *testing.T) {
 			request: BatchUpdateRequest{
 				TaskID: "task-1",
 				Updates: map[string]interface{}{
-					"son_tarih": "invalid-date", // Invalid date format should generate warning
+					"due_date": "invalid-date", // Invalid date format should generate warning
 				},
 			},
 			expectedSuccessful: 0,
@@ -372,7 +372,7 @@ func TestProcessBatchUpdate_WithWarnings(t *testing.T) {
 			request: BatchUpdateRequest{
 				TaskID: "task-1",
 				Updates: map[string]interface{}{
-					"son_tarih": "", // Empty date should clear due date
+					"due_date": "", // Empty date should clear due date
 				},
 			},
 			expectedSuccessful: 1, // Should be successful
@@ -425,7 +425,7 @@ func TestProcessBatchUpdate_WithAIContext(t *testing.T) {
 	request := BatchUpdateRequest{
 		TaskID: "task-1",
 		Updates: map[string]interface{}{
-			"baslik": "Updated with AI Context",
+			"title": "Updated with AI Context",
 		},
 	}
 
@@ -569,7 +569,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"baslik": "Valid Title"},
+					Updates: map[string]interface{}{"title": "Valid Title"},
 				},
 				false,
 				"valid request with title update",
@@ -577,7 +577,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"durum": constants.TaskStatusInProgress},
+					Updates: map[string]interface{}{"status": constants.TaskStatusInProgress},
 				},
 				false,
 				"valid request with status update",
@@ -585,7 +585,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"oncelik": constants.PriorityHigh},
+					Updates: map[string]interface{}{"priority": constants.PriorityHigh},
 				},
 				false,
 				"valid request with priority update",
@@ -593,7 +593,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"aciklama": "New description"},
+					Updates: map[string]interface{}{"description": "New description"},
 				},
 				false,
 				"valid request with description update",
@@ -611,7 +611,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "non-existent",
-					Updates: map[string]interface{}{"baslik": "Title"},
+					Updates: map[string]interface{}{"title": "Title"},
 				},
 				true,
 				"invalid request - non-existent task",
@@ -619,7 +619,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"durum": "invalid-status"},
+					Updates: map[string]interface{}{"status": "invalid-status"},
 				},
 				true,
 				"invalid request - invalid status",
@@ -627,7 +627,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"oncelik": "invalid-priority"},
+					Updates: map[string]interface{}{"priority": "invalid-priority"},
 				},
 				true,
 				"invalid request - invalid priority",
@@ -635,7 +635,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"baslik": ""},
+					Updates: map[string]interface{}{"title": ""},
 				},
 				true,
 				"invalid request - empty title",
@@ -643,7 +643,7 @@ func TestBatchProcessor_ValidationFunctions(t *testing.T) {
 			{
 				BatchUpdateRequest{
 					TaskID:  "task-1",
-					Updates: map[string]interface{}{"baslik": "   "},
+					Updates: map[string]interface{}{"title": "   "},
 				},
 				true,
 				"invalid request - whitespace-only title",

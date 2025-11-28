@@ -153,6 +153,7 @@ func (s *APIServer) setupRoutes() {
 
 	// Template routes
 	api.Get("/templates", s.getTemplates)
+	api.Post("/template/init", s.initializeTemplates)
 
 	// Summary routes
 	api.Get("/summary", s.getSummary)
@@ -297,13 +298,34 @@ func (s *APIServer) updateTask(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	// Handle status update - use GorevGuncelle with params map and workspace context
+	// Handle task updates - use GorevGuncelle with params map and workspace context
+	// Note: API accepts Turkish field names but DB columns are English since v0.17.0
+	// Mapping: durum -> status, proje_id -> project_id, oncelik -> priority
 	iy := s.getIsYoneticiFromContext(c)
 	ctx := s.getContextFromRequest(c)
+
+	// Build update params with proper field name mapping
+	params := make(map[string]interface{})
+
 	if durum, ok := req["durum"].(string); ok {
-		params := map[string]interface{}{"durum": durum}
+		params["status"] = durum
+	}
+	if projeID, ok := req["proje_id"].(string); ok {
+		params["project_id"] = projeID
+	}
+	if oncelik, ok := req["oncelik"].(string); ok {
+		params["priority"] = oncelik
+	}
+	if baslik, ok := req["baslik"].(string); ok {
+		params["title"] = baslik
+	}
+	if aciklama, ok := req["aciklama"].(string); ok {
+		params["description"] = aciklama
+	}
+
+	if len(params) > 0 {
 		if err := iy.VeriYonetici().GorevGuncelle(ctx, id, params); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update task %s with status %s: %v", id, durum, err))
+			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to update task %s: %v", id, err))
 		}
 	}
 
@@ -542,6 +564,22 @@ func (s *APIServer) getTemplates(c *fiber.Ctx) error {
 	})
 }
 
+// initializeTemplates creates default templates (TR/EN pairs) in the database
+func (s *APIServer) initializeTemplates(c *fiber.Ctx) error {
+	iy := s.getIsYoneticiFromContext(c)
+	ctx := s.getContextFromRequest(c)
+
+	// Call the business logic to initialize templates
+	if err := iy.VeriYonetici().VarsayilanTemplateleriOlustur(ctx); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to initialize templates: %v", err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Default templates initialized successfully",
+	})
+}
+
 // getSummary retrieves system-wide summary statistics
 func (s *APIServer) getSummary(c *fiber.Ctx) error {
 	// This would need a summary method in business logic
@@ -610,10 +648,10 @@ func (s *APIServer) createSubtask(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Title       string `json:"baslik"`
-		Description string `json:"aciklama"`
-		Priority    string `json:"oncelik"`
-		DueDate     string `json:"son_tarih"`
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Priority    string `json:"priority"`
+		DueDate     string `json:"due_date"`
 		Tags        string `json:"etiketler"`
 	}
 	if err := c.BodyParser(&req); err != nil {

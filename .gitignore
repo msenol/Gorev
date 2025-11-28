@@ -114,3 +114,6 @@ gorev-web/.vite/
 
 # NPM package tarballs (test packages)
 *.tgz
+
+# Deployment configuration (contains sensitive VPS credentials)
+scripts/deploy-config.sh

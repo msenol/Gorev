@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
 import * as path from 'path';
-import { ApiClient } from '../api/client';
+import * as os from 'os';
+import { ApiClient, ExportRequest } from '../api/client';
 import { Logger } from '../utils/logger';
 import { validateExportOptions, estimateExportSize } from '../commands/dataCommands';
 
@@ -66,7 +67,7 @@ export class ExportDialog {
     await this.loadInitialData();
   }
 
-  private async handleMessage(message: any): Promise<void> {
+  private async handleMessage(message: { command: string; [key: string]: unknown }): Promise<void> {
     Logger.debug('Export dialog received message', message);
 
     switch (message.command) {
@@ -79,19 +80,19 @@ export class ExportDialog {
         break;
 
       case 'validateOptions':
-        await this.validateExportOptions(message.options);
+        await this.validateExportOptions(message.options as Record<string, unknown>);
         break;
 
       case 'estimateSize':
-        await this.estimateExportSize(message.options);
+        await this.estimateExportSize(message.options as Record<string, unknown>);
         break;
 
       case 'selectOutputPath':
-        await this.selectOutputPath(message.format);
+        await this.selectOutputPath(message.format as string);
         break;
 
       case 'startExport':
-        await this.startExport(message.options);
+        await this.startExport(message.options as Record<string, unknown>);
         break;
 
       case 'cancel':
@@ -163,10 +164,10 @@ export class ExportDialog {
     }
   }
 
-  private async validateExportOptions(options: any): Promise<void> {
+  private async validateExportOptions(options: Record<string, unknown>): Promise<void> {
     if (!this.panel) return;
 
-    const validation = validateExportOptions(options);
+    const validation = validateExportOptions(options as Partial<ExportRequest>);
     this.panel.webview.postMessage({
       command: 'validationResult',
       isValid: validation.isValid,
@@ -174,11 +175,11 @@ export class ExportDialog {
     });
   }
 
-  private async estimateExportSize(options: any): Promise<void> {
+  private async estimateExportSize(options: Record<string, unknown>): Promise<void> {
     if (!this.panel) return;
 
     try {
-      const sizeEstimate = await estimateExportSize(this.apiClient, options);
+      const sizeEstimate = await estimateExportSize(this.apiClient, options as Partial<ExportRequest>);
       this.panel.webview.postMessage({
         command: 'sizeEstimate',
         size: sizeEstimate
@@ -212,7 +213,7 @@ export class ExportDialog {
     }
   }
 
-  private async startExport(options: any): Promise<void> {
+  private async startExport(options: Record<string, unknown>): Promise<void> {
     if (!this.panel) return;
 
     try {
@@ -230,7 +231,7 @@ export class ExportDialog {
         progress.report({ increment: 10, message: t('export.preparing') });
 
         // Call REST API export endpoint
-        const result = await this.apiClient.exportData(options);
+        const result = await this.apiClient.exportData(options as unknown as ExportRequest);
 
         progress.report({ increment: 90, message: t('export.completing') });
 
@@ -241,25 +242,26 @@ export class ExportDialog {
         progress.report({ increment: 100, message: t('export.complete') });
 
         // Notify webview of success
+        const exportReq = options as unknown as ExportRequest;
         this.panel?.webview.postMessage({
           command: 'exportCompleted',
-          path: options.output_path
+          path: exportReq.output_path
         });
 
         // Show success message with action buttons
         const openAction = t('export.openFile');
         const openFolderAction = t('export.openFolder');
-        
+
         const action = await vscode.window.showInformationMessage(
-          t('export.success', { path: options.output_path }),
+          t('export.success', { path: exportReq.output_path }),
           openAction,
           openFolderAction
         );
 
         if (action === openAction) {
-          await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(options.output_path));
+          await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(exportReq.output_path));
         } else if (action === openFolderAction) {
-          await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(options.output_path));
+          await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(exportReq.output_path));
         }
 
         // Close dialog after successful export
@@ -289,13 +291,13 @@ export class ExportDialog {
     if (vscode.workspace.rootPath) {
       return path.join(vscode.workspace.rootPath, defaultFileName);
     } else {
-      const downloadsPath = path.join(require('os').homedir(), 'Downloads');
+      const downloadsPath = path.join(os.homedir(), 'Downloads');
       return path.join(downloadsPath, defaultFileName);
     }
   }
 
-  private parseProjectList(text: string): Array<{id: string, name: string, isActive: boolean}> {
-    const projects: Array<{id: string, name: string, isActive: boolean}> = [];
+  private parseProjectList(text: string): {id: string, name: string, isActive: boolean}[] {
+    const projects: {id: string, name: string, isActive: boolean}[] = [];
     const lines = text.split('\n');
     
     for (const line of lines) {

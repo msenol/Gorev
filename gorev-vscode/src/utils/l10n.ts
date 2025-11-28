@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as l10n from '@vscode/l10n';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { Logger } from './logger';
@@ -12,9 +11,12 @@ export class L10nManager {
     private static instance: L10nManager;
     private initialized = false;
     private bundles: Map<string, Record<string, string>> = new Map();
-    private currentLocale: string = 'en';
+    private currentLocale = 'en';
 
-    private constructor() {}
+    // Private constructor prevents external instantiation (singleton pattern)
+    private constructor() {
+        // Intentionally empty - singleton initialization happens in getInstance()
+    }
 
     public static getInstance(): L10nManager {
         if (!L10nManager.instance) {
@@ -101,7 +103,7 @@ export class L10nManager {
     /**
      * Translate a key with arguments
      */
-    public t(key: string, ...args: (string | number | boolean | Record<string, any>)[]): string {
+    public t(key: string, ...args: (string | number | boolean | Record<string, unknown>)[]): string {
         if (!this.initialized) {
             Logger.debug('[GOREV-L10N] 13. Manager not initialized, returning key:', key);
             return key;
@@ -114,7 +116,7 @@ export class L10nManager {
     /**
      * Manual bundle lookup with fallback
      */
-    private manualLookup(key: string, args: (string | number | boolean | Record<string, any>)[]): string {
+    private manualLookup(key: string, args: (string | number | boolean | Record<string, unknown>)[]): string {
         const simpleLocale = this.getSimpleLocale(this.currentLocale);
         Logger.debug('[GOREV-L10N] 15. Looking up key:', key, 'for locale:', simpleLocale);
 
@@ -140,7 +142,7 @@ export class L10nManager {
     /**
      * Replace placeholders in translation
      */
-    private replacePlaceholders(text: string, args: (string | number | boolean | Record<string, any>)[]): string {
+    private replacePlaceholders(text: string, args: (string | number | boolean | Record<string, unknown>)[]): string {
         return text.replace(/\{(\d+)\}/g, (match, index) => {
             const argIndex = parseInt(index, 10);
             const arg = args[argIndex];
@@ -192,9 +194,9 @@ export async function initializeL10n(context: vscode.ExtensionContext): Promise<
 /**
  * Translate a key using global manager
  */
-export function t(key: string, ...args: (string | number | boolean | Record<string, any>)[]): string {
+export function t(key: string, ...args: (string | number | boolean | Record<string, unknown>)[]): string {
     if (!globalManager) {
-        console.warn('L10n not initialized, returning key');
+        Logger.warn('L10n not initialized, returning key');
         return key;
     }
     return globalManager.t(key, ...args);

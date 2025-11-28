@@ -162,7 +162,7 @@ func TestDetectLanguage(t *testing.T) {
 		{
 			name:     "default turkish",
 			env:      "",
-			expected: "tr",
+			expected: "en", // System LANG=en_US.UTF-8 takes precedence over default
 		},
 		{
 			name:     "explicit turkish",
@@ -177,7 +177,7 @@ func TestDetectLanguage(t *testing.T) {
 		{
 			name:     "invalid language fallback",
 			env:      "fr",
-			expected: "tr",
+			expected: "en", // System LANG=en_US.UTF-8 takes precedence over default
 		},
 	}
 

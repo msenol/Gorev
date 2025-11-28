@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { Logger } from '../utils/logger';
 
 export interface DebugConfig {
     useDebugWrapper: boolean;
@@ -31,10 +32,10 @@ export function getServerPath(): string {
         );
         
         if (fs.existsSync(wrapperPath)) {
-            console.log(`[Gorev] Using debug wrapper: ${wrapperPath}`);
+            Logger.debug(`Using debug wrapper: ${wrapperPath}`);
             return wrapperPath;
         } else {
-            console.warn(`[Gorev] Debug wrapper not found at: ${wrapperPath}`);
+            Logger.warn(`Debug wrapper not found at: ${wrapperPath}`);
         }
     }
     
@@ -65,7 +66,7 @@ export function showDebugInfo(outputChannel: vscode.OutputChannel): void {
                 // Also create a command to open the log
                 vscode.commands.executeCommand('vscode.open', vscode.Uri.file(latestLog));
             }
-        } catch (e) {
+        } catch {
             // Debug directory might not exist yet
         }
     }

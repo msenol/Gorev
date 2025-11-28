@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** November 5, 2025 | **Version:** v0.17.0
+**Last Updated:** November 28, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -18,7 +18,44 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 - **Backward Compatibility**: Domain terms (`gorevler`, `projeler`) remain Turkish
 - See `docs/MIGRATION_GUIDE_v0.17.md` for upgrade instructions
 
-**Previous (v0.17.0 - October 6, 2025):**
+**Recent Updates (November 28, 2025):**
+
+- **Critical Bug Fixes - Workspace Isolation**: Fixed workspace_id not being set on task creation
+  - Template-based task creation now properly assigns workspace_id via injected parameters
+  - Subtask creation now includes workspace_id from parent task
+  - Project creation now stores workspace_id in database SQL INSERT
+  - Files: `internal/gorev/is_yonetici.go`, `internal/gorev/template_yonetici.go`, `internal/gorev/veri_yonetici.go`
+
+- **API Field Mapping Fix**: Fixed English→Turkish field mapping for v0.17.0 API
+  - Added `mapApiTaskToTask()` function in VS Code API client
+  - All task operations properly map: title→baslik, description→aciklama, status→durum, priority→oncelik
+  - Fixed getTasks(), getTask(), createTaskFromTemplate(), updateTask(), createSubtask()
+  - File: `gorev-vscode/src/api/client.ts`
+
+- **Heavy Development Warnings**: Added prominent warnings across all platforms
+  - Warning banners added to README.md, README.tr.md, and public website https://gorev.work
+  - Animated warning banner in embedded web UI with pulse effect
+  - Clear messaging about active development and potential breaking changes
+
+**Previous (v0.17.0 - November 22, 2025):**
+
+- **Multilingual Template Support** - Templates now support multiple languages (TR/EN)
+  - Database schema extended with `language_code` and `base_template_id` fields (migration 000012)
+  - Template pairs created for common templates (bug, feature) in Turkish and English
+  - Language-aware template selection based on `GOREV_LANG` environment variable
+  - Files: `internal/gorev/template_yonetici.go`, `internal/veri/migrations/000012_add_template_multilang.*.sql`
+
+- **i18n Phase 3 Complete** - Context-aware language propagation system
+  - Environment variable `GOREV_LANG` now properly propagates through all layers (CLI, MCP, API)
+  - Per-request language selection for MCP handlers with fallback hierarchy
+  - Files: `internal/i18n/manager.go`, `internal/i18n/helpers.go`, `internal/mcp/handlers.go`
+
+- **VS Code Extension: Rule 15 Compliance Achieved**
+  - Eliminated all 242 ESLint warnings → 0 warnings (100% clean)
+  - Maintained 100% test pass rate (104/104 tests)
+  - Files: 13 files refactored including `ui/taskDetailPanel.ts`, `providers/*.ts`, `commands/*.ts`
+
+**Previous (v0.16.3 - October 6, 2025):**
 
 - MCP Tool Parameter Transformation Fixes, Bulk Operations, VS Code Dependency Counters
 

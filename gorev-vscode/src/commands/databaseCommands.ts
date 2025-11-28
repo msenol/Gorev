@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 import { ApiClient } from '../api/client';
 import { COMMANDS } from '../utils/constants';
 import { Logger } from '../utils/logger';
@@ -6,8 +8,8 @@ import { CommandContext } from './index';
 
 export function registerDatabaseCommands(
   context: vscode.ExtensionContext,
-  apiClient: ApiClient,
-  providers: CommandContext
+  _apiClient: ApiClient,
+  _providers: CommandContext
 ): void {
 
   // Initialize Workspace Database
@@ -19,9 +21,6 @@ export function registerDatabaseCommands(
           vscode.window.showWarningMessage('No workspace folder found. Please open a folder first.');
           return;
         }
-
-        const path = require('path');
-        const fs = require('fs');
 
         const workspaceDbDir = path.join(workspaceFolder.uri.fsPath, '.gorev');
         const workspaceDbPath = path.join(workspaceDbDir, 'gorev.db');

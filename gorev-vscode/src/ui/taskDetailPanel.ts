@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { t } from '../utils/l10n';
-import { ApiClient, TaskHierarchy } from '../api/client';
+import { ApiClient } from '../api/client';
 import { Gorev, GorevDurum, GorevOncelik, GorevHiyerarsi } from '../models/gorev';
 import { Logger } from '../utils/logger';
-import * as path from 'path';
 
 /**
  * Rich task detail webview panel
@@ -39,7 +38,7 @@ export class TaskDetailPanel {
         
         // Update the content based on view changes
         this.panel.onDidChangeViewState(
-            e => {
+            _e => {
                 if (this.panel.visible) {
                     this.update();
                 }
@@ -100,7 +99,7 @@ export class TaskDetailPanel {
                 const hierarchyResult = await this.apiClient.getHierarchy(this.task.id);
                 if (hierarchyResult.success && hierarchyResult.data) {
                     // Store hierarchy data for rendering
-                    this.hierarchyInfo = hierarchyResult.data as any;
+                    this.hierarchyInfo = hierarchyResult.data as unknown as GorevHiyerarsi;
                 }
             } catch (err) {
                 Logger.debug('Hierarchy info not available:', err);
@@ -116,36 +115,17 @@ export class TaskDetailPanel {
             vscode.window.showErrorMessage(t('taskDetail.loadFailed'));
         }
     }
-    
-    private parseTaskDetails(content: string) {
-        // Parse additional details from markdown content
-        // This includes dependencies, tags, dates, etc.
-        // TODO: Remove markdown parsing - task already has full data from API
-        const parsedTask: any = {};
-        
-        // Update task with parsed details
-        if (parsedTask.etiketler) {
-            this.task.etiketler = parsedTask.etiketler;
-        }
-        if (parsedTask.bagimliliklar) {
-            this.task.bagimliliklar = parsedTask.bagimliliklar;
-        }
-        if (parsedTask.son_tarih) {
-            this.task.son_tarih = parsedTask.son_tarih;
-        }
-        
-        // Add debug logging
-        Logger.debug('Parsed task details:', {
-            id: this.task.id,
-            etiketler: this.task.etiketler,
-            bagimliliklar: this.task.bagimliliklar
-        });
-    }
-    
+
     private parseHierarchyInfo(content: string) {
         // Parse hierarchy statistics from the response
         const lines = content.split('\n');
-        const stats: any = {};
+        const stats: {
+            toplamAltGorev?: number;
+            tamamlananAlt?: number;
+            devamEdenAlt?: number;
+            beklemedeAlt?: number;
+            ilerlemeYuzdesi?: number;
+        } = {};
         
         // Add debug logging
         Logger.debug('Parsing hierarchy info from content:', content);
@@ -190,7 +170,7 @@ export class TaskDetailPanel {
         }
         
         // Calculate progress if not provided but we have the data
-        if (stats.ilerlemeYuzdesi === undefined && stats.toplamAltGorev > 0) {
+        if (stats.ilerlemeYuzdesi === undefined && stats.toplamAltGorev !== undefined && stats.toplamAltGorev > 0 && stats.tamamlananAlt !== undefined) {
             stats.ilerlemeYuzdesi = Math.round((stats.tamamlananAlt / stats.toplamAltGorev) * 100);
             Logger.debug('Calculated progress percentage:', stats.ilerlemeYuzdesi);
         }
@@ -212,8 +192,8 @@ export class TaskDetailPanel {
         Logger.debug('Final hierarchy info:', this.hierarchyInfo);
     }
     
-    private parseDependencies(content: string): any[] {
-        const dependencies: any[] = [];
+    private parseDependencies(content: string): { baslik: string; id: string; durum: string }[] {
+        const dependencies: { baslik: string; id: string; durum: string }[] = [];
         const depSection = content.split('## Bağımlılıklar')[1];
         
         if (depSection) {
@@ -959,9 +939,9 @@ export class TaskDetailPanel {
         
         // Calculate progress from task.alt_gorevler if hierarchyInfo is not available
         let progressInfo = this.hierarchyInfo;
-        if (!progressInfo && hasSubtasks) {
+        if (!progressInfo && hasSubtasks && this.task.alt_gorevler) {
             // Count all subtasks recursively
-            const counts = this.countAllSubtasks(this.task.alt_gorevler!);
+            const counts = this.countAllSubtasks(this.task.alt_gorevler);
             const totalSubtasks = counts.total;
             const completedSubtasks = counts.completed;
             const inProgressSubtasks = counts.inProgress;
@@ -1117,8 +1097,7 @@ export class TaskDetailPanel {
     
     private renderSubtasks(subtasks: Gorev[], level: number): string {
         let html = '';
-        const indent = '    '.repeat(level);
-        
+
         subtasks.forEach(subtask => {
             const statusIcon = this.getSubtaskStatusIcon(subtask.durum as GorevDurum);
             const statusClass = this.getSubtaskStatusClass(subtask.durum as GorevDurum);
@@ -1137,8 +1116,8 @@ export class TaskDetailPanel {
             `;
             
             // Recursively render sub-subtasks
-            if (hasChildren) {
-                html += this.renderSubtasks(subtask.alt_gorevler!, level + 1);
+            if (hasChildren && subtask.alt_gorevler) {
+                html += this.renderSubtasks(subtask.alt_gorevler, level + 1);
             }
         });
         
@@ -1168,14 +1147,14 @@ export class TaskDetailPanel {
     
     private renderDependenciesSection(): string {
         // Debug: Log dependency information
-        console.log('Task dependency info:', {
+        Logger.debug('Task dependency info:', JSON.stringify({
             bagimli_gorev_sayisi: this.task.bagimli_gorev_sayisi,
             tamamlanmamis_bagimlilik_sayisi: this.task.tamamlanmamis_bagimlilik_sayisi,
             bu_goreve_bagimli_sayisi: this.task.bu_goreve_bagimli_sayisi,
             bagimliliklar: this.task.bagimliliklar,
             taskId: this.task.id,
             taskTitle: this.task.baslik
-        });
+        }));
         
         const hasDependencyInfo = this.task.bagimli_gorev_sayisi || this.task.bu_goreve_bagimli_sayisi || 
                                   (this.task.bagimliliklar && this.task.bagimliliklar.length > 0);
@@ -1224,7 +1203,7 @@ export class TaskDetailPanel {
             html += `
                 <div class="dependency-list compact">
                     <h4>Bağımlı Olduğu Görevler:</h4>
-                    ${this.task.bagimliliklar.map((dep: any) => `
+                    ${this.task.bagimliliklar.map((dep) => `
                         <div class="dependency-item">
                             <span class="dep-status ${this.getDepStatusClass(dep.hedef_durum || 'beklemede')}">
                                 <i class="codicon ${this.getDepStatusIcon(dep.hedef_durum || 'beklemede')}"></i>
@@ -1341,30 +1320,30 @@ export class TaskDetailPanel {
                 <text x="200" y="105" text-anchor="middle" class="node-text">
                     ${this.escapeHtml(this.task.baslik.substring(0, 10))}...
                 </text>
-                
-                ${this.task.bagimliliklar?.map((dep: any, index: number) => `
+
+                ${this.task.bagimliliklar?.map((dep, index) => `
                     <!-- Dependency ${index + 1} -->
-                    <rect x="${50 + (index * 120)}" y="20" width="100" height="40" rx="5" 
-                          class="dep-node status-${dep.durum}" />
+                    <rect x="${50 + (index * 120)}" y="20" width="100" height="40" rx="5"
+                          class="dep-node status-${dep.hedef_durum || 'beklemede'}" />
                     <text x="${100 + (index * 120)}" y="45" text-anchor="middle" class="node-text">
-                        ${this.escapeHtml(dep.baslik.substring(0, 10))}...
+                        ${this.escapeHtml((dep.hedef_baslik || 'Görev').substring(0, 10))}...
                     </text>
-                    <line x1="${100 + (index * 120)}" y1="60" x2="200" y2="80" 
+                    <line x1="${100 + (index * 120)}" y1="60" x2="200" y2="80"
                           stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" />
                 `).join('') || ''}
             </svg>
         `;
     }
     
-    private async handleMessage(message: any) {
+    private async handleMessage(message: { command: string; [key: string]: unknown }) {
         try {
             switch (message.command) {
                 case 'updateTitle':
-                    await this.updateTaskField('baslik', message.title);
+                    await this.updateTaskField('baslik', message.title as string);
                     break;
-                    
+
                 case 'updateDescription':
-                    await this.updateTaskField('aciklama', message.description);
+                    await this.updateTaskField('aciklama', message.description as string | undefined);
                     break;
                     
                 case 'updateStatus':
@@ -1380,10 +1359,10 @@ export class TaskDetailPanel {
                     break;
                     
                 case 'addTag':
-                    await this.addTag(message.tag);
+                    await this.addTag(message.tag as string);
                     break;
                 case 'insertLink':
-                    await this.handleInsertLink(message.selectedText);
+                    await this.handleInsertLink(message.selectedText as string | undefined);
                     break;
                 case 'insertImage':
                     await this.handleInsertImage();
@@ -1394,13 +1373,13 @@ export class TaskDetailPanel {
                 case 'insertTable':
                     await this.handleInsertTable();
                     break;
-                    
+
                 case 'addDependency':
                     await this.showDependencyPicker();
                     break;
-                    
+
                 case 'openTask':
-                    await this.openTask(message.taskId);
+                    await this.openTask(message.taskId as string);
                     break;
                     
                 case 'createSubtask':
@@ -1421,18 +1400,14 @@ export class TaskDetailPanel {
         }
     }
     
-    private async updateTaskField(field: string, value: any) {
-        try {
-            const updates: any = {};
-            updates[field] = value;
+    private async updateTaskField(field: string, value: unknown) {
+        const updates: Record<string, unknown> = {};
+        updates[field] = value;
 
-            await this.apiClient.updateTask(this.task.id, updates);
-            (this.task as any)[field] = value;
+        await this.apiClient.updateTask(this.task.id, updates);
+        (this.task as unknown as Record<string, unknown>)[field] = value;
 
-            vscode.window.showInformationMessage('Görev güncellendi');
-        } catch (error) {
-            throw error;
-        }
+        vscode.window.showInformationMessage('Görev güncellendi');
     }
     
     private async showStatusPicker() {
@@ -1448,9 +1423,9 @@ export class TaskDetailPanel {
 
         if (selected) {
             await this.apiClient.updateTask(this.task.id, {
-                durum: selected.value as any
+                durum: selected.value
             });
-            this.task.durum = selected.value as any;
+            this.task.durum = selected.value;
             this.update();
         }
     }

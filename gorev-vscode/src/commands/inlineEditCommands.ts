@@ -5,6 +5,7 @@ import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { InlineEditProvider } from '../providers/inlineEditProvider';
 import { EnhancedGorevTreeProvider } from '../providers/enhancedGorevTreeProvider';
+import { GorevTreeItem } from '../providers/gorevTreeProvider';
 import { Logger } from '../utils/logger';
 
 export function registerInlineEditCommands(
@@ -17,12 +18,12 @@ export function registerInlineEditCommands(
 
     // Edit Task Title (F2)
     context.subscriptions.push(
-        vscode.commands.registerCommand(COMMANDS.EDIT_TASK_TITLE, async (item?: any) => {
+        vscode.commands.registerCommand(COMMANDS.EDIT_TASK_TITLE, async (item?: GorevTreeItem) => {
             // Eğer item yoksa, seçili görevi al
             if (!item) {
                 const selectedTasks = treeProvider.getSelectedTasks();
                 if (selectedTasks.length === 1) {
-                    item = { task: selectedTasks[0] };
+                    item = new GorevTreeItem(selectedTasks[0]);
                 } else {
                     vscode.window.showWarningMessage(t('inlineEdit.selectTaskToEdit'));
                     return;
@@ -36,7 +37,7 @@ export function registerInlineEditCommands(
 
     // Quick Status Change
     context.subscriptions.push(
-        vscode.commands.registerCommand(COMMANDS.QUICK_STATUS_CHANGE, async (item: any) => {
+        vscode.commands.registerCommand(COMMANDS.QUICK_STATUS_CHANGE, async (item: GorevTreeItem) => {
             Logger.info(t('inlineEdit.quickStatusStartLog'));
             Logger.info(t('inlineEdit.quickStatusItemTypeLog'), item?.constructor?.name);
             Logger.info(t('inlineEdit.quickStatusHasTaskLog'), !!item?.task);
@@ -62,7 +63,7 @@ export function registerInlineEditCommands(
                 await treeProvider.refresh();
                 
                 // Also refresh the project tree if it exists
-                const projeTreeProvider = (global as any).projeTreeProvider;
+                const projeTreeProvider = (global as unknown as { projeTreeProvider?: { refresh: () => Promise<void> } }).projeTreeProvider;
                 if (projeTreeProvider) {
                     await projeTreeProvider.refresh();
                 }
@@ -74,7 +75,7 @@ export function registerInlineEditCommands(
 
     // Quick Priority Change
     context.subscriptions.push(
-        vscode.commands.registerCommand(COMMANDS.QUICK_PRIORITY_CHANGE, async (item: any) => {
+        vscode.commands.registerCommand(COMMANDS.QUICK_PRIORITY_CHANGE, async (item: GorevTreeItem) => {
             if (!item || !item.task) {
                 vscode.window.showWarningMessage(t('inlineEdit.selectTask'));
                 return;
@@ -87,7 +88,7 @@ export function registerInlineEditCommands(
 
     // Quick Date Change
     context.subscriptions.push(
-        vscode.commands.registerCommand(COMMANDS.QUICK_DATE_CHANGE, async (item: any) => {
+        vscode.commands.registerCommand(COMMANDS.QUICK_DATE_CHANGE, async (item: GorevTreeItem) => {
             if (!item || !item.task) {
                 vscode.window.showWarningMessage(t('inlineEdit.selectTask'));
                 return;
@@ -100,7 +101,7 @@ export function registerInlineEditCommands(
 
     // Detailed Edit
     context.subscriptions.push(
-        vscode.commands.registerCommand(COMMANDS.DETAILED_EDIT, async (item: any) => {
+        vscode.commands.registerCommand(COMMANDS.DETAILED_EDIT, async (item: GorevTreeItem) => {
             if (!item || !item.task) {
                 vscode.window.showWarningMessage(t('inlineEdit.selectTask'));
                 return;
@@ -113,7 +114,7 @@ export function registerInlineEditCommands(
 
     // Double-click to edit title
     context.subscriptions.push(
-        vscode.commands.registerCommand('gorev.onTreeItemDoubleClick', async (item: any) => {
+        vscode.commands.registerCommand('gorev.onTreeItemDoubleClick', async (item: GorevTreeItem) => {
             if (item && item.task) {
                 await editProvider.startEdit(item);
                 await treeProvider.refresh();

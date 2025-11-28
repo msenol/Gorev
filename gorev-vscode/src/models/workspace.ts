@@ -15,6 +15,7 @@ export interface WorkspaceInfo {
 export interface WorkspaceRegistration {
   path: string;
   name?: string;
+  workspace_id?: string; // Explicit workspace ID for centralized mode
 }
 
 export interface WorkspaceRegistrationResponse {

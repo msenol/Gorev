@@ -4,9 +4,9 @@
 
 This guide helps diagnose and fix connection issues between the VS Code extension and the MCP server.
 
-## Quick Fix
+## Solution
 
-Based on the diagnosis in `DEBUG_CONNECTION_ISSUE.md`, the problem is that the MCP server outputs log messages to stderr which interfere with the JSON-RPC protocol. The logs are already commented out in the current version, so you just need to rebuild:
+Based on the diagnosis in `DEBUG_CONNECTION_ISSUE.md`, the problem was that the MCP server was outputting log messages to stderr which interfered with the JSON-RPC protocol. This has been resolved by removing the problematic stderr logging. To apply the fix, rebuild the server:
 
 ```bash
 cd gorev-mcpserver

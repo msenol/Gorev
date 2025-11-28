@@ -3,10 +3,6 @@ import { t } from '../utils/l10n';
 import { ApiClient, ApiError, Task, Project } from '../api/client';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import {
-    EnhancedTreeItem,
-    GroupTreeItem,
-    TaskTreeItem,
-    EmptyTreeItem,
     TreeItemType,
     GroupingStrategy,
     SortingCriteria,
@@ -19,10 +15,10 @@ import {
 import { GroupingStrategyProvider } from './groupingStrategy';
 import { DragDropController } from './dragDropController';
 import { TaskDecorationProvider } from './decorationProvider';
-import { ICONS, COLORS, CONTEXT_VALUES } from '../utils/constants';
+import { COLORS } from '../utils/constants';
 import { Logger } from '../utils/logger';
 import { RefreshManager, RefreshTarget, RefreshProvider, RefreshReason, RefreshPriority } from '../managers/refreshManager';
-import { performanceMonitor, measureAsync } from '../utils/performance';
+import { measureAsync } from '../utils/performance';
 import { debounceConfig } from '../utils/debounce';
 
 /**
@@ -35,7 +31,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
     private tasks: Gorev[] = [];
     private filteredTasks: Gorev[] = [];
-    private projects: Map<string, any> = new Map(); // Proje ID -> Proje bilgisi
+    private projects: Map<string, Project> = new Map(); // Proje ID -> Proje bilgisi
     private config: TreeViewConfig;
     private selection: TaskSelection;
     private events: TreeViewEvents = {};
@@ -49,8 +45,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     private decorationProvider: TaskDecorationProvider;
 
     // Differential update support
-    private previousTasksHash: string = '';
-    private previousProjectsHash: string = '';
+    private previousTasksHash = '';
+    private previousProjectsHash = '';
     private treeDataCache: Map<string, EnhancedTreeViewItem> = new Map();
     private expansionStateCache: Map<string, boolean> = new Map();
 
@@ -235,7 +231,8 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
         // Grup item'larını oluştur
         for (const groupKey of sortedGroupKeys) {
-            const tasksInGroup = groups.get(groupKey)!;
+            const tasksInGroup = groups.get(groupKey);
+            if (!tasksInGroup) continue;
 
             // Boş grupları gizle
             if (!this.config.showEmptyGroups && tasksInGroup.length === 0) {
@@ -442,12 +439,11 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             
             if (this.tasks.length > 0) {
                 // Tasks loaded successfully
-                
-                const tasksWithProjectId = this.tasks.filter(t => t.proje_id);
+
                 const tasksWithoutProjectId = this.tasks.filter(t => !t.proje_id);
-                
+
                 // Task categorization complete
-                
+
                 // Warn about tasks without project_id
                 if (tasksWithoutProjectId.length > 0) {
                     Logger.warn('[EnhancedGorevTreeProvider] Found tasks without project_id:', 
@@ -741,7 +737,7 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
     /**
      * Görev seçimini günceller
      */
-    selectTask(taskId: string, multiSelect: boolean = false, rangeSelect: boolean = false): void {
+    selectTask(taskId: string, multiSelect = false, rangeSelect = false): void {
         if (!multiSelect && !rangeSelect) {
             // Tek seçim
             this.selection.selectedTasks.clear();
@@ -786,9 +782,12 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
 
         this.selection.selectedTasks.clear();
         for (let i = start; i <= end; i++) {
-            this.selection.selectedTasks.add(this.filteredTasks[i].id!);
+            const task = this.filteredTasks[i];
+            if (task?.id) {
+                this.selection.selectedTasks.add(task.id);
+            }
         }
-        
+
         this.selection.lastSelectedTask = toId;
     }
 
@@ -887,16 +886,16 @@ export class GroupTreeViewItem extends vscode.TreeItem {
         public groupKey: string,
         public groupType: GroupingStrategy,
         public tasks: Gorev[],
-        expanded: boolean = true,
-        private projects?: Map<string, any>
+        expanded = true,
+        private projects?: Map<string, Project>
     ) {
         let label = GroupingStrategyProvider.getGroupLabel(groupKey, groupType);
         
         // Proje gruplandırması için proje ismini kullan
         if (groupType === GroupingStrategy.ByProject && projects && groupKey !== 'no-project') {
             const project = projects.get(groupKey);
-            if (project && project.isim) {
-                label = project.isim;
+            if (project && project.name) {
+                label = project.name;
             }
         }
         
@@ -977,7 +976,7 @@ export class TaskTreeViewItem extends vscode.TreeItem {
         const isSelected = !!(task.id && selection.selectedTasks.has(task.id));
 
         // Icon
-        this.iconPath = this.getTaskIcon(isSelected) as any;
+        this.iconPath = this.getTaskIcon(isSelected);
 
         // Açıklama - configuration'a göre ayarla
         const config = vscode.workspace.getConfiguration('gorev.treeView.visuals');

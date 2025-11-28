@@ -58,12 +58,12 @@ func TestGetTask(t *testing.T) {
 
 	// Create a task first
 	payload := map[string]interface{}{
-		"baslik":    "Test Task",
-		"aciklama":  "Description",
-		"durum":     constants.TaskStatusPending,
-		"oncelik":   constants.PriorityMedium,
-		"proje_id":  projectID,
-		"etiketler": "test",
+		"title":       "Test Task",
+		"description": "Description",
+		"status":      constants.TaskStatusPending,
+		"priority":    constants.PriorityMedium,
+		"proje_id":    projectID,
+		"etiketler":   "test",
 	}
 	body, _ := json.Marshal(payload)
 
@@ -133,8 +133,8 @@ func TestCreateTaskFromTemplate(t *testing.T) {
 	payload := map[string]interface{}{
 		"template_id": constants.TestTemplateSimple,
 		"degerler": map[string]interface{}{
-			"baslik":  "Template Task",
-			"oncelik": constants.PriorityMedium,
+			"title":    "Template Task",
+			"priority": constants.PriorityMedium,
 		},
 	}
 	body, _ := json.Marshal(payload)
@@ -248,8 +248,8 @@ func TestSubtaskOperations(t *testing.T) {
 
 	payload := map[string]interface{}{
 		"parent_id": "test-parent-id",
-		"baslik":    "Test Subtask",
-		"oncelik":   constants.PriorityMedium,
+		"title":     "Test Subtask",
+		"priority":  constants.PriorityMedium,
 	}
 	body, _ := json.Marshal(payload)
 

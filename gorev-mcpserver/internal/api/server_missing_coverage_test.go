@@ -45,15 +45,15 @@ func setupMissingCoverageTestServer(t *testing.T) (*APIServer, string, string, f
 
 	// Create a test task using the "bug" template alias
 	degerler := map[string]string{
-		"baslik":    "Test Task",
-		"aciklama":  "Test Description",
-		"modul":     "API",
-		"ortam":     "development",
-		"adimlar":   "Test steps",
-		"beklenen":  "Expected result",
-		"mevcut":    "Current result",
-		"oncelik":   constants.PriorityMedium,
-		"etiketler": "test",
+		"title":       "Test Task",
+		"description": "Test Description",
+		"module":      "API", // Changed from "modul" to "module"
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
+		"priority":    constants.PriorityMedium,
+		"tags":        "test",
 	}
 	gorevResult, err := isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
@@ -121,9 +121,9 @@ func TestCreateSubtask(t *testing.T) {
 	defer cleanup()
 
 	payload := map[string]interface{}{
-		"baslik":   "Test Subtask",
-		"aciklama": "Subtask Description",
-		"oncelik":  constants.PriorityMedium,
+		"title":       "Test Subtask",
+		"description": "Subtask Description",
+		"priority":    constants.PriorityMedium,
 	}
 	body, _ := json.Marshal(payload)
 
@@ -141,8 +141,8 @@ func TestCreateSubtask_MissingParentID(t *testing.T) {
 	defer cleanup()
 
 	payload := map[string]interface{}{
-		"baslik":  "Test Subtask",
-		"oncelik": constants.PriorityMedium,
+		"title":    "Test Subtask",
+		"priority": constants.PriorityMedium,
 	}
 	body, _ := json.Marshal(payload)
 
@@ -162,15 +162,15 @@ func TestChangeParentTask(t *testing.T) {
 
 	// Create another task to use as new parent
 	degerler := map[string]string{
-		"baslik":    "Parent Task",
-		"aciklama":  "Parent Description",
-		"modul":     "API",
-		"ortam":     "development",
-		"adimlar":   "Test steps",
-		"beklenen":  "Expected result",
-		"mevcut":    "Current result",
-		"oncelik":   constants.PriorityMedium,
-		"etiketler": "test",
+		"title":       "Parent Task",
+		"description": "Parent Description",
+		"module":      "API",
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
+		"priority":    constants.PriorityMedium,
+		"tags":        "test",
 	}
 	parentResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
@@ -213,15 +213,15 @@ func TestAddDependency(t *testing.T) {
 
 	// Create another task for dependency
 	degerler := map[string]string{
-		"baslik":    "Dependent Task",
-		"aciklama":  "Dependent Description",
-		"modul":     "API",
-		"ortam":     "development",
-		"adimlar":   "Test steps",
-		"beklenen":  "Expected result",
-		"mevcut":    "Current result",
-		"oncelik":   constants.PriorityMedium,
-		"etiketler": "test",
+		"title":       "Dependent Task",
+		"description": "Dependent Description",
+		"module":      "API",
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
+		"priority":    constants.PriorityMedium,
+		"tags":        "test",
 	}
 	depResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
@@ -265,15 +265,15 @@ func TestRemoveDependency(t *testing.T) {
 
 	// Create another task for dependency
 	degerler := map[string]string{
-		"baslik":    "Dependent Task",
-		"aciklama":  "Dependent Description",
-		"modul":     "API",
-		"ortam":     "development",
-		"adimlar":   "Test steps",
-		"beklenen":  "Expected result",
-		"mevcut":    "Current result",
-		"oncelik":   constants.PriorityMedium,
-		"etiketler": "test",
+		"title":       "Dependent Task",
+		"description": "Dependent Description",
+		"module":      "API",
+		"environment": "development",
+		"steps":       "Test steps",
+		"expected":    "Expected result",
+		"actual":      "Current result",
+		"priority":    constants.PriorityMedium,
+		"tags":        "test",
 	}
 	depResult, err := server.isYonetici.TemplatedenGorevOlustur(context.Background(), "bug", degerler)
 	require.NoError(t, err)
