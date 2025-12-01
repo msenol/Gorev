@@ -426,6 +426,13 @@ export class EnhancedGorevTreeProvider implements vscode.TreeDataProvider<Enhanc
             Logger.info(`  - Page size used: ${pageSize}`);
             Logger.info(`  - Show all projects: ${showAllProjects}`);
             Logger.info(`  - Active project ID: ${activeProjectId || 'N/A'}`);
+
+            // Debug: Log tasks with subtasks
+            const tasksWithSubtasks = this.tasks.filter(t => t.alt_gorevler && t.alt_gorevler.length > 0);
+            Logger.info(`  - Tasks with subtasks: ${tasksWithSubtasks.length}`);
+            tasksWithSubtasks.forEach(t => {
+                Logger.info(`    * "${t.baslik}" has ${t.alt_gorevler?.length} subtasks`);
+            });
             
             // If tasks don't have project_id and we're showing active project tasks only, assign it
             if (!showAllProjects && activeProjectId && this.tasks.length > 0) {

@@ -391,10 +391,13 @@ func main() {
 	// MCP proxy command
 	mcpProxyCmd := createMCPProxyCommand()
 
+	// Seed test data command
+	seedCmd := createSeedCommand()
+
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&langFlag, "lang", "", i18n.T("flags.language"))
 
-	rootCmd.AddCommand(serveCmd, versionCmd, initCmd, templateCmd, mcpCmd, ideCmd, daemonCmd, daemonStopCmd, daemonStatusCmd, mcpProxyCmd)
+	rootCmd.AddCommand(serveCmd, versionCmd, initCmd, templateCmd, mcpCmd, ideCmd, daemonCmd, daemonStopCmd, daemonStatusCmd, mcpProxyCmd, seedCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Hata: %v\n", err)

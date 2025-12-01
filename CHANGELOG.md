@@ -5,7 +5,7 @@ All notable changes to Gorev will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.17.0] - 2025-11-28
+## [v0.17.0] - 2025-12-02
 
 ### Added
 
@@ -21,6 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Environment variable `GOREV_LANG` propagates through CLI, MCP, and API layers
   - Enhanced i18n helper functions with improved error handling and validation
 
+- **Subtasks API Endpoint**: New `GET /api/v1/tasks/:id/subtasks` endpoint for retrieving task subtasks
+  - Returns all direct subtasks for a given parent task
+  - Includes full task details (title, status, priority, tags, etc.)
+  - File: `gorev-mcpserver/internal/api/server.go`
+
+- **Comprehensive E2E Testing Infrastructure**: Complete Playwright-based testing framework
+  - CLI `seed-test-data` command for database seeding with options (`--lang`, `--minimal`, `--force`)
+  - Test data seeder with configurable options (`SeedTestData`, `SeederConfig` in testing helpers)
+  - Page Object pattern implementation (`TaskListPage`, `CreateTaskModal`, `BasePage`)
+  - E2E test scripts in package.json: `test:e2e`, `test:e2e:api`, `test:e2e:ui`
+  - Manual test guide with 79 test scenarios (`docs/MANUAL_TEST_GUIDE.md`)
+  - Files: `gorev-mcpserver/cmd/gorev/seed.go`, `gorev-mcpserver/internal/testing/seeder.go`
+
+- **Web UI Test Attributes**: Added `data-testid` attributes for E2E testing
+  - TaskList, TaskCard, Header components enhanced with test identifiers
+  - Files: `gorev-web/src/components/TaskList.tsx`, `gorev-web/src/components/TaskCard.tsx`, `gorev-web/src/components/Header.tsx`
+
 ### Fixed
 
 - **i18n**: CLI template commands now properly respect `GOREV_LANG` environment variable
@@ -30,12 +47,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed 10 `array-type` warnings using consistent `T[]` notation
   - Fixed 5 `no-useless-catch` warnings by removing unnecessary try-catch wrappers
 
+- **Subtask Loading in API**: `getTask` handler now includes nested subtasks
+  - Single task endpoint now returns subtasks in `subtasks` field
+  - Tree view expansion works correctly for tasks with subtasks
+  - File: `gorev-mcpserver/internal/api/server.go`
+
+- **Subtask Field Mapping**: Added `subtasks` → `alt_gorevler` mapping in VS Code client
+  - API client now properly maps nested subtasks for tree view display
+  - Recursive mapping handles multi-level subtask hierarchies
+  - File: `gorev-vscode/src/api/client.ts`
+
+- **Docker Workspace Registration**: Fixed workspace not found errors after Docker rebuild
+  - Workspace must be registered via `/api/v1/workspaces/register` in centralized mode
+
 ### Changed
 
 - **VS Code Extension**: Refactored 13 TypeScript files for type safety
   - Updated `ui/taskDetailPanel.ts`, `providers/*.ts`, `commands/*.ts` with proper typing
   - Maintained 100% test pass rate (104/104 tests) throughout refactoring
 - **Version Alignment**: Updated all modules to v0.17.0 for consistency
+- **Enhanced Debug Logging**: Improved task loading logs in EnhancedGorevTreeProvider
+  - Now shows count and names of tasks with subtasks
+  - File: `gorev-vscode/src/providers/enhancedGorevTreeProvider.ts`
 
 ### Fixed
 

@@ -14,7 +14,7 @@ const TaskList: React.FC<TaskListProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="loading-indicator">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="card animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -54,7 +54,7 @@ const TaskList: React.FC<TaskListProps> = ({
   const statusOrder = ['beklemede', 'devam_ediyor', 'tamamlandi'];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="task-list">
       {statusOrder.map((status) => {
         const statusTasks = groupedTasks[status] || [];
         if (statusTasks.length === 0) return null;
@@ -62,12 +62,12 @@ const TaskList: React.FC<TaskListProps> = ({
         const config = statusConfig[status as keyof typeof statusConfig];
 
         return (
-          <div key={status} className={`border rounded-lg p-4 ${config.color}`}>
+          <div key={status} className={`border rounded-lg p-4 ${config.color}`} data-testid={`status-section-${status}`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900" data-testid={`status-title-${status}`}>
                 {config.title}
               </h3>
-              <span className="text-sm text-gray-600 bg-white px-2 py-1 rounded-full">
+              <span className="text-sm text-gray-600 bg-white px-2 py-1 rounded-full" data-testid={`status-count-${status}`}>
                 {statusTasks.length} görev
               </span>
             </div>

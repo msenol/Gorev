@@ -9,13 +9,15 @@ import { test, expect } from '@playwright/test';
 import MockServer from './mock-server';
 
 let mockServer: MockServer;
+let mockServerPort: number;
 
 test.describe('VS Code Extension Integration', () => {
   test.beforeAll(async () => {
     // Start mock server before all tests
-    mockServer = new MockServer(5083);
+    mockServer = new MockServer(); // Port 0 = auto-assign
     await mockServer.start();
-    console.log('[Extension Tests] Mock server started');
+    mockServerPort = mockServer.getPort();
+    console.log(`[Extension Tests] Mock server started on port ${mockServerPort}`);
   });
 
   test.afterAll(async () => {
@@ -26,7 +28,7 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should successfully connect to API server', async ({ page }) => {
     // Test health endpoint
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/health');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/health`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -35,7 +37,7 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should load and display tasks in extension tree view', async ({ page }) => {
     // Simulate loading tasks in VS Code extension
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -80,7 +82,7 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should handle task creation with template', async ({ page }) => {
     // Create task using template
-    const createResponse = await page.request.post(`http://localhost:${mockServerPort}/api/v1/tasks/from-template', {
+    const createResponse = await page.request.post(`http://localhost:${mockServerPort}/api/v1/tasks/from-template`, {
       data: {
         template_id: 'feature',
         values: {
@@ -120,7 +122,7 @@ test.describe('VS Code Extension Integration', () => {
   });
 
   test('should load and display projects', async ({ page }) => {
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/projects');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/projects`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -157,7 +159,7 @@ test.describe('VS Code Extension Integration', () => {
   });
 
   test('should create new project', async ({ page }) => {
-    const response = await page.request.post(`http://localhost:${mockServerPort}/api/v1/projects', {
+    const response = await page.request.post(`http://localhost:${mockServerPort}/api/v1/projects`, {
       data: {
         name: 'New Test Project',
         description: 'A test project created during UI testing'
@@ -172,7 +174,7 @@ test.describe('VS Code Extension Integration', () => {
   });
 
   test('should load templates from API', async ({ page }) => {
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/templates');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/templates`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -236,7 +238,7 @@ test.describe('VS Code Extension Integration', () => {
   });
 
   test('should load and verify summary statistics', async ({ page }) => {
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/summary');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/summary`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -258,7 +260,7 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should handle pagination correctly', async ({ page }) => {
     // Test with limit and offset
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks?limit=2&offset=0');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks?limit=2&offset=0`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -268,7 +270,7 @@ test.describe('VS Code Extension Integration', () => {
     expect(data.data.length).toBeLessThanOrEqual(2);
 
     // Test with different offset
-    const response2 = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks?limit=2&offset=2');
+    const response2 = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks?limit=2&offset=2`);
     expect(response2.status()).toBe(200);
     const data2 = await response2.json();
     expect(data2.offset).toBe(2);
@@ -276,7 +278,7 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should properly handle Turkish field names in API', async ({ page }) => {
     // Verify that the API returns data in expected format for extension
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -298,7 +300,7 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should validate workspace isolation', async ({ page }) => {
     // All tasks should have workspace_id
-    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks');
+    const response = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks`);
     expect(response.status()).toBe(200);
 
     const data = await response.json();
@@ -311,7 +313,7 @@ test.describe('VS Code Extension Integration', () => {
   });
 
   test('should handle CORS preflight requests', async ({ page }) => {
-    const response = await page.request.fetch(`http://localhost:${mockServerPort}/api/v1/tasks', {
+    const response = await page.request.fetch(`http://localhost:${mockServerPort}/api/v1/tasks`, {
       method: 'OPTIONS',
       headers: {
         'Origin': 'vscode-webview://extension',
@@ -334,33 +336,33 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should return proper error responses', async ({ page }) => {
     // Test 404 for non-existent task
-    const notFoundResponse = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks/non-existent-id');
+    const notFoundResponse = await page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks/non-existent-id`);
     expect(notFoundResponse.status()).toBe(404);
     const notFoundData = await notFoundResponse.json();
     expect(notFoundData.success).toBe(false);
 
     // Test 404 for update
-    const updateResponse = await page.request.put(`http://localhost:${mockServerPort}/api/v1/tasks/non-existent-id', {
+    const updateResponse = await page.request.put(`http://localhost:${mockServerPort}/api/v1/tasks/non-existent-id`, {
       data: { title: 'Test' }
     });
     expect(updateResponse.status()).toBe(404);
 
     // Test 404 for delete
-    const deleteResponse = await page.request.delete(`http://localhost:${mockServerPort}/api/v1/tasks/non-existent-id');
+    const deleteResponse = await page.request.delete(`http://localhost:${mockServerPort}/api/v1/tasks/non-existent-id`);
     expect(deleteResponse.status()).toBe(404);
   });
 
   test('should handle concurrent API requests', async ({ page }) => {
     // Make multiple concurrent requests
     const requests = Array(5).fill(null).map(() =>
-      page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks')
+      page.request.get(`http://localhost:${mockServerPort}/api/v1/tasks`)
     );
 
     const responses = await Promise.all(requests);
 
     // All requests should succeed
-    responses.forEach((response, index) => {
-      expect(response.status()).toBe(200, `Request ${index} failed`);
+    responses.forEach((response) => {
+      expect(response.status()).toBe(200);
     });
 
     // All should return consistent data
@@ -371,7 +373,7 @@ test.describe('VS Code Extension Integration', () => {
 
   test('should maintain data consistency across operations', async ({ page }) => {
     // Create a task
-    const createResponse = await page.request.post(`http://localhost:${mockServerPort}/api/v1/tasks/from-template', {
+    const createResponse = await page.request.post(`http://localhost:${mockServerPort}/api/v1/tasks/from-template`, {
       data: {
         template_id: 'bug-report',
         values: {

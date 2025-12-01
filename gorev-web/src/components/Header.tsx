@@ -78,11 +78,12 @@ const Header: React.FC<HeaderProps> = ({
                 value={taskFilter.search || ''}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                data-testid="search-input"
               />
             </div>
 
             {/* Filters */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" data-testid="filter-section">
               <Filter className="h-4 w-4 text-gray-400" />
 
               {/* Status Filter */}
@@ -90,6 +91,7 @@ const Header: React.FC<HeaderProps> = ({
                 value={taskFilter.status || ''}
                 onChange={(e) => handleStatusFilter(e.target.value as TaskStatus || undefined)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                data-testid="status-filter"
               >
                 <option value="">{t('all_statuses')}</option>
                 <option value="beklemede">{t('pending')}</option>
@@ -102,6 +104,7 @@ const Header: React.FC<HeaderProps> = ({
                 value={taskFilter.priority || ''}
                 onChange={(e) => handlePriorityFilter(e.target.value as TaskPriority || undefined)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                data-testid="priority-filter"
               >
                 <option value="">{t('all_priorities')}</option>
                 <option value="yuksek">{t('high')}</option>

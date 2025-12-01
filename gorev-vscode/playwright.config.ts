@@ -1,6 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
+ * Gorev Playwright Test Configuration
+ *
+ * Test categories:
+ * - API tests: Test API endpoints with mock server (fast, isolated)
+ * - E2E tests: Test Web UI with real server (comprehensive, integration)
+ *
+ * Run commands:
+ * - npm run test:api    - Run API tests with mock server
+ * - npm run test:ui     - Run all UI tests
+ * - SKIP_WEB_SERVER=true npx playwright test e2e/ - Run E2E with real server
+ *
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({

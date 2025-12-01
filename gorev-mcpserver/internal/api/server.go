@@ -163,6 +163,7 @@ func (s *APIServer) setupRoutes() {
 	api.Post("/language", s.setLanguage)
 
 	// Subtask routes
+	api.Get("/tasks/:id/subtasks", s.getSubtasks)
 	api.Post("/tasks/:id/subtasks", s.createSubtask)
 	api.Put("/tasks/:id/parent", s.changeParent)
 	api.Get("/tasks/:id/hierarchy", s.getHierarchy)
@@ -273,6 +274,12 @@ func (s *APIServer) getTask(c *fiber.Ctx) error {
 	gorev, err := iy.VeriYonetici().GorevGetir(ctx, id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get task with ID %s: %v", id, err))
+	}
+
+	// Load subtasks for the task
+	subtasks, err := iy.AltGorevleriGetir(ctx, id)
+	if err == nil && len(subtasks) > 0 {
+		gorev.Subtasks = subtasks
 	}
 
 	return c.JSON(fiber.Map{
@@ -637,6 +644,28 @@ func (s *APIServer) setLanguage(c *fiber.Ctx) error {
 		"success":  true,
 		"language": req.Language,
 		"message":  fmt.Sprintf("Language changed to %s", req.Language),
+	})
+}
+
+// getSubtasks retrieves all subtasks for a parent task
+func (s *APIServer) getSubtasks(c *fiber.Ctx) error {
+	parentID := c.Params("id")
+	if parentID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Parent task ID is required")
+	}
+
+	iy := s.getIsYoneticiFromContext(c)
+	ctx := s.getContextFromRequest(c)
+
+	subtasks, err := iy.AltGorevleriGetir(ctx, parentID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get subtasks: %v", err))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    subtasks,
+		"total":   len(subtasks),
 	})
 }
 

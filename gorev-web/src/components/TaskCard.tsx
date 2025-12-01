@@ -85,17 +85,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-testid="task-item" data-task-id={task.id}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           {/* Title */}
-          <h4 className="text-lg font-medium text-gray-900 mb-2 line-clamp-2">
+          <h4 className="text-lg font-medium text-gray-900 mb-2 line-clamp-2" data-testid="task-title">
             {task.title}
           </h4>
 
           {/* Description */}
           {task.description && (
-            <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+            <p className="text-gray-600 text-sm mb-3 line-clamp-3" data-testid="task-description">
               {task.description}
             </p>
           )}
@@ -156,23 +156,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
 
           {/* Subtasks */}
           {task.subtasks && task.subtasks.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-3" data-testid="subtasks-section">
               <button
                 onClick={() => setShowSubtasks(!showSubtasks)}
                 className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+                data-testid="expand-button"
               >
                 {showSubtasks ? (
                   <ChevronDown className="h-4 w-4 mr-1" />
                 ) : (
                   <ChevronRight className="h-4 w-4 mr-1" />
                 )}
-                <span>{task.subtasks.length} alt görev</span>
+                <span data-testid="subtask-count">{task.subtasks.length} alt görev</span>
               </button>
 
               {showSubtasks && (
-                <div className="mt-2 ml-5 space-y-2 border-l-2 border-gray-200 pl-3">
+                <div className="mt-2 ml-5 space-y-2 border-l-2 border-gray-200 pl-3" data-testid="subtasks-list">
                   {task.subtasks.map((subtask) => (
-                    <div key={subtask.id} className="text-sm">
+                    <div key={subtask.id} className="text-sm" data-testid="subtask-item" data-subtask-id={subtask.id}>
                       <div className="flex items-center gap-2">
                         <span className={`inline-block w-2 h-2 rounded-full ${
                           subtask.status === 'tamamlandi'
@@ -180,8 +181,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                             : subtask.status === 'devam_ediyor'
                             ? 'bg-blue-500'
                             : 'bg-gray-300'
-                        }`}></span>
-                        <span className={subtask.status === 'tamamlandi' ? 'line-through text-gray-500' : 'text-gray-700'}>
+                        }`} data-testid="subtask-status-indicator"></span>
+                        <span className={subtask.status === 'tamamlandi' ? 'line-through text-gray-500' : 'text-gray-700'} data-testid="subtask-title">
                           {subtask.title}
                         </span>
                       </div>
@@ -201,6 +202,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                 task.status
               )} focus:outline-none focus:ring-2 focus:ring-primary-500`}
               disabled={updateMutation.isPending}
+              data-testid="status-select"
             >
               <option value="beklemede">Beklemede</option>
               <option value="devam_ediyor">Devam Ediyor</option>
@@ -211,6 +213,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
               className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
                 task.priority
               )}`}
+              data-testid="priority-badge"
             >
               {task.priority === 'yuksek'
                 ? 'Yüksek'
@@ -227,18 +230,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
             onClick={() => setShowActions(!showActions)}
             className="p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
             title="Menü"
+            data-testid="task-menu-button"
           >
             ⋮
           </button>
 
           {showActions && (
-            <div className="absolute right-0 top-8 z-10 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
+            <div className="absolute right-0 top-8 z-10 w-48 bg-white border border-gray-200 rounded-md shadow-lg" data-testid="context-menu">
               <button
                 onClick={() => {
                   setIsEditing(true);
                   setShowActions(false);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                data-testid="menu-item-edit"
               >
                 ✏️ Düzenle
               </button>
@@ -246,6 +251,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
                 className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center"
+                data-testid="menu-item-delete"
               >
                 🗑️ Sil
               </button>
@@ -256,8 +262,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
 
       {/* Edit Modal */}
       {isEditing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="edit-task-modal">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md" data-testid="edit-task-dialog">
             <h3 className="text-lg font-semibold mb-4">Görevi Düzenle</h3>
             <div className="space-y-4">
               <div>
@@ -275,6 +281,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                     });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  data-testid="input-title"
                 />
               </div>
               <div>
@@ -285,6 +292,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
                   value={task.status}
                   onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  data-testid="edit-status-select"
                 >
                   <option value="beklemede">Beklemede</option>
                   <option value="devam_ediyor">Devam Ediyor</option>
@@ -296,12 +304,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onUpdate }) => {
               <button
                 onClick={() => setIsEditing(false)}
                 className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                data-testid="cancel-button"
               >
                 İptal
               </button>
               <button
                 onClick={() => setIsEditing(false)}
                 className="px-4 py-2 text-white bg-primary-600 rounded-md hover:bg-primary-700"
+                data-testid="save-button"
               >
                 Kaydet
               </button>

@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** November 28, 2025 | **Version:** v0.17.0
+**Last Updated:** December 2, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -18,26 +18,31 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 - **Backward Compatibility**: Domain terms (`gorevler`, `projeler`) remain Turkish
 - See `docs/MIGRATION_GUIDE_v0.17.md` for upgrade instructions
 
-**Recent Updates (November 28, 2025):**
+**Recent Updates (December 2, 2025) - v0.17.0:**
+
+- **Subtasks API & Tree View Fix**: Complete subtask support in VS Code extension
+  - New `GET /api/v1/tasks/:id/subtasks` endpoint for retrieving task subtasks
+  - `getTask` handler now includes nested subtasks in response
+  - Added `subtasks` → `alt_gorevler` mapping in VS Code API client
+  - Tree view now correctly shows expandable tasks with subtask hierarchies
+  - Files: `internal/api/server.go`, `gorev-vscode/src/api/client.ts`
+
+- **E2E Testing Infrastructure**: Comprehensive Playwright-based testing framework
+  - Test data seeding with `./gorev seed-test-data` CLI command
+  - Page Object pattern for maintainable tests
+  - Interactive test runner script (`./test-runner.sh`)
+  - Manual test guide with 79 scenarios
+  - Files: `cmd/gorev/seed.go`, `internal/testing/seeder.go`, `test-runner.sh`
+
+- **Web UI Test Attributes**: Added `data-testid` for E2E testing
+  - TaskList, TaskCard, Header components enhanced
+  - Files: `gorev-web/src/components/*.tsx`
 
 - **Critical Bug Fixes - Workspace Isolation**: Fixed workspace_id not being set on task creation
-  - Template-based task creation now properly assigns workspace_id via injected parameters
-  - Subtask creation now includes workspace_id from parent task
-  - Project creation now stores workspace_id in database SQL INSERT
-  - Files: `internal/gorev/is_yonetici.go`, `internal/gorev/template_yonetici.go`, `internal/gorev/veri_yonetici.go`
-
 - **API Field Mapping Fix**: Fixed English→Turkish field mapping for v0.17.0 API
-  - Added `mapApiTaskToTask()` function in VS Code API client
-  - All task operations properly map: title→baslik, description→aciklama, status→durum, priority→oncelik
-  - Fixed getTasks(), getTask(), createTaskFromTemplate(), updateTask(), createSubtask()
-  - File: `gorev-vscode/src/api/client.ts`
-
 - **Heavy Development Warnings**: Added prominent warnings across all platforms
-  - Warning banners added to README.md, README.tr.md, and public website https://gorev.work
-  - Animated warning banner in embedded web UI with pulse effect
-  - Clear messaging about active development and potential breaking changes
 
-**Previous (v0.17.0 - November 22, 2025):**
+**Previous (November 22, 2025):**
 
 - **Multilingual Template Support** - Templates now support multiple languages (TR/EN)
   - Database schema extended with `language_code` and `base_template_id` fields (migration 000012)
@@ -92,7 +97,7 @@ Gorev runs as a **background daemon process** with multi-client support:
 
 - **Lock File Mechanism**: `~/.gorev-daemon/.lock` ensures single instance, provides service discovery
 - **Multi-Client MCP Proxy**: Multiple AI assistants (Claude, Windsurf, Cursor) can connect simultaneously
-- **REST API Server**: 23 endpoints for VS Code extension (Fiber framework, port 5082)
+- **REST API Server**: 24 endpoints for VS Code extension (Fiber framework, port 5082)
 - **WebSocket Server**: Real-time task update broadcasts (experimental)
 - **VS Code Auto-Start**: Extension automatically detects and starts daemon
 - **Workspace Isolation**: SHA256-based workspace IDs for multi-project support
@@ -142,6 +147,18 @@ make test-coverage                     # Generate coverage report (coverage.html
 cd gorev-vscode
 npm test                               # Run extension tests
 npm run test:coverage                  # Extension test coverage
+
+# E2E Testing (Playwright)
+cd gorev-vscode
+npm run test:e2e                       # Run all E2E tests
+npm run test:e2e:api                   # API integration tests only
+npm run test:e2e:ui                    # Web UI tests only (requires web server)
+
+# Test Data Seeding
+./gorev seed-test-data                 # Seed with full Turkish data
+./gorev seed-test-data --lang=en       # Seed with English data
+./gorev seed-test-data --minimal       # Quick seed with 3 tasks
+./gorev seed-test-data --force         # Overwrite existing data
 ```
 
 ### Web UI Development
@@ -225,7 +242,7 @@ cd gorev-vscode && rm -rf out/         # Extension only
 - **Business Logic**: `internal/gorev/is_yonetici.go`
 - **Database Access**: `internal/veri/veri_yonetici.go`
 - **Database Schema**: `internal/veri/migrations/*.sql` (add new migration)
-- **REST API Endpoints**: `internal/api/handlers.go` (23 endpoints)
+- **REST API Endpoints**: `internal/api/server.go` (24 endpoints)
 - **i18n Strings**: `locales/en.toml`, `locales/tr.toml`
 - **CLI Commands**: `cmd/gorev/*.go` (daemon.go, serve.go, etc.)
 - **Daemon Logic**: `cmd/gorev/daemon.go`, `internal/daemon/lockfile.go`
@@ -233,6 +250,9 @@ cd gorev-vscode && rm -rf out/         # Extension only
 - **Extension TreeView**: `gorev-vscode/src/providers/*.ts`
 - **Web UI Components**: `gorev-web/src/components/*.tsx`
 - **Web UI API Client**: `gorev-web/src/api/client.ts`
+- **Test Data Seeding**: `cmd/gorev/seed.go`, `internal/testing/seeder.go`
+- **E2E Page Objects**: `gorev-vscode/test/integration/playwright/page-objects/*.ts`
+- **E2E Test Specs**: `gorev-vscode/test/integration/playwright/e2e/*.spec.ts`
 
 ## 🧪 Testing Strategy
 

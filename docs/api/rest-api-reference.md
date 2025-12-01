@@ -1,6 +1,6 @@
 # REST API Reference
 
-**Last Updated:** 30 September 2025
+**Last Updated:** 2 December 2025
 **API Version:** v1
 **Base URL:** `http://localhost:5082/api/v1`
 **Framework:** Fiber (Go)
@@ -478,6 +478,49 @@ Get system-wide summary statistics.
 ---
 
 ### Subtask Management
+
+#### GET `/api/v1/tasks/:id/subtasks`
+
+Get all subtasks for a parent task.
+
+**Path Parameters:**
+
+- `id` (string, required): Parent task UUID
+
+**Example Request:**
+
+```bash
+curl "http://localhost:5082/api/v1/tasks/550e8400-e29b-41d4-a716-446655440000/subtasks"
+```
+
+**Example Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "subtask-uuid-1",
+      "baslik": "Setup JWT library",
+      "aciklama": "Install and configure JWT dependencies",
+      "durum": "tamamlandi",
+      "oncelik": "orta",
+      "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+      "olusturma_zamani": "2025-09-15T15:00:00Z"
+    },
+    {
+      "id": "subtask-uuid-2",
+      "baslik": "Implement token generation",
+      "aciklama": "Create JWT token generation logic",
+      "durum": "devam_ediyor",
+      "oncelik": "yuksek",
+      "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+      "olusturma_zamani": "2025-09-15T15:30:00Z"
+    }
+  ],
+  "total": 2
+}
+```
 
 #### POST `/api/v1/tasks/:id/subtasks`
 

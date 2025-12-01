@@ -61,6 +61,7 @@ interface ApiTask {
   parent_id?: string;
   workspace_id?: string;
   tags?: { id: string; name: string }[];
+  subtasks?: ApiTask[]; // Nested subtasks from API
   dependency_count?: number;
   uncompleted_dependency_count?: number;
   dependent_on_this_count?: number;
@@ -81,6 +82,7 @@ function mapApiTaskToTask(apiTask: ApiTask): Task {
     proje_name: apiTask.proje_name,
     parent_id: apiTask.parent_id,
     etiketler: apiTask.tags?.map(t => ({ id: t.id, isim: t.name })),
+    alt_gorevler: apiTask.subtasks?.map(mapApiTaskToTask), // Map nested subtasks
     bagimli_gorev_sayisi: apiTask.dependency_count,
     tamamlanmamis_bagimlilik_sayisi: apiTask.uncompleted_dependency_count,
     bu_goreve_bagimli_sayisi: apiTask.dependent_on_this_count,

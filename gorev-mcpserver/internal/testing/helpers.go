@@ -16,13 +16,15 @@ import (
 
 // TestDatabaseConfig configures test database setup
 type TestDatabaseConfig struct {
-	UseMemoryDB     bool   // Use :memory: database
-	UseTempFile     bool   // Use temporary file database
-	CustomPath      string // Use custom database path
-	MigrationsPath  string // Path to migration files (used if MigrationsFS is nil)
-	MigrationsFS    fs.FS  // Embedded migrations filesystem (preferred over MigrationsPath)
-	CreateTemplates bool   // Create default templates
-	InitializeI18n  bool   // Initialize i18n system
+	UseMemoryDB     bool          // Use :memory: database
+	UseTempFile     bool          // Use temporary file database
+	CustomPath      string        // Use custom database path
+	MigrationsPath  string        // Path to migration files (used if MigrationsFS is nil)
+	MigrationsFS    fs.FS         // Embedded migrations filesystem (preferred over MigrationsPath)
+	CreateTemplates bool          // Create default templates
+	InitializeI18n  bool          // Initialize i18n system
+	SeedTestData    bool          // Seed test data after database setup
+	SeederConfig    *SeederConfig // Configuration for test data seeder (used if SeedTestData is true)
 }
 
 // DefaultTestDatabaseConfig returns default configuration for test databases
@@ -107,5 +109,17 @@ func SetupTestEnvironmentBasic(t *testing.T) (*gorev.IsYonetici, func()) {
 func SetupTestEnvironmentWithConfig(t *testing.T, config *TestDatabaseConfig) (*gorev.IsYonetici, func()) {
 	veriYonetici, cleanup := SetupTestDatabase(t, config)
 	isYonetici := gorev.YeniIsYonetici(veriYonetici)
+
+	// Seed test data if requested
+	if config.SeedTestData {
+		seederConfig := config.SeederConfig
+		if seederConfig == nil {
+			seederConfig = DefaultSeederConfig()
+		}
+		seeder := NewTestDataSeeder(isYonetici, seederConfig)
+		_, err := seeder.SeedAll()
+		require.NoError(t, err, "failed to seed test data")
+	}
+
 	return isYonetici, cleanup
 }
