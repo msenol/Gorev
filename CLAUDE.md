@@ -2,7 +2,7 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** December 2, 2025 | **Version:** v0.17.0
+**Last Updated:** December 4, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
@@ -18,7 +18,16 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 - **Backward Compatibility**: Domain terms (`gorevler`, `projeler`) remain Turkish
 - See `docs/MIGRATION_GUIDE_v0.17.md` for upgrade instructions
 
-**Recent Updates (December 2, 2025) - v0.17.0:**
+**Recent Updates (December 4, 2025) - v0.17.0:**
+
+- **MCP Tool Parameter Migration Complete**: All MCP tool parameters now use English names
+  - Schema definitions in `tool_registry.go` and `mcp_bridge.go` fully migrated
+  - Handler parameter extraction using `constants.ParamXxx` consistently
+  - Parameters: `name`, `definition`, `status`, `confirm`, `category`, `tag`, `order_by`, `filter`, `all_projects`
+  - All test files updated to use English parameter names
+  - Files: `internal/mcp/handlers.go`, `internal/mcp/tool_registry.go`, `internal/api/mcp_bridge.go`
+
+**Previous (December 2, 2025):**
 
 - **Subtasks API & Tree View Fix**: Complete subtask support in VS Code extension
   - New `GET /api/v1/tasks/:id/subtasks` endpoint for retrieving task subtasks

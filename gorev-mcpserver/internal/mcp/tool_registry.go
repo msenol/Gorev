@@ -44,36 +44,36 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"durum": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "durum_filter"),
-					"enum":     []string{constants.TaskStatusPending, constants.TaskStatusInProgress, constants.TaskStatusCompleted},
+				"status": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "durum_filter"),
+					"enum":        []string{constants.TaskStatusPending, constants.TaskStatusInProgress, constants.TaskStatusCompleted},
 				},
-				"sirala": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "sirala"),
-					"enum":     []string{"son_tarih_asc", "son_tarih_desc"},
+				"sort": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "sirala"),
+					"enum":        []string{"due_date_asc", "due_date_desc"},
 				},
-				"filtre": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "filtre"),
-					"enum":     []string{"acil", "gecmis"},
+				"filter": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "filtre"),
+					"enum":        []string{"urgent", "overdue"},
 				},
-				"etiket": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "etiket"),
+				"tag": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "etiket"),
 				},
-				"tum_projeler": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.TParam("tr", "tum_projeler"),
+				"all_projects": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.TParam("tr", "tum_projeler"),
 				},
 				"limit": map[string]interface{}{
-					"type":     "number",
-					"aciklama": i18n.TParam("tr", "limit"),
+					"type":        "number",
+					"description": i18n.TParam("tr", "limit"),
 				},
 				"offset": map[string]interface{}{
-					"type":     "number",
-					"aciklama": i18n.TParam("tr", "offset"),
+					"type":        "number",
+					"description": i18n.TParam("tr", "offset"),
 				},
 			},
 		},
@@ -87,15 +87,15 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "id_field"),
+					"type":        "string",
+					"description": i18n.TParam("tr", "id_field"),
 				},
 			},
 			Required: []string{"id"},
 		},
 	}, tr.handlers.GorevDetay)
 
-	// Görev güncelle
+	// Görev güncelle (status update)
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_guncelle",
 		Description: i18n.T("tools.descriptions.gorev_guncelle", nil),
@@ -103,20 +103,25 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "id_field"),
+					"type":        "string",
+					"description": i18n.TParam("tr", "id_field"),
 				},
-				"durum": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "durum"),
-					"enum":     constants.GetValidTaskStatuses(),
+				"status": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "durum"),
+					"enum":        constants.GetValidTaskStatuses(),
+				},
+				"priority": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "oncelik"),
+					"enum":        constants.GetValidPriorities(),
 				},
 			},
-			Required: []string{"id", "durum"},
+			Required: []string{"id"},
 		},
 	}, tr.handlers.GorevGuncelle)
 
-	// Görev düzenle
+	// Görev düzenle (content edit)
 	s.AddTool(mcp.Tool{
 		Name:        "gorev_duzenle",
 		Description: i18n.T("tools.descriptions.gorev_duzenle", nil),
@@ -124,25 +129,25 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "id_field"),
+					"type":        "string",
+					"description": i18n.TParam("tr", "id_field"),
 				},
-				"baslik": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "baslik"),
+				"title": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "baslik"),
 				},
-				"aciklama": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "aciklama"),
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "aciklama"),
 				},
-				"oncelik": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "oncelik"),
-					"enum":     constants.GetValidPriorities(),
+				"priority": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "oncelik"),
+					"enum":        constants.GetValidPriorities(),
 				},
-				"son_tarih": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TParam("tr", "son_tarih"),
+				"due_date": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "son_tarih"),
 				},
 			},
 			Required: []string{"id"},
@@ -157,15 +162,15 @@ func (tr *ToolRegistry) registerTaskManagementTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "delete"),
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "delete"),
 				},
-				"onay": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.TParam("tr", "onay"),
+				"confirm": map[string]interface{}{
+					"type":        "boolean",
+					"description": i18n.TParam("tr", "onay"),
 				},
 			},
-			Required: []string{"id", "onay"},
+			Required: []string{"id", "confirm"},
 		},
 	}, tr.handlers.GorevSil)
 }
@@ -179,16 +184,16 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"isim": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TProjectField("tr", "name"),
+				"name": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TProjectField("tr", "name"),
 				},
-				"tanim": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TProjectField("tr", "description"),
+				"definition": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TProjectField("tr", "description"),
 				},
 			},
-			Required: []string{"isim", "tanim"},
+			Required: []string{"name"},
 		},
 	}, tr.handlers.ProjeOlustur)
 
@@ -209,20 +214,20 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"proje_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "project", "unique"),
+				"project_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "project", "unique"),
 				},
 				"limit": map[string]interface{}{
-					"type":     "number",
-					"aciklama": i18n.TTaskCount("return_max", "fifty"),
+					"type":        "number",
+					"description": i18n.TTaskCount("return_max", "fifty"),
 				},
 				"offset": map[string]interface{}{
-					"type":     "number",
-					"aciklama": i18n.TTaskCount("skip", "zero"),
+					"type":        "number",
+					"description": i18n.TTaskCount("skip", "zero"),
 				},
 			},
-			Required: []string{"proje_id"},
+			Required: []string{"project_id"},
 		},
 	}, tr.handlers.ProjeGorevleri)
 
@@ -233,12 +238,12 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"proje_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "project", "active"),
+				"project_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "project", "active"),
 				},
 			},
-			Required: []string{"proje_id"},
+			Required: []string{"project_id"},
 		},
 	}, tr.handlers.AktifProjeAyarla)
 
@@ -272,9 +277,9 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"kategori": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TTemplate("tr", "filter"),
+				"category": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TTemplate("tr", "filter"),
 				},
 			},
 		},
@@ -288,12 +293,12 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				constants.ParamTemplateID: map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TTemplate("tr", "template_id"),
+					"type":        "string",
+					"description": i18n.TTemplate("tr", "template_id"),
 				},
 				constants.ParamValues: map[string]interface{}{
-					"type":     "object",
-					"aciklama": i18n.TTemplate("tr", "fields"),
+					"type":        "object",
+					"description": i18n.TTemplate("tr", "fields"),
 				},
 			},
 			Required: []string{constants.ParamTemplateID, constants.ParamValues},
@@ -311,8 +316,8 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "active"),
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "active"),
 				},
 			},
 			Required: []string{"task_id"},
@@ -337,8 +342,8 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"limit": map[string]interface{}{
-					"type":     "number",
-					"aciklama": i18n.TTaskCount("return", "five"),
+					"type":        "number",
+					"description": i18n.TTaskCount("return", "five"),
 				},
 			},
 		},
@@ -362,40 +367,40 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"updates": map[string]interface{}{
-					"type":     "array",
-					"aciklama": i18n.TBatch("tr", "updates"),
+					"type":        "array",
+					"description": i18n.TBatch("tr", "updates"),
 					"items": map[string]interface{}{
 						"type": "object",
 						"properties": map[string]interface{}{
 							"id": map[string]interface{}{
-								"type":     "string",
-								"aciklama": "Task ID to update",
+								"type":        "string",
+								"description": "Task ID to update",
 							},
-							"baslik": map[string]interface{}{
-								"type":     "string",
-								"aciklama": "New task title",
+							"title": map[string]interface{}{
+								"type":        "string",
+								"description": "New task title",
 							},
-							"aciklama": map[string]interface{}{
-								"type":     "string",
-								"aciklama": "New task description",
+							"description": map[string]interface{}{
+								"type":        "string",
+								"description": "New task description",
 							},
-							"durum": map[string]interface{}{
-								"type":     "string",
-								"aciklama": "New task status",
-								"enum":     []string{"beklemede", "devam_ediyor", "tamamlandi", "iptal"},
+							"status": map[string]interface{}{
+								"type":        "string",
+								"description": "New task status",
+								"enum":        constants.GetValidTaskStatuses(),
 							},
-							"oncelik": map[string]interface{}{
-								"type":     "string",
-								"aciklama": "New task priority",
-								"enum":     []string{"dusuk", "orta", "yuksek"},
+							"priority": map[string]interface{}{
+								"type":        "string",
+								"description": "New task priority",
+								"enum":        constants.GetValidPriorities(),
 							},
-							"son_tarih": map[string]interface{}{
-								"type":     "string",
-								"aciklama": "New due date (YYYY-MM-DD format)",
+							"due_date": map[string]interface{}{
+								"type":        "string",
+								"description": "New due date (YYYY-MM-DD format)",
 							},
-							"proje_id": map[string]interface{}{
-								"type":     "string",
-								"aciklama": "New project ID",
+							"project_id": map[string]interface{}{
+								"type":        "string",
+								"description": "New project ID",
 							},
 						},
 						"required": []string{"id"},
@@ -414,8 +419,8 @@ func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"query": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TBatch("tr", "query"),
+					"type":        "string",
+					"description": i18n.TBatch("tr", "query"),
 				},
 			},
 			Required: []string{"query"},
@@ -433,12 +438,12 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "simple"),
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "simple"),
 				},
 				"file_path": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFilePath("tr", "watch"),
+					"type":        "string",
+					"description": i18n.TFilePath("tr", "watch"),
 				},
 			},
 			Required: []string{"task_id", "file_path"},
@@ -453,12 +458,12 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "simple"),
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "simple"),
 				},
 				"file_path": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFilePath("tr", "remove"),
+					"type":        "string",
+					"description": i18n.TFilePath("tr", "remove"),
 				},
 			},
 			Required: []string{"task_id", "file_path"},
@@ -473,8 +478,8 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"task_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "simple"),
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "simple"),
 				},
 			},
 			Required: []string{"task_id"},
@@ -506,46 +511,46 @@ func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"query": map[string]interface{}{
-					"type":     "string",
-					"aciklama": "Search query for FTS5 full-text search",
+					"type":        "string",
+					"description": "Search query for FTS5 full-text search",
 				},
 				"filters": map[string]interface{}{
-					"type":     "object",
-					"aciklama": "Filter conditions (durum, oncelik, proje_id, etc.)",
+					"type":        "object",
+					"description": "Filter conditions (status, priority, project_id, etc.)",
 				},
 				"use_fuzzy_search": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": "Enable fuzzy search for partial matches",
-					"default":  true,
+					"type":        "boolean",
+					"description": "Enable fuzzy search for partial matches",
+					"default":     true,
 				},
 				"fuzzy_threshold": map[string]interface{}{
-					"type":     "number",
-					"aciklama": "Fuzzy search similarity threshold (0.0-1.0)",
-					"default":  0.6,
+					"type":        "number",
+					"description": "Fuzzy search similarity threshold (0.0-1.0)",
+					"default":     0.6,
 				},
 				"max_results": map[string]interface{}{
-					"type":     "integer",
-					"aciklama": "Maximum number of results to return",
-					"default":  50,
+					"type":        "integer",
+					"description": "Maximum number of results to return",
+					"default":     50,
 				},
 				"sort_by": map[string]interface{}{
-					"type":     "string",
-					"aciklama": "Sort field (relevance, created, updated, due_date, priority)",
-					"default":  "relevance",
+					"type":        "string",
+					"description": "Sort field (relevance, created, updated, due_date, priority)",
+					"default":     "relevance",
 				},
 				"sort_direction": map[string]interface{}{
-					"type":     "string",
-					"aciklama": "Sort direction (asc, desc)",
-					"default":  "desc",
+					"type":        "string",
+					"description": "Sort direction (asc, desc)",
+					"default":     "desc",
 				},
 				"include_completed": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": "Include completed tasks in results",
-					"default":  false,
+					"type":        "boolean",
+					"description": "Include completed tasks in results",
+					"default":     false,
 				},
 				"search_fields": map[string]interface{}{
-					"type":     "array",
-					"aciklama": "Fields to search (baslik, aciklama, etiketler, proje_adi)",
+					"type":        "array",
+					"description": "Fields to search (title, description, tags, project_name)",
 					"items": map[string]interface{}{
 						"type": "string",
 					},
@@ -561,26 +566,26 @@ func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"isim": map[string]interface{}{
-					"type":     "string",
-					"aciklama": "Profile name",
+				"name": map[string]interface{}{
+					"type":        "string",
+					"description": "Profile name",
 				},
-				"aciklama": map[string]interface{}{
-					"type":     "string",
-					"aciklama": "Profile description",
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": "Profile description",
 				},
 				"filters": map[string]interface{}{
-					"type":     "object",
-					"aciklama": "Filter configuration to save",
+					"type":        "object",
+					"description": "Filter configuration to save",
 				},
 				"search_query": map[string]interface{}{
-					"type":     "string",
-					"aciklama": "Search query to save with profile",
+					"type":        "string",
+					"description": "Search query to save with profile",
 				},
 				"is_default": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": "Mark as default profile",
-					"default":  false,
+					"type":        "boolean",
+					"description": "Mark as default profile",
+					"default":     false,
 				},
 			},
 			Required: []string{"name"},
@@ -595,12 +600,12 @@ func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"profile_id": map[string]interface{}{
-					"type":     "integer",
-					"aciklama": "Profile ID to load",
+					"type":        "integer",
+					"description": "Profile ID to load",
 				},
 				"profile_name": map[string]interface{}{
-					"type":     "string",
-					"aciklama": "Profile name to load",
+					"type":        "string",
+					"description": "Profile name to load",
 				},
 			},
 		},
@@ -614,9 +619,9 @@ func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"defaults_only": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": "Only return default profiles",
-					"default":  false,
+					"type":        "boolean",
+					"description": "Only return default profiles",
+					"default":     false,
 				},
 			},
 		},
@@ -630,8 +635,8 @@ func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"profile_id": map[string]interface{}{
-					"type":     "integer",
-					"aciklama": "Profile ID to delete",
+					"type":        "integer",
+					"description": "Profile ID to delete",
 				},
 			},
 			Required: []string{"profile_id"},
@@ -646,9 +651,9 @@ func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"limit": map[string]interface{}{
-					"type":     "integer",
-					"aciklama": "Maximum number of history entries to return",
-					"default":  20,
+					"type":        "integer",
+					"description": "Maximum number of history entries to return",
+					"default":     20,
 				},
 			},
 		},
@@ -668,32 +673,32 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"parent_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "parent"),
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "parent"),
 				},
-				"baslik": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TSubtaskField("tr", "title"),
+				"title": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TSubtaskField("tr", "title"),
 				},
-				"aciklama": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TSubtaskField("tr", "subtask_description"),
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TSubtaskField("tr", "subtask_description"),
 				},
-				"oncelik": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TSubtaskField("tr", "priority"),
-					"enum":     constants.GetValidPriorities(),
+				"priority": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TSubtaskField("tr", "priority"),
+					"enum":        constants.GetValidPriorities(),
 				},
-				"son_tarih": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TWithFormat("tr", i18n.TSubtaskField("tr", "due_date"), "YYYY-MM-DD"),
+				"due_date": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TWithFormat("tr", i18n.TSubtaskField("tr", "due_date"), "YYYY-MM-DD"),
 				},
 				"tags": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TCommaSeparated("tr", "etiket"),
+					"type":        "string",
+					"description": i18n.TCommaSeparated("tr", "etiket"),
 				},
 			},
-			Required: []string{"parent_id", "baslik"},
+			Required: []string{"parent_id", "title"},
 		},
 	}, tr.handlers.GorevAltGorevOlustur)
 
@@ -704,16 +709,16 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"gorev_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "move"),
+				"task_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "move"),
 				},
-				"yeni_parent_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "new_parent"),
+				"new_parent_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "new_parent"),
 				},
 			},
-			Required: []string{"gorev_id"},
+			Required: []string{"task_id"},
 		},
 	}, tr.handlers.GorevUstDegistir)
 
@@ -724,12 +729,12 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"gorev_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "hierarchy"),
+				"task_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "hierarchy"),
 				},
 			},
-			Required: []string{"gorev_id"},
+			Required: []string{"task_id"},
 		},
 	}, tr.handlers.GorevHiyerarsiGoster)
 
@@ -740,21 +745,21 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"kaynak_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TFieldID("tr", "task", "dependent"),
+				"source_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TFieldID("tr", "task", "dependent"),
 				},
-				"hedef_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("common.fields.target_id", nil),
+				"target_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.T("common.fields.target_id", nil),
 				},
-				"baglanti_tipi": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.TBatch("tr", "dependency_type"),
-					"enum":     constants.GetValidDependencyTypes(),
+				"connection_type": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TBatch("tr", "dependency_type"),
+					"enum":        constants.GetValidDependencyTypes(),
 				},
 			},
-			Required: []string{"kaynak_id", "hedef_id", "baglanti_tipi"},
+			Required: []string{"source_id", "target_id", "connection_type"},
 		},
 	}, tr.handlers.GorevBagimlilikEkle)
 
@@ -779,55 +784,55 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"output_path": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.export.output_path", nil),
+					"type":        "string",
+					"description": i18n.T("tools.params.export.output_path", nil),
 				},
 				"format": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.export.format", nil),
-					"enum":     []string{"json", "csv"},
-					"default":  "json",
+					"type":        "string",
+					"description": i18n.T("tools.params.export.format", nil),
+					"enum":        []string{"json", "csv"},
+					"default":     "json",
 				},
 				"include_completed": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.T("tools.params.export.include_completed", nil),
-					"default":  true,
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_completed", nil),
+					"default":     true,
 				},
 				"include_dependencies": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.T("tools.params.export.include_dependencies", nil),
-					"default":  true,
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_dependencies", nil),
+					"default":     true,
 				},
 				"include_templates": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.T("tools.params.export.include_templates", nil),
-					"default":  false,
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_templates", nil),
+					"default":     false,
 				},
 				"include_ai_context": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.T("tools.params.export.include_ai_context", nil),
-					"default":  false,
+					"type":        "boolean",
+					"description": i18n.T("tools.params.export.include_ai_context", nil),
+					"default":     false,
 				},
 				"project_filter": map[string]interface{}{
-					"type":     "array",
-					"aciklama": i18n.T("tools.params.export.project_filter", nil),
+					"type":        "array",
+					"description": i18n.T("tools.params.export.project_filter", nil),
 					"items": map[string]interface{}{
 						"type": "string",
 					},
 				},
 				"date_range": map[string]interface{}{
-					"type":     "object",
-					"aciklama": i18n.T("tools.params.export.date_range", nil),
+					"type":        "object",
+					"description": i18n.T("tools.params.export.date_range", nil),
 					"properties": map[string]interface{}{
 						"from": map[string]interface{}{
-							"type":     "string",
-							"aciklama": i18n.T("tools.params.export.date_from", nil),
-							"format":   "date-time",
+							"type":        "string",
+							"description": i18n.T("tools.params.export.date_from", nil),
+							"format":      "date-time",
 						},
 						"to": map[string]interface{}{
-							"type":     "string",
-							"aciklama": i18n.T("tools.params.export.date_to", nil),
-							"format":   "date-time",
+							"type":        "string",
+							"description": i18n.T("tools.params.export.date_to", nil),
+							"format":      "date-time",
 						},
 					},
 				},
@@ -847,34 +852,34 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"file_path": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.import.file_path", nil),
+					"type":        "string",
+					"description": i18n.T("tools.params.import.file_path", nil),
 				},
 				"import_mode": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.import.import_mode", nil),
-					"enum":     []string{"merge", "replace"},
-					"default":  "merge",
+					"type":        "string",
+					"description": i18n.T("tools.params.import.import_mode", nil),
+					"enum":        []string{"merge", "replace"},
+					"default":     "merge",
 				},
 				"conflict_resolution": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.import.conflict_resolution", nil),
-					"enum":     []string{"skip", "overwrite", "prompt"},
-					"default":  "skip",
+					"type":        "string",
+					"description": i18n.T("tools.params.import.conflict_resolution", nil),
+					"enum":        []string{"skip", "overwrite", "prompt"},
+					"default":     "skip",
 				},
 				"preserve_ids": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.T("tools.params.import.preserve_ids", nil),
-					"default":  false,
+					"type":        "boolean",
+					"description": i18n.T("tools.params.import.preserve_ids", nil),
+					"default":     false,
 				},
 				"dry_run": map[string]interface{}{
-					"type":     "boolean",
-					"aciklama": i18n.T("tools.params.import.dry_run", nil),
-					"default":  false,
+					"type":        "boolean",
+					"description": i18n.T("tools.params.import.dry_run", nil),
+					"default":     false,
 				},
 				"project_mapping": map[string]interface{}{
-					"type":     "object",
-					"aciklama": i18n.T("tools.params.import.project_mapping", nil),
+					"type":        "object",
+					"description": i18n.T("tools.params.import.project_mapping", nil),
 					"additionalProperties": map[string]interface{}{
 						"type": "string",
 					},
@@ -912,9 +917,9 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"ide_type": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.ide.ide_type", nil),
-					"enum":     []string{"vscode", "cursor", "windsurf", "all"},
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.ide_type", nil),
+					"enum":        []string{"vscode", "cursor", "windsurf", "all"},
 				},
 			},
 			Required: []string{"ide_type"},
@@ -932,14 +937,14 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"ide_type": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.ide.ide_type", nil),
-					"enum":     []string{"vscode", "cursor", "windsurf"},
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.ide_type", nil),
+					"enum":        []string{"vscode", "cursor", "windsurf"},
 				},
 				"extension_id": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.ide.extension_id", nil),
-					"default":  "mehmetsenol.gorev-vscode",
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.extension_id", nil),
+					"default":     "mehmetsenol.gorev-vscode",
 				},
 			},
 			Required: []string{"ide_type"},
@@ -970,9 +975,9 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Type: "object",
 			Properties: map[string]interface{}{
 				"ide_type": map[string]interface{}{
-					"type":     "string",
-					"aciklama": i18n.T("tools.params.ide.ide_type", nil),
-					"enum":     []string{"vscode", "cursor", "windsurf", "all"},
+					"type":        "string",
+					"description": i18n.T("tools.params.ide.ide_type", nil),
+					"enum":        []string{"vscode", "cursor", "windsurf", "all"},
 				},
 			},
 			Required: []string{"ide_type"},

@@ -249,8 +249,8 @@ func HandlerTestRunner(t *testing.T, env *TestEnvironment, cases []HandlerTestCa
 // CreateTestProject creates a test project for use in tests
 func CreateTestProject(t *testing.T, env *TestEnvironment, name, description string) string {
 	params := map[string]interface{}{
-		"isim":  name,
-		"tanim": description,
+		"name":       name,
+		"definition": description,
 	}
 
 	result, err := env.Handlers.ProjeOlustur(params)

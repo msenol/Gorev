@@ -269,7 +269,7 @@ func TestSeederSeedAll(t *testing.T) {
 		// Verify minimal counts
 		assert.Len(t, result.Projects, 1)
 		assert.Len(t, result.Tasks, 3)
-		assert.Len(t, result.Subtasks, 0) // Minimal mode skips subtasks
+		assert.Len(t, result.Subtasks, 0)     // Minimal mode skips subtasks
 		assert.Len(t, result.Dependencies, 0) // Minimal mode skips dependencies
 	})
 

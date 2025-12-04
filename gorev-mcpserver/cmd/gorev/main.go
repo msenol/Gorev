@@ -21,15 +21,15 @@ import (
 )
 
 var (
-	version       = "v0.17.0"
-	buildTime     = "unknown"
-	gitCommit     = "unknown"
-	langFlag      string
-	debugFlag     bool
-	apiPortFlag   string
-	noAPIFlag     bool
+	version        = "v0.17.0"
+	buildTime      = "unknown"
+	gitCommit      = "unknown"
+	langFlag       string
+	debugFlag      bool
+	apiPortFlag    string
+	noAPIFlag      bool
 	serverModeFlag string
-	dbPathFlag    string
+	dbPathFlag     string
 )
 
 // getMigrationsPath returns the correct path to migrations folder

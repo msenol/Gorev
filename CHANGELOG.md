@@ -5,7 +5,7 @@ All notable changes to Gorev will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.17.0] - 2025-12-02
+## [v0.17.0] - 2025-12-04
 
 ### Added
 
@@ -38,7 +38,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TaskList, TaskCard, Header components enhanced with test identifiers
   - Files: `gorev-web/src/components/TaskList.tsx`, `gorev-web/src/components/TaskCard.tsx`, `gorev-web/src/components/Header.tsx`
 
+- **Database Schema: Workspace ID Support** (migration 000013): Multi-tenant isolation for centralized mode
+  - Added `workspace_id` column to all 10 core tables (gorevler, projeler, baglantilar, etiketler, gorev_templateleri, ai_interactions, ai_context, aktif_proje, filter_profiles, search_history)
+  - Created indexes for efficient workspace filtering on all tables
+  - Added composite indexes for common queries (workspace+status, workspace+project)
+  - Enables multi-workspace support in centralized Docker deployments
+  - Files: `internal/veri/migrations/000013_add_workspace_id.up.sql`, `internal/veri/migrations/000013_add_workspace_id.down.sql`
+
 ### Fixed
+
+- **MCP Tool Parameter Migration**: Complete migration of MCP tool parameters from Turkish to English
+  - All schema definitions updated: `isim`→`name`, `tanim`→`definition`, `durum`→`status`, `onay`→`confirm`
+  - Handler parameter extraction uses `constants.ParamXxx` for consistency
+  - Additional parameters migrated: `kategori`→`category`, `etiket`→`tag`, `sirala`→`order_by`, `filtre`→`filter`, `tum_projeler`→`all_projects`
+  - All test files updated to use English parameter names (handlers_test.go, handlers_coverage_test.go, handlers_edge_cases_test.go, integration_test.go)
+  - Files: `internal/mcp/handlers.go`, `internal/mcp/tool_registry.go`, `internal/api/mcp_bridge.go`, `internal/mcp/test_helpers.go`
 
 - **i18n**: CLI template commands now properly respect `GOREV_LANG` environment variable
 - **VS Code Extension**: Eliminated all 242 ESLint warnings achieving Rule 15 compliance

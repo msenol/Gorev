@@ -176,8 +176,8 @@ func TestMCPHandlers_Integration(t *testing.T) {
 	t.Run("Complete Task Lifecycle", func(t *testing.T) {
 		// 1. Create a project first
 		result := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-			"isim":     "Test Projesi",
-			"aciklama": "Integration test projesi",
+			"name":       "Test Projesi",
+			"definition": "Integration test projesi",
 		})
 		assert.False(t, result.IsError)
 
@@ -251,13 +251,13 @@ func TestMCPHandlers_Integration(t *testing.T) {
 
 		// 6. List tasks by status
 		result = callTool(t, handlers, "gorev_listele", map[string]interface{}{
-			"durum": constants.TaskStatusPending,
+			"status": constants.TaskStatusPending,
 		})
 		assert.False(t, result.IsError)
 
 		// 7. List tasks with filters
 		result = callTool(t, handlers, "gorev_listele", map[string]interface{}{
-			"filtre": "acil",
+			"filter": "acil",
 		})
 		assert.False(t, result.IsError)
 
@@ -270,8 +270,8 @@ func TestMCPHandlers_Integration(t *testing.T) {
 
 		// 9. Update task status
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
-			"id":    taskIDs[0],
-			"durum": constants.TaskStatusInProgress,
+			"id":     taskIDs[0],
+			"status": constants.TaskStatusInProgress,
 		})
 		assert.False(t, result.IsError)
 
@@ -325,8 +325,8 @@ func TestMCPHandlers_Integration(t *testing.T) {
 		// 18. Delete tasks (clean up)
 		for i, taskID := range taskIDs {
 			result = callTool(t, handlers, "gorev_sil", map[string]interface{}{
-				"id":   taskID,
-				"onay": true,
+				"id":      taskID,
+				"confirm": true,
 			})
 			assert.False(t, result.IsError, "Failed to delete task %d: %s", i+1, getResultText(result))
 		}
@@ -375,7 +375,7 @@ func TestMCPHandlers_ErrorHandling(t *testing.T) {
 				wantErr: true,
 			},
 			{
-				name:    "proje_olustur - missing isim",
+				name:    "proje_olustur - missing name",
 				tool:    "proje_olustur",
 				params:  map[string]interface{}{},
 				wantErr: true,
@@ -383,7 +383,7 @@ func TestMCPHandlers_ErrorHandling(t *testing.T) {
 			{
 				name:    "gorev_sil - wrong confirmation",
 				tool:    "gorev_sil",
-				params:  map[string]interface{}{"id": "test", "onay": false},
+				params:  map[string]interface{}{"id": "test", "confirm": false},
 				wantErr: true,
 			},
 		}
@@ -415,7 +415,7 @@ func TestMCPHandlers_TemplateIntegration(t *testing.T) {
 
 		// 2. List templates by category
 		result = callTool(t, handlers, "template_listele", map[string]interface{}{
-			"kategori": "bug",
+			"category": "bug",
 		})
 		assert.False(t, result.IsError)
 
@@ -463,8 +463,8 @@ func TestMCPHandlers_ProjectManagement(t *testing.T) {
 	t.Run("Project Lifecycle", func(t *testing.T) {
 		// Create multiple projects
 		projects := []map[string]interface{}{
-			{"isim": "Proje A", "aciklama": "İlk test projesi"},
-			{"isim": "Proje B", "aciklama": "İkinci test projesi"},
+			{"name": "Proje A", "definition": "İlk test projesi"},
+			{"name": "Proje B", "definition": "İkinci test projesi"},
 		}
 
 		var projectIDs []string
@@ -632,8 +632,8 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 
 		// Try to start Task 3 (should fail due to dependencies)
 		result := callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
-			"id":    taskIDs[2],
-			"durum": constants.TaskStatusInProgress,
+			"id":     taskIDs[2],
+			"status": constants.TaskStatusInProgress,
 		})
 		// Note: Dependencies might not be enforced in this version, so this test might pass
 		if result.IsError {
@@ -644,15 +644,15 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 
 		// Complete Task 1
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
-			"id":    taskIDs[0],
-			"durum": constants.TaskStatusCompleted,
+			"id":     taskIDs[0],
+			"status": constants.TaskStatusCompleted,
 		})
 		assert.False(t, result.IsError)
 
 		// Still can't start Task 3 (Task 2 not complete) - but this might not be enforced
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
-			"id":    taskIDs[2],
-			"durum": constants.TaskStatusInProgress,
+			"id":     taskIDs[2],
+			"status": constants.TaskStatusInProgress,
 		})
 		// Dependencies might not be enforced in this version
 		if result.IsError {
@@ -663,15 +663,15 @@ func TestMCPHandlers_TaskDependencies(t *testing.T) {
 
 		// Complete Task 2
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
-			"id":    taskIDs[1],
-			"durum": constants.TaskStatusCompleted,
+			"id":     taskIDs[1],
+			"status": constants.TaskStatusCompleted,
 		})
 		assert.False(t, result.IsError)
 
 		// Now Task 3 can start
 		result = callTool(t, handlers, "gorev_guncelle", map[string]interface{}{
-			"id":    taskIDs[2],
-			"durum": constants.TaskStatusInProgress,
+			"id":     taskIDs[2],
+			"status": constants.TaskStatusInProgress,
 		})
 		assert.False(t, result.IsError)
 
@@ -845,7 +845,7 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// List only "Teknik" category templates
 		result := callTool(t, handlers, "template_listele", map[string]interface{}{
-			"kategori": "Teknik",
+			"category": "Teknik",
 		})
 		assert.False(t, result.IsError)
 
@@ -902,7 +902,7 @@ func TestTemplateHandlers(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title":       "Login button not working",
-				"aciklama":    "Users can't log in when clicking the login button",
+				"description": "Users can't log in when clicking the login button",
 				"module":      "Authentication",
 				"environment": "production",
 				"steps":       "1. Go to login page\n2. Enter credentials\n3. Click login button",
@@ -987,7 +987,7 @@ func TestTemplateHandlers(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title": "Test bug",
-				// Missing required fields: aciklama, modul, ortam, adimlar, beklenen, mevcut, oncelik
+				// Missing required fields: description, modul, ortam, adimlar, beklenen, mevcut, oncelik
 			},
 		})
 		assert.True(t, result.IsError)
@@ -1046,8 +1046,8 @@ func TestTemplateHandlers(t *testing.T) {
 
 		// Create a project for the feature
 		projectResult := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-			"isim":     "Mobile App",
-			"aciklama": "Mobile application project",
+			"name":       "Mobile App",
+			"definition": "Mobile application project",
 		})
 		assert.False(t, projectResult.IsError)
 
@@ -1064,18 +1064,18 @@ func TestTemplateHandlers(t *testing.T) {
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: featureTemplateID,
 			constants.ParamValues: map[string]interface{}{
-				"title":      "Dark mode support",
-				"aciklama":   "Add dark mode theme to the mobile app",
-				"purpose":    "Improve user experience in low-light conditions and save battery",
-				"users":      "All mobile app users",
-				"criteria":   "- Theme toggle in settings\n- Persistent preference\n- Smooth transition",
-				"ui_ux":      "Material Design 3 dark theme guidelines",
-				"ilgili":     "Settings module, Theme manager",
-				"efor":       constants.PriorityMedium,
-				"priority":   constants.PriorityMedium,
-				"tags":       "özellik,ui,mobile",
-				"project_id": projectID,
-				"due_date":   "2025-08-15",
+				"title":       "Dark mode support",
+				"description": "Add dark mode theme to the mobile app",
+				"purpose":     "Improve user experience in low-light conditions and save battery",
+				"users":       "All mobile app users",
+				"criteria":    "- Theme toggle in settings\n- Persistent preference\n- Smooth transition",
+				"ui_ux":       "Material Design 3 dark theme guidelines",
+				"ilgili":      "Settings module, Theme manager",
+				"efor":        constants.PriorityMedium,
+				"priority":    constants.PriorityMedium,
+				"tags":        "özellik,ui,mobile",
+				"project_id":  projectID,
+				"due_date":    "2025-08-15",
 			},
 		})
 		assert.False(t, result.IsError)
@@ -1137,21 +1137,22 @@ func TestTemplateHandlers(t *testing.T) {
 		handlers := YeniHandlers(isYonetici)
 
 		// Create task from technical debt template
+		// Note: Teknik Borç template uses Turkish field names
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: techDebtTemplateID,
 			constants.ParamValues: map[string]interface{}{
-				"title":        "Database query optimization",
-				"aciklama":     "Optimize slow database queries in user listing",
-				"module":       "Backend/Database",
-				"files":        "user_repository.go, user_queries.sql",
-				"reason":       "Page load time exceeds 5 seconds for user list",
-				"analysis":     "N+1 query problem, missing indexes",
-				"solution":     "Add composite indexes, use JOIN instead of multiple queries",
-				"risks":        "Potential data inconsistency during migration",
-				"improvements": constants.TestPerformanceImprovement,
-				"duration":     "2-3 gün",
-				"priority":     constants.PriorityHigh,
-				"tags":         "teknik-borç,performance,database",
+				"title":          "Database query optimization",
+				"description":    "Optimize slow database queries in user listing",
+				"alan":           "Backend/Database",
+				"dosyalar":       "user_repository.go, user_queries.sql",
+				"neden":          "Page load time exceeds 5 seconds for user list",
+				"analiz":         "N+1 query problem, missing indexes",
+				"cozum":          "Add composite indexes, use JOIN instead of multiple queries",
+				"riskler":        "Potential data inconsistency during migration",
+				"iyilestirmeler": constants.TestPerformanceImprovement,
+				"sure":           "2-3 gün",
+				"priority":       constants.PriorityHigh,
+				"tags":           "teknik-borç,performance,database",
 			},
 		})
 		assert.False(t, result.IsError)
@@ -1292,7 +1293,7 @@ func TestTemplateConcurrency(t *testing.T) {
 				constants.ParamTemplateID: bugTemplateID,
 				constants.ParamValues: map[string]interface{}{
 					"title":       fmt.Sprintf("Concurrent Bug %d", index),
-					"aciklama":    fmt.Sprintf("Bug description %d", index),
+					"description": fmt.Sprintf("Bug description %d", index),
 					"module":      "TestModule",
 					"environment": "development",
 					"steps":       "Test steps",
@@ -1368,8 +1369,8 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 	// First, set up a project
 	projectResult := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-		"isim":     "Template Test Project",
-		"aciklama": "Project for testing mandatory templates",
+		"name":       "Template Test Project",
+		"definition": "Project for testing mandatory templates",
 	})
 	assert.False(t, projectResult.IsError)
 
@@ -1411,7 +1412,7 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title":       "Login API fails with 500 error",
-				"aciklama":    "Users cannot login due to server error",
+				"description": "Users cannot login due to server error",
 				"module":      "Authentication",
 				"environment": "production",
 				"steps":       "1. Go to login page\n2. Enter valid credentials\n3. Click login",
@@ -1429,9 +1430,9 @@ func TestTemplateMandatoryWorkflow(t *testing.T) {
 
 		// 3. Verify gorev_olustur tool was removed (would return error via callTool helper)
 		result := callTool(t, handlers, "gorev_olustur", map[string]interface{}{
-			"title":    "This should fail",
-			"aciklama": "Old method",
-			"priority": constants.PriorityHigh,
+			"title":       "This should fail",
+			"description": "Old method",
+			"priority":    constants.PriorityHigh,
 		})
 		assert.True(t, result.IsError)
 		assert.Contains(t, getResultText(result), "removed")

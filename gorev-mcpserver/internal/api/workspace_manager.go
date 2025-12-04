@@ -18,12 +18,12 @@ import (
 
 // WorkspaceManager manages multiple workspace contexts with their database connections
 type WorkspaceManager struct {
-	workspaces           map[string]*WorkspaceContext // Keyed by workspace ID
-	migrationsFS         fs.FS                        // Embedded migrations filesystem (optional)
-	wsHub                *ws.Hub                      // WebSocket hub for real-time updates
-	centralizedDB        *gorev.VeriYonetici          // Shared DB for centralized mode
-	centralizedDBInitMu  sync.Once                    // Ensures centralized DB is initialized once
-	mu                   sync.RWMutex
+	workspaces          map[string]*WorkspaceContext // Keyed by workspace ID
+	migrationsFS        fs.FS                        // Embedded migrations filesystem (optional)
+	wsHub               *ws.Hub                      // WebSocket hub for real-time updates
+	centralizedDB       *gorev.VeriYonetici          // Shared DB for centralized mode
+	centralizedDBInitMu sync.Once                    // Ensures centralized DB is initialized once
+	mu                  sync.RWMutex
 }
 
 // NewWorkspaceManager creates a new workspace manager

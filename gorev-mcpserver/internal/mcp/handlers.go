@@ -394,28 +394,25 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	lang := h.extractLanguage()
 	ctx := i18n.WithLanguage(context.Background(), lang)
 
-	durum, _ := params[constants.ParamStatus].(string)
-	sirala, _ := params["sirala"].(string)
-	filtre, _ := params["filtre"].(string)
-	etiket, _ := params["etiket"].(string)
-	tumProjeler, _ := params["tum_projeler"].(bool)
+	status, _ := params[constants.ParamStatus].(string)
+	orderBy, _ := params[constants.ParamOrderBy].(string)
+	filter, _ := params[constants.ParamFilter].(string)
+	tag, _ := params[constants.ParamTag].(string)
+	allProjects, _ := params[constants.ParamAllProjects].(bool)
 
-	// Pagination parametreleri
+	// Pagination parameters
 	limit, offset := h.toolHelpers.Validator.ValidatePagination(params)
-
-	// DEBUG: Log parametreleri
-	// fmt.Fprintf(os.Stderr, "[GorevListele] Called - durum: %s, limit: %d, offset: %d\n", durum, limit, offset)
 
 	// Create filters map
 	filters := make(map[string]interface{})
-	if durum != "" {
-		filters[constants.ParamStatus] = durum
+	if status != "" {
+		filters[constants.ParamStatus] = status
 	}
-	if sirala != "" {
-		filters["sirala"] = sirala
+	if orderBy != "" {
+		filters[constants.ParamOrderBy] = orderBy
 	}
-	if filtre != "" {
-		filters["filtre"] = filtre
+	if filter != "" {
+		filters[constants.ParamFilter] = filter
 	}
 
 	gorevler, err := h.isYonetici.GorevListele(ctx, filters)
@@ -426,23 +423,23 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	// DEBUG: Log görev sayısı
 	// fmt.Fprintf(os.Stderr, "[GorevListele] Fetched %d tasks total\n", len(gorevler))
 
-	// Etikete göre filtrele
-	if etiket != "" {
-		var filtreliGorevler []*gorev.Gorev
+	// Filter by tag
+	if tag != "" {
+		var filteredTasks []*gorev.Gorev
 		for _, g := range gorevler {
 			for _, e := range g.Tags {
-				if e.Name == etiket {
-					filtreliGorevler = append(filtreliGorevler, g)
+				if e.Name == tag {
+					filteredTasks = append(filteredTasks, g)
 					break
 				}
 			}
 		}
-		gorevler = filtreliGorevler
+		gorevler = filteredTasks
 	}
 
-	// Aktif proje varsa ve tum_projeler false ise, sadece aktif projenin görevlerini göster
+	// If active project exists and all_projects is false, show only active project's tasks
 	var aktifProje *gorev.Proje
-	if !tumProjeler {
+	if !allProjects {
 		aktifProje, _ = h.isYonetici.AktifProjeGetir(ctx)
 		if aktifProje != nil {
 			// Görevleri filtrele
@@ -511,7 +508,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 		metin = i18n.T("messages.taskListCount", map[string]interface{}{"Count": toplamRootGorevSayisi}) + "\n"
 	}
 
-	if aktifProje != nil && !tumProjeler {
+	if aktifProje != nil && !allProjects {
 		metin += i18n.T("messages.projectHeader", map[string]interface{}{"Name": aktifProje.Name}) + "\n"
 	}
 	metin += "\n"
@@ -559,7 +556,7 @@ func (h *Handlers) GorevListele(params map[string]interface{}) (*mcp.CallToolRes
 	// Kök görevlerden başlayarak hiyerarşiyi oluştur
 	// NOT: gorevMap tüm görevleri içerir, böylece paginated bir görevin TÜM alt görevleri gösterilir
 	for _, kokGorev := range gorevlerToShow {
-		metin += h.gorevHiyerarsiYazdirVeIsaretle(ctx, lang, kokGorev, gorevMap, 0, tumProjeler || aktifProje == nil, shownGorevIDs)
+		metin += h.gorevHiyerarsiYazdirVeIsaretle(ctx, lang, kokGorev, gorevMap, 0, allProjects || aktifProje == nil, shownGorevIDs)
 	}
 
 	// REMOVED: Orphan checking logic
@@ -644,18 +641,18 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 		return result, nil
 	}
 
-	// Check if we have durum or oncelik (at least one required) - using Turkish names per schema
-	durum, durumResult := h.toolHelpers.Validator.ValidateEnum(params, "durum", constants.GetValidTaskStatuses(), false)
-	oncelik, oncelikResult := h.toolHelpers.Validator.ValidateEnum(params, "oncelik", constants.GetValidPriorities(), false)
+	// Check if we have status or priority (at least one required) - using English names per schema
+	status, statusResult := h.toolHelpers.Validator.ValidateEnum(params, constants.ParamStatus, constants.GetValidTaskStatuses(), false)
+	priority, priorityResult := h.toolHelpers.Validator.ValidateEnum(params, constants.ParamPriority, constants.GetValidPriorities(), false)
 
 	// If a parameter was provided but invalid, return that error immediately
 	// Special case: if status was explicitly provided but is empty/invalid, it should fail
-	if params["durum"] != nil {
-		if durumResult != nil && durum == "" {
-			return durumResult, nil
+	if params[constants.ParamStatus] != nil {
+		if statusResult != nil && status == "" {
+			return statusResult, nil
 		}
 		// Additional validation: explicitly provided empty status should fail
-		if durum == "" && durumResult == nil {
+		if status == "" && statusResult == nil {
 			// Status was provided but is empty - this should be treated as invalid
 			return mcp.NewToolResultError(i18n.T("error.invalidStatus",
 				map[string]interface{}{
@@ -664,30 +661,30 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 				})), nil
 		}
 	}
-	if params["oncelik"] != nil {
-		if oncelikResult != nil && oncelik == "" {
-			return oncelikResult, nil
+	if params[constants.ParamPriority] != nil {
+		if priorityResult != nil && priority == "" {
+			return priorityResult, nil
 		}
 	}
 
 	// If both are missing/invalid, return error
-	if durumResult != nil && oncelikResult != nil {
+	if statusResult != nil && priorityResult != nil {
 		// Custom validation: at least one of status or priority required
 		return mcp.NewToolResultError(i18n.T("common.validation.one_of_required",
-			map[string]interface{}{"Params": "durum, oncelik"})), nil
+			map[string]interface{}{"Params": "status, priority"})), nil
 	}
 
 	// Update status if provided
-	if durum != "" {
-		if err := h.isYonetici.GorevDurumGuncelle(ctx, id, durum); err != nil {
+	if status != "" {
+		if err := h.isYonetici.GorevDurumGuncelle(ctx, id, status); err != nil {
 			return mcp.NewToolResultError(i18n.TUpdateFailed(lang, "task", err)), nil
 		}
 	}
 
 	// Update priority if provided
-	if oncelik != "" {
+	if priority != "" {
 		updateParams := map[string]interface{}{
-			"oncelik": oncelik,
+			"priority": priority,
 		}
 		if err := h.isYonetici.VeriYonetici().GorevGuncelle(ctx, id, updateParams); err != nil {
 			return mcp.NewToolResultError(i18n.TUpdateFailed(lang, "task", err)), nil
@@ -696,11 +693,11 @@ func (h *Handlers) GorevGuncelle(params map[string]interface{}) (*mcp.CallToolRe
 
 	// Build success message
 	var updates []string
-	if durum != "" {
-		updates = append(updates, i18n.TLabel(lang, "durum")+": "+durum)
+	if status != "" {
+		updates = append(updates, i18n.TLabel(lang, "durum")+": "+status)
 	}
-	if oncelik != "" {
-		updates = append(updates, i18n.TLabel(lang, "oncelik")+": "+oncelik)
+	if priority != "" {
+		updates = append(updates, i18n.TLabel(lang, "oncelik")+": "+priority)
 	}
 
 	return mcp.NewToolResultText(
@@ -717,14 +714,14 @@ func (h *Handlers) ProjeOlustur(params map[string]interface{}) (*mcp.CallToolRes
 	h.toolHelpers.SetLanguage(lang)
 	ctx := i18n.WithLanguage(context.Background(), lang)
 
-	isim, result := h.toolHelpers.Validator.ValidateRequiredString(params, "isim")
+	name, result := h.toolHelpers.Validator.ValidateRequiredString(params, constants.ParamName)
 	if result != nil {
 		return result, nil
 	}
 
-	tanim := h.toolHelpers.Validator.ValidateOptionalString(params, "tanim")
+	definition := h.toolHelpers.Validator.ValidateOptionalString(params, constants.ParamDefinition)
 
-	proje, err := h.isYonetici.ProjeOlustur(ctx, isim, tanim)
+	proje, err := h.isYonetici.ProjeOlustur(ctx, name, definition)
 	if err != nil {
 		return mcp.NewToolResultError(i18n.TCreateFailed(lang, "project", err)), nil
 	}
@@ -933,9 +930,9 @@ func (h *Handlers) GorevSil(params map[string]interface{}) (*mcp.CallToolResult,
 		return result, nil
 	}
 
-	// Onay kontrolü
-	onay := h.toolHelpers.Validator.ValidateBool(params, "onay")
-	if !onay {
+	// Confirmation check
+	confirm := h.toolHelpers.Validator.ValidateBool(params, constants.ParamConfirm)
+	if !confirm {
 		return mcp.NewToolResultError(i18n.T("error.confirmationRequired")), nil
 	}
 
@@ -1496,7 +1493,7 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	lang := h.extractLanguage()
 	h.toolHelpers.SetLanguage(lang)
 	ctx := i18n.WithLanguage(context.Background(), lang)
-	projeID, result := h.toolHelpers.Validator.ValidateRequiredString(params, "proje_id")
+	projeID, result := h.toolHelpers.Validator.ValidateRequiredString(params, "project_id")
 	if result != nil {
 		return result, nil
 	}
@@ -1745,13 +1742,13 @@ func (h *Handlers) GorevBagimlilikEkle(params map[string]interface{}) (*mcp.Call
 	})), nil
 }
 
-// TemplateListele kullanılabilir template'leri listeler
+// TemplateListele lists available templates
 func (h *Handlers) TemplateListele(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	lang := h.extractLanguage()
 	ctx := i18n.WithLanguage(context.Background(), lang)
-	kategori, _ := params["kategori"].(string)
+	category, _ := params[constants.ParamCategory].(string)
 
-	templates, err := h.isYonetici.TemplateListele(ctx, kategori)
+	templates, err := h.isYonetici.TemplateListele(ctx, category)
 	if err != nil {
 		return mcp.NewToolResultError(i18n.TListFailed(lang, "template", err)), nil
 	}
@@ -1944,19 +1941,19 @@ func (h *Handlers) GorevAltGorevOlustur(params map[string]interface{}) (*mcp.Cal
 func (h *Handlers) GorevUstDegistir(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	lang := h.extractLanguage()
 	ctx := i18n.WithLanguage(context.Background(), lang)
-	gorevID, ok := params["gorev_id"].(string)
-	if !ok || gorevID == "" {
-		return mcp.NewToolResultError(i18n.TRequiredParam(lang, "gorev_id")), nil
+	taskID, ok := params[constants.ParamTaskID].(string)
+	if !ok || taskID == "" {
+		return mcp.NewToolResultError(i18n.TRequiredParam(lang, constants.ParamTaskID)), nil
 	}
 
-	yeniParentID, _ := params["yeni_parent_id"].(string)
+	newParentID, _ := params[constants.ParamNewParentID].(string)
 
-	err := h.isYonetici.GorevUstDegistir(ctx, gorevID, yeniParentID)
+	err := h.isYonetici.GorevUstDegistir(ctx, taskID, newParentID)
 	if err != nil {
 		return mcp.NewToolResultError(i18n.TUpdateFailed(lang, "task", err)), nil
 	}
 
-	if yeniParentID == "" {
+	if newParentID == "" {
 		return mcp.NewToolResultText(i18n.T("success.taskMovedToRoot")), nil
 	}
 	return mcp.NewToolResultText(i18n.T("success.taskMovedToParent")), nil
@@ -1966,12 +1963,12 @@ func (h *Handlers) GorevUstDegistir(params map[string]interface{}) (*mcp.CallToo
 func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	lang := h.extractLanguage()
 	ctx := i18n.WithLanguage(context.Background(), lang)
-	gorevID, ok := params["gorev_id"].(string)
-	if !ok || gorevID == "" {
-		return mcp.NewToolResultError(i18n.TRequiredParam(lang, "gorev_id")), nil
+	taskID, ok := params[constants.ParamTaskID].(string)
+	if !ok || taskID == "" {
+		return mcp.NewToolResultError(i18n.TRequiredParam(lang, constants.ParamTaskID)), nil
 	}
 
-	hiyerarsi, err := h.isYonetici.GorevHiyerarsiGetir(ctx, gorevID)
+	hiyerarsi, err := h.isYonetici.GorevHiyerarsiGetir(ctx, taskID)
 	if err != nil {
 		return mcp.NewToolResultError(i18n.TFetchFailed(lang, "hierarchy", err)), nil
 	}
@@ -2008,7 +2005,7 @@ func (h *Handlers) GorevHiyerarsiGoster(params map[string]interface{}) (*mcp.Cal
 	}) + "\n\n")
 
 	// Doğrudan alt görevler
-	altGorevler, err := h.isYonetici.AltGorevleriGetir(ctx, gorevID)
+	altGorevler, err := h.isYonetici.AltGorevleriGetir(ctx, taskID)
 	if err == nil && len(altGorevler) > 0 {
 		sb.WriteString(i18n.T("messages.directSubtasks") + "\n")
 		for _, alt := range altGorevler {
@@ -3463,11 +3460,11 @@ func (h *Handlers) GorevBulk(params map[string]interface{}) (*mcp.CallToolResult
 		transformedParams["task_ids"] = idsRaw
 
 		if hasData {
-			// Accept both "durum" and "yeni_durum" for flexibility
-			if durum, ok := data["durum"].(string); ok {
-				transformedParams["durum"] = durum
-			} else if yeniDurum, ok := data["yeni_durum"].(string); ok {
-				transformedParams["durum"] = yeniDurum
+			// Accept "status" as the primary parameter name (v0.17.0 English migration)
+			if status, ok := data[constants.ParamStatus].(string); ok {
+				transformedParams[constants.ParamStatus] = status
+			} else if newStatus, ok := data["new_status"].(string); ok {
+				transformedParams[constants.ParamStatus] = newStatus
 			}
 
 			// Optional parameters
@@ -3487,6 +3484,9 @@ func (h *Handlers) GorevBulk(params map[string]interface{}) (*mcp.CallToolResult
 	case "tag":
 		// Transform: ids → task_ids
 		transformedParams["task_ids"] = idsRaw
+
+		// Default operation is "add" if not specified
+		transformedParams["operation"] = "add"
 
 		if hasData {
 			// data.tags → tags
@@ -3559,6 +3559,12 @@ func (h *Handlers) GorevHierarchy(params map[string]interface{}) (*mcp.CallToolR
 	case "change_parent":
 		return h.GorevUstDegistir(params)
 	case "show":
+		// Transform parameter: parent_id → task_id (unified schema uses parent_id for task ID)
+		if parentID, ok := params["parent_id"].(string); ok && parentID != "" {
+			if _, hasTaskID := params[constants.ParamTaskID]; !hasTaskID {
+				params[constants.ParamTaskID] = parentID
+			}
+		}
 		return h.GorevHiyerarsiGoster(params)
 	default:
 		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: create_subtask|change_parent|show)", action)), nil
@@ -3643,6 +3649,8 @@ func (h *Handlers) GorevContext(params map[string]interface{}) (*mcp.CallToolRes
 
 	switch action {
 	case "set_active":
+		// Use task_id parameter directly (v0.17.0 English migration)
+		// Note: params already contains task_id from unified schema
 		return h.GorevSetActive(params)
 	case "get_active":
 		return h.GorevGetActive(params)

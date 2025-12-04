@@ -130,10 +130,10 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	gorevObj, err := isYonetici.GorevOlustur(context.Background(), "Durum test görevi", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
-	// Durumu güncelle
+	// Update status
 	updateParams := map[string]interface{}{
-		"id":    gorevObj.ID,
-		"durum": "devam_ediyor",
+		"id":     gorevObj.ID,
+		"status": "devam_ediyor",
 	}
 
 	result, err := handlers.GorevGuncelle(updateParams)
@@ -143,8 +143,8 @@ func TestGorevDurumGuncelle(t *testing.T) {
 	assert.Contains(t, text, "Görev güncellendi")
 	assert.Contains(t, text, "devam_ediyor")
 
-	// Güncellemeyi doğrula
-	gorevler, err := isYonetici.GorevListele(context.Background(), map[string]interface{}{"durum": "devam_ediyor"})
+	// Verify update
+	gorevler, err := isYonetici.GorevListele(context.Background(), map[string]interface{}{"status": "devam_ediyor"})
 	require.NoError(t, err)
 	assert.Len(t, gorevler, 1)
 	assert.Equal(t, "devam_ediyor", gorevler[0].Status)
@@ -159,10 +159,10 @@ func TestProjeOlustur(t *testing.T) {
 	handlers := mcphandlers.YeniHandlers(isYonetici)
 	defer handlers.Close()
 
-	// Proje oluştur
+	// Create project
 	params := map[string]interface{}{
-		"isim":  "Test Projesi",
-		"tanim": "Test amaçlı proje",
+		"name":       "Test Projesi",
+		"definition": "Test amaçlı proje",
 	}
 
 	result, err := handlers.ProjeOlustur(params)
@@ -269,10 +269,10 @@ func TestHataYonetimi(t *testing.T) {
 	text := extractText(t, result)
 	assert.Contains(t, text, "Integration Test Bug")
 
-	// Test: Geçersiz ID ile güncelleme
+	// Test: Update with invalid ID
 	updateParams := map[string]interface{}{
-		"id":    "gecersiz-id",
-		"durum": "tamamlandi",
+		"id":     "gecersiz-id",
+		"status": "tamamlandi",
 	}
 
 	result, err = handlers.GorevGuncelle(updateParams)
@@ -376,10 +376,10 @@ func TestGorevSil(t *testing.T) {
 	gorevObj, err := isYonetici.GorevOlustur(context.Background(), "Silinecek Görev", "", "orta", "", "", nil)
 	require.NoError(t, err)
 
-	// Onaysız silme denemesi
+	// Delete attempt without confirmation
 	params := map[string]interface{}{
-		"id":   gorevObj.ID,
-		"onay": false,
+		"id":      gorevObj.ID,
+		"confirm": false,
 	}
 
 	result, err := handlers.GorevSil(params)
@@ -390,8 +390,8 @@ func TestGorevSil(t *testing.T) {
 	t.Logf("i18n initialized: %v", i18n.IsInitialized())
 	assert.Contains(t, text, "görevi silmek için")
 
-	// Onaylı silme
-	params["onay"] = true
+	// Delete with confirmation
+	params["confirm"] = true
 	result, err = handlers.GorevSil(params)
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
@@ -486,7 +486,7 @@ func TestProjeGorevleri(t *testing.T) {
 
 	// Proje görevlerini listele
 	params := map[string]interface{}{
-		"proje_id": proje.ID,
+		"project_id": proje.ID,
 	}
 
 	result, err := handlers.ProjeGorevleri(params)

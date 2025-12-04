@@ -122,9 +122,9 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
 				constants.ParamValues: map[string]interface{}{
-					"title":    injection,
-					"aciklama": injection,
-					"priority": constants.PriorityMedium,
+					"title":       injection,
+					"description": injection,
+					"priority":    constants.PriorityMedium,
 				},
 			})
 
@@ -192,9 +192,9 @@ func TestGorevOlustur_EdgeCases(t *testing.T) {
 		result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 			constants.ParamTemplateID: templateID,
 			constants.ParamValues: map[string]interface{}{
-				"title":    "Task with long description",
-				"aciklama": longString,
-				"priority": constants.PriorityMedium,
+				"title":       "Task with long description",
+				"description": longString,
+				"priority":    constants.PriorityMedium,
 			},
 		})
 
@@ -401,8 +401,8 @@ func TestProjeOlustur_EdgeCases(t *testing.T) {
 
 		for _, name := range emptyNames {
 			result := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-				"isim":     name,
-				"aciklama": "Test description",
+				"name":       name,
+				"definition": "Test description",
 			})
 
 			assert.True(t, result.IsError, "Expected error for empty project name")
@@ -413,15 +413,15 @@ func TestProjeOlustur_EdgeCases(t *testing.T) {
 	t.Run("Duplicate project names", func(t *testing.T) {
 		// Create first project
 		result1 := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-			"isim":     "Duplicate Test Project",
-			"aciklama": "First project",
+			"name":       "Duplicate Test Project",
+			"definition": "First project",
 		})
 		assert.False(t, result1.IsError)
 
 		// Try to create second project with same name
 		result2 := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-			"isim":     "Duplicate Test Project",
-			"aciklama": "Second project",
+			"name":       "Duplicate Test Project",
+			"definition": "Second project",
 		})
 
 		// The system might allow duplicate names, which is OK
@@ -532,9 +532,9 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 				defer wg.Done()
 
 				result := callTool(t, handlers, "gorev_duzenle", map[string]interface{}{
-					"id":       taskID,
-					"title":    fmt.Sprintf("Updated title %d", index),
-					"aciklama": fmt.Sprintf("Updated by goroutine %d", index),
+					"id":          taskID,
+					"title":       fmt.Sprintf("Updated title %d", index),
+					"description": fmt.Sprintf("Updated by goroutine %d", index),
 				})
 
 				if result.IsError {
@@ -564,8 +564,8 @@ func TestConcurrency_EdgeCases(t *testing.T) {
 		projectIDs := make([]string, 3)
 		for i := 0; i < 3; i++ {
 			result := callTool(t, handlers, "proje_olustur", map[string]interface{}{
-				"isim":     fmt.Sprintf("Concurrent Project %d", i),
-				"aciklama": fmt.Sprintf("Project %d for concurrency test", i),
+				"name":       fmt.Sprintf("Concurrent Project %d", i),
+				"definition": fmt.Sprintf("Project %d for concurrency test", i),
 			})
 			projectIDs[i] = extractProjectIDFromText(getResultText(result))
 		}
@@ -689,7 +689,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 
 		injectionValues := map[string]interface{}{
 			"title":       "{{title}} {{description}} {{module}}",
-			"aciklama":    "'; DROP TABLE gorevler; --",
+			"description": "'; DROP TABLE gorevler; --",
 			"module":      "{{../../../etc/passwd}}",
 			"environment": "production' OR '1'='1",
 			"steps":       "{{constructor.constructor('return process')()}}",
@@ -741,7 +741,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title":       "Large content test",
-				"aciklama":    largeString,
+				"description": largeString,
 				"module":      "TestModule",
 				"environment": "development",
 				"steps":       "Test steps",
@@ -804,7 +804,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title":       map[string]string{"nested": "object"},
-				"aciklama":    []string{"array", "of", "strings"},
+				"description": []string{"array", "of", "strings"},
 				"module":      123,
 				"environment": true,
 				"steps":       nil,
@@ -845,7 +845,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 			constants.ParamTemplateID: bugTemplateID,
 			constants.ParamValues: map[string]interface{}{
 				"title":       "Task with duplicate tags",
-				"aciklama":    "Bug description",
+				"description": "Bug description",
 				"module":      "TestModule",
 				"environment": "production",
 				"steps":       "Test steps",
@@ -947,11 +947,11 @@ func TestPerformance_EdgeCases(t *testing.T) {
 			result := callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
 				constants.ParamTemplateID: templateID,
 				constants.ParamValues: map[string]interface{}{
-					"title":    fmt.Sprintf("Performance task %d", i),
-					"aciklama": fmt.Sprintf("Description for task %d with some longer text to simulate real usage", i),
-					"priority": []string{constants.PriorityHigh, constants.PriorityMedium, constants.PriorityLow}[i%3],
-					"tags":     fmt.Sprintf("tag%d,performance,test,category%d", i, i%10),
-					"due_date": time.Now().AddDate(0, 0, i).Format("2006-01-02"),
+					"title":       fmt.Sprintf("Performance task %d", i),
+					"description": fmt.Sprintf("Description for task %d with some longer text to simulate real usage", i),
+					"priority":    []string{constants.PriorityHigh, constants.PriorityMedium, constants.PriorityLow}[i%3],
+					"tags":        fmt.Sprintf("tag%d,performance,test,category%d", i, i%10),
+					"due_date":    time.Now().AddDate(0, 0, i).Format("2006-01-02"),
 				},
 			})
 
@@ -971,9 +971,9 @@ func TestPerformance_EdgeCases(t *testing.T) {
 		}{
 			{"All tasks", map[string]interface{}{}},
 			{"By status", map[string]interface{}{"status": constants.TaskStatusPending}},
-			{"By priority", map[string]interface{}{"filtre": "acil"}},
-			{"By tag", map[string]interface{}{"etiket": "performance"}},
-			{"Sorted by date", map[string]interface{}{"sirala": "son_tarih_asc"}},
+			{"By priority", map[string]interface{}{"filter": "acil"}},
+			{"By tag", map[string]interface{}{"tag": "performance"}},
+			{"Sorted by date", map[string]interface{}{"order_by": "due_date_asc"}},
 		}
 
 		for _, ft := range filterTests {
