@@ -1226,7 +1226,7 @@ func TestTemplateHandlers(t *testing.T) {
 			constants.ParamTemplateID: constants.TestTemplateSomeID,
 		})
 		assert.True(t, result.IsError)
-		assert.Contains(t, getResultText(result), "degerler parametresi gerekli")
+		assert.Contains(t, getResultText(result), "values parametresi gerekli")
 
 		// Test wrong type for degerler
 		result = callTool(t, handlers, "templateden_gorev_olustur", map[string]interface{}{
@@ -1234,7 +1234,7 @@ func TestTemplateHandlers(t *testing.T) {
 			constants.ParamValues:     "not-an-object",
 		})
 		assert.True(t, result.IsError)
-		assert.Contains(t, getResultText(result), "degerler parametresi gerekli ve obje tipinde olmalı")
+		assert.Contains(t, getResultText(result), "values parametresi gerekli ve obje tipinde olmalı")
 	})
 }
 

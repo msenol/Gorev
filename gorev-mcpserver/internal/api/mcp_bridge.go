@@ -34,23 +34,33 @@ func (s *APIServer) handleMCPToolCall(c *fiber.Ctx) error {
 		})
 	}
 
-	// Get workspace context from manager
+	// Get workspace context from manager, with fallback to global
 	wsCtx, err := s.workspaceManager.GetWorkspaceContext(workspaceID.(string))
+	var handlers *mcp.Handlers
+
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": fmt.Sprintf("Failed to get workspace context: %v", err),
-		})
+		// Fallback to global isYonetici (same behavior as REST API handlers)
+		fmt.Fprintf(os.Stderr, "[MCP Bridge] Workspace %s not found, using global isYonetici for tool: %s\n",
+			workspaceID.(string), toolName)
+		handlers = mcp.YeniHandlers(s.isYonetici)
+
+		// Create minimal workspace context for event emission
+		wsCtx = &WorkspaceContext{
+			ID:           workspaceID.(string),
+			IsYonetici:   s.isYonetici,
+			EventEmitter: ws.NewHubEventEmitter(s.wsHub),
+		}
+	} else {
+		// Debug: Log EventEmitter type
+		fmt.Fprintf(os.Stderr, "[MCP Bridge] Tool: %s, Workspace: %s, EventEmitter type: %T\n",
+			toolName, wsCtx.ID, wsCtx.EventEmitter)
+
+		// Get business logic manager from workspace context
+		isYonetici := wsCtx.IsYonetici
+
+		// Create MCP handlers for this workspace
+		handlers = mcp.YeniHandlers(isYonetici)
 	}
-
-	// Debug: Log EventEmitter type
-	fmt.Fprintf(os.Stderr, "[MCP Bridge] Tool: %s, Workspace: %s, EventEmitter type: %T\n",
-		toolName, wsCtx.ID, wsCtx.EventEmitter)
-
-	// Get business logic manager from workspace context
-	isYonetici := wsCtx.IsYonetici
-
-	// Create MCP handlers for this workspace
-	handlers := mcp.YeniHandlers(isYonetici)
 
 	// Parse request body as MCP tool parameters
 	var params map[string]interface{}
@@ -261,7 +271,7 @@ func (s *APIServer) dispatchMCPTool(handlers *mcp.Handlers, toolName string, par
 			{"name": "gorev_detay", "description": "Show task details", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"id": map[string]interface{}{"type": "string"}}, "required": []string{"id"}}},
 			{"name": "gorev_guncelle", "description": "Update task fields", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"id": map[string]interface{}{"type": "string"}, "status": map[string]interface{}{"type": "string"}, "priority": map[string]interface{}{"type": "string"}}, "required": []string{"id"}}},
 			{"name": "gorev_duzenle", "description": "Edit task content", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"id": map[string]interface{}{"type": "string"}, "title": map[string]interface{}{"type": "string"}, "description": map[string]interface{}{"type": "string"}}, "required": []string{"id"}}},
-			{"name": "gorev_sil", "description": "Delete task", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"id": map[string]interface{}{"type": "string"}}, "required": []string{"id"}}},
+			{"name": "gorev_sil", "description": "Delete task", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"id": map[string]interface{}{"type": "string"}, "confirm": map[string]interface{}{"type": "boolean"}}, "required": []string{"id", "confirm"}}},
 
 			// Templates
 			{"name": "template_listele", "description": "List templates", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{}}},

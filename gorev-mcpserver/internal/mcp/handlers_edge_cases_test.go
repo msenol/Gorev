@@ -667,7 +667,7 @@ func TestTemplatedenGorevOlustur_EdgeCases(t *testing.T) {
 					constants.ParamValues:     wrongType,
 				})
 				assert.True(t, result.IsError)
-				assert.Contains(t, getResultText(result), "degerler parametresi gerekli ve obje tipinde olmalı")
+				assert.Contains(t, getResultText(result), "values parametresi gerekli ve obje tipinde olmalı")
 			})
 		}
 	})

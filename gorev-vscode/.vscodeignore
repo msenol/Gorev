@@ -1,19 +1,56 @@
+# VS Code test files
 .vscode/**
 .vscode-test/**
+.vscode-test.mjs
 test/**
-src/**
 test-workspace/**
+
+# Source files (dist is used)
+src/**
+**/*.ts
+!**/*.d.ts
 **/*.map
+
+# Config files
 .gitignore
 .prettierrc.json
 .eslintrc.json
+eslint.config.js
 tsconfig.json
 webpack.config.js
+playwright.config.ts
+
+# Build/dev scripts
+*.sh
+debug-vscode-tasks.js
+test-coverage.js
+
+# Documentation (keep only README and CHANGELOG)
+DEBUG_GUIDE.md
+MANUAL_TEST_CHECKLIST.md
+RELEASE_NOTES_*.md
+SCREENSHOT_GUIDE.md
+SCREENSHOT_UPLOAD_GUIDE.md
+TROUBLESHOOTING.md
+UI_TESTING_SUMMARY.md
+diagnose-extension.md
+CHANGELOG_v*.md
+docs/TESTING_*.md
+docs/architecture/**
+
+# Coverage and test artifacts
+coverage-report.json
+coverage/**
+.nyc_output/**
+
+# Node modules cleanup
 node_modules/**/test/**
 node_modules/**/*.md
 node_modules/**/*.txt
 node_modules/**/LICENSE
 node_modules/**/license
 node_modules/**/.github/**
-**/*.ts
-!**/*.d.ts
+node_modules/**/CHANGELOG*
+node_modules/**/.travis.yml
+node_modules/**/.eslintrc*
+node_modules/**/tsconfig.json

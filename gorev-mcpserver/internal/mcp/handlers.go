@@ -571,9 +571,14 @@ func (h *Handlers) AktifProjeAyarla(params map[string]interface{}) (*mcp.CallToo
 	lang := h.extractLanguage()
 	ctx := i18n.WithLanguage(context.Background(), lang)
 
+	// Support both English and Turkish parameter names for backward compatibility
 	projeID, result := h.toolHelpers.Validator.ValidateRequiredString(params, "project_id")
 	if result != nil {
-		return result, nil
+		// Fallback to Turkish parameter name
+		projeID, result = h.toolHelpers.Validator.ValidateRequiredString(params, "proje_id")
+		if result != nil {
+			return result, nil
+		}
 	}
 
 	if err := h.isYonetici.AktifProjeAyarla(ctx, projeID); err != nil {
@@ -714,12 +719,21 @@ func (h *Handlers) ProjeOlustur(params map[string]interface{}) (*mcp.CallToolRes
 	h.toolHelpers.SetLanguage(lang)
 	ctx := i18n.WithLanguage(context.Background(), lang)
 
+	// Support both English and Turkish parameter names for backward compatibility
 	name, result := h.toolHelpers.Validator.ValidateRequiredString(params, constants.ParamName)
 	if result != nil {
-		return result, nil
+		// Fallback to Turkish parameter name
+		name, result = h.toolHelpers.Validator.ValidateRequiredString(params, "isim")
+		if result != nil {
+			return result, nil
+		}
 	}
 
+	// Support both English and Turkish parameter names
 	definition := h.toolHelpers.Validator.ValidateOptionalString(params, constants.ParamDefinition)
+	if definition == "" {
+		definition = h.toolHelpers.Validator.ValidateOptionalString(params, "tanim")
+	}
 
 	proje, err := h.isYonetici.ProjeOlustur(ctx, name, definition)
 	if err != nil {
@@ -1493,9 +1507,15 @@ func (h *Handlers) ProjeGorevleri(params map[string]interface{}) (*mcp.CallToolR
 	lang := h.extractLanguage()
 	h.toolHelpers.SetLanguage(lang)
 	ctx := i18n.WithLanguage(context.Background(), lang)
+
+	// Support both English and Turkish parameter names for backward compatibility
 	projeID, result := h.toolHelpers.Validator.ValidateRequiredString(params, "project_id")
 	if result != nil {
-		return result, nil
+		// Fallback to Turkish parameter name
+		projeID, result = h.toolHelpers.Validator.ValidateRequiredString(params, "proje_id")
+		if result != nil {
+			return result, nil
+		}
 	}
 
 	// Pagination parametreleri
@@ -1715,19 +1735,34 @@ func (h *Handlers) OzetGoster(params map[string]interface{}) (*mcp.CallToolResul
 func (h *Handlers) GorevBagimlilikEkle(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	lang := h.extractLanguage()
 	ctx := i18n.WithLanguage(context.Background(), lang)
+
+	// Support both English and Turkish parameter names for backward compatibility
 	kaynakID, ok := params["source_id"].(string)
 	if !ok || kaynakID == "" {
-		return mcp.NewToolResultError(i18n.TRequiredParam(lang, "source_id")), nil
+		// Fallback to Turkish parameter name
+		kaynakID, ok = params["gorev_id"].(string)
+		if !ok || kaynakID == "" {
+			return mcp.NewToolResultError(i18n.TRequiredParam(lang, "source_id")), nil
+		}
 	}
 
 	hedefID, ok := params["target_id"].(string)
 	if !ok || hedefID == "" {
-		return mcp.NewToolResultError(i18n.TRequiredParam(lang, "target_id")), nil
+		// Fallback to Turkish parameter name
+		hedefID, ok = params["bagli_gorev_id"].(string)
+		if !ok || hedefID == "" {
+			return mcp.NewToolResultError(i18n.TRequiredParam(lang, "target_id")), nil
+		}
 	}
 
 	baglantiTipi, ok := params["connection_type"].(string)
 	if !ok || baglantiTipi == "" {
-		return mcp.NewToolResultError(i18n.TRequiredParam(lang, "connection_type")), nil
+		// Fallback to Turkish parameter name
+		baglantiTipi, ok = params["baglanti_tipi"].(string)
+		if !ok || baglantiTipi == "" {
+			// Default to "blocks" if not specified
+			baglantiTipi = "blocks"
+		}
 	}
 
 	baglanti, err := h.isYonetici.GorevBagimlilikEkle(ctx, kaynakID, hedefID, baglantiTipi)
@@ -1811,11 +1846,16 @@ func (h *Handlers) TemplatedenGorevOlustur(params map[string]interface{}) (*mcp.
 		return mcp.NewToolResultError(i18n.TRequiredParam(lang, "template_id")), nil
 	}
 
+	// Support both English and Turkish parameter names for backward compatibility
 	degerlerRaw, ok := params[constants.ParamValues].(map[string]interface{})
 	if !ok {
-		return mcp.NewToolResultError(i18n.T("common.validation.required_object", map[string]interface{}{
-			"Param": "degerler",
-		})), nil
+		// Fallback to Turkish parameter name
+		degerlerRaw, ok = params["degerler"].(map[string]interface{})
+		if !ok {
+			return mcp.NewToolResultError(i18n.T("common.validation.required_object", map[string]interface{}{
+				"Param": "values",
+			})), nil
+		}
 	}
 
 	// Önce template'i ID veya alias ile kontrol et
