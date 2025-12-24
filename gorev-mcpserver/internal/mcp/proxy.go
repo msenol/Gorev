@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/msenol/gorev/internal/daemon"
 )
 
 // Proxy forwards MCP messages between stdio and HTTP daemon
@@ -18,6 +20,8 @@ type Proxy struct {
 	workspaceCtx *WorkspaceContext
 	client       *http.Client
 	debug        bool
+	clientID     string
+	stopChan     chan struct{}
 }
 
 // NewProxy creates a new MCP proxy instance
@@ -39,6 +43,19 @@ func (p *Proxy) Serve() error {
 		log.Printf("[MCP Proxy] Daemon URL: %s", p.daemonURL)
 	}
 
+	// Generate client ID and register with daemon
+	p.clientID = daemon.GenerateClientID()
+	p.stopChan = make(chan struct{})
+
+	if err := p.registerClient(); err != nil {
+		log.Printf("[MCP Proxy] Warning: Failed to register client: %v", err)
+	} else {
+		log.Printf("[MCP Proxy] Client registered: %s", p.clientID)
+	}
+
+	// Start heartbeat loop
+	go p.heartbeatLoop()
+
 	scanner := bufio.NewScanner(os.Stdin)
 	writer := bufio.NewWriter(os.Stdout)
 	defer writer.Flush()
@@ -57,6 +74,18 @@ func (p *Proxy) Serve() error {
 				log.Printf("[MCP Proxy] Parse error: %v", err)
 			}
 			p.writeError(writer, nil, ParseError, "Parse error", err.Error())
+			continue
+		}
+
+		if p.debug {
+			log.Printf("[MCP Proxy] Request: method=%s, id=%v (type=%T)", req.Method, req.ID, req.ID)
+		}
+
+		// Check if this is a notification (id is null) - don't send response
+		if req.ID == nil {
+			if p.debug {
+				log.Printf("[MCP Proxy] Notification (no response expected): %s", req.Method)
+			}
 			continue
 		}
 
@@ -92,7 +121,7 @@ func (p *Proxy) forwardToDaemon(req JSONRPCRequest) (string, error) {
 	endpoint := p.mapMethodToEndpoint(req.Method)
 
 	if p.debug {
-		log.Printf("[MCP Proxy] Forwarding %s to %s", req.Method, endpoint)
+		log.Printf("[MCP Proxy] Forwarding %s to %s (id=%v)", req.Method, endpoint, req.ID)
 	}
 
 	// Create HTTP request
@@ -125,7 +154,11 @@ func (p *Proxy) forwardToDaemon(req JSONRPCRequest) (string, error) {
 	defer resp.Body.Close()
 
 	// Convert HTTP response to JSON-RPC response
-	return p.convertHTTPToJSONRPC(resp, req.ID)
+	id := req.ID
+	if p.debug {
+		log.Printf("[MCP Proxy] Converting response with id=%v (type=%T)", id, id)
+	}
+	return p.convertHTTPToJSONRPC(resp, id)
 }
 
 // mapMethodToEndpoint maps MCP tool names to HTTP API endpoints
@@ -148,6 +181,11 @@ func (p *Proxy) convertHTTPToJSONRPC(resp *http.Response, id interface{}) (strin
 		if err := json.Unmarshal(bodyBytes, &result); err != nil {
 			return "", fmt.Errorf("failed to parse response: %w", err)
 		}
+	}
+
+	if p.debug {
+		log.Printf("[MCP Proxy] HTTP response: status=%d, id=%v (type=%T), result_type=%T",
+			resp.StatusCode, id, id, result)
 	}
 
 	// Check for HTTP errors
@@ -175,4 +213,122 @@ func (p *Proxy) writeError(w *bufio.Writer, id interface{}, code int, message st
 	jsonData, _ := json.Marshal(response)
 	w.WriteString(string(jsonData) + "\n")
 	w.Flush()
+}
+
+// registerClient registers this MCP proxy as an active client
+func (p *Proxy) registerClient() error {
+	reqBody := map[string]interface{}{
+		"client_id":    p.clientID,
+		"client_type":  "mcp-proxy",
+		"workspace_id": p.workspaceCtx.ID,
+		"ttl_seconds":  300, // 5 minutes TTL
+	}
+
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/api/v1/daemon/clients/register", p.daemonURL),
+		bytes.NewReader(data),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := p.client.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("registration failed with status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// unregisterClient removes this client from tracking
+func (p *Proxy) unregisterClient() error {
+	reqBody := map[string]interface{}{
+		"client_id": p.clientID,
+	}
+
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/api/v1/daemon/clients/unregister", p.daemonURL),
+		bytes.NewReader(data),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := p.client.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// heartbeatLoop periodically sends heartbeats to keep client active
+func (p *Proxy) heartbeatLoop() {
+	ticker := time.NewTicker(60 * time.Second) // Heartbeat every minute
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := p.sendHeartbeat(); err != nil {
+				log.Printf("[MCP Proxy] Heartbeat failed: %v", err)
+			}
+		case <-p.stopChan:
+			return
+		}
+	}
+}
+
+// sendHeartbeat sends a heartbeat to extend TTL
+func (p *Proxy) sendHeartbeat() error {
+	reqBody := map[string]interface{}{
+		"client_id":   p.clientID,
+		"ttl_seconds": 300,
+	}
+
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	httpReq, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/api/v1/daemon/heartbeat", p.daemonURL),
+		bytes.NewReader(data),
+	)
+	if err != nil {
+		return err
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := p.client.Do(httpReq)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }

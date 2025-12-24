@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/msenol/gorev/internal/api/middleware"
+	"github.com/msenol/gorev/internal/daemon"
 	"github.com/msenol/gorev/internal/gorev"
 	"github.com/msenol/gorev/internal/i18n"
 	ws "github.com/msenol/gorev/internal/websocket"
@@ -22,10 +23,11 @@ import (
 type APIServer struct {
 	app              *fiber.App
 	port             string
-	isYonetici       *gorev.IsYonetici // Legacy single workspace manager (deprecated)
-	workspaceManager *WorkspaceManager // Multi-workspace manager
-	handlers         interface{}       // MCP Handlers for export/import operations
-	wsHub            *ws.Hub           // WebSocket hub for real-time updates
+	isYonetici       *gorev.IsYonetici     // Legacy single workspace manager (deprecated)
+	workspaceManager *WorkspaceManager     // Multi-workspace manager
+	handlers         interface{}           // MCP Handlers for export/import operations
+	wsHub            *ws.Hub               // WebSocket hub for real-time updates
+	clientTracker    *daemon.ClientTracker // Active client tracking for smart shutdown
 }
 
 // SetMigrationsFS sets the embedded migrations filesystem for workspace manager
@@ -80,6 +82,7 @@ func NewAPIServer(port string, isYonetici *gorev.IsYonetici) *APIServer {
 		isYonetici:       isYonetici,
 		workspaceManager: workspaceManager,
 		wsHub:            wsHub,
+		clientTracker:    daemon.NewClientTracker(),
 	}
 
 	// Start WebSocket hub in background
@@ -169,6 +172,7 @@ func (s *APIServer) setupRoutes() {
 	api.Get("/tasks/:id/hierarchy", s.getHierarchy)
 
 	// Dependency routes
+	api.Get("/tasks/:id/dependencies", s.getDependencies)
 	api.Post("/tasks/:id/dependencies", s.addDependency)
 	api.Delete("/tasks/:id/dependencies/:dep_id", s.removeDependency)
 
@@ -181,6 +185,12 @@ func (s *APIServer) setupRoutes() {
 	api.Get("/workspaces/:id", s.getWorkspaceHandler)
 	api.Delete("/workspaces/:id", s.unregisterWorkspaceHandler)
 	api.Delete("/active-project", s.removeActiveProject)
+
+	// Client management routes (for smart shutdown)
+	api.Get("/daemon/clients/count", s.getActiveClientCountHandler)
+	api.Post("/daemon/clients/register", s.registerClientHandler)
+	api.Post("/daemon/clients/unregister", s.unregisterClientHandler)
+	api.Post("/daemon/heartbeat", s.heartbeatHandler)
 
 	// Export/Import routes
 	api.Post("/export", s.exportData)
@@ -271,7 +281,7 @@ func (s *APIServer) getTask(c *fiber.Ctx) error {
 	// Get task details using MCP handler logic with workspace context
 	iy := s.getIsYoneticiFromContext(c)
 	ctx := s.getContextFromRequest(c)
-	gorev, err := iy.VeriYonetici().GorevGetir(ctx, id)
+	task, err := iy.VeriYonetici().GorevGetir(ctx, id)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, fmt.Sprintf("failed to get task with ID %s: %v", id, err))
 	}
@@ -279,12 +289,32 @@ func (s *APIServer) getTask(c *fiber.Ctx) error {
 	// Load subtasks for the task
 	subtasks, err := iy.AltGorevleriGetir(ctx, id)
 	if err == nil && len(subtasks) > 0 {
-		gorev.Subtasks = subtasks
+		task.Subtasks = subtasks
+	}
+
+	// Load dependencies for the task (for VS Code extension task detail panel)
+	baglantilari, err := iy.VeriYonetici().BaglantilariGetir(ctx, id)
+	if err == nil && len(baglantilari) > 0 {
+		bagimliliklar := make([]gorev.Bagimlilik, 0, len(baglantilari))
+		for _, b := range baglantilari {
+			dep := gorev.Bagimlilik{
+				KaynakID:    b.SourceID,
+				HedefID:     b.TargetID,
+				BaglantiTip: b.ConnectionType,
+			}
+			// Get target task info for display
+			if targetTask, err := iy.VeriYonetici().GorevGetir(ctx, b.TargetID); err == nil {
+				dep.HedefBaslik = targetTask.Title
+				dep.HedefDurum = targetTask.Status
+			}
+			bagimliliklar = append(bagimliliklar, dep)
+		}
+		task.Bagimliliklar = bagimliliklar
 	}
 
 	return c.JSON(fiber.Map{
 		"success": true,
-		"data":    gorev,
+		"data":    task,
 	})
 }
 
@@ -402,21 +432,14 @@ func (s *APIServer) createTaskFromTemplate(c *fiber.Ctx) error {
 func (s *APIServer) getIsYoneticiFromContext(c *fiber.Ctx) *gorev.IsYonetici {
 	isYonetici := middleware.GetIsYonetici(c)
 	if isYonetici == nil {
-		log.Printf("[getIsYoneticiFromContext] No workspace context, using global isYonetici for %s %s",
-			c.Method(), c.Path())
 		return s.isYonetici
 	}
 
 	iy, ok := isYonetici.(*gorev.IsYonetici)
 	if !ok {
-		log.Printf("[getIsYoneticiFromContext] Type assertion failed, using global isYonetici for %s %s",
-			c.Method(), c.Path())
 		return s.isYonetici
 	}
 
-	wsID := middleware.GetWorkspaceID(c)
-	log.Printf("[getIsYoneticiFromContext] Using workspace-specific isYonetici for workspace %s (%s %s)",
-		wsID, c.Method(), c.Path())
 	return iy
 }
 
@@ -589,12 +612,151 @@ func (s *APIServer) initializeTemplates(c *fiber.Ctx) error {
 
 // getSummary retrieves system-wide summary statistics
 func (s *APIServer) getSummary(c *fiber.Ctx) error {
-	// This would need a summary method in business logic
-	// For now, return basic info
+	iy := s.getIsYoneticiFromContext(c)
+	ctx := s.getContextFromRequest(c)
+
+	// Get all tasks
+	allTasks, err := iy.VeriYonetici().GorevleriGetir(ctx, "", "", "")
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get tasks: %v", err))
+	}
+
+	// Get all projects
+	projects, err := iy.VeriYonetici().ProjeleriGetir(ctx)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get projects: %v", err))
+	}
+
+	// Get templates
+	templates, err := iy.VeriYonetici().TemplateListele(ctx, "")
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get templates: %v", err))
+	}
+
+	// Get active project
+	activeProjectID, _ := iy.VeriYonetici().AktifProjeGetir(ctx)
+	var activeProject *gorev.Proje
+	if activeProjectID != "" {
+		activeProject, _ = iy.VeriYonetici().ProjeGetir(ctx, activeProjectID)
+	}
+
+	// Calculate statistics
+	statusCounts := map[string]int{
+		"pending":     0,
+		"in_progress": 0,
+		"completed":   0,
+	}
+	priorityCounts := map[string]int{
+		"high":   0,
+		"medium": 0,
+		"low":    0,
+	}
+
+	var overdueTasks []*gorev.Gorev
+	var dueTodayTasks []*gorev.Gorev
+	var dueThisWeekTasks []*gorev.Gorev
+	var highPriorityTasks []*gorev.Gorev
+	var blockedTasks []*gorev.Gorev
+	var recentTasks []*gorev.Gorev
+
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	weekEnd := today.AddDate(0, 0, 7)
+
+	for _, task := range allTasks {
+		// Status counts
+		switch task.Status {
+		case "pending", "beklemede":
+			statusCounts["pending"]++
+		case "in_progress", "devam_ediyor":
+			statusCounts["in_progress"]++
+		case "completed", "tamamlandi":
+			statusCounts["completed"]++
+		}
+
+		// Priority counts
+		switch task.Priority {
+		case "high", "yuksek":
+			priorityCounts["high"]++
+			if task.Status != "completed" && task.Status != "tamamlandi" {
+				highPriorityTasks = append(highPriorityTasks, task)
+			}
+		case "medium", "orta":
+			priorityCounts["medium"]++
+		case "low", "dusuk":
+			priorityCounts["low"]++
+		}
+
+		// Due date analysis
+		if task.DueDate != nil && task.Status != "completed" && task.Status != "tamamlandi" {
+			dueDate := *task.DueDate
+			if dueDate.Before(today) {
+				overdueTasks = append(overdueTasks, task)
+			} else if dueDate.Before(today.AddDate(0, 0, 1)) {
+				dueTodayTasks = append(dueTodayTasks, task)
+			} else if dueDate.Before(weekEnd) {
+				dueThisWeekTasks = append(dueThisWeekTasks, task)
+			}
+		}
+
+		// Blocked tasks (has uncompleted dependencies)
+		if task.UncompletedDependencyCount > 0 {
+			blockedTasks = append(blockedTasks, task)
+		}
+
+		// Recent tasks (last 5 updated)
+		if len(recentTasks) < 5 {
+			recentTasks = append(recentTasks, task)
+		}
+	}
+
+	// Limit lists to reasonable size
+	if len(highPriorityTasks) > 5 {
+		highPriorityTasks = highPriorityTasks[:5]
+	}
+	if len(overdueTasks) > 5 {
+		overdueTasks = overdueTasks[:5]
+	}
+	if len(blockedTasks) > 5 {
+		blockedTasks = blockedTasks[:5]
+	}
+
+	// Calculate completion rate
+	totalTasks := len(allTasks)
+	completedTasks := statusCounts["completed"]
+	completionRate := 0.0
+	if totalTasks > 0 {
+		completionRate = float64(completedTasks) / float64(totalTasks) * 100
+	}
+
+	// Build response
 	return c.JSON(fiber.Map{
 		"success": true,
 		"data": fiber.Map{
-			"message": "Summary endpoint - to be implemented",
+			"total_tasks":     totalTasks,
+			"total_projects":  len(projects),
+			"total_templates": len(templates),
+			"active_project":  activeProject,
+			"status_counts": fiber.Map{
+				"pending":     statusCounts["pending"],
+				"in_progress": statusCounts["in_progress"],
+				"completed":   statusCounts["completed"],
+			},
+			"priority_counts": fiber.Map{
+				"high":   priorityCounts["high"],
+				"medium": priorityCounts["medium"],
+				"low":    priorityCounts["low"],
+			},
+			"due_date_summary": fiber.Map{
+				"overdue":       len(overdueTasks),
+				"due_today":     len(dueTodayTasks),
+				"due_this_week": len(dueThisWeekTasks),
+			},
+			"completion_rate":     completionRate,
+			"high_priority_tasks": highPriorityTasks,
+			"overdue_tasks":       overdueTasks,
+			"blocked_tasks":       blockedTasks,
+			"recent_tasks":        recentTasks,
 		},
 	})
 }
@@ -770,6 +932,62 @@ func (s *APIServer) getHierarchy(c *fiber.Ctx) error {
 	})
 }
 
+// getDependencies retrieves all dependencies for a task
+func (s *APIServer) getDependencies(c *fiber.Ctx) error {
+	taskID := c.Params("id")
+	if taskID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Task ID is required")
+	}
+
+	iy := s.getIsYoneticiFromContext(c)
+	ctx := s.getContextFromRequest(c)
+
+	// Get all connections for this task
+	baglantilari, err := iy.VeriYonetici().BaglantilariGetir(ctx, taskID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to get dependencies for task %s: %v", taskID, err))
+	}
+
+	// Build dependency list with task details
+	type DependencyInfo struct {
+		SourceID       string `json:"source_id"`
+		TargetID       string `json:"target_id"`
+		ConnectionType string `json:"connection_type"`
+		SourceTitle    string `json:"source_title,omitempty"`
+		SourceStatus   string `json:"source_status,omitempty"`
+		TargetTitle    string `json:"target_title,omitempty"`
+		TargetStatus   string `json:"target_status,omitempty"`
+	}
+
+	dependencies := make([]DependencyInfo, 0)
+	for _, b := range baglantilari {
+		dep := DependencyInfo{
+			SourceID:       b.SourceID,
+			TargetID:       b.TargetID,
+			ConnectionType: b.ConnectionType,
+		}
+
+		// Get source task info
+		if sourceTask, err := iy.VeriYonetici().GorevGetir(ctx, b.SourceID); err == nil {
+			dep.SourceTitle = sourceTask.Title
+			dep.SourceStatus = sourceTask.Status
+		}
+
+		// Get target task info
+		if targetTask, err := iy.VeriYonetici().GorevGetir(ctx, b.TargetID); err == nil {
+			dep.TargetTitle = targetTask.Title
+			dep.TargetStatus = targetTask.Status
+		}
+
+		dependencies = append(dependencies, dep)
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    dependencies,
+	})
+}
+
 // addDependency adds a dependency between tasks
 func (s *APIServer) addDependency(c *fiber.Ctx) error {
 	hedefID := c.Params("id")
@@ -868,5 +1086,110 @@ func (s *APIServer) removeActiveProject(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "Active project removed successfully",
+	})
+}
+
+// getActiveClientCountHandler returns the number of active clients
+func (s *APIServer) getActiveClientCountHandler(c *fiber.Ctx) error {
+	count := s.clientTracker.GetActiveClientCount()
+	return c.JSON(fiber.Map{
+		"success":      true,
+		"client_count": count,
+	})
+}
+
+// registerClientHandler registers a new client connection
+func (s *APIServer) registerClientHandler(c *fiber.Ctx) error {
+	var req struct {
+		ClientID    string `json:"client_id"`
+		ClientType  string `json:"client_type"`
+		WorkspaceID string `json:"workspace_id"`
+		TTL         int    `json:"ttl_seconds"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.ClientID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "client_id is required")
+	}
+
+	if req.ClientType == "" {
+		req.ClientType = "unknown"
+	}
+
+	if req.TTL <= 0 {
+		req.TTL = 300 // Default 5 minutes
+	}
+
+	client := &daemon.ClientInfo{
+		ClientID:     req.ClientID,
+		ClientType:   req.ClientType,
+		WorkspaceID:  req.WorkspaceID,
+		ConnectedAt:  time.Now(),
+		LastActivity: time.Now(),
+		ExpiresAt:    time.Now().Add(time.Duration(req.TTL) * time.Second),
+	}
+
+	s.clientTracker.RegisterClient(client)
+
+	log.Printf("[ClientTracker] Client registered: %s (%s)", req.ClientID, req.ClientType)
+
+	return c.JSON(fiber.Map{
+		"success":    true,
+		"client_id":  req.ClientID,
+		"expires_at": client.ExpiresAt.Unix(),
+	})
+}
+
+// unregisterClientHandler removes a client connection
+func (s *APIServer) unregisterClientHandler(c *fiber.Ctx) error {
+	var req struct {
+		ClientID string `json:"client_id"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.ClientID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "client_id is required")
+	}
+
+	s.clientTracker.UnregisterClient(req.ClientID)
+
+	log.Printf("[ClientTracker] Client unregistered: %s", req.ClientID)
+
+	return c.JSON(fiber.Map{
+		"success":   true,
+		"client_id": req.ClientID,
+	})
+}
+
+// heartbeatHandler updates client activity to extend TTL
+func (s *APIServer) heartbeatHandler(c *fiber.Ctx) error {
+	var req struct {
+		ClientID string `json:"client_id"`
+		TTL      int    `json:"ttl_seconds"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.ClientID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "client_id is required")
+	}
+
+	if req.TTL <= 0 {
+		req.TTL = 300
+	}
+
+	s.clientTracker.UpdateActivity(req.ClientID, time.Duration(req.TTL)*time.Second)
+
+	return c.JSON(fiber.Map{
+		"success":   true,
+		"client_id": req.ClientID,
 	})
 }
