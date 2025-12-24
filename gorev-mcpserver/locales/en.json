@@ -571,6 +571,7 @@
       "proje_olustur": "Creates a new project.",
       "proje_listele": "Lists all projects with task counts.",
       "proje_gorevleri": "Shows tasks belonging to specified project organized by status groups.",
+      "aktif_proje": "Manage active project (actions: set|get|clear). Set active project for new tasks, get current active project, or clear active project setting.",
       "aktif_proje_ayarla": "Sets the active project to work on. New tasks will be automatically assigned to this project.",
       "aktif_proje_goster": "Shows the currently active project.",
       "aktif_proje_kaldir": "Removes the active project setting. No project will be active anymore.",
@@ -583,10 +584,12 @@
       "gorev_batch_update": "Updates multiple tasks at once. Used for efficient bulk operations.",
       "gorev_nlp_query": "Natural language task search. Examples: 'high priority', 'working on today', 'tag:bug'",
       "gorev_search_advanced": "Advanced search - FTS5 full-text search, fuzzy matching, and filters",
+      "gorev_filter_profile": "Manage filter profiles (actions: save|load|list|delete). Save filter profiles for future use, load saved profiles, list all profiles, or delete a profile.",
       "gorev_filter_profile_save": "Save filter profile - store search and filter settings for future use",
       "gorev_filter_profile_load": "Load filter profile - apply saved search and filter settings",
       "gorev_filter_profile_list": "List filter profiles - show all saved search profiles",
       "gorev_filter_profile_delete": "Delete filter profile - permanently remove saved profile",
+      "gorev_search": "Search tasks using various methods (modes: nlp|advanced|history). Natural language query, advanced FTS5 search, or search history.",
       "gorev_search_history": "Search history - show recent searches and their results",
       "gorev_file_watch_add": "Adds a file path to a task and starts monitoring for automatic status updates.",
       "gorev_file_watch_remove": "Removes a file path from a task and stops monitoring.",
@@ -599,11 +602,15 @@
       "ozet_goster": "Summary report showing system status. Includes total task counts, project statistics, priority distributions and recent activities.",
       "gorev_export": "Export tasks, projects and related data to file in JSON or CSV format. Used for backup and data sharing.",
       "gorev_import": "Import previously exported data back into the system. Offers conflict resolution and selective import options.",
+      "gorev_ide": "Manage IDE extensions (actions: detect|install|uninstall|status|update). Detect installed IDEs, install Gorev extension, uninstall extension, check status, or update to latest version.",
       "ide_detect": "Detect IDEs on the system (VS Code, Cursor, Windsurf)",
       "ide_install": "Install Gorev extension to specified IDE",
       "ide_uninstall": "Remove Gorev extension from specified IDE",
       "ide_status": "Check extension installation status in IDEs",
-      "ide_update": "Update Gorev extension to latest version"
+      "ide_update": "Update Gorev extension to latest version",
+      "gorev_bulk": "Perform bulk operations on tasks (operations: transition|tag|update). Update status for multiple tasks, add/remove tags, or update multiple task properties at once.",
+      "gorev_hierarchy": "Manage task hierarchy (actions: create_subtask|change_parent|show). Create subtask under parent, change task's parent, or show full task hierarchy tree.",
+      "gorev_context": "Manage AI context (actions: set_active|get_active|recent|summary). Set active task for AI session, get current active task, view recent tasks, or get AI context summary."
     },
     "params": {
       "descriptions": {
