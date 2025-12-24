@@ -8,6 +8,7 @@ import {
   WorkspaceRegistrationResponse,
   WorkspaceListResponse
 } from '../models/workspace';
+import { Bagimlilik, GorevDurum } from '../models/gorev';
 
 export interface ApiResponse<T = unknown> {
   data: T;
@@ -43,6 +44,8 @@ export interface Task {
   bagimli_gorev_sayisi?: number;
   tamamlanmamis_bagimlilik_sayisi?: number;
   bu_goreve_bagimli_sayisi?: number;
+  // Dependencies from getTask endpoint
+  bagimliliklar?: Bagimlilik[];
 }
 
 // API response with English field names (v0.17.0+)
@@ -65,6 +68,16 @@ interface ApiTask {
   dependency_count?: number;
   uncompleted_dependency_count?: number;
   dependent_on_this_count?: number;
+  bagimliliklar?: ApiDependency[]; // Dependencies from getTask endpoint
+}
+
+// Dependency info from API (Turkish field names)
+interface ApiDependency {
+  kaynak_id: string;
+  hedef_id: string;
+  baglanti_tip: string;
+  hedef_baslik?: string;
+  hedef_durum?: string;
 }
 
 // Map API task (English fields) to frontend Task (Turkish fields)
@@ -86,6 +99,13 @@ function mapApiTaskToTask(apiTask: ApiTask): Task {
     bagimli_gorev_sayisi: apiTask.dependency_count,
     tamamlanmamis_bagimlilik_sayisi: apiTask.uncompleted_dependency_count,
     bu_goreve_bagimli_sayisi: apiTask.dependent_on_this_count,
+    bagimliliklar: apiTask.bagimliliklar?.map((dep): Bagimlilik => ({
+      kaynak_id: dep.kaynak_id,
+      hedef_id: dep.hedef_id,
+      baglanti_tip: dep.baglanti_tip,
+      hedef_baslik: dep.hedef_baslik,
+      hedef_durum: dep.hedef_durum as GorevDurum | undefined,
+    })),
   };
 }
 
@@ -148,16 +168,42 @@ export interface SubtaskData {
   etiketler?: string;
 }
 
+// API response from backend (uses English field names)
+export interface ApiTaskHierarchy {
+  gorev: ApiTask;
+  parent_tasks: ApiTask[];
+  total_subtasks: number;
+  completed_subtasks: number;
+  in_progress_subtasks: number;
+  pending_subtasks: number;
+  progress_percentage: number;
+}
+
+// Frontend model (uses Turkish field names for consistency)
 export interface TaskHierarchy {
   gorev: Task;
-  alt_gorevler: Task[];
-  toplam_alt_gorev: number;
-  tamamlanan_alt_gorev: number;
+  parent_tasks: Task[];
+  total_subtasks: number;
+  completed_subtasks: number;
+  in_progress_subtasks: number;
+  pending_subtasks: number;
+  progress_percentage: number;
 }
 
 export interface DependencyRequest {
   kaynak_id: string;
   baglanti_tipi?: string;
+}
+
+// Dependency info returned from backend
+export interface DependencyInfo {
+  source_id: string;
+  target_id: string;
+  connection_type: string;
+  source_title?: string;
+  source_status?: string;
+  target_title?: string;
+  target_status?: string;
 }
 
 export interface ExportRequest {
@@ -290,8 +336,10 @@ export class ApiClient extends EventEmitter {
         if (error.response) {
           const statusCode = error.response.status;
           const endpoint = error.config?.url || 'unknown';
-          const errorMessage = (error.response.data as { error?: string; message?: string })?.error ||
-                               (error.response.data as { error?: string; message?: string })?.message ||
+          const responseData = error.response.data as { error?: boolean | string; message?: string };
+          // Backend returns { error: true, message: "..." } - use message field
+          const errorMessage = responseData?.message ||
+                               (typeof responseData?.error === 'string' ? responseData.error : null) ||
                                error.message;
 
           Logger.error(`[ApiClient] API Error ${statusCode} at ${endpoint}:`, errorMessage);
@@ -311,6 +359,61 @@ export class ApiClient extends EventEmitter {
   async checkHealth(): Promise<{ status: string }> {
     const response = await this.axiosInstance.get('/health');
     return response.data as { status: string };
+  }
+
+  // Client tracking for smart shutdown
+  async getActiveClientCount(): Promise<number> {
+    try {
+      const response = await this.axiosInstance.get('/daemon/clients/count');
+      const data = response.data as { success: boolean; client_count: number };
+      return data.client_count;
+    } catch (error) {
+      Logger.warn('[ApiClient] Failed to get client count:', error);
+      return -1;
+    }
+  }
+
+  async registerClient(clientId: string, clientType: string, workspaceId: string, ttlSeconds: number = 300): Promise<boolean> {
+    try {
+      const response = await this.axiosInstance.post('/daemon/clients/register', {
+        client_id: clientId,
+        client_type: clientType,
+        workspace_id: workspaceId,
+        ttl_seconds: ttlSeconds
+      });
+      const data = response.data as { success: boolean; client_id: string };
+      return data.success === true;
+    } catch (error) {
+      Logger.warn('[ApiClient] Failed to register client:', error);
+      return false;
+    }
+  }
+
+  async unregisterClient(clientId: string): Promise<boolean> {
+    try {
+      const response = await this.axiosInstance.post('/daemon/clients/unregister', {
+        client_id: clientId
+      });
+      const data = response.data as { success: boolean; client_id: string };
+      return data.success === true;
+    } catch (error) {
+      Logger.warn('[ApiClient] Failed to unregister client:', error);
+      return false;
+    }
+  }
+
+  async sendHeartbeat(clientId: string, ttlSeconds: number = 300): Promise<boolean> {
+    try {
+      const response = await this.axiosInstance.post('/daemon/heartbeat', {
+        client_id: clientId,
+        ttl_seconds: ttlSeconds
+      });
+      const data = response.data as { success: boolean; client_id: string };
+      return data.success === true;
+    } catch (error) {
+      Logger.warn('[ApiClient] Failed to send heartbeat:', error);
+      return false;
+    }
   }
 
   // Tasks API
@@ -487,10 +590,34 @@ export class ApiClient extends EventEmitter {
 
   async getHierarchy(taskId: string): Promise<ApiResponse<TaskHierarchy>> {
     const response = await this.axiosInstance.get(`/tasks/${taskId}/hierarchy`);
-    return response.data as ApiResponse<TaskHierarchy>;
+    const apiResponse = response.data as ApiResponse<ApiTaskHierarchy>;
+    
+    // Map API response to frontend format
+    if (apiResponse.success && apiResponse.data) {
+      const mappedData: TaskHierarchy = {
+        gorev: mapApiTaskToTask(apiResponse.data.gorev),
+        parent_tasks: (apiResponse.data.parent_tasks || []).map(mapApiTaskToTask),
+        total_subtasks: apiResponse.data.total_subtasks || 0,
+        completed_subtasks: apiResponse.data.completed_subtasks || 0,
+        in_progress_subtasks: apiResponse.data.in_progress_subtasks || 0,
+        pending_subtasks: apiResponse.data.pending_subtasks || 0,
+        progress_percentage: apiResponse.data.progress_percentage || 0,
+      };
+      return {
+        ...apiResponse,
+        data: mappedData,
+      };
+    }
+    
+    return apiResponse as unknown as ApiResponse<TaskHierarchy>;
   }
 
   // Dependency API
+  async getDependencies(taskId: string): Promise<ApiResponse<DependencyInfo[]>> {
+    const response = await this.axiosInstance.get(`/tasks/${taskId}/dependencies`);
+    return response.data as ApiResponse<DependencyInfo[]>;
+  }
+
   async addDependency(targetId: string, dependency: DependencyRequest): Promise<ApiResponse<void>> {
     const response = await this.axiosInstance.post(`/tasks/${targetId}/dependencies`, dependency);
     return response.data as ApiResponse<void>;
@@ -613,10 +740,51 @@ export class ApiClient extends EventEmitter {
           return this.convertToMCPFormat(result);
         }
 
+        case 'gorev_hierarchy': {
+          // Unified hierarchy tool (v0.18.0)
+          const action = (params as { action: string }).action;
+          if (action === 'create_subtask') {
+            const hierarchyParams = params as {
+              parent_id: string;
+              title: string;
+              description?: string;
+              priority?: string;
+            };
+            result = await this.createSubtask(hierarchyParams.parent_id, {
+              baslik: hierarchyParams.title,
+              aciklama: hierarchyParams.description,
+              oncelik: hierarchyParams.priority
+            });
+          } else if (action === 'show') {
+            const hierarchyParams = params as { task_id: string };
+            result = await this.getHierarchy(hierarchyParams.task_id);
+          } else {
+            // change_parent or unknown actions
+            result = { success: false, data: null, message: `Hierarchy action '${action}' not implemented in REST API` };
+          }
+          return this.convertToMCPFormat(result);
+        }
+
         case 'proje_olustur':
           result = await this.createProject(params as { isim: string; tanim?: string });
           return this.convertToMCPFormat(result);
 
+        case 'aktif_proje': {
+          // Unified active project tool (v0.18.0)
+          const action = (params as { action: string }).action;
+          if (action === 'set') {
+            result = await this.activateProject((params as { project_id: string }).project_id);
+          } else if (action === 'get') {
+            result = await this.getActiveProject();
+          } else if (action === 'clear') {
+            result = await this.removeActiveProject();
+          } else {
+            result = { success: false, data: null, message: `Unknown action: ${action}` };
+          }
+          return this.convertToMCPFormat(result);
+        }
+
+        // Legacy support for old tool names
         case 'aktif_proje_ayarla':
           result = await this.activateProject((params as { proje_id: string }).proje_id);
           return this.convertToMCPFormat(result);
@@ -633,17 +801,57 @@ export class ApiClient extends EventEmitter {
           result = await this.importData(params as unknown as ImportRequest);
           return this.convertToMCPFormat(result);
 
-        // MCP-only tools (no REST API endpoints)
+        // Unified context tool (v0.18.0)
+        case 'gorev_context': {
+          const action = (params as { action: string }).action;
+          if (action === 'set_active') {
+            // Set active task for AI context
+            result = { success: true, data: { message: 'Active task set via MCP' } };
+          } else if (action === 'get_active') {
+            result = { success: true, data: null };
+          } else if (action === 'recent') {
+            result = { success: true, data: [] };
+          } else if (action === 'summary') {
+            result = await this.getSummary();
+          } else {
+            result = { success: false, data: null, message: `Unknown action: ${action}` };
+          }
+          return this.convertToMCPFormat(result);
+        }
+
+        // Unified search tool (v0.18.0)
+        case 'gorev_search': {
+          const mode = (params as { mode: string }).mode;
+          if (mode === 'nlp' || mode === 'advanced' || mode === 'history') {
+            // Search requires MCP, redirect to MCP-only warning
+            Logger.warn(`[ApiClient] Tool 'gorev_search' mode '${mode}' requires MCP protocol`);
+            return {
+              content: [{
+                type: 'text',
+                text: `Tool 'gorev_search' with mode '${mode}' is only available via MCP protocol, not REST API.`
+              }]
+            };
+          }
+          // Fallback for unknown modes
+          return {
+            content: [{
+              type: 'text',
+              text: `Unknown search mode: ${mode}. Use 'nlp', 'advanced', or 'history'.`
+            }]
+          };
+        }
+
+        // Legacy MCP-only tools (deprecated in v0.18.0)
         case 'gorev_set_active':
         case 'gorev_get_active':
         case 'gorev_nlp_query':
         case 'gorev_context_summary':
         case 'gorev_batch_update':
-          Logger.warn(`[ApiClient] Tool '${name}' is MCP-only and not available via REST API`);
+          Logger.warn(`[ApiClient] Tool '${name}' is deprecated, use unified tools instead`);
           return {
             content: [{
               type: 'text',
-              text: `Tool '${name}' is only available via MCP protocol, not REST API. Skipping.`
+              text: `Tool '${name}' is deprecated. Use unified tools (gorev_context, gorev_bulk, gorev_search) instead.`
             }]
           };
 

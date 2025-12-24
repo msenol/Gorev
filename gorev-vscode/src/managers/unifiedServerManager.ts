@@ -43,12 +43,28 @@ export class UnifiedServerManager extends EventEmitter {
   private readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
   private readonly SERVER_START_TIMEOUT = 60000; // 60 seconds (increased for first-time setup)
   private readonly PORT_CHECK_RETRY_INTERVAL = 1000; // 1 second
+  private readonly connectionMode: string;
+  private readonly localServerPath: string | undefined;
 
   constructor(
     private readonly apiHost = 'localhost',
     private readonly apiPort = 5082
   ) {
     super();
+
+    // Read connection mode and local server path from VS Code configuration
+    const config = vscode.workspace.getConfiguration();
+    this.connectionMode = config.get<string>('gorev.connectionMode', 'auto');
+    this.localServerPath = config.get<string>('gorev.serverPath', '');
+
+    Logger.info(`[UnifiedServerManager] Connection mode: ${this.connectionMode}`);
+    if (this.connectionMode === 'local') {
+      if (this.localServerPath) {
+        Logger.info(`[UnifiedServerManager] Local server path: ${this.localServerPath}`);
+      } else {
+        Logger.warn('[UnifiedServerManager] Local mode enabled but gorev.serverPath not configured, falling back to npm package');
+      }
+    }
 
     // Initialize API client
     this.apiClient = new ApiClient(`http://${apiHost}:${apiPort}`);
@@ -227,6 +243,7 @@ export class UnifiedServerManager extends EventEmitter {
 
   /**
    * Dispose resources and cleanup
+   * Rule 15: Smart shutdown - check active clients before stopping
    */
   async dispose(): Promise<void> {
     // Stop health check monitoring
@@ -240,9 +257,16 @@ export class UnifiedServerManager extends EventEmitter {
       this.apiClient.disconnect();
     }
 
-    // Stop server if we started it
+    // SMART SHUTDOWN: Check active clients before stopping server
     if (this.serverProcess) {
-      await this.stopServer();
+      const shouldStop = await this.shouldStopServer();
+      if (shouldStop) {
+        Logger.info('[UnifiedServerManager] No other clients detected, stopping server...');
+        await this.stopServer();
+      } else {
+        Logger.info('[UnifiedServerManager] Other clients active, leaving server running...');
+        this.serverProcess = undefined; // Just clear the reference, don't stop
+      }
     }
 
     // Clear workspace context
@@ -251,6 +275,41 @@ export class UnifiedServerManager extends EventEmitter {
     this.serverStatus.workspaceRegistered = false;
 
     Logger.info('[UnifiedServerManager] Disposed');
+  }
+
+  /**
+   * Check if server should be stopped based on active client count
+   * Rule 15: Proper root cause analysis - don't kill other clients' connections
+   */
+  private async shouldStopServer(): Promise<boolean> {
+    try {
+      const clientCount = await this.getActiveClientCount();
+      // VS Code itself counts as 1 client, so >1 means other clients exist
+      if (clientCount > 1) {
+        Logger.info(`[UnifiedServerManager] ${clientCount - 1} other client(s) active, not stopping server`);
+        return false;
+      }
+      // No other clients, safe to stop
+      Logger.info('[UnifiedServerManager] No other clients detected');
+      return true;
+    } catch (error) {
+      Logger.warn('[UnifiedServerManager] Failed to check client count, stopping server:', error);
+      // Conservative approach: if we can't check, stop the server
+      // This ensures no orphaned daemon processes
+      return true;
+    }
+  }
+
+  /**
+   * Get active client count from daemon
+   */
+  private async getActiveClientCount(): Promise<number> {
+    try {
+      return await this.apiClient.getActiveClientCount();
+    } catch (error) {
+      Logger.warn('[UnifiedServerManager] Failed to get client count:', error);
+      return -1; // Indicate check failed
+    }
   }
 
   /**
@@ -355,28 +414,62 @@ export class UnifiedServerManager extends EventEmitter {
   }
 
   /**
-   * Start the Gorev server process
+   * Start the Gorev server process based on connection mode
    */
   private async startServer(): Promise<void> {
+    // Handle remote mode - don't start server, expect it to be running
+    if (this.connectionMode === 'remote') {
+      Logger.warn('[UnifiedServerManager] Remote mode enabled - server should be started manually');
+      vscode.window.showWarningMessage(
+        'Gorev: Remote mode enabled. Please ensure the Gorev server is running on the remote host.',
+        'OK'
+      );
+      return;
+    }
+
     return new Promise((resolve, reject) => {
       try {
         Logger.info('[UnifiedServerManager] Starting Gorev server...');
-
-        // Show user notification
         vscode.window.showInformationMessage('Gorev: Starting server...', 'Show Logs').then((selection) => {
           if (selection === 'Show Logs') {
             vscode.commands.executeCommand('workbench.action.output.show');
           }
         });
 
-        // Use npx to run the server
-        const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-        // Note: Not passing --api-port as it defaults to 5082 (matches apiPort setting)
-        // This ensures compatibility with all versions of the binary
-        const args = ['@mehmetsenol/gorev-mcp-server', 'serve', '--debug'];
+        // Determine command and args based on connection mode
+        let command: string;
+        let args: string[];
+        let useShell = false;
+
+        if (this.connectionMode === 'local') {
+          // Local mode: use gorev.serverPath or try to find gorev in PATH
+          if (this.localServerPath && fs.existsSync(this.localServerPath)) {
+            command = this.localServerPath;
+            args = ['serve', '--debug'];
+            Logger.info(`[UnifiedServerManager] Using local binary: ${command}`);
+          } else {
+            // Try to use gorev from PATH
+            command = 'gorev';
+            args = ['serve', '--debug'];
+            Logger.info(`[UnifiedServerManager] Using gorev from PATH`);
+          }
+          useShell = false;
+        } else if (this.connectionMode === 'docker') {
+          // Docker mode: use docker-compose
+          command = 'docker-compose';
+          const composeFile = this.localServerPath || './docker-compose.yml';
+          args = ['-f', composeFile, 'up', '-d'];
+          useShell = true;
+          Logger.info(`[UnifiedServerManager] Using Docker: ${command} ${args.join(' ')}`);
+        } else {
+          // Auto mode (default): use npm package
+          command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+          args = ['@mehmetsenol/gorev-mcp-server', 'serve', '--debug'];
+          useShell = process.platform === 'win32';
+          Logger.info(`[UnifiedServerManager] Using npm package: ${command} ${args.join(' ')}`);
+        }
 
         // Determine database path
-        // Priority: Workspace folder > User home directory
         const workspaceFolder = this.getCurrentWorkspaceFolder();
         const dbPath = workspaceFolder
           ? path.join(workspaceFolder.uri.fsPath, '.gorev', 'gorev.db')
@@ -395,16 +488,14 @@ export class UnifiedServerManager extends EventEmitter {
           GOREV_DB_PATH: dbPath
         };
 
-        Logger.info(`[UnifiedServerManager] Running command: ${command} ${args.join(' ')} (port: ${this.apiPort})`);
         Logger.info(`[UnifiedServerManager] Database path: ${dbPath}`);
+        Logger.info(`[UnifiedServerManager] Running command: ${command} ${args.join(' ')} (port: ${this.apiPort})`);
 
         let errorOutput = '';
 
         this.serverProcess = spawn(command, args, {
-          // Note: stdin must be 'pipe' (not 'ignore') to keep MCP server alive
-          // We don't send any MCP commands, but the server needs stdin open
           stdio: ['pipe', 'pipe', 'pipe'],
-          shell: process.platform === 'win32',
+          shell: useShell,
           env: env
         });
 
@@ -421,11 +512,10 @@ export class UnifiedServerManager extends EventEmitter {
             const output = data.toString().trim();
             errorOutput += output + '\n';
 
-            // Check for common errors
             if (output.includes('command not found') || output.includes('not found')) {
-              Logger.error(`[UnifiedServerManager] npx command failed: ${output}`);
+              Logger.error(`[UnifiedServerManager] Command failed: ${output}`);
             } else if (output.includes('ENOENT')) {
-              Logger.error(`[UnifiedServerManager] Package not found: ${output}`);
+              Logger.error(`[UnifiedServerManager] File/executable not found: ${output}`);
             } else {
               Logger.warn(`[Gorev Server] ${output}`);
             }
@@ -434,49 +524,21 @@ export class UnifiedServerManager extends EventEmitter {
 
         this.serverProcess.on('error', (error) => {
           Logger.error('[UnifiedServerManager] Server process spawn error:', error);
-          vscode.window.showErrorMessage(
-            `Gorev: Failed to start server. ${error.message}. ` +
-            'Please ensure @mehmetsenol/gorev-mcp-server is installed.',
-            'Install Package',
-            'Show Logs'
-          ).then((selection) => {
-            if (selection === 'Install Package') {
-              vscode.window.showInformationMessage(
-                'Run in terminal: npm install -g @mehmetsenol/gorev-mcp-server'
-              );
-            } else if (selection === 'Show Logs') {
-              vscode.commands.executeCommand('workbench.action.output.show');
-            }
-          });
+          this.showStartError(error);
           reject(new Error(`Failed to start server: ${error.message}`));
         });
 
         this.serverProcess.on('exit', (code, signal) => {
           Logger.info(`[UnifiedServerManager] Server process exited with code ${code}, signal ${signal}`);
-
-          // If process exited immediately with error, show helpful message
           if (code !== 0 && code !== null) {
             const errorMsg = errorOutput || 'Unknown error';
             Logger.error(`[UnifiedServerManager] Server startup failed: ${errorMsg}`);
-
-            if (errorMsg.includes('not found') || errorMsg.includes('ENOENT')) {
-              vscode.window.showErrorMessage(
-                'Gorev: Server package not found. Please install it first.',
-                'Install Instructions'
-              ).then((selection) => {
-                if (selection === 'Install Instructions') {
-                  vscode.window.showInformationMessage(
-                    'Run: npm install -g @mehmetsenol/gorev-mcp-server'
-                  );
-                }
-              });
-            }
+            this.handleStartupError(errorMsg);
           }
-
           this.serverProcess = undefined;
         });
 
-        // Give server a moment to start and check for immediate failures
+        // Give server a moment to start
         setTimeout(() => {
           if (this.serverProcess && !this.serverProcess.killed) {
             Logger.info('[UnifiedServerManager] Server process spawned successfully');
@@ -484,7 +546,7 @@ export class UnifiedServerManager extends EventEmitter {
           } else {
             reject(new Error('Server process terminated immediately after spawn'));
           }
-        }, 2000); // Increased from 1000ms to 2000ms for better reliability
+        }, 2000);
 
       } catch (error) {
         Logger.error('[UnifiedServerManager] Failed to start server:', error);
@@ -499,6 +561,73 @@ export class UnifiedServerManager extends EventEmitter {
         reject(error);
       }
     });
+  }
+
+  /**
+   * Show error message when server fails to start
+   */
+  private showStartError(error: Error): void {
+    let message = `Gorev: Failed to start server. ${error.message}.`;
+    let actions: string[] = ['Show Logs'];
+
+    if (this.connectionMode === 'local') {
+      message += ' Please configure gorev.serverPath or ensure gorev is in PATH.';
+      actions.push('Configure');
+    } else if (this.connectionMode === 'docker') {
+      message += ' Please ensure Docker and docker-compose are installed.';
+      actions.push('Docker Info');
+    } else {
+      message += ' Please ensure @mehmetsenol/gorev-mcp-server is installed.';
+      actions.push('Install Package');
+    }
+
+    vscode.window.showErrorMessage(message, ...actions).then((selection) => {
+      if (selection === 'Show Logs') {
+        vscode.commands.executeCommand('workbench.action.output.show');
+      } else if (selection === 'Install Package') {
+        vscode.window.showInformationMessage('Run: npm install -g @mehmetsenol/gorev-mcp-server');
+      } else if (selection === 'Configure') {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'gorev.serverPath');
+      } else if (selection === 'Docker Info') {
+        vscode.window.showInformationMessage('Install Docker from: https://docs.docker.com/get-docker/');
+      }
+    });
+  }
+
+  /**
+   * Handle server startup errors with helpful messages
+   */
+  private handleStartupError(errorMsg: string): void {
+    if (errorMsg.includes('not found') || errorMsg.includes('ENOENT')) {
+      if (this.connectionMode === 'local') {
+        vscode.window.showErrorMessage(
+          'Gorev: Local binary not found. Please configure gorev.serverPath in settings.',
+          'Open Settings'
+        ).then((selection) => {
+          if (selection === 'Open Settings') {
+            vscode.commands.executeCommand('workbench.action.openSettings', 'gorev.serverPath');
+          }
+        });
+      } else if (this.connectionMode === 'docker') {
+        vscode.window.showErrorMessage(
+          'Gorev: Docker or docker-compose not found. Please install Docker.',
+          'Docker Install'
+        ).then((selection) => {
+          if (selection === 'Docker Install') {
+            vscode.env.openExternal(vscode.Uri.parse('https://docs.docker.com/get-docker/'));
+          }
+        });
+      } else {
+        vscode.window.showErrorMessage(
+          'Gorev: Server package not found. Please install it first.',
+          'Install Instructions'
+        ).then((selection) => {
+          if (selection === 'Install Instructions') {
+            vscode.window.showInformationMessage('Run: npm install -g @mehmetsenol/gorev-mcp-server');
+          }
+        });
+      }
+    }
   }
 
   /**
