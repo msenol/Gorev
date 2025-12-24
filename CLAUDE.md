@@ -2,11 +2,45 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** December 4, 2025 | **Version:** v0.17.0
+**Last Updated:** December 24, 2025 | **Version:** v0.17.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
 
-## 🚀 Recent Major Update
+## 🚀 Recent Update (December 24, 2025) - Smart Shutdown & Client Tracking
+
+**⚠️ BREAKING CHANGES**
+
+- **Smart Shutdown**: VS Code extension now checks active clients before stopping daemon
+  - Prevents killing MCP proxy (kilocode) when VS Code closes
+  - Client count tracking via `/api/v1/daemon/clients/count` endpoint
+  - Client registration and heartbeat system with 5-minute TTL
+
+- **Client Tracking System** (NEW):
+  - `internal/daemon/client_tracker.go` - Thread-safe client tracking
+  - `internal/config/shared_config.go` - Shared configuration for all components
+  - MCP Proxy registers as client on startup, sends heartbeat every 60s
+  - Extension smart shutdown: if other clients exist, daemon keeps running
+
+- **Unified MCP Tools (December 23, 2025)**: 27 individual tools consolidated into 8 unified handlers
+  - Tool Count: 41 tools → 26 tools (37% reduction)
+  - Unified Tools:
+    - `aktif_proje` (actions: set|get|clear) - replaces 3 active project tools
+    - `gorev_bulk` (operations: transition|tag|update) - replaces 3 bulk operation tools
+    - `gorev_hierarchy` (actions: create_subtask|change_parent|show) - replaces 3 hierarchy tools
+    - `gorev_filter_profile` (actions: save|load|list|delete) - replaces 4 filter profile tools
+    - `gorev_ide` (actions: detect|install|uninstall|status|update) - replaces 5 IDE tools
+    - `gorev_context` (actions: set_active|get_active|recent|summary) - replaces 4 AI context tools
+    - `gorev_search` (modes: nlp|advanced|history) - replaces 3 search tools
+    - `gorev_ozet` (actions: show) - summary tool
+  - **Action Constants**: Added `constants.ActionXxx` to eliminate magic strings
+
+- **Enhanced Summary Dashboard**: New HTML dashboard with:
+  - Progress bars for task status
+  - Due date summary with overdue/today/this week counts
+  - High priority and recent tasks widgets
+  - Active project display
+
+**Previous Updates:**
 
 **v0.17.0 - English Field Names Migration (October 11, 2025)** ⚠️ **BREAKING CHANGES**
 
@@ -84,7 +118,7 @@ This file provides essential guidance to AI assistants using MCP (Model Context 
 2. **gorev-vscode**: Optional VS Code extension - Rich visual interface
 3. **gorev-web**: React + TypeScript source code (for development only)
 
-**Core Features**: 24 optimized MCP tools (unified from 45), unlimited subtask hierarchy, task dependencies, template system, data export/import, IDE extension management, file watching, bilingual support (TR/EN), AI context management, enhanced NLP processing, advanced search & filtering, fuzzy matching, filter profiles.
+**Core Features**: 26 optimized MCP tools (7 unified handlers), unlimited subtask hierarchy, task dependencies, template system with aliases (bug, feature, etc.), data export/import, IDE extension management, file watching, bilingual support (TR/EN), AI context management, enhanced NLP processing, advanced search & filtering, fuzzy matching, filter profiles.
 
 ## 🏗️ Architecture
 
@@ -198,6 +232,33 @@ npm run watch                          # Watch mode (for development)
 # 3. Test in Extension Development Host window
 ```
 
+#### Connection Mode Configuration
+
+The VS Code extension supports **4 connection modes** via `gorev.connectionMode` setting:
+
+| Mode | Behavior | Configuration |
+|------|----------|---------------|
+| **auto** (default) | Automatically detects and starts daemon using npm package | No additional config needed |
+| **local** | Uses local gorev binary (for development) | Set `gorev.serverPath` to binary path |
+| **docker** | Uses docker-compose to run container | Set `gorev.dockerComposeFile` path |
+| **remote** | Connects to existing remote server | Server must be started manually |
+
+**Local Development Setup** (recommended for contributors):
+```json
+{
+  "gorev.connectionMode": "local",
+  "gorev.serverPath": "/home/msenol/Projects/Gorev/gorev-mcpserver/gorev"
+}
+```
+
+Build the local binary first:
+```bash
+cd gorev-mcpserver
+make build
+```
+
+Now VS Code extension will use your locally built binary instead of the npm package.
+
 ### Database
 
 ```bash
@@ -223,11 +284,20 @@ cd gorev-vscode && rm -rf out/         # Extension only
 
 ## 🛠️ MCP Tools Summary
 
-**24 Optimized MCP Tools** (reduced from 45 via unification):
+**26 Optimized MCP Tools** (reduced from 41 via unification - 37% reduction):
 
-- **Core Tools (11)**: Task CRUD (5), Templates (2), Projects (3), Dependencies (1)
-- **Unified Tools (8)**: Active Project, Hierarchy, Bulk Ops, Filter Profiles, File Watch, IDE Management, AI Context, Search
-- **Special Tools (5)**: Summary, Export, Import, AI Suggestions, Intelligent Create
+- **Core Tools (10)**: Task CRUD (5), Templates (2), Projects (2), Dependencies (1)
+- **Unified Tools (8)**:
+  - `aktif_proje` (actions: set|get|clear) - Active project management
+  - `gorev_bulk` (operations: transition|tag|update) - Bulk task operations
+  - `gorev_hierarchy` (actions: create_subtask|change_parent|show) - Task hierarchy
+  - `gorev_filter_profile` (actions: save|load|list|delete) - Filter profiles
+  - `gorev_ide` (actions: detect|install|uninstall|status|update) - IDE extension
+  - `gorev_context` (actions: set_active|get_active|recent|summary) - AI context
+  - `gorev_search` (modes: nlp|advanced|history) - Search
+  - `gorev_ozet` (actions: show) - Summary dashboard
+- **File Watcher Tools (4)**: Add, Remove, List, Stats
+- **Special Tools (4)**: Export, Import, AI Suggestions
 
 > **Template Aliases**: `bug`, `feature`, `research`, `refactor`, `test`, `doc`
 
@@ -248,14 +318,17 @@ cd gorev-vscode && rm -rf out/         # Extension only
 **Need to modify...**
 
 - **MCP Tools**: `internal/mcp/handlers.go` + register in `tool_registry.go`
+- **Client Tracking**: `internal/daemon/client_tracker.go`, `internal/config/shared_config.go`
 - **Business Logic**: `internal/gorev/is_yonetici.go`
 - **Database Access**: `internal/veri/veri_yonetici.go`
 - **Database Schema**: `internal/veri/migrations/*.sql` (add new migration)
-- **REST API Endpoints**: `internal/api/server.go` (24 endpoints)
+- **REST API Endpoints**: `internal/api/server.go` (28 endpoints)
 - **i18n Strings**: `locales/en.toml`, `locales/tr.toml`
 - **CLI Commands**: `cmd/gorev/*.go` (daemon.go, serve.go, etc.)
 - **Daemon Logic**: `cmd/gorev/daemon.go`, `internal/daemon/lockfile.go`
+- **MCP Proxy**: `internal/mcp/proxy.go` (client registration, heartbeat)
 - **VS Code Extension**: `gorev-vscode/src/extension.ts`
+- **Extension Manager**: `gorev-vscode/src/managers/unifiedServerManager.ts` (smart shutdown)
 - **Extension TreeView**: `gorev-vscode/src/providers/*.ts`
 - **Web UI Components**: `gorev-web/src/components/*.tsx`
 - **Web UI API Client**: `gorev-web/src/api/client.ts`

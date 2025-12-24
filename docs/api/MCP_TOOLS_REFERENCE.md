@@ -1,8 +1,8 @@
-# MCP Tools Reference - v0.16.3
+# MCP Tools Reference - v0.17.0
 
-Complete reference for **24 optimized MCP tools** (unified from 45 in v0.16.0).
+Complete reference for **26 optimized MCP tools** (unified from 41 in v0.16.0).
 
-**Last Updated**: October 6, 2025
+**Last Updated**: December 24, 2025
 
 ## 📋 Tool Categories
 
@@ -14,7 +14,7 @@ Essential operations for task management, templates, projects, and dependencies.
 
 1. `gorev_listele` - List and filter tasks
 2. `gorev_detay` - Show detailed task information
-3. `gorev_guncelle` - Update task status/priority ⭐ **v0.16.3 EXTENDED**
+3. `gorev_guncelle` - Update task status/priority
 4. `gorev_duzenle` - Edit task content and properties
 5. `gorev_sil` - Delete task with safety checks
 
@@ -33,28 +33,37 @@ Essential operations for task management, templates, projects, and dependencies.
 
 11. `gorev_bagimlilik_ekle` - Add task dependency relationship
 
-### UNIFIED TOOLS (8)
+### UNIFIED TOOLS (7)
 
 Consolidated handlers that replace multiple specialized tools through action-based routing.
 
 12. `aktif_proje` - Active project management (set|get|clear)
-13. `gorev_hierarchy` - Task hierarchy operations (create_subtask|change_parent|show)
-14. `gorev_bulk` - Bulk operations (transition|tag|update) ⭐ **v0.16.3 FIXED**
+13. `gorev_bulk` - Bulk operations (transition|tag|update)
+14. `gorev_hierarchy` - Task hierarchy operations (create_subtask|change_parent|show)
 15. `gorev_filter_profile` - Filter profile management (save|load|list|delete)
-16. `gorev_file_watch` - File watching (add|remove|list|stats)
-17. `ide_manage` - IDE extension management (detect|install|uninstall|status|update)
-18. `gorev_context` - AI context management (set_active|get_active|recent|summary)
-19. `gorev_search` - Task search (nlp|advanced|history) ⭐ **v0.16.3 ENHANCED**
+16. `gorev_ide` - IDE extension management (detect|install|uninstall|status|update)
+17. `gorev_context` - AI context management (set_active|get_active|recent|summary)
+18. `gorev_search` - Task search (nlp|advanced|history)
 
-### SPECIAL TOOLS (5)
+### FILE WATCHER TOOLS (4)
+
+Individual tools for file watching operations.
+
+19. `gorev_file_watch_add` - Add file path to watch
+20. `gorev_file_watch_remove` - Remove file path from watch
+21. `gorev_file_watch_list` - List active file watches
+22. `gorev_file_watch_stats` - Show file watch statistics
+
+### SPECIAL TOOLS (4)
 
 Advanced features for summaries, data management, and AI-powered operations.
 
-20. `ozet_goster` - Show workspace summary
-21. `gorev_export` - Export tasks to various formats
-22. `gorev_import` - Import tasks from external sources
-23. `gorev_suggestions` - Get AI-powered task suggestions
-24. `gorev_intelligent_create` - AI-powered task creation ⭐ **v0.16.3 FIXED**
+23. `ozet_goster` - Show workspace summary with HTML dashboard
+24. `gorev_suggestions` - Get AI-powered task suggestions
+25. `gorev_export` - Export tasks to various formats
+26. `gorev_import` - Import tasks from external sources
+
+> **Template Aliases**: `bug`, `feature`, `research`, `refactor`, `test`, `doc`
 
 ---
 
@@ -534,27 +543,73 @@ Accepts both `operation` and `tag_operation` parameter names (flexible)
 
 ---
 
-#### 16. gorev_file_watch
+#### 17. gorev_file_watch_add
 
-**Purpose**: File watching for automatic task creation
+**Purpose**: Add a file path to watch for automatic task creation
 
 **Parameters**:
 
-- `action` (required): "add" | "remove" | "list" | "stats"
-- `file_path` (required for add/remove): Path to watch
+- `file_path` (required): Path to file to watch
+- `gorev_id` (optional): Task ID to link to this file
 
 **Example**:
 
 ```json
 {
-  "action": "add",
+  "file_path": "/path/to/project/tasks.md",
+  "gorev_id": "abc12345"
+}
+```
+
+---
+
+#### 18. gorev_file_watch_remove
+
+**Purpose**: Remove a file path from watching
+
+**Parameters**:
+
+- `file_path` (required): Path to file to remove from watch
+
+**Example**:
+
+```json
+{
   "file_path": "/path/to/project/tasks.md"
 }
 ```
 
 ---
 
-#### 17. ide_manage
+#### 19. gorev_file_watch_list
+
+**Purpose**: List all active file watches
+
+**Parameters**: None required
+
+**Example**:
+
+```json
+{}
+```
+
+---
+
+#### 20. gorev_file_watch_stats
+
+**Purpose**: Show file watch statistics and activity
+
+**Parameters**: None required
+
+**Example**:
+
+```json
+{}
+```
+
+---
+
+#### 17. gorev_ide
 
 **Purpose**: Manage IDE extensions (VS Code extension management)
 
@@ -594,16 +649,9 @@ Accepts both `operation` and `tag_operation` parameter names (flexible)
 
 ---
 
-#### 19. gorev_search ⭐ **v0.16.3 ENHANCED**
+#### 19. gorev_search
 
 **Purpose**: Search tasks using NLP, advanced filters, or history
-
-**What's New in v0.16.3**:
-
-- Advanced mode now supports query string parsing
-- Automatically extracts filters from "key:value" patterns
-- Space-separated multi-filter support
-- Works seamlessly with existing filter parameters
 
 **Parameters**:
 
@@ -621,9 +669,9 @@ Understands natural language queries:
 }
 ```
 
-**Mode: advanced** ⭐ **ENHANCED in v0.16.3**
+**Mode: advanced**
 
-Now supports query string parsing:
+Supports query string parsing with key:value patterns:
 
 ```json
 {
@@ -671,21 +719,38 @@ Show recent search queries:
 
 #### 20. ozet_goster
 
-**Purpose**: Show workspace summary with statistics
+**Purpose**: Show workspace summary with HTML dashboard
 
 **Parameters**: None required
 
-**Output**:
+**Output** (Enhanced in v0.17.0):
 
-- Total tasks by status
-- Project summaries
-- Overdue tasks
-- Urgent tasks (due in 7 days)
-- Recent activity
+- Progress bars for task status
+- Due date summary (overdue, due today, due this week)
+- High priority tasks widget
+- Recent tasks
+- Active project display
 
 ---
 
-#### 21. gorev_export
+#### 21. gorev_suggestions
+
+**Purpose**: Get AI-powered task suggestions
+
+**Parameters**:
+
+- `context` (optional): Context string for suggestions
+
+**Output**: AI-generated task suggestions based on:
+
+- Current project context
+- Incomplete tasks
+- Dependencies
+- Project patterns
+
+---
+
+#### 22. gorev_export
 
 **Purpose**: Export tasks to various formats
 
@@ -704,7 +769,7 @@ Show recent search queries:
 
 ---
 
-#### 22. gorev_import
+#### 23. gorev_import
 
 **Purpose**: Import tasks from external sources
 
@@ -728,89 +793,28 @@ Show recent search queries:
 
 ---
 
-#### 23. gorev_suggestions
-
-**Purpose**: Get AI-powered task suggestions
-
-**Parameters**:
-
-- `context` (optional): Context string for suggestions
-
-**Output**: AI-generated task suggestions based on:
-
-- Current project context
-- Incomplete tasks
-- Dependencies
-- Project patterns
-
----
-
-#### 24. gorev_intelligent_create ⭐ **v0.16.3 FIXED**
-
-**Purpose**: AI-powered task creation with intelligent features
-
-**What's New in v0.16.3**:
-
-- Schema fixed with correct parameter definitions
-- All AI features now functional
-
-**Parameters**:
-
-- `baslik` (required): Task title
-- `aciklama` (optional): Task description
-- `auto_split` (optional): boolean - Automatically split into subtasks
-- `estimate_time` (optional): boolean - AI estimates task duration
-- `smart_priority` (optional): boolean - AI suggests priority
-- `suggest_template` (optional): boolean - Suggest matching template
-- `proje_id` (optional): Project ID
-
-**AI Features**:
-
-- **Auto-split**: Analyzes task description and creates logical subtasks
-- **Time estimation**: Provides duration estimates based on task complexity
-- **Smart priority**: Suggests priority based on keywords and context
-- **Template matching**: Recommends template based on task description
-
-**Example**:
-
-```json
-{
-  "baslik": "Implement user authentication system",
-  "aciklama": "Full OAuth2 implementation with JWT tokens",
-  "auto_split": true,
-  "estimate_time": true,
-  "smart_priority": true,
-  "suggest_template": true
-}
-```
-
-**Output**: Task created with:
-
-- AI-generated subtasks (if auto_split enabled)
-- Estimated duration (if estimate_time enabled)
-- Suggested priority with confidence score
-- Recommended template
-
----
-
 ## 📊 Version History
+
+### v0.17.0 (December 24, 2025) - Smart Shutdown & Client Tracking
+
+- **Smart Shutdown**: VS Code extension now checks active clients before stopping daemon
+- **Client Tracking System**: New `/api/v1/daemon/clients/*` endpoints for multi-client support
+- **MCP Proxy Registration**: MCP clients register with daemon, send heartbeat every 60s
+- **gorev_ide**: Renamed from `ide_manage` to `gorev_ide` for consistency
+- **File Watcher Tools**: Split from unified `gorev_file_watch` into 4 individual tools
+- **Enhanced Summary Dashboard**: New HTML dashboard with progress bars and due date summary
 
 ### v0.16.3 (October 6, 2025) - Critical Fixes
 
 - ⭐ **gorev_bulk**: All 3 operations fixed with proper parameter transformation
 - ⭐ **gorev_guncelle**: Extended to support both status and priority updates
 - ⭐ **gorev_search**: Advanced mode enhanced with query string parsing
-- ⭐ **gorev_intelligent_create**: Schema fixed, all AI features functional
 
 ### v0.16.0 (October 3, 2025) - Tool Unification
 
-- Reduced from 45 tools to 24 optimized unified tools
+- Reduced from 45 tools to 26 optimized unified tools
 - 8 unified handlers with action-based routing
 - Improved maintainability and consistency
-
-### v0.15.x and earlier
-
-- 41+ individual tools (now consolidated)
 
 ---
 
@@ -823,4 +827,4 @@ Show recent search queries:
 
 ---
 
-**Note**: This documentation reflects the current v0.16.3 implementation. All tools are production-ready with 100% test success rate.
+**Note**: This documentation reflects the current v0.17.0 implementation. All tools are production-ready with 100% test success rate.
