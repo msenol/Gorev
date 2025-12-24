@@ -4,6 +4,7 @@ import { ApiClient, ApiError } from '../api/client';
 import { CommandContext } from './index';
 import { COMMANDS } from '../utils/constants';
 import { GorevDurum, GorevOncelik } from '../models/common';
+import { Gorev } from '../models/gorev';
 import { TaskDetailPanel } from '../ui/taskDetailPanel';
 import { Logger } from '../utils/logger';
 import { GorevTreeItem } from '../providers/gorevTreeProvider';
@@ -177,8 +178,11 @@ export function registerGorevCommands(
 
   // Change Parent
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.CHANGE_PARENT, async (item: GorevTreeItem) => {
+    vscode.commands.registerCommand(COMMANDS.CHANGE_PARENT, async (item: GorevTreeItem | { task: Gorev }) => {
       try {
+        // Support both GorevTreeItem (from tree view) and { task: Gorev } (from task detail panel)
+        const task = 'task' in item ? item.task : item;
+        
         // Use REST API to get all tasks
         const response = await apiClient.getTasks({
           tum_projeler: true,
@@ -188,13 +192,17 @@ export function registerGorevCommands(
           throw new Error(t('error.fetchTasks'));
         }
 
-        // Filter out current task and its subtasks (to prevent circular references)
-        const availableTasks = response.data.filter(task => task.id !== item.task.id);
+        // Filter out current task and show only tasks from the same project
+        // (parent and child must be in the same project)
+        const availableTasks = response.data.filter(taskItem => 
+          taskItem.id !== task.id && 
+          taskItem.proje_id === task.proje_id
+        );
 
         const parentChoice = await vscode.window.showQuickPick(
           [
             { label: t('parent.noParent'), value: null },
-            ...availableTasks.map(t => ({ label: t.baslik, value: t.id }))
+            ...availableTasks.map(taskItem => ({ label: taskItem.baslik, value: taskItem.id }))
           ],
           {
             placeHolder: t('input.selectParentTask'),
@@ -204,10 +212,13 @@ export function registerGorevCommands(
         if (!parentChoice) return;
 
         // Use REST API to change parent
-        await apiClient.changeParent(item.task.id, parentChoice.value || '');
+        await apiClient.changeParent(task.id, parentChoice.value || '');
 
         vscode.window.showInformationMessage(t('success.parentChanged'));
         await providers.gorevTreeProvider.refresh();
+        
+        // Refresh task detail panel if open
+        await TaskDetailPanel.refreshIfOpen(task.id);
       } catch (error) {
         if (error instanceof ApiError) {
           Logger.error(`[ChangeParent] API Error ${error.statusCode}:`, error.apiError);
@@ -221,13 +232,19 @@ export function registerGorevCommands(
 
   // Remove Parent (make root task)
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.REMOVE_PARENT, async (item: GorevTreeItem) => {
+    vscode.commands.registerCommand(COMMANDS.REMOVE_PARENT, async (item: GorevTreeItem | { task: Gorev }) => {
       try {
+        // Support both GorevTreeItem (from tree view) and { task: Gorev } (from task detail panel)
+        const task = 'task' in item ? item.task : item;
+        
         // Use REST API to remove parent (empty string makes it root)
-        await apiClient.changeParent(item.task.id, '');
+        await apiClient.changeParent(task.id, '');
 
         vscode.window.showInformationMessage(t('success.taskIsRootNow'));
         await providers.gorevTreeProvider.refresh();
+        
+        // Refresh task detail panel if open
+        await TaskDetailPanel.refreshIfOpen(task.id);
       } catch (error) {
         if (error instanceof ApiError) {
           Logger.error(`[RemoveParent] API Error ${error.statusCode}:`, error.apiError);
@@ -241,8 +258,11 @@ export function registerGorevCommands(
 
   // Add Dependency
   context.subscriptions.push(
-    vscode.commands.registerCommand(COMMANDS.ADD_DEPENDENCY, async (item: GorevTreeItem) => {
+    vscode.commands.registerCommand(COMMANDS.ADD_DEPENDENCY, async (item: GorevTreeItem | { task: Gorev }) => {
       try {
+        // Support both GorevTreeItem (from tree view) and { task: Gorev } (from task detail panel)
+        const task = 'task' in item ? item.task : item;
+        
         // Use REST API to get all tasks
         const response = await apiClient.getTasks({
           tum_projeler: true,
@@ -253,7 +273,7 @@ export function registerGorevCommands(
         }
 
         // Filter out current task
-        const availableTasks = response.data.filter(task => task.id !== item.task.id);
+        const availableTasks = response.data.filter(t => t.id !== task.id);
 
         if (availableTasks.length === 0) {
           vscode.window.showInformationMessage(t('info.noTasksForDependency'));
@@ -261,23 +281,23 @@ export function registerGorevCommands(
         }
 
         // Create quick pick items with status icons
-        const quickPickItems = availableTasks.map(task => ({
-          label: `${task.durum === 'tamamlandi' ? '✓' : task.durum === 'devam_ediyor' ? '▶' : '○'} ${task.baslik}`,
-          description: task.durum === 'tamamlandi' ? t('status.completed') : task.durum === 'devam_ediyor' ? t('status.inProgress') : t('status.pending'),
-          value: task.id
+        const quickPickItems = availableTasks.map(taskItem => ({
+          label: `${taskItem.durum === 'tamamlandi' ? '✓' : taskItem.durum === 'devam_ediyor' ? '▶' : '○'} ${taskItem.baslik}`,
+          description: taskItem.durum === 'tamamlandi' ? t('status.completed') : taskItem.durum === 'devam_ediyor' ? t('status.inProgress') : t('status.pending'),
+          value: taskItem.id
         }));
 
         const selectedTask = await vscode.window.showQuickPick(
           quickPickItems,
           {
-            placeHolder: t('input.selectDependency', item.task.baslik),
+            placeHolder: t('input.selectDependency', task.baslik),
           }
         );
 
         if (!selectedTask) return;
 
         // Use REST API to add dependency
-        await apiClient.addDependency(item.task.id, {
+        await apiClient.addDependency(task.id, {
           kaynak_id: selectedTask.value,
           baglanti_tipi: 'bagimli', // depends on
         });
