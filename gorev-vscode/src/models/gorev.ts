@@ -29,12 +29,12 @@ export interface GorevDetay extends Gorev {
 
 export interface GorevHiyerarsi {
   gorev: Gorev;
-  ust_gorevler: Gorev[];
-  toplam_alt_gorev: number;
-  tamamlanan_alt: number;
-  devam_eden_alt: number;
-  beklemede_alt: number;
-  ilerleme_yuzdesi: number;
+  parent_tasks: Gorev[];  // Backend sends "parent_tasks" not "ust_gorevler"
+  total_subtasks: number;
+  completed_subtasks: number;
+  in_progress_subtasks: number;
+  pending_subtasks: number;
+  progress_percentage: number;
 }
 
 export interface Bagimlilik {
