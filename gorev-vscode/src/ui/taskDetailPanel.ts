@@ -86,6 +86,18 @@ export class TaskDetailPanel {
         TaskDetailPanel.currentPanel = new TaskDetailPanel(panel, apiClient, task, extensionUri);
     }
     
+    /**
+     * Refresh the current panel if it's open and matches the given task ID.
+     * If no taskId is provided, refreshes the current panel regardless of task.
+     */
+    public static async refreshIfOpen(taskId?: string): Promise<void> {
+        if (TaskDetailPanel.currentPanel) {
+            if (!taskId || TaskDetailPanel.currentPanel.task.id === taskId) {
+                await TaskDetailPanel.currentPanel.update();
+            }
+        }
+    }
+    
     private async update() {
         try {
             // Get fresh task details from server using REST API
@@ -103,6 +115,35 @@ export class TaskDetailPanel {
                 }
             } catch (err) {
                 Logger.debug('Hierarchy info not available:', err);
+            }
+            
+            // Get dependencies for this task
+            try {
+                const depsResult = await this.apiClient.getDependencies(this.task.id);
+                if (depsResult.success && depsResult.data) {
+                    // Convert to frontend format (bagimliliklar)
+                    this.task.bagimliliklar = depsResult.data
+                        .filter(dep => dep.target_id === this.task.id) // Dependencies where this task is the target
+                        .map(dep => ({
+                            kaynak_id: dep.source_id,
+                            hedef_id: dep.target_id,
+                            baglanti_tip: dep.connection_type,
+                            hedef_baslik: dep.source_title, // The source is what we depend on
+                            hedef_durum: dep.source_status as GorevDurum,
+                        }));
+                    
+                    // Update dependency counts
+                    this.task.bagimli_gorev_sayisi = this.task.bagimliliklar.length;
+                    this.task.tamamlanmamis_bagimlilik_sayisi = this.task.bagimliliklar.filter(
+                        d => d.hedef_durum !== GorevDurum.Tamamlandi
+                    ).length;
+                    
+                    // Count tasks that depend on this task
+                    this.task.bu_goreve_bagimli_sayisi = depsResult.data
+                        .filter(dep => dep.source_id === this.task.id).length;
+                }
+            } catch (err) {
+                Logger.debug('Dependencies not available:', err);
             }
             
             // Update webview content
@@ -175,18 +216,18 @@ export class TaskDetailPanel {
             Logger.debug('Calculated progress percentage:', stats.ilerlemeYuzdesi);
         }
         
-        // Ensure ilerleme_yuzdesi is always a valid number
+        // Ensure progress_percentage is always a valid number
         const progressPercentage = stats.ilerlemeYuzdesi || 0;
         const validPercentage = isNaN(progressPercentage) ? 0 : Math.min(100, Math.max(0, progressPercentage));
         
         this.hierarchyInfo = {
             gorev: this.task,
-            ust_gorevler: [],
-            toplam_alt_gorev: stats.toplamAltGorev || 0,
-            tamamlanan_alt: stats.tamamlananAlt || 0,
-            devam_eden_alt: stats.devamEdenAlt || 0,
-            beklemede_alt: stats.beklemedeAlt || 0,
-            ilerleme_yuzdesi: validPercentage
+            parent_tasks: [],
+            total_subtasks: stats.toplamAltGorev || 0,
+            completed_subtasks: stats.tamamlananAlt || 0,
+            in_progress_subtasks: stats.devamEdenAlt || 0,
+            pending_subtasks: stats.beklemedeAlt || 0,
+            progress_percentage: validPercentage
         };
         
         Logger.debug('Final hierarchy info:', this.hierarchyInfo);
@@ -480,6 +521,22 @@ export class TaskDetailPanel {
         if (createSubtaskBtn) {
             createSubtaskBtn.addEventListener('click', function() {
                 vscode.postMessage({ command: 'createSubtask' });
+            });
+        }
+        
+        // Handle change parent button
+        const changeParentBtn = document.getElementById('changeParentBtn');
+        if (changeParentBtn) {
+            changeParentBtn.addEventListener('click', function() {
+                vscode.postMessage({ command: 'changeParent' });
+            });
+        }
+        
+        // Handle remove parent button
+        const removeParentBtn = document.getElementById('removeParentBtn');
+        if (removeParentBtn) {
+            removeParentBtn.addEventListener('click', function() {
+                vscode.postMessage({ command: 'removeParent' });
             });
         }
         
@@ -909,8 +966,8 @@ export class TaskDetailPanel {
         breadcrumbHtml += `<a href="#" class="breadcrumb-item">${this.escapeHtml(projectName)}</a>`;
         
         // Add parent task chain if available from hierarchy info
-        if (this.hierarchyInfo && this.hierarchyInfo.ust_gorevler && this.hierarchyInfo.ust_gorevler.length > 0) {
-            for (const parentTask of this.hierarchyInfo.ust_gorevler) {
+        if (this.hierarchyInfo && this.hierarchyInfo.parent_tasks && this.hierarchyInfo.parent_tasks.length > 0) {
+            for (const parentTask of this.hierarchyInfo.parent_tasks) {
                 breadcrumbHtml += `
                     <i class="codicon codicon-chevron-right"></i>
                     <a href="#" class="breadcrumb-item">${this.escapeHtml(parentTask.baslik)}</a>`;
@@ -919,7 +976,7 @@ export class TaskDetailPanel {
             // Fallback: indicate there's a parent but we don't have full hierarchy
             breadcrumbHtml += `
                 <i class="codicon codicon-chevron-right"></i>
-                <a href="#" class="breadcrumb-item">Üst Görev</a>`;
+                <a href="#" class="breadcrumb-item">${t('taskDetail.parentTaskLabel')}</a>`;
         }
         
         // Current task
@@ -934,7 +991,7 @@ export class TaskDetailPanel {
     private renderEnhancedHierarchySection(): string {
         // Check both hierarchyInfo and task.alt_gorevler
         const hasSubtasks = (this.task.alt_gorevler && this.task.alt_gorevler.length > 0);
-        const hasHierarchyInfo = this.hierarchyInfo && this.hierarchyInfo.toplam_alt_gorev > 0;
+        const hasHierarchyInfo = this.hierarchyInfo && this.hierarchyInfo.total_subtasks > 0;
         const hasHierarchy = hasSubtasks || hasHierarchyInfo || this.task.parent_id;
         
         // Calculate progress from task.alt_gorevler if hierarchyInfo is not available
@@ -950,12 +1007,12 @@ export class TaskDetailPanel {
             
             progressInfo = {
                 gorev: this.task,
-                ust_gorevler: [],
-                toplam_alt_gorev: totalSubtasks,
-                tamamlanan_alt: completedSubtasks,
-                devam_eden_alt: inProgressSubtasks,
-                beklemede_alt: pendingSubtasks,
-                ilerleme_yuzdesi: progressPercentage
+                parent_tasks: [],
+                total_subtasks: totalSubtasks,
+                completed_subtasks: completedSubtasks,
+                in_progress_subtasks: inProgressSubtasks,
+                pending_subtasks: pendingSubtasks,
+                progress_percentage: progressPercentage
             };
         }
         
@@ -965,7 +1022,7 @@ export class TaskDetailPanel {
                 
                 ${hasHierarchy ? `
                     <!-- Progress Overview -->
-                    ${progressInfo && progressInfo.toplam_alt_gorev > 0 ? `
+                    ${progressInfo && progressInfo.total_subtasks > 0 ? `
                         <div class="progress-overview">
                             <div class="circular-progress">
                                 <svg viewBox="0 0 36 36" class="circular-chart">
@@ -975,26 +1032,26 @@ export class TaskDetailPanel {
                                         a 15.9155 15.9155 0 0 1 0 -31.831"
                                     />
                                     <path class="circle"
-                                        stroke-dasharray="${progressInfo.ilerleme_yuzdesi || 0}, 100"
+                                        stroke-dasharray="${progressInfo.progress_percentage || 0}, 100"
                                         d="M18 2.0845
                                         a 15.9155 15.9155 0 0 1 0 31.831
                                         a 15.9155 15.9155 0 0 1 0 -31.831"
                                     />
                                 </svg>
-                                <div class="percentage-overlay">${Math.round(progressInfo.ilerleme_yuzdesi || 0)}%</div>
+                                <div class="percentage-overlay">${Math.round(progressInfo.progress_percentage || 0)}%</div>
                             </div>
                             <div class="progress-details">
                                 <div class="stat-item">
-                                    <span class="stat-value">${progressInfo.toplam_alt_gorev}</span>
-                                    <span class="stat-label">Toplam</span>
+                                    <span class="stat-value">${progressInfo.total_subtasks}</span>
+                                    <span class="stat-label">${t('taskDetail.totalSubtasks')}</span>
                                 </div>
                                 <div class="stat-item success">
-                                    <span class="stat-value">${progressInfo.tamamlanan_alt}</span>
-                                    <span class="stat-label">Tamamlandı</span>
+                                    <span class="stat-value">${progressInfo.completed_subtasks}</span>
+                                    <span class="stat-label">${t('taskDetail.completedSubtasks')}</span>
                                 </div>
                                 <div class="stat-item warning">
-                                    <span class="stat-value">${progressInfo.devam_eden_alt || 0}</span>
-                                    <span class="stat-label">Devam Ediyor</span>
+                                    <span class="stat-value">${progressInfo.in_progress_subtasks || 0}</span>
+                                    <span class="stat-label">${t('taskDetail.inProgressSubtasks')}</span>
                                 </div>
                             </div>
                         </div>
@@ -1007,21 +1064,21 @@ export class TaskDetailPanel {
                 ` : `
                     <div class="empty-state">
                         <i class="codicon codicon-type-hierarchy"></i>
-                        <p>Bu görev henüz bir hiyerarşiye sahip değil</p>
+                        <p>${t('taskDetail.noHierarchy')}</p>
                     </div>
                 `}
                 
                 <div class="hierarchy-actions">
                     <button class="action-button small" id="createSubtaskBtn">
-                        <i class="codicon codicon-add"></i> Alt Görev
+                        <i class="codicon codicon-add"></i> ${t('taskDetail.subtask')}
                     </button>
                     ${this.task.parent_id ? `
-                        <button class="action-button small" onclick="vscode.postMessage({command: 'removeParent'})">
-                            <i class="codicon codicon-ungroup-by-ref-type"></i> Bağımsız Yap
+                        <button class="action-button small" id="removeParentBtn">
+                            <i class="codicon codicon-ungroup-by-ref-type"></i> ${t('taskDetail.makeIndependent')}
                         </button>
                     ` : `
-                        <button class="action-button small" onclick="vscode.postMessage({command: 'changeParent'})">
-                            <i class="codicon codicon-type-hierarchy-sub"></i> Üst Görev Ata
+                        <button class="action-button small" id="changeParentBtn">
+                            <i class="codicon codicon-type-hierarchy-sub"></i> ${t('taskDetail.assignParent')}
                         </button>
                     `}
                 </div>
@@ -1033,32 +1090,51 @@ export class TaskDetailPanel {
         // Show actual task hierarchy
         let treeHtml = '';
         
-        // If task has parent, show it
-        if (this.task.parent_id) {
+        // If task has parent, show parent tasks from hierarchy info
+        if (this.task.parent_id && this.hierarchyInfo?.parent_tasks && this.hierarchyInfo.parent_tasks.length > 0) {
+            // Show all parent tasks in order (top-most first)
+            const parents = [...this.hierarchyInfo.parent_tasks].reverse();
+            parents.forEach((parent, index) => {
+                const indent = index > 0 ? 'style="margin-left: ' + (index * 16) + 'px;"' : '';
+                treeHtml += `
+                    <div class="tree-item parent" ${indent}>
+                        <span class="tree-icon"><i class="codicon codicon-chevron-down"></i></span>
+                        <span class="tree-content" onclick="vscode.postMessage({command: 'openTask', taskId: '${parent.id}'})">
+                            <i class="codicon codicon-symbol-class"></i> ${this.escapeHtml(parent.baslik)}
+                        </span>
+                    </div>
+                `;
+            });
+        } else if (this.task.parent_id) {
+            // Fallback: show generic parent label if hierarchy info not available
             treeHtml += `
                 <div class="tree-item parent">
                     <span class="tree-icon"><i class="codicon codicon-chevron-down"></i></span>
                     <span class="tree-content">
-                        <i class="codicon codicon-symbol-class"></i> Üst Görev
+                        <i class="codicon codicon-symbol-class"></i> ${t('taskDetail.parentTaskLabel')}
                     </span>
                 </div>
             `;
         }
         
+        // Calculate indent for current task based on parent count
+        const parentCount = this.hierarchyInfo?.parent_tasks?.length || (this.task.parent_id ? 1 : 0);
+        const currentIndent = parentCount > 0 ? 'style="margin-left: ' + (parentCount * 16) + 'px;"' : '';
+        
         // Show current task
         treeHtml += `
-            <div class="tree-item ${this.task.parent_id ? 'child' : ''} current">
+            <div class="tree-item ${this.task.parent_id ? 'child' : ''} current" ${currentIndent}>
                 <span class="tree-icon"></span>
                 <span class="tree-content">
                     <i class="codicon codicon-circle-filled"></i> ${this.escapeHtml(this.task.baslik)}
-                    <span class="tree-badge">Şu an</span>
+                    <span class="tree-badge">${t('taskDetail.currentTask')}</span>
                 </span>
             </div>
         `;
         
         // Show subtasks if any
         if (this.task.alt_gorevler && this.task.alt_gorevler.length > 0) {
-            treeHtml += this.renderSubtasks(this.task.alt_gorevler, 1);
+            treeHtml += this.renderSubtasks(this.task.alt_gorevler, parentCount + 1);
         }
         
         return treeHtml;
@@ -1202,14 +1278,14 @@ export class TaskDetailPanel {
         if (this.task.bagimliliklar && this.task.bagimliliklar.length > 0) {
             html += `
                 <div class="dependency-list compact">
-                    <h4>Bağımlı Olduğu Görevler:</h4>
+                    <h4>${t('taskDetail.dependsOnTasks')}</h4>
                     ${this.task.bagimliliklar.map((dep) => `
                         <div class="dependency-item">
                             <span class="dep-status ${this.getDepStatusClass(dep.hedef_durum || 'beklemede')}">
                                 <i class="codicon ${this.getDepStatusIcon(dep.hedef_durum || 'beklemede')}"></i>
                             </span>
-                            <span class="dep-title">${this.escapeHtml(dep.hedef_baslik || 'Görev')}</span>
-                            <button class="link-button" onclick="vscode.postMessage({command: 'openTask', taskId: '${dep.hedef_id}'})" title="Görevi Aç">
+                            <span class="dep-title">${this.escapeHtml(dep.hedef_baslik || t('taskDetail.task'))}</span>
+                            <button class="link-button" onclick="vscode.postMessage({command: 'openTask', taskId: '${dep.hedef_id}'})" title="${t('taskDetail.openTask')}">
                                 <i class="codicon codicon-arrow-right"></i>
                             </button>
                         </div>
@@ -1220,7 +1296,7 @@ export class TaskDetailPanel {
         
         html += `
                 <button class="add-button" id="addDependencyBtn" onclick="vscode.postMessage({command: 'addDependency'})">
-                    <i class="codicon codicon-add"></i> Bağımlılık Ekle
+                    <i class="codicon codicon-add"></i> ${t('taskDetail.addDependency')}
                 </button>
             </div>
         `;
@@ -1242,7 +1318,7 @@ export class TaskDetailPanel {
             <div class="timeline-item">
                 <span class="timeline-icon"><i class="codicon codicon-add"></i></span>
                 <div class="timeline-content">
-                    <div class="timeline-title">Oluşturuldu</div>
+                    <div class="timeline-title">${t('taskDetail.createdAt')}</div>
                     <div class="timeline-time">${this.formatRelativeTime(this.task.olusturma_tarihi)}</div>
                 </div>
             </div>
@@ -1254,7 +1330,7 @@ export class TaskDetailPanel {
                 <div class="timeline-item">
                     <span class="timeline-icon"><i class="codicon codicon-debug-start"></i></span>
                     <div class="timeline-content">
-                        <div class="timeline-title">Başlatıldı</div>
+                        <div class="timeline-title">${t('taskDetail.started')}</div>
                         <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarihi)}</div>
                     </div>
                 </div>
@@ -1266,7 +1342,7 @@ export class TaskDetailPanel {
                     <div class="timeline-item">
                         <span class="timeline-icon"><i class="codicon codicon-debug-start"></i></span>
                         <div class="timeline-content">
-                            <div class="timeline-title">Başlatıldı</div>
+                            <div class="timeline-title">${t('taskDetail.started')}</div>
                             <div class="timeline-time">-</div>
                         </div>
                     </div>
@@ -1278,7 +1354,7 @@ export class TaskDetailPanel {
                 <div class="timeline-item">
                     <span class="timeline-icon"><i class="codicon codicon-pass-filled"></i></span>
                     <div class="timeline-content">
-                        <div class="timeline-title">Tamamlandı</div>
+                        <div class="timeline-title">${t('status.completed')}</div>
                         <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarihi)}</div>
                     </div>
                 </div>
@@ -1293,7 +1369,7 @@ export class TaskDetailPanel {
                 <div class="timeline-item">
                     <span class="timeline-icon"><i class="codicon codicon-edit"></i></span>
                     <div class="timeline-content">
-                        <div class="timeline-title">Güncellendi</div>
+                        <div class="timeline-title">${t('taskDetail.updated')}</div>
                         <div class="timeline-time">${this.formatRelativeTime(this.task.guncelleme_tarihi)}</div>
                     </div>
                 </div>
@@ -1326,7 +1402,7 @@ export class TaskDetailPanel {
                     <rect x="${50 + (index * 120)}" y="20" width="100" height="40" rx="5"
                           class="dep-node status-${dep.hedef_durum || 'beklemede'}" />
                     <text x="${100 + (index * 120)}" y="45" text-anchor="middle" class="node-text">
-                        ${this.escapeHtml((dep.hedef_baslik || 'Görev').substring(0, 10))}...
+                        ${this.escapeHtml((dep.hedef_baslik || t('taskDetail.task')).substring(0, 10))}...
                     </text>
                     <line x1="${100 + (index * 120)}" y1="60" x2="200" y2="80"
                           stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" />
@@ -1396,7 +1472,7 @@ export class TaskDetailPanel {
             }
         } catch (error) {
             Logger.error('Error handling webview message:', error);
-            vscode.window.showErrorMessage(`İşlem başarısız: ${error}`);
+            vscode.window.showErrorMessage(t('taskDetail.operationFailed', String(error)));
         }
     }
     
@@ -1407,18 +1483,18 @@ export class TaskDetailPanel {
         await this.apiClient.updateTask(this.task.id, updates);
         (this.task as unknown as Record<string, unknown>)[field] = value;
 
-        vscode.window.showInformationMessage('Görev güncellendi');
+        vscode.window.showInformationMessage(t('taskDetail.taskUpdated'));
     }
     
     private async showStatusPicker() {
         const items = [
-            { label: 'Beklemede', value: GorevDurum.Beklemede },
-            { label: 'Devam Ediyor', value: GorevDurum.DevamEdiyor },
-            { label: 'Tamamlandı', value: GorevDurum.Tamamlandi }
+            { label: t('taskDetail.status.pending'), value: GorevDurum.Beklemede },
+            { label: t('taskDetail.status.inProgress'), value: GorevDurum.DevamEdiyor },
+            { label: t('taskDetail.status.completed'), value: GorevDurum.Tamamlandi }
         ];
         
         const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: 'Yeni durum seçin'
+            placeHolder: t('taskDetail.selectNewStatus')
         });
 
         if (selected) {
@@ -1439,17 +1515,19 @@ export class TaskDetailPanel {
     }
     
     private async deleteTask() {
+        const yesDelete = t('taskDetail.yesDelete');
+        const cancel = t('common.cancel');
         const confirm = await vscode.window.showWarningMessage(
-            `"${this.task.baslik}" görevini silmek istediğinizden emin misiniz?`,
-            'Evet, Sil',
-            'İptal'
+            t('taskDetail.confirmDeleteWithTitle', this.task.baslik),
+            yesDelete,
+            cancel
         );
         
-        if (confirm === 'Evet, Sil') {
+        if (confirm === yesDelete) {
             await this.apiClient.deleteTask(this.task.id);
 
             this.panel.dispose();
-            vscode.window.showInformationMessage('Görev silindi');
+            vscode.window.showInformationMessage(t('taskDetail.taskDeleted'));
 
             // Refresh the tree view
             await vscode.commands.executeCommand('gorev.refreshTasks');
@@ -1469,14 +1547,14 @@ export class TaskDetailPanel {
     
     private async handleInsertLink(selectedText?: string) {
         const url = await vscode.window.showInputBox({
-            prompt: 'Link URL\'sini girin',
+            prompt: t('taskDetail.enterLinkUrl'),
             placeHolder: 'https://example.com'
         });
         
         if (url) {
             const linkText = selectedText || await vscode.window.showInputBox({
-                prompt: 'Link metni',
-                placeHolder: 'Link açıklaması',
+                prompt: t('taskDetail.linkText'),
+                placeHolder: t('taskDetail.linkDescription'),
                 value: selectedText || ''
             }) || url;
             
@@ -1489,16 +1567,16 @@ export class TaskDetailPanel {
     
     private async handleInsertImage() {
         const url = await vscode.window.showInputBox({
-            prompt: 'Resim URL\'sini girin',
+            prompt: t('taskDetail.enterImageUrl'),
             placeHolder: 'https://example.com/image.png'
         });
         
         if (url) {
             const altText = await vscode.window.showInputBox({
-                prompt: 'Alternatif metin',
-                placeHolder: 'Resim açıklaması',
-                value: 'Resim'
-            }) || 'Resim';
+                prompt: t('taskDetail.altText'),
+                placeHolder: t('taskDetail.imageDescription'),
+                value: t('taskDetail.imageLabel')
+            }) || t('taskDetail.imageLabel');
             
             this.panel.webview.postMessage({
                 command: 'insertText',
@@ -1509,8 +1587,8 @@ export class TaskDetailPanel {
     
     private async handleInsertCodeBlock() {
         const language = await vscode.window.showInputBox({
-            prompt: 'Programlama dili (opsiyonel)',
-            placeHolder: 'javascript, python, go, vb.'
+            prompt: t('taskDetail.programmingLanguage'),
+            placeHolder: t('taskDetail.languageExamples')
         }) || '';
         
         this.panel.webview.postMessage({
@@ -1522,7 +1600,7 @@ export class TaskDetailPanel {
     
     private async handleInsertTable() {
         const colsStr = await vscode.window.showInputBox({
-            prompt: 'Kolon sayısını girin',
+            prompt: t('taskDetail.enterColumnCount'),
             placeHolder: '3',
             value: '3'
         });
@@ -1531,7 +1609,7 @@ export class TaskDetailPanel {
             const cols = parseInt(colsStr) || 3;
             let table = '\n| ';
             for (let i = 0; i < cols; i++) {
-                table += `Başlık ${i + 1} | `;
+                table += `${t('taskDetail.headerN', i + 1)} | `;
             }
             table += '\n| ';
             for (let i = 0; i < cols; i++) {
@@ -1539,7 +1617,7 @@ export class TaskDetailPanel {
             }
             table += '\n| ';
             for (let i = 0; i < cols; i++) {
-                table += 'Hücre | ';
+                table += `${t('taskDetail.cell')} | `;
             }
             table += '\n';
             
@@ -1552,7 +1630,7 @@ export class TaskDetailPanel {
     
     private async showDependencyPicker() {
         // Show task picker for adding dependency
-        vscode.commands.executeCommand('gorev.addDependency', this.task.id);
+        vscode.commands.executeCommand('gorev.addDependency', { task: this.task });
     }
     
     private async openTask(taskId: string) {
@@ -1645,13 +1723,13 @@ export class TaskDetailPanel {
         const diffDays = Math.floor(diffHours / 24);
         
         if (diffSecs < 60) {
-            return 'Az önce';
+            return t('taskDetail.justNow');
         } else if (diffMins < 60) {
-            return `${diffMins} dakika önce`;
+            return t('taskDetail.minutesAgo', diffMins);
         } else if (diffHours < 24) {
-            return `${diffHours} saat önce`;
+            return t('taskDetail.hoursAgo', diffHours);
         } else if (diffDays < 7) {
-            return `${diffDays} gün önce`;
+            return t('taskDetail.daysAgo', diffDays);
         } else {
             return this.formatDate(dateStr);
         }

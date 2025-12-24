@@ -207,7 +207,7 @@ func (s *APIServer) dispatchMCPTool(handlers *mcp.Handlers, toolName string, par
 		result, err = handlers.GorevFileWatch(params)
 
 	// Unified IDE management handler
-	case "ide_manage":
+	case "gorev_ide":
 		result, err = handlers.IDEManage(params)
 
 	// Unified AI context handler
@@ -289,7 +289,7 @@ func (s *APIServer) dispatchMCPTool(handlers *mcp.Handlers, toolName string, par
 			{"name": "gorev_bulk", "description": "Bulk operations (unified: transition|tag|update)", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"operation": map[string]interface{}{"type": "string", "enum": []string{"transition", "tag", "update"}}, "ids": map[string]interface{}{"type": "array"}, "data": map[string]interface{}{"type": "object"}}, "required": []string{"operation", "ids"}}},
 			{"name": "gorev_filter_profile", "description": "Filter profiles (unified: save|load|list|delete)", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"action": map[string]interface{}{"type": "string", "enum": []string{"save", "load", "list", "delete"}}, "name": map[string]interface{}{"type": "string"}}, "required": []string{"action"}}},
 			{"name": "gorev_file_watch", "description": "File watching (unified: add|remove|list|stats)", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"action": map[string]interface{}{"type": "string", "enum": []string{"add", "remove", "list", "stats"}}, "file_path": map[string]interface{}{"type": "string"}}, "required": []string{"action"}}},
-			{"name": "ide_manage", "description": "IDE management (unified: detect|install|uninstall|status|update)", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"action": map[string]interface{}{"type": "string", "enum": []string{"detect", "install", "uninstall", "status", "update"}}, "ide": map[string]interface{}{"type": "string"}}, "required": []string{"action"}}},
+			{"name": "gorev_ide", "description": "IDE management (unified: detect|install|uninstall|status|update)", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"action": map[string]interface{}{"type": "string", "enum": []string{"detect", "install", "uninstall", "status", "update"}}, "ide_type": map[string]interface{}{"type": "string"}}, "required": []string{"action"}}},
 			{"name": "gorev_context", "description": "AI context (unified: set_active|get_active|recent|summary)", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"action": map[string]interface{}{"type": "string", "enum": []string{"set_active", "get_active", "recent", "summary"}}, "task_id": map[string]interface{}{"type": "string"}}, "required": []string{"action"}}},
 			{"name": "gorev_search", "description": "Search tasks (unified: nlp|advanced|history)", "inputSchema": map[string]interface{}{"type": "object", "properties": map[string]interface{}{"mode": map[string]interface{}{"type": "string", "enum": []string{"nlp", "advanced", "history"}}, "query": map[string]interface{}{"type": "string"}}, "required": []string{"mode"}}},
 

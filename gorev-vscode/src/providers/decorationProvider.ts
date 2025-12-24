@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Gorev, GorevDurum, GorevOncelik } from '../models/gorev';
 import { TaskTreeViewItem } from './enhancedGorevTreeProvider';
 import { COLORS } from '../utils/constants';
+import { t } from '../utils/l10n';
 
 /**
  * Task decoration provider for visual enhancements
@@ -101,10 +102,10 @@ export class TaskDecorationProvider implements vscode.FileDecorationProvider {
      */
     private getStatusBadge(task: Gorev): { badge: string; tooltip?: string } | undefined {
         if (task.durum === GorevDurum.Tamamlandi) {
-            return { badge: '✓', tooltip: 'Tamamlandı' };
+            return { badge: '✓', tooltip: t('decoration.completed') };
         }
         if (task.durum === GorevDurum.DevamEdiyor) {
-            return { badge: '▶', tooltip: 'Devam ediyor' };
+            return { badge: '▶', tooltip: t('decoration.inProgress') };
         }
         return undefined;
     }
@@ -122,19 +123,19 @@ export class TaskDecorationProvider implements vscode.FileDecorationProvider {
                 return { 
                     badge: '🔥', 
                     color: COLORS.HIGH_PRIORITY,
-                    tooltip: 'Yüksek öncelik' 
+                    tooltip: t('decoration.highPriority') 
                 };
             case GorevOncelik.Orta:
                 return { 
                     badge: '⚡', 
                     color: COLORS.MEDIUM_PRIORITY,
-                    tooltip: 'Orta öncelik' 
+                    tooltip: t('decoration.mediumPriority') 
                 };
             case GorevOncelik.Dusuk:
                 return { 
                     badge: 'ℹ', 
                     color: COLORS.LOW_PRIORITY,
-                    tooltip: 'Düşük öncelik' 
+                    tooltip: t('decoration.lowPriority') 
                 };
         }
     }
@@ -164,38 +165,38 @@ export class TaskDecorationProvider implements vscode.FileDecorationProvider {
         if (dueDate < today) {
             // Overdue
             return { 
-                badge: `📅 ${Math.abs(diffDays)}g gecikmiş`, 
+                badge: `📅 ${t('decoration.daysOverdueShort', Math.abs(diffDays))}`, 
                 color: 'errorForeground',
-                tooltip: `${Math.abs(diffDays)} gün gecikmiş!` 
+                tooltip: t('decoration.daysOverdue', Math.abs(diffDays))
             };
         } else if (dueDate >= today && dueDate < tomorrow) {
             // Due today
             return { 
-                badge: '📅 Bugün', 
+                badge: `📅 ${t('decoration.today')}`, 
                 color: 'warningForeground',
-                tooltip: 'Bugün teslim!' 
+                tooltip: t('decoration.dueToday')
             };
         } else if (dueDate >= tomorrow && dueDate < dayAfterTomorrow) {
             // Due tomorrow
             return { 
-                badge: '📅 Yarın', 
+                badge: `📅 ${t('decoration.tomorrow')}`, 
                 color: 'warningForeground',
-                tooltip: 'Yarın teslim' 
+                tooltip: t('decoration.dueTomorrow')
             };
         } else if (dueDate < nextWeek) {
             // Due this week
             return { 
-                badge: `📅 ${diffDays}g`, 
+                badge: `📅 ${t('decoration.daysShort', diffDays)}`, 
                 color: 'editorWarning.foreground',
-                tooltip: `${diffDays} gün içinde teslim` 
+                tooltip: t('decoration.dueInDays', diffDays)
             };
         } else {
             // Due later
             const weeks = Math.floor(diffDays / 7);
             if (weeks > 0) {
                 return { 
-                    badge: `📅 ${weeks}h`, 
-                    tooltip: `${weeks} hafta içinde teslim` 
+                    badge: `📅 ${t('decoration.weeksShort', weeks)}`, 
+                    tooltip: t('decoration.dueInWeeks', weeks)
                 };
             } else {
                 return { 

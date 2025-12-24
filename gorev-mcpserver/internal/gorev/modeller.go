@@ -23,6 +23,17 @@ type Gorev struct {
 	DependencyCount            int `json:"dependency_count"`
 	UncompletedDependencyCount int `json:"uncompleted_dependency_count"`
 	DependentOnThisCount       int `json:"dependent_on_this_count"`
+	// Dependencies - For task detail panel (Turkish field names for VS Code extension)
+	Bagimliliklar []Bagimlilik `json:"bagimliliklar,omitempty"`
+}
+
+// Bagimlilik bağımlılık bilgisi (dependency info for VS Code extension)
+type Bagimlilik struct {
+	KaynakID    string `json:"kaynak_id"`
+	HedefID     string `json:"hedef_id"`
+	BaglantiTip string `json:"baglanti_tip"`
+	HedefBaslik string `json:"hedef_baslik,omitempty"`
+	HedefDurum  string `json:"hedef_durum,omitempty"`
 }
 
 // Etiket görevleri kategorize etmek için kullanılır (tag for categorizing tasks)

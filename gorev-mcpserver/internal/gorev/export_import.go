@@ -6,13 +6,43 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/msenol/gorev/internal/constants"
 	"github.com/msenol/gorev/internal/i18n"
 )
+
+// NormalizePath normalizes a file path by expanding home directory (~)
+// and converting relative paths to absolute paths
+func NormalizePath(path string) (string, error) {
+	if path == "" {
+		return "", fmt.Errorf("path cannot be empty")
+	}
+
+	// Expand home directory (~)
+	if strings.HasPrefix(path, "~/") {
+		usr, err := user.Current()
+		if err != nil {
+			return "", fmt.Errorf("failed to get home directory: %w", err)
+		}
+		path = filepath.Join(usr.HomeDir, path[2:])
+	}
+
+	// Convert relative paths to absolute
+	if !filepath.IsAbs(path) {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve absolute path: %w", err)
+		}
+		path = absPath
+	}
+
+	return path, nil
+}
 
 // ExportFormat defines the structure of exported data
 type ExportFormat struct {
@@ -260,17 +290,23 @@ func (iy *IsYonetici) SaveExportToFile(ctx context.Context, exportData *ExportFo
 		return fmt.Errorf(i18n.T("error.invalidExportOptions", map[string]interface{}{"Error": err}))
 	}
 
+	// Normalize output path (expand ~ and resolve relative paths)
+	outputPath, err := NormalizePath(options.OutputPath)
+	if err != nil {
+		return fmt.Errorf(i18n.T("error.invalidOutputPath", map[string]interface{}{"Error": err}))
+	}
+
 	// Ensure output directory exists
-	outputDir := filepath.Dir(options.OutputPath)
+	outputDir := filepath.Dir(outputPath)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf(i18n.T("error.failedToCreateDirectory", map[string]interface{}{"Path": outputDir, "Error": err}))
 	}
 
 	switch options.Format {
 	case "json", "":
-		return iy.saveAsJSON(exportData, options.OutputPath)
+		return iy.saveAsJSON(exportData, outputPath)
 	case "csv":
-		return iy.saveAsCSV(exportData, options.OutputPath)
+		return iy.saveAsCSV(exportData, outputPath)
 	default:
 		return fmt.Errorf(i18n.T("error.unsupportedExportFormat", map[string]interface{}{"Format": options.Format}))
 	}
@@ -603,13 +639,19 @@ func (iy *IsYonetici) ImportData(ctx context.Context, options ImportOptions) (*I
 
 // loadImportData loads and parses import data from file
 func (iy *IsYonetici) loadImportData(filePath string) (*ExportFormat, error) {
-	file, err := os.Open(filePath)
+	// Normalize input path (expand ~ and resolve relative paths)
+	normalizedPath, err := NormalizePath(filePath)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.T("error.failedToOpenFile", map[string]interface{}{"Path": filePath, "Error": err}))
+		return nil, fmt.Errorf(i18n.T("error.invalidFilePath", map[string]interface{}{"Error": err}))
+	}
+
+	file, err := os.Open(normalizedPath)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("error.failedToOpenFile", map[string]interface{}{"Path": normalizedPath, "Error": err}))
 	}
 	defer func() {
 		if cerr := file.Close(); cerr != nil {
-			fmt.Printf("Warning: failed to close file %s: %v\n", filePath, cerr)
+			fmt.Printf("Warning: failed to close file %s: %v\n", normalizedPath, cerr)
 		}
 	}()
 
