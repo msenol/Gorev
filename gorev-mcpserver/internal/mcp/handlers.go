@@ -2073,12 +2073,6 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.GorevSil(params)
 	case "gorev_bagimlilik_ekle":
 		return h.GorevBagimlilikEkle(params)
-	case "gorev_altgorev_olustur":
-		return h.GorevAltGorevOlustur(params)
-	case "gorev_ust_degistir":
-		return h.GorevUstDegistir(params)
-	case "gorev_hiyerarsi_goster":
-		return h.GorevHiyerarsiGoster(params)
 	case "proje_olustur":
 		return h.ProjeOlustur(params)
 	case "proje_listele":
@@ -2087,36 +2081,14 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.ProjeGorevleri(params)
 	case "proje_aktif_yap":
 		return h.AktifProjeAyarla(params)
-	case "aktif_proje_ayarla":
-		return h.AktifProjeAyarla(params)
-	case "aktif_proje_goster":
-		return h.AktifProjeGoster(params)
-	case "aktif_proje_kaldir":
-		return h.AktifProjeKaldir(params)
 	case "ozet_goster":
 		return h.OzetGoster(params)
 	case "template_listele":
 		return h.TemplateListele(params)
 	case "templateden_gorev_olustur":
 		return h.TemplatedenGorevOlustur(params)
-	case "gorev_set_active":
-		return h.GorevSetActive(params)
-	case "gorev_get_active":
-		return h.GorevGetActive(params)
-	case "gorev_recent":
-		return h.GorevRecent(params)
-	case "gorev_context_summary":
-		return h.GorevContextSummary(params)
-	case "gorev_batch_update":
-		return h.GorevBatchUpdate(params)
-	case "gorev_bulk_transition":
-		return h.GorevBulkTransition(params)
-	case "gorev_bulk_tag":
-		return h.GorevBulkTag(params)
 	case "gorev_suggestions":
 		return h.GorevSuggestions(params)
-	case "gorev_nlp_query":
-		return h.GorevNLPQuery(params)
 	case "gorev_file_watch_add":
 		return h.GorevFileWatchAdd(params)
 	case "gorev_file_watch_remove":
@@ -2125,32 +2097,27 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.GorevFileWatchList(params)
 	case "gorev_file_watch_stats":
 		return h.GorevFileWatchStats(params)
-	case "gorev_search_advanced":
-		return h.GorevSearchAdvanced(params)
-	case "gorev_filter_profile_save":
-		return h.GorevFilterProfileSave(params)
-	case "gorev_filter_profile_load":
-		return h.GorevFilterProfileLoad(params)
-	case "gorev_filter_profile_list":
-		return h.GorevFilterProfileList(params)
-	case "gorev_filter_profile_delete":
-		return h.GorevFilterProfileDelete(params)
-	case "gorev_search_history":
-		return h.GorevSearchHistory(params)
 	case "gorev_export":
 		return h.GorevExport(params)
 	case "gorev_import":
 		return h.GorevImport(params)
-	case "gorev_ide_detect":
-		return h.IDEDetect(params)
-	case "gorev_ide_install":
-		return h.IDEInstallExtension(params)
-	case "gorev_ide_uninstall":
-		return h.IDEUninstallExtension(params)
-	case "gorev_ide_status":
-		return h.IDEExtensionStatus(params)
-	case "gorev_ide_update":
-		return h.IDEUpdateExtension(params)
+
+	// Unified tools - 8 tools replacing 27 individual tools (37% reduction)
+	case "aktif_proje": // replaces aktif_proje_ayarla, aktif_proje_goster, aktif_proje_kaldir
+		return h.AktifProje(params)
+	case "gorev_hierarchy": // replaces gorev_altgorev_olustur, gorev_ust_degistir, gorev_hiyerarsi_goster
+		return h.GorevHierarchy(params)
+	case "gorev_context": // replaces gorev_set_active, gorev_get_active, gorev_recent, gorev_context_summary
+		return h.GorevContext(params)
+	case "gorev_bulk": // replaces gorev_batch_update, gorev_bulk_transition, gorev_bulk_tag
+		return h.GorevBulk(params)
+	case "gorev_search": // replaces gorev_search_advanced, gorev_nlp_query, gorev_search_history
+		return h.GorevSearch(params)
+	case "gorev_filter_profile": // replaces gorev_filter_profile_save, gorev_filter_profile_load, gorev_filter_profile_list, gorev_filter_profile_delete
+		return h.GorevFilterProfile(params)
+	case "gorev_ide": // replaces gorev_ide_detect, gorev_ide_install, gorev_ide_uninstall, gorev_ide_status, gorev_ide_update
+		return h.IDEManage(params)
+
 	default:
 		return mcp.NewToolResultError(i18n.T("error.unknownTool", map[string]interface{}{"Tool": toolName})), nil
 	}

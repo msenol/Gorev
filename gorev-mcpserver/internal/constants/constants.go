@@ -323,3 +323,74 @@ const (
 	// ErrorPrefixUnable for "Unable to..." patterns
 	ErrorPrefixUnable = "Unable to %s"
 )
+
+// ============================================================================
+// Unified Tool Action Constants
+// ============================================================================
+
+// Action constants for unified MCP tools to eliminate magic strings
+const (
+	// Common CRUD actions
+	ActionSet    = "set"
+	ActionGet    = "get"
+	ActionClear  = "clear"
+	ActionSave   = "save"
+	ActionLoad   = "load"
+	ActionList   = "list"
+	ActionDelete = "delete"
+	ActionAdd    = "add"
+	ActionRemove = "remove"
+	ActionShow   = "show"
+	ActionStats  = "stats"
+
+	// IDE management actions
+	ActionDetect    = "detect"
+	ActionInstall   = "install"
+	ActionUninstall = "uninstall"
+	ActionStatus    = "status"
+	ActionUpdate    = "update"
+
+	// AI context actions
+	ActionSetActive = "set_active"
+	ActionGetActive = "get_active"
+	ActionRecent    = "recent"
+	ActionSummary   = "summary"
+
+	// Bulk operation actions
+	ActionTransition = "transition"
+	ActionTag        = "tag"
+	ActionBulkUpdate = "update"
+
+	// Hierarchy actions
+	ActionCreateSubtask = "create_subtask"
+	ActionChangeParent  = "change_parent"
+
+	// Search modes
+	ModeNLP      = "nlp"
+	ModeAdvanced = "advanced"
+	ModeHistory  = "history"
+)
+
+// Valid action sets for unified tool validation
+var (
+	// ValidActiveProjectActions for aktif_proje tool
+	ValidActiveProjectActions = []string{ActionSet, ActionGet, ActionClear}
+
+	// ValidBulkOperationActions for gorev_bulk tool
+	ValidBulkOperationActions = []string{ActionTransition, ActionTag, ActionBulkUpdate}
+
+	// ValidHierarchyActions for gorev_hierarchy tool
+	ValidHierarchyActions = []string{ActionCreateSubtask, ActionChangeParent, ActionShow}
+
+	// ValidFilterProfileActions for gorev_filter_profile tool
+	ValidFilterProfileActions = []string{ActionSave, ActionLoad, ActionList, ActionDelete}
+
+	// ValidIDEActions for gorev_ide tool
+	ValidIDEActions = []string{ActionDetect, ActionInstall, ActionUninstall, ActionStatus, ActionUpdate}
+
+	// ValidContextActions for gorev_context tool
+	ValidContextActions = []string{ActionSetActive, ActionGetActive, ActionRecent, ActionSummary}
+
+	// ValidSearchModes for gorev_search tool
+	ValidSearchModes = []string{ModeNLP, ModeAdvanced, ModeHistory}
+)

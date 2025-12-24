@@ -26,9 +26,8 @@ func (tr *ToolRegistry) RegisterAllTools(s *server.MCPServer) {
 	tr.registerTaskManagementTools(s)
 	tr.registerProjectManagementTools(s)
 	tr.registerTemplateTools(s)
-	tr.registerAIContextTools(s)
+	tr.registerUnifiedTools(s) // 8 unified tools replacing 27 individual tools
 	tr.registerFileWatcherTools(s)
-	tr.registerSearchTools(s)
 	tr.registerAdvancedTools(s)
 }
 
@@ -231,41 +230,7 @@ func (tr *ToolRegistry) registerProjectManagementTools(s *server.MCPServer) {
 		},
 	}, tr.handlers.ProjeGorevleri)
 
-	// Aktif proje ayarla
-	s.AddTool(mcp.Tool{
-		Name:        "aktif_proje_ayarla",
-		Description: i18n.T("tools.descriptions.aktif_proje_ayarla", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"project_id": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TFieldID("tr", "project", "active"),
-				},
-			},
-			Required: []string{"project_id"},
-		},
-	}, tr.handlers.AktifProjeAyarla)
-
-	// Aktif proje göster
-	s.AddTool(mcp.Tool{
-		Name:        "aktif_proje_goster",
-		Description: i18n.T("tools.descriptions.aktif_proje_goster", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-		},
-	}, tr.handlers.AktifProjeGoster)
-
-	// Aktif proje kaldır
-	s.AddTool(mcp.Tool{
-		Name:        "aktif_proje_kaldir",
-		Description: i18n.T("tools.descriptions.aktif_proje_kaldir", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-		},
-	}, tr.handlers.AktifProjeKaldir)
+	// Active project tools replaced by unified "aktif_proje" tool with actions: set|get|clear
 }
 
 // registerTemplateTools registers template-related tools
@@ -306,127 +271,11 @@ func (tr *ToolRegistry) registerTemplateTools(s *server.MCPServer) {
 	}, tr.handlers.TemplatedenGorevOlustur)
 }
 
-// registerAIContextTools registers AI context management tools
-func (tr *ToolRegistry) registerAIContextTools(s *server.MCPServer) {
-	// AI aktif görev ayarla
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_set_active",
-		Description: i18n.T("tools.descriptions.gorev_set_active", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"task_id": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TFieldID("tr", "task", "active"),
-				},
-			},
-			Required: []string{"task_id"},
-		},
-	}, tr.handlers.GorevSetActive)
-
-	// AI aktif görevi getir
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_get_active",
-		Description: i18n.T("tools.descriptions.gorev_get_active", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-		},
-	}, tr.handlers.GorevGetActive)
-
-	// Son görevleri getir
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_recent",
-		Description: i18n.T("tools.descriptions.gorev_recent", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"limit": map[string]interface{}{
-					"type":        "number",
-					"description": i18n.TTaskCount("return", "five"),
-				},
-			},
-		},
-	}, tr.handlers.GorevRecent)
-
-	// Context özeti
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_context_summary",
-		Description: i18n.T("tools.descriptions.gorev_context_summary", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-		},
-	}, tr.handlers.GorevContextSummary)
-
-	// Toplu güncelleme
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_batch_update",
-		Description: i18n.T("tools.descriptions.gorev_batch_update", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"updates": map[string]interface{}{
-					"type":        "array",
-					"description": i18n.TBatch("tr", "updates"),
-					"items": map[string]interface{}{
-						"type": "object",
-						"properties": map[string]interface{}{
-							"id": map[string]interface{}{
-								"type":        "string",
-								"description": "Task ID to update",
-							},
-							"title": map[string]interface{}{
-								"type":        "string",
-								"description": "New task title",
-							},
-							"description": map[string]interface{}{
-								"type":        "string",
-								"description": "New task description",
-							},
-							"status": map[string]interface{}{
-								"type":        "string",
-								"description": "New task status",
-								"enum":        constants.GetValidTaskStatuses(),
-							},
-							"priority": map[string]interface{}{
-								"type":        "string",
-								"description": "New task priority",
-								"enum":        constants.GetValidPriorities(),
-							},
-							"due_date": map[string]interface{}{
-								"type":        "string",
-								"description": "New due date (YYYY-MM-DD format)",
-							},
-							"project_id": map[string]interface{}{
-								"type":        "string",
-								"description": "New project ID",
-							},
-						},
-						"required": []string{"id"},
-					},
-				},
-			},
-			Required: []string{"updates"},
-		},
-	}, tr.handlers.GorevBatchUpdate)
-
-	// Doğal dil sorgusu
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_nlp_query",
-		Description: i18n.T("tools.descriptions.gorev_nlp_query", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"query": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TBatch("tr", "query"),
-				},
-			},
-			Required: []string{"query"},
-		},
-	}, tr.handlers.GorevNLPQuery)
-}
+// registerAIContextTools was removed - AI context tools now use unified handlers
+// All AI context tools replaced by unified handlers:
+// - gorev_set_active, gorev_get_active, gorev_recent, gorev_context_summary → gorev_context
+// - gorev_batch_update → gorev_bulk (operation: update)
+// - gorev_nlp_query → gorev_search (mode: nlp)
 
 // registerFileWatcherTools registers file watcher tools
 func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
@@ -497,246 +346,18 @@ func (tr *ToolRegistry) registerFileWatcherTools(s *server.MCPServer) {
 	}, tr.handlers.GorevFileWatchStats)
 }
 
-// registerSearchTools registers advanced search and filter tools
-func (tr *ToolRegistry) registerSearchTools(s *server.MCPServer) {
-	if tr.handlers.debug {
-		slog.Debug("Registering search tools")
-	}
-
-	// Advanced search with FTS5
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_search_advanced",
-		Description: i18n.T("tools.descriptions.gorev_search_advanced", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"query": map[string]interface{}{
-					"type":        "string",
-					"description": "Search query for FTS5 full-text search",
-				},
-				"filters": map[string]interface{}{
-					"type":        "object",
-					"description": "Filter conditions (status, priority, project_id, etc.)",
-				},
-				"use_fuzzy_search": map[string]interface{}{
-					"type":        "boolean",
-					"description": "Enable fuzzy search for partial matches",
-					"default":     true,
-				},
-				"fuzzy_threshold": map[string]interface{}{
-					"type":        "number",
-					"description": "Fuzzy search similarity threshold (0.0-1.0)",
-					"default":     0.6,
-				},
-				"max_results": map[string]interface{}{
-					"type":        "integer",
-					"description": "Maximum number of results to return",
-					"default":     50,
-				},
-				"sort_by": map[string]interface{}{
-					"type":        "string",
-					"description": "Sort field (relevance, created, updated, due_date, priority)",
-					"default":     "relevance",
-				},
-				"sort_direction": map[string]interface{}{
-					"type":        "string",
-					"description": "Sort direction (asc, desc)",
-					"default":     "desc",
-				},
-				"include_completed": map[string]interface{}{
-					"type":        "boolean",
-					"description": "Include completed tasks in results",
-					"default":     false,
-				},
-				"search_fields": map[string]interface{}{
-					"type":        "array",
-					"description": "Fields to search (title, description, tags, project_name)",
-					"items": map[string]interface{}{
-						"type": "string",
-					},
-				},
-			},
-		},
-	}, tr.handlers.GorevSearchAdvanced)
-
-	// Save filter profile
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_filter_profile_save",
-		Description: i18n.T("tools.descriptions.gorev_filter_profile_save", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"name": map[string]interface{}{
-					"type":        "string",
-					"description": "Profile name",
-				},
-				"description": map[string]interface{}{
-					"type":        "string",
-					"description": "Profile description",
-				},
-				"filters": map[string]interface{}{
-					"type":        "object",
-					"description": "Filter configuration to save",
-				},
-				"search_query": map[string]interface{}{
-					"type":        "string",
-					"description": "Search query to save with profile",
-				},
-				"is_default": map[string]interface{}{
-					"type":        "boolean",
-					"description": "Mark as default profile",
-					"default":     false,
-				},
-			},
-			Required: []string{"name"},
-		},
-	}, tr.handlers.GorevFilterProfileSave)
-
-	// Load filter profile
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_filter_profile_load",
-		Description: i18n.T("tools.descriptions.gorev_filter_profile_load", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"profile_id": map[string]interface{}{
-					"type":        "integer",
-					"description": "Profile ID to load",
-				},
-				"profile_name": map[string]interface{}{
-					"type":        "string",
-					"description": "Profile name to load",
-				},
-			},
-		},
-	}, tr.handlers.GorevFilterProfileLoad)
-
-	// List filter profiles
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_filter_profile_list",
-		Description: i18n.T("tools.descriptions.gorev_filter_profile_list", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"defaults_only": map[string]interface{}{
-					"type":        "boolean",
-					"description": "Only return default profiles",
-					"default":     false,
-				},
-			},
-		},
-	}, tr.handlers.GorevFilterProfileList)
-
-	// Delete filter profile
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_filter_profile_delete",
-		Description: i18n.T("tools.descriptions.gorev_filter_profile_delete", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"profile_id": map[string]interface{}{
-					"type":        "integer",
-					"description": "Profile ID to delete",
-				},
-			},
-			Required: []string{"profile_id"},
-		},
-	}, tr.handlers.GorevFilterProfileDelete)
-
-	// Search history
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_search_history",
-		Description: i18n.T("tools.descriptions.gorev_search_history", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"limit": map[string]interface{}{
-					"type":        "integer",
-					"description": "Maximum number of history entries to return",
-					"default":     20,
-				},
-			},
-		},
-	}, tr.handlers.GorevSearchHistory)
-}
+// registerSearchTools was removed - search tools now use unified handlers
+// All search tools replaced by unified handlers:
+// - gorev_search_advanced, gorev_nlp_query, gorev_search_history → gorev_search (modes: advanced|nlp|history)
+// - gorev_filter_profile_save, gorev_filter_profile_load, gorev_filter_profile_list, gorev_filter_profile_delete → gorev_filter_profile
 
 // registerAdvancedTools registers advanced and hierarchy tools
 func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 	if tr.handlers.debug {
 		slog.Debug("Registering advanced tools")
 	}
-	// Alt görev oluştur
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_altgorev_olustur",
-		Description: i18n.T("tools.descriptions.gorev_altgorev_olustur", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"parent_id": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TFieldID("tr", "task", "parent"),
-				},
-				"title": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TSubtaskField("tr", "title"),
-				},
-				"description": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TSubtaskField("tr", "subtask_description"),
-				},
-				"priority": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TSubtaskField("tr", "priority"),
-					"enum":        constants.GetValidPriorities(),
-				},
-				"due_date": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TWithFormat("tr", i18n.TSubtaskField("tr", "due_date"), "YYYY-MM-DD"),
-				},
-				"tags": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TCommaSeparated("tr", "etiket"),
-				},
-			},
-			Required: []string{"parent_id", "title"},
-		},
-	}, tr.handlers.GorevAltGorevOlustur)
 
-	// Üst görev değiştir
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_ust_degistir",
-		Description: i18n.T("tools.descriptions.gorev_ust_degistir", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"task_id": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TFieldID("tr", "task", "move"),
-				},
-				"new_parent_id": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TFieldID("tr", "task", "new_parent"),
-				},
-			},
-			Required: []string{"task_id"},
-		},
-	}, tr.handlers.GorevUstDegistir)
-
-	// Hiyerarşi göster
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_hiyerarsi_goster",
-		Description: i18n.T("tools.descriptions.gorev_hiyerarsi_goster", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type: "object",
-			Properties: map[string]interface{}{
-				"task_id": map[string]interface{}{
-					"type":        "string",
-					"description": i18n.TFieldID("tr", "task", "hierarchy"),
-				},
-			},
-			Required: []string{"task_id"},
-		},
-	}, tr.handlers.GorevHiyerarsiGoster)
+	// Hierarchy tools replaced by unified "gorev_hierarchy" tool with actions: create_subtask|change_parent|show
 
 	// Bağımlılık ekle
 	s.AddTool(mcp.Tool{
@@ -772,6 +393,16 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 			Properties: map[string]interface{}{},
 		},
 	}, tr.handlers.OzetGoster)
+
+	// Gorev Suggestions - AI-powered task suggestions
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_suggestions",
+		Description: i18n.T("tools.descriptions.gorev_suggestions", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type:       "object",
+			Properties: map[string]interface{}{},
+		},
+	}, tr.handlers.GorevSuggestions)
 
 	// Gorev Export - Data export tool
 	if tr.handlers.debug {
@@ -889,98 +520,219 @@ func (tr *ToolRegistry) registerAdvancedTools(s *server.MCPServer) {
 		},
 	}, tr.handlers.GorevImport)
 
+	// IDE Management tools replaced by unified "gorev_ide" tool with actions: detect|install|uninstall|status|update
+}
+
+// registerUnifiedTools registers optimized unified handlers
+// This replaces 27 individual tools with 7 unified handlers (37% reduction)
+func (tr *ToolRegistry) registerUnifiedTools(s *server.MCPServer) {
+	if tr.handlers.debug {
+		slog.Debug("Registering unified tools - 7 tools replacing 27 individual tools")
+	}
+
 	// ========================================
-	// IDE Management Tools
+	// Active Project Management (1 tool replaces 3)
 	// ========================================
 
-	// IDE Detect - Detect installed IDEs
-	if tr.handlers.debug {
-		slog.Debug("Registering gorev_ide_detect tool")
-	}
 	s.AddTool(mcp.Tool{
-		Name:        "gorev_ide_detect",
-		Description: i18n.T("tools.descriptions.ide_detect", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-		},
-	}, tr.handlers.IDEDetect)
-
-	// IDE Install Extension - Install Gorev extension to IDEs
-	if tr.handlers.debug {
-		slog.Debug("Registering gorev_ide_install tool")
-	}
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_ide_install",
-		Description: i18n.T("tools.descriptions.ide_install", nil),
+		Name:        "aktif_proje",
+		Description: i18n.T("tools.descriptions.aktif_proje", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
+				"action": map[string]interface{}{
+					"type":        "string",
+					"description": "Operation to perform",
+					"enum":        constants.ValidActiveProjectActions,
+				},
+				"project_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "project_id"),
+				},
+			},
+			Required: []string{"action"},
+		},
+	}, tr.handlers.AktifProje)
+
+	// ========================================
+	// Bulk Operations (1 tool replaces 3)
+	// ========================================
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_bulk",
+		Description: i18n.T("tools.descriptions.gorev_bulk", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"operation": map[string]interface{}{
+					"type":        "string",
+					"description": "Bulk operation type",
+					"enum":        constants.ValidBulkOperationActions,
+				},
+				"ids": map[string]interface{}{
+					"type":        "array",
+					"items":       map[string]interface{}{"type": "string"},
+					"description": i18n.TParam("tr", "task_ids"),
+				},
+				"data": map[string]interface{}{
+					"type":        "object",
+					"description": "Operation data (status, tags, etc.)",
+				},
+			},
+			Required: []string{"operation", "ids"},
+		},
+	}, tr.handlers.GorevBulk)
+
+	// ========================================
+	// Hierarchy Management (1 tool replaces 3)
+	// ========================================
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_hierarchy",
+		Description: i18n.T("tools.descriptions.gorev_hierarchy", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"action": map[string]interface{}{
+					"type":        "string",
+					"description": "Hierarchy operation",
+					"enum":        constants.ValidHierarchyActions,
+				},
+				"task_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "task_id"),
+				},
+				"parent_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "parent_id"),
+				},
+				"title": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "title"),
+				},
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "description"),
+				},
+			},
+			Required: []string{"action"},
+		},
+	}, tr.handlers.GorevHierarchy)
+
+	// ========================================
+	// Filter Profile Management (1 tool replaces 4)
+	// ========================================
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_filter_profile",
+		Description: i18n.T("tools.descriptions.gorev_filter_profile", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"action": map[string]interface{}{
+					"type":        "string",
+					"description": "Filter profile action",
+					"enum":        constants.ValidFilterProfileActions,
+				},
+				"profile_id": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "profile_id"),
+				},
+				"name": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "profile_name"),
+				},
+				"filters": map[string]interface{}{
+					"type":        "object",
+					"description": i18n.TParam("tr", "filters"),
+				},
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "description"),
+				},
+			},
+			Required: []string{"action"},
+		},
+	}, tr.handlers.GorevFilterProfile)
+
+	// ========================================
+	// IDE Management (1 tool replaces 5)
+	// ========================================
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ide",
+		Description: i18n.T("tools.descriptions.gorev_ide", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"action": map[string]interface{}{
+					"type":        "string",
+					"description": "IDE management action",
+					"enum":        constants.ValidIDEActions,
+				},
 				"ide_type": map[string]interface{}{
 					"type":        "string",
-					"description": i18n.T("tools.params.ide.ide_type", nil),
+					"description": i18n.TParam("tr", "ide_type"),
 					"enum":        []string{"vscode", "cursor", "windsurf", "all"},
 				},
 			},
-			Required: []string{"ide_type"},
+			Required: []string{"action"},
 		},
-	}, tr.handlers.IDEInstallExtension)
+	}, tr.handlers.IDEManage)
 
-	// IDE Uninstall Extension - Remove Gorev extension from IDEs
-	if tr.handlers.debug {
-		slog.Debug("Registering gorev_ide_uninstall tool")
-	}
+	// ========================================
+	// AI Context Management (1 tool replaces 4)
+	// ========================================
+
 	s.AddTool(mcp.Tool{
-		Name:        "gorev_ide_uninstall",
-		Description: i18n.T("tools.descriptions.ide_uninstall", nil),
+		Name:        "gorev_context",
+		Description: i18n.T("tools.descriptions.gorev_context", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"ide_type": map[string]interface{}{
+				"action": map[string]interface{}{
 					"type":        "string",
-					"description": i18n.T("tools.params.ide.ide_type", nil),
-					"enum":        []string{"vscode", "cursor", "windsurf"},
+					"description": "AI context action",
+					"enum":        constants.ValidContextActions,
 				},
-				"extension_id": map[string]interface{}{
+				"task_id": map[string]interface{}{
 					"type":        "string",
-					"description": i18n.T("tools.params.ide.extension_id", nil),
-					"default":     "mehmetsenol.gorev-vscode",
+					"description": i18n.TParam("tr", "task_id"),
+				},
+				"limit": map[string]interface{}{
+					"type":        "number",
+					"description": i18n.TParam("tr", "limit"),
 				},
 			},
-			Required: []string{"ide_type"},
+			Required: []string{"action"},
 		},
-	}, tr.handlers.IDEUninstallExtension)
+	}, tr.handlers.GorevContext)
 
-	// IDE Extension Status - Check extension installation status
-	if tr.handlers.debug {
-		slog.Debug("Registering gorev_ide_status tool")
-	}
-	s.AddTool(mcp.Tool{
-		Name:        "gorev_ide_status",
-		Description: i18n.T("tools.descriptions.ide_status", nil),
-		InputSchema: mcp.ToolInputSchema{
-			Type:       "object",
-			Properties: map[string]interface{}{},
-		},
-	}, tr.handlers.IDEExtensionStatus)
+	// ========================================
+	// Search Operations (1 tool replaces 3)
+	// ========================================
 
-	// IDE Update Extension - Update Gorev extension to latest version
-	if tr.handlers.debug {
-		slog.Debug("Registering gorev_ide_update tool")
-	}
 	s.AddTool(mcp.Tool{
-		Name:        "gorev_ide_update",
-		Description: i18n.T("tools.descriptions.ide_update", nil),
+		Name:        "gorev_search",
+		Description: i18n.T("tools.descriptions.gorev_search", nil),
 		InputSchema: mcp.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]interface{}{
-				"ide_type": map[string]interface{}{
+				"mode": map[string]interface{}{
 					"type":        "string",
-					"description": i18n.T("tools.params.ide.ide_type", nil),
-					"enum":        []string{"vscode", "cursor", "windsurf", "all"},
+					"description": "Search mode",
+					"enum":        constants.ValidSearchModes,
+				},
+				"query": map[string]interface{}{
+					"type":        "string",
+					"description": i18n.TParam("tr", "query"),
+				},
+				"filters": map[string]interface{}{
+					"type":        "object",
+					"description": i18n.TParam("tr", "filters"),
 				},
 			},
-			Required: []string{"ide_type"},
+			Required: []string{"mode"},
 		},
-	}, tr.handlers.IDEUpdateExtension)
+	}, tr.handlers.GorevSearch)
 }
