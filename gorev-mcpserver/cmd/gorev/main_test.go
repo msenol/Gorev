@@ -185,9 +185,12 @@ func TestDetectLanguage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Save original environment
 			origLang := os.Getenv("GOREV_LANG")
+			origSystemLang := os.Getenv("LANG")
 			defer os.Setenv("GOREV_LANG", origLang)
+			defer os.Setenv("LANG", origSystemLang)
 
-			// Set test environment
+			// Set test environment - mock LANG to en_US.UTF-8 for consistency
+			os.Setenv("LANG", "en_US.UTF-8")
 			if tt.env != "" {
 				os.Setenv("GOREV_LANG", tt.env)
 			} else {
