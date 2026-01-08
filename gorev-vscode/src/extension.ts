@@ -15,6 +15,8 @@ import { measureAsync } from './utils/performance';
 import { debounceConfig } from './utils/debounce';
 import { DatabaseFileWatcher } from './managers/databaseFileWatcher';
 import { WebSocketClient } from './managers/websocketClient';
+import { AIPanelProvider } from './panels/aiPanel';
+import { AIStatusBar } from './statusbar/aiStatusBar';
 
 let serverManager: UnifiedServerManager;
 let apiClient: ApiClient;
@@ -26,6 +28,8 @@ let templateTreeProvider: TemplateTreeProvider;
 let refreshManager: RefreshManager;
 let databaseWatcher: DatabaseFileWatcher;
 let webSocketClient: WebSocketClient | null = null;
+let aiPanelProvider: AIPanelProvider;
+let aiStatusBar: AIStatusBar;
 
 let context: vscode.ExtensionContext;
 let debouncedConfigHandler: ReturnType<typeof debounceConfig>;
@@ -243,6 +247,184 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   filterToolbar.show();
   context.subscriptions.push(filterToolbar);
 
+  // Initialize AI components (Rule 15 compliance - gracefully degrades if AI not configured)
+  aiPanelProvider = AIPanelProvider.getInstance(context.extensionUri, context);
+  aiStatusBar = AIStatusBar.getInstance(apiClient);
+
+  // Register AI commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gorev.ai.showPanel', async () => {
+      try {
+        // Check if AI is configured
+        const activeProjectResponse = await apiClient.getActiveProject();
+        const projectId = activeProjectResponse.data?.id;
+
+        if (!projectId) {
+          vscode.window.showWarningMessage('AI features require an active project. Please activate a project first.');
+          return;
+        }
+
+        // Show AI panel
+        await aiPanelProvider.show(true);
+      } catch (error) {
+        Logger.error('[Extension] Failed to show AI panel:', error);
+        vscode.window.showErrorMessage(`Failed to open AI panel: ${error}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('gorev.ai.configure', async () => {
+      try {
+        await vscode.commands.executeCommand('gorev.ai.showPanel');
+        // Panel will open on Configure tab
+      } catch (error) {
+        Logger.error('[Extension] Failed to open AI configuration:', error);
+        vscode.window.showErrorMessage(`Failed to open AI configuration: ${error}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('gorev.ai.chat', async (message?: string) => {
+      try {
+        if (!message) {
+          message = await vscode.window.showInputBox({
+            prompt: 'Enter your message for AI',
+            placeHolder: 'Ask AI anything about your tasks...'
+          });
+
+          if (!message) {
+            return; // User cancelled
+          }
+        }
+
+        // Show AI panel on Chat tab
+        await vscode.commands.executeCommand('gorev.ai.showPanel');
+      } catch (error) {
+        Logger.error('[Extension] Failed to send AI chat:', error);
+        vscode.window.showErrorMessage(`Failed to send chat message: ${error}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('gorev.ai.analyzeProject', async () => {
+      try {
+        const activeProjectResponse = await apiClient.getActiveProject();
+        const project = activeProjectResponse.data;
+
+        if (!project) {
+          vscode.window.showWarningMessage('AI features require an active project. Please activate a project first.');
+          return;
+        }
+
+        // Get project statistics
+        const tasksResponse = await apiClient.getProjectTasks(project.id);
+        const tasks = tasksResponse.data || [];
+        const completedCount = tasks.filter(t => t.durum === 'tamamlandi').length;
+        const pendingCount = tasks.length - completedCount;
+
+        // Call AI analyze via API
+        const result = await apiClient.aiAnalyze({
+          project_id: project.id,
+          project_name: project.name,
+          task_count: tasks.length,
+          completed_count: completedCount,
+          pending_count: pendingCount
+        });
+
+        if (result.success && result.data) {
+          // Show results in AI panel
+          await aiPanelProvider.show(true);
+
+          // Send analyze results to panel
+          vscode.commands.executeCommand('gorev.ai.showPanel', {
+            action: 'analyze',
+            data: result.data
+          });
+        } else {
+          vscode.window.showWarningMessage('AI analysis is not configured for this project.');
+        }
+      } catch (error) {
+        Logger.error('[Extension] Failed to analyze project with AI:', error);
+        vscode.window.showErrorMessage(`Failed to analyze project: ${error}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('gorev.ai.estimateTask', async (taskId?: string) => {
+      try {
+        if (!taskId) {
+          // Ask user to select a task
+          const tasksResponse = await apiClient.getTasks({ tum_projeler: true, limit: 50 });
+          const tasks = tasksResponse.data || [];
+
+          if (tasks.length === 0) {
+            vscode.window.showInformationMessage('No tasks found to estimate.');
+            return;
+          }
+
+          const quickPickItems = tasks.map(task => ({
+            label: task.baslik,
+            description: task.proje_name || '',
+            taskId: task.id
+          }));
+
+          const selected = await vscode.window.showQuickPick(quickPickItems, {
+            placeHolder: 'Select a task to estimate time'
+          });
+
+          if (!selected) {
+            return; // User cancelled
+          }
+
+          taskId = selected.taskId;
+        }
+
+        // Get task details
+        const taskResponse = await apiClient.getTask(taskId);
+        const task = taskResponse.data;
+
+        if (!task) {
+          vscode.window.showErrorMessage('Task not found.');
+          return;
+        }
+
+        // Call AI estimate via API
+        const result = await apiClient.aiEstimate({
+          task_id: task.id,
+          title: task.baslik,
+          description: task.aciklama || '',
+          tags: task.etiketler?.map(t => t.isim)
+        });
+
+        if (result.success && result.data) {
+          const estimation = result.data;
+          vscode.window.showInformationMessage(
+            `Time Estimate for "${task.baslik}": ${estimation.estimated_hours}h ` +
+            `(confidence: ${Math.round(estimation.confidence * 100)}%)\n\n` +
+            `Reasoning: ${estimation.reasoning}`
+          );
+        } else {
+          vscode.window.showWarningMessage('AI estimation is not configured for this project.');
+        }
+      } catch (error) {
+        Logger.error('[Extension] Failed to estimate task time with AI:', error);
+        vscode.window.showErrorMessage(`Failed to estimate task: ${error}`);
+      }
+    })
+  );
+
+  // Show AI status bar
+  aiStatusBar.show();
+  context.subscriptions.push(aiStatusBar);
+
+  // Update AI status when active project changes
+  apiClient.on('connected', async () => {
+    try {
+      const activeProjectResponse = await apiClient.getActiveProject();
+      if (activeProjectResponse.data?.id) {
+        await aiStatusBar.update(activeProjectResponse.data.id);
+      }
+    } catch (error) {
+      Logger.warn('[Extension] Failed to update AI status:', error);
+    }
+  });
+
   // Initialize debounced configuration handler
   debouncedConfigHandler = debounceConfig(handleConfigurationChange);
 
@@ -314,6 +496,11 @@ export async function deactivate() {
 
   if (statusBarManager) {
     statusBarManager.dispose();
+  }
+
+  // Dispose AI components
+  if (aiStatusBar) {
+    aiStatusBar.dispose();
   }
 }
 /**

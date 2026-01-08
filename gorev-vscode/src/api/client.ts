@@ -373,7 +373,7 @@ export class ApiClient extends EventEmitter {
     }
   }
 
-  async registerClient(clientId: string, clientType: string, workspaceId: string, ttlSeconds: number = 300): Promise<boolean> {
+  async registerClient(clientId: string, clientType: string, workspaceId: string, ttlSeconds = 300): Promise<boolean> {
     try {
       const response = await this.axiosInstance.post('/daemon/clients/register', {
         client_id: clientId,
@@ -402,7 +402,7 @@ export class ApiClient extends EventEmitter {
     }
   }
 
-  async sendHeartbeat(clientId: string, ttlSeconds: number = 300): Promise<boolean> {
+  async sendHeartbeat(clientId: string, ttlSeconds = 300): Promise<boolean> {
     try {
       const response = await this.axiosInstance.post('/daemon/heartbeat', {
         client_id: clientId,
@@ -957,6 +957,208 @@ export class ApiClient extends EventEmitter {
   async unregisterWorkspace(workspaceId: string): Promise<ApiResponse<void>> {
     const response = await this.axiosInstance.delete(`/workspaces/${workspaceId}`);
     return response.data as ApiResponse<void>;
+  }
+
+  // AI API Endpoints
+
+  /**
+   * Configure AI for a project
+   */
+  async configureAI(config: {
+    project_id: string;
+    provider: string;
+    api_key: string;
+    model?: string;
+    temperature?: number;
+    max_tokens?: number;
+  }): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    const response = await this.axiosInstance.post('/ai/configure', config);
+    return response.data as ApiResponse<{ success: boolean; message: string }>;
+  }
+
+  /**
+   * Get AI configuration for a project
+   */
+  async getAIConfig(projectId: string): Promise<ApiResponse<{
+    provider?: string;
+    model?: string;
+    configured: boolean;
+  }>> {
+    const response = await this.axiosInstance.get(`/ai/config?project_id=${encodeURIComponent(projectId)}`);
+    return response.data as ApiResponse<{ provider?: string; model?: string; configured: boolean }>;
+  }
+
+  /**
+   * Send chat message to AI
+   */
+  async aiChat(message: string, projectId?: string): Promise<ApiResponse<{
+    response: string;
+    provider?: string;
+    model?: string;
+  }>> {
+    const response = await this.axiosInstance.post('/ai/chat', {
+      message,
+      project_id: projectId
+    });
+    return response.data as ApiResponse<{ response: string; provider?: string; model?: string }>;
+  }
+
+  /**
+   * Get AI-powered task suggestions
+   */
+  async aiSuggest(params: {
+    project_id: string;
+    max_results?: number;
+    context?: string;
+  }): Promise<ApiResponse<{
+    title: string;
+    description: string;
+    priority: string;
+    estimated_hours?: number;
+    tags?: string[];
+  }[]>> {
+    const response = await this.axiosInstance.post('/ai/suggest', params);
+    return response.data as ApiResponse<{
+      title: string;
+      description: string;
+      priority: string;
+      estimated_hours?: number;
+      tags?: string[];
+    }[]>;
+  }
+
+  /**
+   * Analyze project with AI
+   */
+  async aiAnalyze(params: {
+    project_id: string;
+    project_name: string;
+    task_count: number;
+    completed_count: number;
+    pending_count: number;
+  }): Promise<ApiResponse<{
+    critical_path: string[];
+    risk_level: string;
+    risk_factors: string[];
+    recommendations: string[];
+    bottlenecks: string[];
+  }>> {
+    const response = await this.axiosInstance.post('/ai/analyze', params);
+    return response.data as ApiResponse<{
+      critical_path: string[];
+      risk_level: string;
+      risk_factors: string[];
+      recommendations: string[];
+      bottlenecks: string[];
+    }>;
+  }
+
+  /**
+   * Decompose task into subtasks with AI
+   */
+  async aiDecompose(params: {
+    task_id: string;
+    title: string;
+    description: string;
+    max_depth?: number;
+  }): Promise<ApiResponse<{
+    subtasks: {
+      title: string;
+      description: string;
+      estimated_hours: number;
+      dependencies: string[];
+    }[];
+  }>> {
+    const response = await this.axiosInstance.post('/ai/decompose', params);
+    return response.data as ApiResponse<{
+      subtasks: {
+        title: string;
+        description: string;
+        estimated_hours: number;
+        dependencies: string[];
+      }[];
+    }>;
+  }
+
+  /**
+   * Semantic search with AI
+   */
+  async aiSearch(params: {
+    query: string;
+    project_id?: string;
+    limit?: number;
+  }): Promise<ApiResponse<{
+    total: number;
+    results: {
+      task_id: string;
+      title: string;
+      relevance: number;
+      match_reason: string;
+    }[];
+    strategy: string;
+  }>> {
+    const response = await this.axiosInstance.post('/ai/search', params);
+    return response.data as ApiResponse<{
+      total: number;
+      results: {
+        task_id: string;
+        title: string;
+        relevance: number;
+        match_reason: string;
+      }[];
+      strategy: string;
+    }>;
+  }
+
+  /**
+   * Estimate task time with AI
+   */
+  async aiEstimate(params: {
+    task_id: string;
+    title: string;
+    description: string;
+    tags?: string[];
+  }): Promise<ApiResponse<{
+    estimated_hours: number;
+    confidence: number;
+    reasoning: string;
+    method: string;
+  }>> {
+    const response = await this.axiosInstance.post('/ai/estimate', params);
+    return response.data as ApiResponse<{
+      estimated_hours: number;
+      confidence: number;
+      reasoning: string;
+      method: string;
+    }>;
+  }
+
+  /**
+   * Test AI connection
+   */
+  async testAIConnection(projectId: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    const response = await this.axiosInstance.post('/ai/test', { project_id: projectId });
+    return response.data as ApiResponse<{ success: boolean; message: string }>;
+  }
+
+  /**
+   * Get available AI models
+   */
+  async getAIModels(): Promise<ApiResponse<{
+    id: string;
+    name: string;
+    provider: string;
+    context_window?: number;
+    pricing?: string;
+  }[]>> {
+    const response = await this.axiosInstance.get('/ai/models');
+    return response.data as ApiResponse<{
+      id: string;
+      name: string;
+      provider: string;
+      context_window?: number;
+      pricing?: string;
+    }[]>;
   }
 
   // Formatting helpers
