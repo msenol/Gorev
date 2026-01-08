@@ -369,6 +369,15 @@ const (
 	ModeNLP      = "nlp"
 	ModeAdvanced = "advanced"
 	ModeHistory  = "history"
+
+	// AI actions
+	ActionConfigure = "configure"
+	ActionChat      = "chat"
+	ActionSuggest   = "suggest"
+	ActionAnalyze   = "analyze"
+	ActionDecompose  = "decompose"
+	ActionSearchAI   = "search" // "search" to avoid conflict with gorev_search tool
+	ActionEstimate   = "estimate"
 )
 
 // Valid action sets for unified tool validation
@@ -393,4 +402,7 @@ var (
 
 	// ValidSearchModes for gorev_search tool
 	ValidSearchModes = []string{ModeNLP, ModeAdvanced, ModeHistory}
+
+	// ValidAIActions for gorev_ai tool
+	ValidAIActions = []string{ActionConfigure, ActionChat, ActionSuggest, ActionAnalyze, ActionDecompose, ActionSearchAI, ActionEstimate}
 )

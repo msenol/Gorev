@@ -610,7 +610,8 @@
       "ide_update": "Update Gorev extension to latest version",
       "gorev_bulk": "Perform bulk operations on tasks (operations: transition|tag|update). Update status for multiple tasks, add/remove tags, or update multiple task properties at once.",
       "gorev_hierarchy": "Manage task hierarchy (actions: create_subtask|change_parent|show). Create subtask under parent, change task's parent, or show full task hierarchy tree.",
-      "gorev_context": "Manage AI context (actions: set_active|get_active|recent|summary). Set active task for AI session, get current active task, view recent tasks, or get AI context summary."
+      "gorev_context": "Manage AI context (actions: set_active|get_active|recent|summary). Set active task for AI session, get current active task, view recent tasks, or get AI context summary.",
+      "gorev_ai": "AI-powered operations (actions: configure|chat|suggest|analyze|decompose|search|estimate). Configure AI provider, chat with AI, get suggestions, analyze tasks, decompose tasks, semantic search, or estimate task time."
     },
     "params": {
       "descriptions": {

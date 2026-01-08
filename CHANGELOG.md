@@ -5,6 +5,53 @@ All notable changes to Gorev will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.18.0] - 2025-01-08
+
+### Added
+
+- **AI Multi-Provider Integration**: Complete AI-powered task management with OpenRouter and Anannas support
+  - **Unified AI Tool**: Single `gorev_ai` tool with 7 actions (configure|chat|suggest|analyze|decompose|search|estimate)
+  - **Centralized Prompt Management**: `internal/ai/prompts.go` - Single source for all AI prompts with i18n support
+  - **Project Analytics**: AI-powered critical path analysis, risk assessment, bottleneck detection
+  - **Task Decomposition**: Break complex tasks into hierarchical subtasks with dependencies
+  - **Semantic Search**: Vector/embedding-based search with FTS fallback (graceful degradation)
+  - **Time Estimation**: AI-powered duration prediction with confidence scoring
+  - **Natural Language Chat**: Interactive AI chat with full task context
+  - **Smart Suggestions**: AI-powered task suggestions based on context
+
+- **Database Schema: AI Configuration** (migration 000014): AI provider settings per project
+  - `ai_providers` table: Project-level AI configuration (provider, api_key, model, temperature, max_tokens)
+  - `ai_models` table: Cached model catalogs (provider, model_id, context_window, pricing)
+  - `ai_operations` table: Cost tracking and audit log (tokens, costs, duration, success/failure)
+  - `ai_prompt_templates` table: Prompt template system (operation, language_code, templates)
+
+- **AI Provider Abstraction**: DRY-compliant provider architecture
+  - `internal/ai/providers/provider.go`: Base provider interface and implementation
+  - `internal/ai/providers/registry.go`: Thread-safe provider registry
+  - `internal/ai/providers/openrouter.go`: OpenRouter provider implementation
+  - `internal/ai/providers/anannas.go`: Anannas provider implementation
+  - `internal/ai/http_client.go`: Shared OpenAI-compatible HTTP client
+
+- **Comprehensive AI Testing**: Full test coverage with graceful degradation scenarios
+  - `internal/ai/service_test.go`: 13 test functions covering enabled/disabled/failing AI scenarios
+  - Mock provider with configurable delays and failures
+  - Timeout and concurrent access testing
+  - i18n prompt management testing
+
+### Changed
+
+- **Enhanced Fallback Strategy**: All AI features gracefully degrade to existing functionality
+  - Search: Semantic → FTS (full-text search) when AI unavailable
+  - Analytics: Unavailable when AI not configured (proper error message)
+  - Chat: Returns proper error when AI not configured
+  - **Rule 15 Compliance**: Zero degradation of existing functionality
+
+### Performance
+
+- **Shared HTTP Client**: Single OpenAI-compatible client for all providers (DRY principle)
+- **Prompt Caching**: Centralized prompt manager reduces redundant prompt definitions
+- **Provider Registry**: Singleton pattern with thread-safe operations
+
 ## [v0.17.0] - 2025-12-04
 
 ### Added

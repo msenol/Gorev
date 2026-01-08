@@ -9,6 +9,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/msenol/gorev/internal/ai"
 	"github.com/msenol/gorev/internal/constants"
 	contextutil "github.com/msenol/gorev/internal/context"
 	"github.com/msenol/gorev/internal/gorev"
@@ -28,6 +29,7 @@ func min(a, b int) int {
 type Handlers struct {
 	isYonetici        *gorev.IsYonetici
 	aiContextYonetici *gorev.AIContextYonetici
+	aiService         *ai.AIService
 	fileWatcher       *gorev.FileWatcher
 	toolHelpers       *ToolHelpers
 	debug             bool
@@ -67,6 +69,7 @@ func YeniHandlers(isYonetici *gorev.IsYonetici) *Handlers {
 	return &Handlers{
 		isYonetici:        isYonetici,
 		aiContextYonetici: aiContextYonetici,
+		aiService:         ai.NewAIService(slog.Default()),
 		fileWatcher:       fileWatcher,
 		toolHelpers:       toolHelpers,
 		debug:             false,
@@ -80,6 +83,7 @@ func YeniHandlersWithDebug(isYonetici *gorev.IsYonetici, debug bool) *Handlers {
 	return &Handlers{
 		isYonetici:        isYonetici,
 		aiContextYonetici: aiContextYonetici,
+		aiService:         ai.NewAIService(slog.Default()),
 		fileWatcher:       fileWatcher,
 		toolHelpers:       toolHelpers,
 		debug:             debug,
@@ -3693,6 +3697,499 @@ func (h *Handlers) GorevSearch(params map[string]interface{}) (*mcp.CallToolResu
 	default:
 		return mcp.NewToolResultError(fmt.Sprintf("invalid mode: %s (expected: nlp|advanced|history)", mode)), nil
 	}
+}
+
+// GorevAI - Unified handler for AI-powered operations
+// Actions: configure, chat, suggest, analyze, decompose, search, estimate
+// Requires AI provider configuration to function properly
+func (h *Handlers) GorevAI(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	action, ok := params["action"].(string)
+	if !ok {
+		return mcp.NewToolResultError("action parameter is required (configure|chat|suggest|analyze|decompose|search|estimate)"), nil
+	}
+
+	switch action {
+	case constants.ActionConfigure:
+		return h.GorevAIConfigure(params)
+	case constants.ActionChat:
+		return h.GorevAIChat(params)
+	case constants.ActionSuggest:
+		return h.GorevAISuggest(params)
+	case constants.ActionAnalyze:
+		return h.GorevAIAnalyze(params)
+	case constants.ActionDecompose:
+		return h.GorevAIDecompose(params)
+	case constants.ActionSearchAI:
+		return h.GorevAISearch(params)
+	case constants.ActionEstimate:
+		return h.GorevAIEstimate(params)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("invalid action: %s (expected: configure|chat|suggest|analyze|decompose|search|estimate)", action)), nil
+	}
+}
+
+// GorevAIConfigure - Configure AI provider for a project
+func (h *Handlers) GorevAIConfigure(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Get active project ID
+	projectID, ok := params["project_id"].(string)
+	if !ok || projectID == "" {
+		// Try to get active project
+		ctx := context.Background()
+		activeProje, err := h.isYonetici.AktifProjeGetir(ctx)
+		if err != nil || activeProje == nil {
+			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
+		}
+		projectID = activeProje.ID
+	}
+
+	// Get required parameters
+	provider, ok := params["provider"].(string)
+	if !ok || provider == "" {
+		return mcp.NewToolResultError("provider is required (openrouter|anannas)"), nil
+	}
+
+	apiKey, ok := params["api_key"].(string)
+	if !ok || apiKey == "" {
+		return mcp.NewToolResultError("api_key is required"), nil
+	}
+
+	// Optional parameters
+	model, _ := params["model"].(string)
+	if model == "" {
+		model = "openai/gpt-4o-mini" // Default model
+	}
+
+	var temperature float64
+	if temp, ok := params["temperature"].(float64); ok {
+		temperature = temp
+	} else {
+		temperature = 0.7
+	}
+
+	maxTokens := 2000
+	if mt, ok := params["max_tokens"].(float64); ok {
+		maxTokens = int(mt)
+	}
+
+	// Create AI configuration
+	config := &ai.ProjectAIConfig{
+		ProjectID:   projectID,
+		Provider:    provider,
+		APIKey:      apiKey,
+		Model:       model,
+		Temperature: temperature,
+		MaxTokens:   maxTokens,
+	}
+
+	// Save configuration
+	ctx := context.Background()
+	if err := h.aiService.SaveConfig(ctx, config); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("failed to save AI configuration: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("✓ AI configured for project %s\nProvider: %s\nModel: %s", projectID, provider, model)), nil
+}
+
+// GorevAIChat - Interactive AI chat
+func (h *Handlers) GorevAIChat(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Get active project ID
+	projectID, ok := params["project_id"].(string)
+	if !ok || projectID == "" {
+		ctx := context.Background()
+		activeProje, err := h.isYonetici.AktifProjeGetir(ctx)
+		if err != nil || activeProje == nil {
+			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
+		}
+		projectID = activeProje.ID
+	}
+
+	// Get message
+	message, ok := params["message"].(string)
+	if !ok || message == "" {
+		return mcp.NewToolResultError("message is required"), nil
+	}
+
+	// Check if AI is configured
+	if !h.aiService.IsConfiguredForProject(projectID) {
+		return mcp.NewToolResultError("AI not configured for this project. Use gorev_ai with action=configure first."), nil
+	}
+
+	// Call AI
+	ctx := context.Background()
+	response, err := h.aiService.Chat(ctx, projectID, message)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("AI chat failed: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(response), nil
+}
+
+// GorevAISuggest - Get AI-powered task suggestions
+func (h *Handlers) GorevAISuggest(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Get active project ID
+	projectID, ok := params["project_id"].(string)
+	if !ok || projectID == "" {
+		ctx := context.Background()
+		activeProje, err := h.isYonetici.AktifProjeGetir(ctx)
+		if err != nil || activeProje == nil {
+			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
+		}
+		projectID = activeProje.ID
+	}
+
+	maxResults := 10
+	if mr, ok := params["max_results"].(float64); ok {
+		maxResults = int(mr)
+	}
+
+	contextStr, _ := params["context"].(string)
+
+	// Check if AI is configured
+	if !h.aiService.IsConfiguredForProject(projectID) {
+		return mcp.NewToolResultError("AI not configured for this project. Use gorev_ai with action=configure first."), nil
+	}
+
+	// Get suggestions
+	ctx := context.Background()
+	suggestions, err := h.aiService.GetSuggestions(ctx, projectID, maxResults, contextStr)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("failed to get suggestions: %v", err)), nil
+	}
+
+	// Format response
+	if len(suggestions) == 0 {
+		return mcp.NewToolResultText("No suggestions available."), nil
+	}
+
+	var response strings.Builder
+	response.WriteString(fmt.Sprintf("Found %d suggestions:\n\n", len(suggestions)))
+	for i, suggestion := range suggestions {
+		response.WriteString(fmt.Sprintf("%d. %s\n", i+1, suggestion.Title))
+		if suggestion.Description != "" {
+			response.WriteString(fmt.Sprintf("   %s\n", suggestion.Description))
+		}
+	}
+
+	return mcp.NewToolResultText(response.String()), nil
+}
+
+// GorevAIAnalyze - Analyze tasks/projects (critical path, risk)
+func (h *Handlers) GorevAIAnalyze(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Get active project ID
+	projectID, ok := params["project_id"].(string)
+	if !ok || projectID == "" {
+		ctx := context.Background()
+		activeProje, err := h.isYonetici.AktifProjeGetir(ctx)
+		if err != nil || activeProje == nil {
+			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
+		}
+		projectID = activeProje.ID
+	}
+
+	// Get project details
+	ctx := context.Background()
+	proje, err := h.isYonetici.VeriYonetici().ProjeGetir(ctx, projectID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("project not found: %v", err)), nil
+	}
+
+	// Get task statistics
+	gorevler, err := h.isYonetici.ProjeGorevleri(ctx, projectID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("failed to get tasks: %v", err)), nil
+	}
+
+	completedCount := 0
+	pendingCount := 0
+	for _, g := range gorevler {
+		if g.Status == constants.TaskStatusCompleted {
+			completedCount++
+		} else {
+			pendingCount++
+		}
+	}
+
+	// Check if AI is configured
+	if !h.aiService.IsConfiguredForProject(projectID) {
+		return mcp.NewToolResultError("AI not configured for this project. Use gorev_ai with action=configure first."), nil
+	}
+
+	// Analyze project
+	analysis, err := h.aiService.AnalyzeProject(ctx, projectID, proje.Name, len(gorevler), completedCount, pendingCount)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("project analysis failed: %v", err)), nil
+	}
+
+	// Format response
+	var response strings.Builder
+	response.WriteString(fmt.Sprintf("Project Analysis: %s\n\n", proje.Name))
+	response.WriteString(fmt.Sprintf("Total Tasks: %d\n", len(gorevler)))
+	response.WriteString(fmt.Sprintf("Completed: %d\n", completedCount))
+	response.WriteString(fmt.Sprintf("Pending: %d\n\n", pendingCount))
+
+	response.WriteString(fmt.Sprintf("Risk Level: %s\n", analysis.RiskLevel))
+	if len(analysis.CriticalPath) > 0 {
+		response.WriteString(fmt.Sprintf("Critical Path: %s\n", strings.Join(analysis.CriticalPath, " → ")))
+	}
+	if len(analysis.RiskFactors) > 0 {
+		response.WriteString(fmt.Sprintf("\nRisk Factors:\n"))
+		for _, factor := range analysis.RiskFactors {
+			response.WriteString(fmt.Sprintf("  • %s\n", factor))
+		}
+	}
+	if len(analysis.Bottlenecks) > 0 {
+		response.WriteString(fmt.Sprintf("\nBottlenecks:\n"))
+		for _, bottleneck := range analysis.Bottlenecks {
+			response.WriteString(fmt.Sprintf("  • %s\n", bottleneck))
+		}
+	}
+	if len(analysis.Recommendations) > 0 {
+		response.WriteString(fmt.Sprintf("\nRecommendations:\n"))
+		for _, rec := range analysis.Recommendations {
+			response.WriteString(fmt.Sprintf("  • %s\n", rec))
+		}
+	}
+
+	return mcp.NewToolResultText(response.String()), nil
+}
+
+// GorevAIDecompose - Break complex tasks into subtasks
+func (h *Handlers) GorevAIDecompose(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Get active project ID
+	projectID, ok := params["project_id"].(string)
+	if !ok || projectID == "" {
+		ctx := context.Background()
+		activeProje, err := h.isYonetici.AktifProjeGetir(ctx)
+		if err != nil || activeProje == nil {
+			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
+		}
+		projectID = activeProje.ID
+	}
+
+	// Get required parameters
+	taskID, ok := params["task_id"].(string)
+	if !ok || taskID == "" {
+		return mcp.NewToolResultError("task_id is required"), nil
+	}
+
+	// Get task details
+	ctx := context.Background()
+	gorev, err := h.isYonetici.VeriYonetici().GorevGetir(ctx, taskID)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("task not found: %v", err)), nil
+	}
+
+	// Get optional max_depth
+	maxDepth := 3
+	if md, ok := params["max_depth"].(float64); ok {
+		maxDepth = int(md)
+	}
+
+	// Check if AI is configured
+	if !h.aiService.IsConfiguredForProject(projectID) {
+		return mcp.NewToolResultError("AI not configured for this project. Use gorev_ai with action=configure first."), nil
+	}
+
+	// Decompose task
+	subtasks, err := h.aiService.DecomposeTask(ctx, projectID, taskID, gorev.Title, gorev.Description, maxDepth)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("task decomposition failed: %v", err)), nil
+	}
+
+	// Format response
+	if len(subtasks) == 0 {
+		return mcp.NewToolResultText("Could not decompose task into subtasks."), nil
+	}
+
+	var response strings.Builder
+	response.WriteString(fmt.Sprintf("Task decomposition for '%s':\n\n", gorev.Title))
+	for i, subtask := range subtasks {
+		response.WriteString(fmt.Sprintf("%d. %s\n", i+1, subtask.Title))
+		if subtask.Description != "" {
+			response.WriteString(fmt.Sprintf("   Description: %s\n", subtask.Description))
+		}
+		if subtask.EstimatedHours > 0 {
+			response.WriteString(fmt.Sprintf("   Estimated: %.1f hours\n", subtask.EstimatedHours))
+		}
+		if len(subtask.Dependencies) > 0 {
+			response.WriteString(fmt.Sprintf("   Dependencies: %s\n", strings.Join(subtask.Dependencies, ", ")))
+		}
+		response.WriteString("\n")
+	}
+
+	return mcp.NewToolResultText(response.String()), nil
+}
+
+// GorevAISearch - Semantic search across tasks
+// Falls back to FTS search if AI is not configured (graceful degradation)
+func (h *Handlers) GorevAISearch(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Get active project ID
+	projectID, ok := params["project_id"].(string)
+	if !ok || projectID == "" {
+		ctx := context.Background()
+		activeProje, err := h.isYonetici.AktifProjeGetir(ctx)
+		if err != nil || activeProje == nil {
+			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
+		}
+		projectID = activeProje.ID
+	}
+
+	// Get query
+	query, ok := params["query"].(string)
+	if !ok || query == "" {
+		return mcp.NewToolResultError("query is required"), nil
+	}
+
+	// Get limit
+	limit := 10
+	if l, ok := params["limit"].(float64); ok {
+		limit = int(l)
+	}
+
+	// Check if AI is configured - if not, fall back to FTS search
+	if !h.aiService.IsConfiguredForProject(projectID) {
+		// Fallback to FTS search (graceful degradation)
+		// Create search engine and perform search
+		db, err := h.isYonetici.VeriYonetici().GetDB()
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Database access failed: %v", err)), nil
+		}
+		searchEngine := gorev.NewSearchEngine(h.isYonetici.VeriYonetici(), db)
+
+		options := gorev.SearchOptions{
+			Query:            query,
+			UseFuzzySearch:   true,
+			FuzzyThreshold:   0.6,
+			MaxResults:       limit,
+			SortBy:           "relevance",
+			SortDirection:    "desc",
+		}
+
+		response, err := searchEngine.Search(options)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("FTS search failed: %v", err)), nil
+		}
+
+		// Format response
+		var responseText strings.Builder
+		responseText.WriteString(fmt.Sprintf("FTS Search Results (AI not configured): %d results\n\n", response.TotalCount))
+		for i, result := range response.Results {
+			if i >= limit {
+				break
+			}
+			responseText.WriteString(fmt.Sprintf("%d. %s\n", i+1, result.Task.Title))
+			responseText.WriteString(fmt.Sprintf("   Status: %s | Priority: %s\n", result.Task.Status, result.Task.Priority))
+			if result.Task.DueDate != nil {
+				responseText.WriteString(fmt.Sprintf("   Due: %s\n", result.Task.DueDate.Format("2006-01-02")))
+			}
+			responseText.WriteString(fmt.Sprintf("   ID: %s\n\n", result.Task.ID))
+		}
+
+		return mcp.NewToolResultText(responseText.String()), nil
+	}
+
+	// AI-powered semantic search (requires embeddings - placeholder for now)
+	// For now, we'll use a simple keyword-based approach as a basic semantic approximation
+	// Create search engine and perform search
+	db, err := h.isYonetici.VeriYonetici().GetDB()
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Database access failed: %v", err)), nil
+	}
+	searchEngine := gorev.NewSearchEngine(h.isYonetici.VeriYonetici(), db)
+
+	options := gorev.SearchOptions{
+		Query:            query,
+		UseFuzzySearch:   true,
+		FuzzyThreshold:   0.6,
+		MaxResults:       limit,
+		SortBy:           "relevance",
+		SortDirection:    "desc",
+	}
+
+	response, err := searchEngine.Search(options)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("search failed: %v", err)), nil
+	}
+
+	// Format response
+	var responseText strings.Builder
+	responseText.WriteString(fmt.Sprintf("Semantic Search Results: %d results\n\n", response.TotalCount))
+	for i, result := range response.Results {
+		if i >= limit {
+			break
+		}
+		responseText.WriteString(fmt.Sprintf("%d. %s\n", i+1, result.Task.Title))
+		responseText.WriteString(fmt.Sprintf("   Status: %s | Priority: %s\n", result.Task.Status, result.Task.Priority))
+		if result.Task.DueDate != nil {
+			responseText.WriteString(fmt.Sprintf("   Due: %s\n", result.Task.DueDate.Format("2006-01-02")))
+		}
+		if result.Task.Description != "" {
+			// Truncate description for display
+			desc := result.Task.Description
+			if len(desc) > 100 {
+				desc = desc[:100] + "..."
+			}
+			responseText.WriteString(fmt.Sprintf("   Description: %s\n", desc))
+		}
+		responseText.WriteString(fmt.Sprintf("   ID: %s\n\n", result.Task.ID))
+	}
+
+	return mcp.NewToolResultText(responseText.String()), nil
+}
+
+// GorevAIEstimate - Time estimation for tasks
+func (h *Handlers) GorevAIEstimate(params map[string]interface{}) (*mcp.CallToolResult, error) {
+	// Get active project ID
+	projectID, ok := params["project_id"].(string)
+	if !ok || projectID == "" {
+		ctx := context.Background()
+		activeProje, err := h.isYonetici.AktifProjeGetir(ctx)
+		if err != nil || activeProje == nil {
+			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
+		}
+		projectID = activeProje.ID
+	}
+
+	// Get task parameters
+	title, ok := params["title"].(string)
+	if !ok || title == "" {
+		return mcp.NewToolResultError("title is required"), nil
+	}
+
+	description, _ := params["description"].(string)
+
+	// Get tags
+	var tags []string
+	if tagsRaw, ok := params["tags"].([]interface{}); ok {
+		for _, tag := range tagsRaw {
+			if tagStr, ok := tag.(string); ok {
+				tags = append(tags, tagStr)
+			}
+		}
+	}
+
+	// Check if AI is configured
+	if !h.aiService.IsConfiguredForProject(projectID) {
+		return mcp.NewToolResultError("AI not configured for this project. Use gorev_ai with action=configure first."), nil
+	}
+
+	// Estimate time
+	ctx := context.Background()
+	estimation, err := h.aiService.EstimateTime(ctx, projectID, "", title, description, tags)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("time estimation failed: %v", err)), nil
+	}
+
+	// Format response
+	var response strings.Builder
+	response.WriteString(fmt.Sprintf("Time estimation for '%s':\n", title))
+	response.WriteString(fmt.Sprintf("Estimated: %.1f hours\n", estimation.EstimatedHours))
+	response.WriteString(fmt.Sprintf("Confidence: %.0f%%\n", estimation.Confidence*100))
+	if estimation.Reasoning != "" {
+		response.WriteString(fmt.Sprintf("Reasoning: %s\n", estimation.Reasoning))
+	}
+
+	return mcp.NewToolResultText(response.String()), nil
 }
 
 // ============================================================================

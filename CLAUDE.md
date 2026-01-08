@@ -2,9 +2,39 @@
 
 This file provides essential guidance to AI assistants using MCP (Model Context Protocol) when working with code in this repository. Compatible with Claude Code, VS Code with MCP extension, Windsurf, Cursor, and other MCP-enabled editors.
 
-**Last Updated:** December 24, 2025 | **Version:** v0.17.0
+**Last Updated:** January 8, 2026 | **Version:** v0.18.0
 
 [🇺🇸 English](CLAUDE.en.md) | [🇹🇷 Türkçe](CLAUDE.md)
+
+## 🚀 Recent Update (January 8, 2026) - AI Multi-Provider Integration (Phase 3)
+
+**⚠️ NEW FEATURES**
+
+- **Unified AI Tool**: Single `gorev_ai` tool with 7 powerful actions
+  - `configure` - Setup AI provider per project (openrouter|anannas)
+  - `chat` - Interactive AI chat with full task context
+  - `suggest` - Get AI-powered task suggestions
+  - `analyze` - Project analytics (critical path, risk, bottlenecks)
+  - `decompose` - Break complex tasks into subtasks
+  - `search` - Semantic search (FTS fallback when AI unavailable)
+  - `estimate` - Time estimation with confidence scoring
+
+- **Centralized Prompt Management**: `internal/ai/prompts.go`
+  - Single source of truth for all AI prompts (DRY compliance)
+  - i18n support (Turkish/English) for all operations
+  - Build*Prompt() methods for dynamic prompt construction
+
+- **AI Provider Abstraction Layer**: Clean architecture with graceful degradation
+  - `internal/ai/providers/` - Provider implementations (OpenRouter, Anannas)
+  - `internal/ai/service.go` - AI service orchestrator with fallback strategies
+  - **Rule 15 Compliance**: Zero degradation when AI not configured
+
+- **Comprehensive Testing**: `internal/ai/service_test.go`
+  - 13 test functions covering enabled/disabled/failing AI scenarios
+  - Mock provider with configurable delays and failures
+  - All tests pass with 100% backward compatibility
+
+**Previous Updates:**
 
 ## 🚀 Recent Update (December 24, 2025) - Smart Shutdown & Client Tracking
 
@@ -284,7 +314,7 @@ cd gorev-vscode && rm -rf out/         # Extension only
 
 ## 🛠️ MCP Tools Summary
 
-**26 Optimized MCP Tools** (reduced from 41 via unification - 37% reduction):
+**27 Optimized MCP Tools** (v0.18.0):
 
 - **Core Tools (10)**: Task CRUD (5), Templates (2), Projects (2), Dependencies (1)
 - **Unified Tools (8)**:
@@ -296,6 +326,8 @@ cd gorev-vscode && rm -rf out/         # Extension only
   - `gorev_context` (actions: set_active|get_active|recent|summary) - AI context
   - `gorev_search` (modes: nlp|advanced|history) - Search
   - `gorev_ozet` (actions: show) - Summary dashboard
+- **AI-Powered Tools (1)**:
+  - `gorev_ai` (actions: configure|chat|suggest|analyze|decompose|search|estimate) - AI operations
 - **File Watcher Tools (4)**: Add, Remove, List, Stats
 - **Special Tools (4)**: Export, Import, AI Suggestions
 
@@ -303,7 +335,7 @@ cd gorev-vscode && rm -rf out/         # Extension only
 
 ## 🗄️ Database Schema
 
-**12 tables + 1 view**: gorevler (tasks), projeler, baglantilar (dependencies), etiketler, gorev_templateleri, ai_interactions, ai_context, aktif_proje, gorevler_fts (full-text search), filter_profiles, search_history, gorev_hiyerarsi (VIEW)
+**16 tables + 1 view**: gorevler (tasks), projeler, baglantilar (dependencies), etiketler, gorev_templateleri, ai_interactions, ai_context, aktif_proje, gorevler_fts (full-text search), filter_profiles, search_history, gorev_hiyerarsi (VIEW), **ai_providers**, **ai_models**, **ai_operations**, **ai_prompt_templates**
 
 ## 📝 Code Style
 
@@ -318,12 +350,13 @@ cd gorev-vscode && rm -rf out/         # Extension only
 **Need to modify...**
 
 - **MCP Tools**: `internal/mcp/handlers.go` + register in `tool_registry.go`
+- **AI Features**: `internal/ai/service.go`, `internal/ai/prompts.go`, `internal/ai/providers/*.go`
 - **Client Tracking**: `internal/daemon/client_tracker.go`, `internal/config/shared_config.go`
 - **Business Logic**: `internal/gorev/is_yonetici.go`
 - **Database Access**: `internal/veri/veri_yonetici.go`
 - **Database Schema**: `internal/veri/migrations/*.sql` (add new migration)
 - **REST API Endpoints**: `internal/api/server.go` (28 endpoints)
-- **i18n Strings**: `locales/en.toml`, `locales/tr.toml`
+- **i18n Strings**: `locales/en.json`, `locales/tr.json`
 - **CLI Commands**: `cmd/gorev/*.go` (daemon.go, serve.go, etc.)
 - **Daemon Logic**: `cmd/gorev/daemon.go`, `internal/daemon/lockfile.go`
 - **MCP Proxy**: `internal/mcp/proxy.go` (client registration, heartbeat)

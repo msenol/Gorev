@@ -735,4 +735,99 @@ func (tr *ToolRegistry) registerUnifiedTools(s *server.MCPServer) {
 			Required: []string{"mode"},
 		},
 	}, tr.handlers.GorevSearch)
+
+	// ========================================
+	// AI-Powered Operations (1 tool with 7 actions)
+	// ========================================
+
+	s.AddTool(mcp.Tool{
+		Name:        "gorev_ai",
+		Description: i18n.T("tools.descriptions.gorev_ai", nil),
+		InputSchema: mcp.ToolInputSchema{
+			Type: "object",
+			Properties: map[string]interface{}{
+				"action": map[string]interface{}{
+					"type":        "string",
+					"description": "AI operation to perform",
+					"enum":        constants.ValidAIActions,
+				},
+				// Common parameters for all actions
+				"project_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Project ID (defaults to active project)",
+				},
+				// Configure action parameters
+				"provider": map[string]interface{}{
+					"type":        "string",
+					"description": "AI provider (openrouter|anannas)",
+					"enum":        []string{"openrouter", "anannas"},
+				},
+				"api_key": map[string]interface{}{
+					"type":        "string",
+					"description": "API key for the provider",
+				},
+				"model": map[string]interface{}{
+					"type":        "string",
+					"description": "Model identifier (e.g., openai/gpt-4o-mini)",
+				},
+				"temperature": map[string]interface{}{
+					"type":        "number",
+					"description": "Temperature for generation (0.0-1.0)",
+				},
+				"max_tokens": map[string]interface{}{
+					"type":        "number",
+					"description": "Maximum tokens to generate",
+				},
+				// Chat action parameters
+				"message": map[string]interface{}{
+					"type":        "string",
+					"description": "Message to send to AI",
+				},
+				// Suggest action parameters
+				"max_results": map[string]interface{}{
+					"type":        "number",
+					"description": "Maximum number of suggestions",
+				},
+				"context": map[string]interface{}{
+					"type":        "string",
+					"description": "Additional context for suggestions",
+				},
+				// Decompose action parameters
+				"task_id": map[string]interface{}{
+					"type":        "string",
+					"description": "Task ID to decompose",
+				},
+				"max_depth": map[string]interface{}{
+					"type":        "number",
+					"description": "Maximum decomposition depth",
+				},
+				// Estimate action parameters
+				"title": map[string]interface{}{
+					"type":        "string",
+					"description": "Task title",
+				},
+				"description": map[string]interface{}{
+					"type":        "string",
+					"description": "Task description",
+				},
+				"tags": map[string]interface{}{
+					"type":        "array",
+					"description": "Task tags",
+					"items": map[string]interface{}{
+						"type": "string",
+					},
+				},
+				// Search action parameters
+				"query": map[string]interface{}{
+					"type":        "string",
+					"description": "Search query for semantic search",
+				},
+				"limit": map[string]interface{}{
+					"type":        "number",
+					"description": "Maximum results to return",
+				},
+			},
+			Required: []string{"action"},
+		},
+	}, tr.handlers.GorevAI)
 }

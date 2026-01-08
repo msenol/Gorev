@@ -654,7 +654,11 @@
       "ide_install": "Gorev extension'ını belirtilen IDE'ye kurar",
       "ide_uninstall": "Gorev extension'ını belirtilen IDE'den kaldırır",
       "ide_status": "IDE'lerdeki extension kurulum durumunu kontrol eder",
-      "ide_update": "Gorev extension'ını en son sürüme günceller"
+      "ide_update": "Gorev extension'ını en son sürüme günceller",
+      "gorev_bulk": "Görevlerde toplu işlemler yapar (işlemler: transition|tag|update). Birden fazla görevin durumunu güncelle, etiket ekle/kaldır, veya birden fazla görev özelliğini aynı anda güncelle.",
+      "gorev_hierarchy": "Görev hiyerarşisini yönet (işlemler: create_subtask|change_parent|show). Üst görev altında alt görev oluştur, görevin üstünü değiştir, veya tam görev hiyerarşi ağacını göster.",
+      "gorev_context": "AI bağlamını yönet (işlemler: set_active|get_active|recent|summary). AI oturumu için aktif görev belirle, mevcut aktif görevi al, son görevleri görüntüle, veya AI bağlam özeti al.",
+      "gorev_ai": "AI destekli işlemler (işlemler: configure|chat|suggest|analyze|decompose|search|estimate). AI sağlayıcısını yapılandır, AI ile sohbet et, öneriler al, görevleri analiz et, görevleri parçalara ayır, anlamsal arama, veya görev süresi tahmin et."
     },
     "params": {
       "descriptions": {
