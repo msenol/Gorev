@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **AI JSON Parsing** (Rule 15 & DRY compliant fix):
+  - Created `internal/ai/response_cleaner.go` with single `extractJSON()` function
+  - Fixed markdown code block parsing for AI responses (`````json ... `````)
+  - Updated 3 methods to use shared function: `DecomposeTask()`, `AnalyzeProject()`, `EstimateTime()`
+  - Added comprehensive unit tests (8 test cases, all edge cases covered)
+  - Eliminates code duplication and provides single source of truth for JSON parsing
+  - **Root cause**: AI models (e.g., `z-ai/glm-4.5-air:free`) return JSON wrapped in markdown code blocks
+  - **Error fixed**: `parse AI response: invalid character '`' looking for beginning of value`
+
+### Added
+
+- `internal/ai/response_cleaner.go` - JSON extraction utility for AI responses
+- `internal/ai/response_cleaner_test.go` - Comprehensive unit tests
+
 ## [0.17.0] - 2025-10-11
 
 ### BREAKING CHANGES ⚠️
