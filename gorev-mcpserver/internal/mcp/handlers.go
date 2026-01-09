@@ -2121,6 +2121,8 @@ func (h *Handlers) CallTool(toolName string, params map[string]interface{}) (*mc
 		return h.GorevFilterProfile(params)
 	case "gorev_ide": // replaces gorev_ide_detect, gorev_ide_install, gorev_ide_uninstall, gorev_ide_status, gorev_ide_update
 		return h.IDEManage(params)
+	case "gorev_ai": // Unified AI tool with 7 actions (configure|chat|suggest|analyze|decompose|search|estimate)
+		return h.GorevAI(params)
 
 	default:
 		return mcp.NewToolResultError(i18n.T("error.unknownTool", map[string]interface{}{"Tool": toolName})), nil
@@ -3728,6 +3730,33 @@ func (h *Handlers) GorevAI(params map[string]interface{}) (*mcp.CallToolResult, 
 	}
 }
 
+// loadAIConfigIfNeeded loads AI configuration from the database if not already in memory
+// This is needed because MCP commands create new service instances each time
+func (h *Handlers) loadAIConfigIfNeeded(projectID string) error {
+	// Check if already configured in memory
+	if h.aiService.IsConfiguredForProject(projectID) {
+		return nil
+	}
+
+	// Load from database
+	ctx := context.Background()
+	config, err := h.isYonetici.VeriYonetici().AISAProviderGetir(ctx, projectID)
+	if err != nil {
+		return fmt.Errorf("failed to load AI config from database: %w", err)
+	}
+	if config == nil {
+		// Not configured in database either
+		return nil
+	}
+
+	// Register in memory
+	if err := h.aiService.LoadConfigFromDB(projectID, config.Provider, config.APIKeyEncrypted); err != nil {
+		return fmt.Errorf("failed to register AI provider: %w", err)
+	}
+
+	return nil
+}
+
 // GorevAIConfigure - Configure AI provider for a project
 func (h *Handlers) GorevAIConfigure(params map[string]interface{}) (*mcp.CallToolResult, error) {
 	// Get active project ID
@@ -3781,10 +3810,16 @@ func (h *Handlers) GorevAIConfigure(params map[string]interface{}) (*mcp.CallToo
 		MaxTokens:   maxTokens,
 	}
 
-	// Save configuration
+	// Save configuration to database
 	ctx := context.Background()
-	if err := h.aiService.SaveConfig(ctx, config); err != nil {
+	if err := h.isYonetici.VeriYonetici().AISAProviderKaydet(ctx, projectID, provider, apiKey, model, temperature, maxTokens); err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("failed to save AI configuration: %v", err)), nil
+	}
+
+	// Also register in memory for current session
+	if err := h.aiService.SaveConfig(ctx, config); err != nil {
+		// Log but don't fail - database save is the source of truth
+		slog.Default().Warn("Failed to register AI in memory", "error", err)
 	}
 
 	return mcp.NewToolResultText(fmt.Sprintf("✓ AI configured for project %s\nProvider: %s\nModel: %s", projectID, provider, model)), nil
@@ -3801,6 +3836,11 @@ func (h *Handlers) GorevAIChat(params map[string]interface{}) (*mcp.CallToolResu
 			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
 		}
 		projectID = activeProje.ID
+	}
+
+	// Load AI config from database if needed
+	if err := h.loadAIConfigIfNeeded(projectID); err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
 	// Get message
@@ -3835,6 +3875,11 @@ func (h *Handlers) GorevAISuggest(params map[string]interface{}) (*mcp.CallToolR
 			return mcp.NewToolResultError(i18n.T("error.noActiveProject", nil)), nil
 		}
 		projectID = activeProje.ID
+	}
+
+	// Load AI config from database if needed
+	if err := h.loadAIConfigIfNeeded(projectID); err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
 	maxResults := 10
@@ -3907,6 +3952,11 @@ func (h *Handlers) GorevAIAnalyze(params map[string]interface{}) (*mcp.CallToolR
 		} else {
 			pendingCount++
 		}
+	}
+
+	// Load AI config from database if needed
+	if err := h.loadAIConfigIfNeeded(projectID); err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
 	// Check if AI is configured
@@ -3983,6 +4033,11 @@ func (h *Handlers) GorevAIDecompose(params map[string]interface{}) (*mcp.CallToo
 	maxDepth := 3
 	if md, ok := params["max_depth"].(float64); ok {
 		maxDepth = int(md)
+	}
+
+	// Load AI config from database if needed
+	if err := h.loadAIConfigIfNeeded(projectID); err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
 	// Check if AI is configured

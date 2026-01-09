@@ -66,5 +66,10 @@ type VeriYoneticiInterface interface {
 	GorevBagimlilikGetir(ctx context.Context, taskID string) ([]*Gorev, error)
 	GetDB() (*sql.DB, error)
 
+	// AI Configuration methods
+	AISAProviderKaydet(ctx context.Context, projectID, provider, apiKey, model string, temperature float64, maxTokens int) error
+	AISAProviderGetir(ctx context.Context, projectID string) (*AIProviderYap, error)
+	AISAConfigureKontrol(ctx context.Context, projectID string) bool
+
 	Kapat() error
 }

@@ -167,8 +167,8 @@ func (p *BaseProvider) ModelCost(modelID string, usage ChatUsage) (float64, erro
 	}
 
 	// Calculate cost
-	inputCost := float64(usage.PromptTokens) / 1000000 * pricing.Input
-	outputCost := float64(usage.CompletionTokens) / 1000000 * pricing.Output
+	inputCost := float64(usage.PromptTokens) / 1000000 * float64(pricing.Input)
+	outputCost := float64(usage.CompletionTokens) / 1000000 * float64(pricing.Output)
 	totalCost := inputCost + outputCost
 
 	return totalCost, nil

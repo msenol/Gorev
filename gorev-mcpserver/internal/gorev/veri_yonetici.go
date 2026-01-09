@@ -1890,3 +1890,88 @@ func (vy *VeriYonetici) repairMigrationState(tablesExist int) error {
 	log.Printf("DEBUG: Migration state repair completed")
 	return nil
 }
+
+// AIProviderYap represents AI provider configuration for a project
+type AIProviderYap struct {
+	ID          string
+	ProjectID   string
+	Provider    string
+	APIKeyEncrypted string
+	Model       string
+	Temperature float64
+	MaxTokens   int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// AISAProviderKaydet saves AI provider configuration for a project
+func (vy *VeriYonetici) AISAProviderKaydet(ctx context.Context, projectID, provider, apiKey, model string, temperature float64, maxTokens int) error {
+	// Check if ai_providers table exists
+	var tableExists int
+	err := vy.db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='ai_providers'").Scan(&tableExists)
+	if err != nil || tableExists == 0 {
+		return fmt.Errorf("ai_providers table does not exist - migration 000014 may not have been applied")
+	}
+
+	now := time.Now()
+
+	// Use INSERT OR REPLACE to handle both new and existing configurations
+	// The unique constraint is on (project_id, workspace_id)
+	query := `
+		INSERT INTO ai_providers (id, project_id, provider, api_key_encrypted, model, temperature, max_tokens, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(project_id, workspace_id) DO UPDATE SET
+			provider = excluded.provider,
+			api_key_encrypted = excluded.api_key_encrypted,
+			model = excluded.model,
+			temperature = excluded.temperature,
+			max_tokens = excluded.max_tokens,
+			updated_at = excluded.updated_at
+	`
+	_, err = vy.db.Exec(query, uuid.New().String(), projectID, provider, apiKey, model, temperature, maxTokens, now, now)
+	if err != nil {
+		return fmt.Errorf("failed to save AI provider config: %w", err)
+	}
+
+	return nil
+}
+
+// AISAProviderGetir retrieves AI provider configuration for a project
+func (vy *VeriYonetici) AISAProviderGetir(ctx context.Context, projectID string) (*AIProviderYap, error) {
+	var config AIProviderYap
+
+	query := `
+		SELECT id, project_id, provider, api_key_encrypted, model, temperature, max_tokens, created_at, updated_at
+		FROM ai_providers
+		WHERE project_id = ?
+		LIMIT 1
+	`
+	err := vy.db.QueryRowContext(ctx, query, projectID).Scan(
+		&config.ID,
+		&config.ProjectID,
+		&config.Provider,
+		&config.APIKeyEncrypted,
+		&config.Model,
+		&config.Temperature,
+		&config.MaxTokens,
+		&config.CreatedAt,
+		&config.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Not configured
+		}
+		return nil, fmt.Errorf("failed to get AI provider config: %w", err)
+	}
+
+	return &config, nil
+}
+
+// AISAConfigureKontrol checks if AI is configured for a project
+func (vy *VeriYonetici) AISAConfigureKontrol(ctx context.Context, projectID string) bool {
+	config, err := vy.AISAProviderGetir(ctx, projectID)
+	if err != nil || config == nil {
+		return false
+	}
+	return config.Provider != ""
+}

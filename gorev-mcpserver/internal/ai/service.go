@@ -88,6 +88,13 @@ func (s *AIService) IsConfiguredForProject(projectID string) bool {
 	return ok
 }
 
+// LoadConfigFromDB loads AI configuration from the database and registers the provider
+// This is a helper method for MCP handlers that need to reload config from the database
+func (s *AIService) LoadConfigFromDB(projectID, provider, apiKey string) error {
+	providerType := providers.ProviderType(provider)
+	return s.registry.RegisterFromConfig(projectID, providerType, apiKey)
+}
+
 // GetConfig retrieves AI configuration for a project
 func (s *AIService) GetConfig(ctx context.Context, projectID string) (*ProjectAIConfig, error) {
 	_, ok := s.registry.Get(projectID)
@@ -217,13 +224,18 @@ func (s *AIService) DecomposeTask(ctx context.Context, projectID, taskID, title,
 		return nil, fmt.Errorf("no response from AI")
 	}
 
-	// Parse response
+	// Parse response using shared JSON extractor
+	cleanJSON, err := extractJSON(resp.Choices[0].Message.Content)
+	if err != nil {
+		return nil, fmt.Errorf("parse AI response: %w", err)
+	}
+
 	var result struct {
 		Subtasks []SubtaskSuggestion `json:"subtasks"`
 	}
 
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return nil, fmt.Errorf("parse AI response: %w", err)
+	if err := json.Unmarshal(cleanJSON, &result); err != nil {
+		return nil, fmt.Errorf("unmarshal subtasks: %w", err)
 	}
 
 	return result.Subtasks, nil
@@ -296,10 +308,15 @@ func (s *AIService) EstimateTime(ctx context.Context, projectID, taskID, title, 
 		return nil, fmt.Errorf("no response from AI")
 	}
 
-	// Parse response
-	var result EstimationResult
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
+	// Parse response using shared JSON extractor
+	cleanJSON, err := extractJSON(resp.Choices[0].Message.Content)
+	if err != nil {
 		return nil, fmt.Errorf("parse AI response: %w", err)
+	}
+
+	var result EstimationResult
+	if err := json.Unmarshal(cleanJSON, &result); err != nil {
+		return nil, fmt.Errorf("unmarshal estimation: %w", err)
 	}
 
 	result.Method = "ai"
@@ -358,10 +375,15 @@ func (s *AIService) AnalyzeProject(ctx context.Context, projectID, projectName s
 		return nil, fmt.Errorf("no response from AI")
 	}
 
-	// Parse response
-	var result ProjectAnalysisResult
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
+	// Parse response using shared JSON extractor
+	cleanJSON, err := extractJSON(resp.Choices[0].Message.Content)
+	if err != nil {
 		return nil, fmt.Errorf("parse AI response: %w", err)
+	}
+
+	var result ProjectAnalysisResult
+	if err := json.Unmarshal(cleanJSON, &result); err != nil {
+		return nil, fmt.Errorf("unmarshal analysis: %w", err)
 	}
 
 	return &result, nil

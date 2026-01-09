@@ -57,7 +57,19 @@ func createMCPListCommand() *cobra.Command {
 			}
 
 			// Initialize managers
-			veriYonetici, err := gorev.YeniVeriYonetici(dbPath, migrationsPath)
+			var veriYonetici *gorev.VeriYonetici
+			var err error
+			if migrationsPath == "embedded://migrations" {
+				// Use embedded migrations
+				migrationsFS, fsErr := getEmbeddedMigrationsFS()
+				if fsErr != nil {
+					return fmt.Errorf("failed to get embedded migrations: %w", fsErr)
+				}
+				veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, migrationsFS)
+			} else {
+				// Fallback to filesystem migrations
+				veriYonetici, err = gorev.YeniVeriYonetici(dbPath, migrationsPath)
+			}
 			if err != nil {
 				return errors.New(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
 			}
@@ -174,7 +186,19 @@ func createMCPCallCommand() *cobra.Command {
 			}
 
 			// Initialize managers
-			veriYonetici, err := gorev.YeniVeriYonetici(dbPath, migrationsPath)
+			var veriYonetici *gorev.VeriYonetici
+			var err error
+			if migrationsPath == "embedded://migrations" {
+				// Use embedded migrations
+				migrationsFS, fsErr := getEmbeddedMigrationsFS()
+				if fsErr != nil {
+					return fmt.Errorf("failed to get embedded migrations: %w", fsErr)
+				}
+				veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, migrationsFS)
+			} else {
+				// Fallback to filesystem migrations
+				veriYonetici, err = gorev.YeniVeriYonetici(dbPath, migrationsPath)
+			}
 			if err != nil {
 				return errors.New(i18n.T("error.dataManagerCreate", map[string]interface{}{"Error": err}))
 			}
@@ -339,7 +363,19 @@ func callMCPTool(toolName string, params map[string]interface{}) error {
 	migrationsPath := getMigrationsPath()
 
 	// Initialize managers
-	veriYonetici, err := gorev.YeniVeriYonetici(dbPath, migrationsPath)
+	var veriYonetici *gorev.VeriYonetici
+	var err error
+	if migrationsPath == "embedded://migrations" {
+		// Use embedded migrations
+		migrationsFS, fsErr := getEmbeddedMigrationsFS()
+		if fsErr != nil {
+			return fmt.Errorf("failed to get embedded migrations: %w", fsErr)
+		}
+		veriYonetici, err = gorev.YeniVeriYoneticiWithEmbeddedMigrations(dbPath, migrationsFS)
+	} else {
+		// Fallback to filesystem migrations
+		veriYonetici, err = gorev.YeniVeriYonetici(dbPath, migrationsPath)
+	}
 	if err != nil {
 		return fmt.Errorf("veri yönetici oluşturulamadı: %w", err)
 	}

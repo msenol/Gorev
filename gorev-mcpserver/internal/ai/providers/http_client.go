@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -123,8 +124,32 @@ type ModelInfo struct {
 
 // Pricing represents model pricing information
 type Pricing struct {
-	Input  float64 `json:"prompt"`
-	Output float64 `json:"completion"`
+	Input  PriceValue `json:"prompt"`
+	Output PriceValue `json:"completion"`
+}
+
+// PriceValue is a flexible type that can be unmarshaled from both strings and floats
+type PriceValue float64
+
+// UnmarshalJSON implements custom JSON unmarshaling for PriceValue
+func (p *PriceValue) UnmarshalJSON(data []byte) error {
+	// Try unmarshaling as string first
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		f, err := strconv.ParseFloat(str, 64)
+		if err != nil {
+			return err
+		}
+		*p = PriceValue(f)
+		return nil
+	}
+	// Try unmarshaling as float
+	var f float64
+	if err := json.Unmarshal(data, &f); err != nil {
+		return err
+	}
+	*p = PriceValue(f)
+	return nil
 }
 
 // ChatRequest represents an OpenAI-compatible chat completion request
