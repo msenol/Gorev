@@ -1,8 +1,8 @@
-# MCP Araçları Referansı - v0.17.0
+# MCP Araçları Referansı - v0.18.0
 
-**24 optimize MCP aracı** için eksiksiz referans (v0.16.0'da 45 araçtan birleştirildi).
+**26 optimize MCP aracı** için eksiksiz referans (v0.16.0'da 45 araçtan birleştirildi).
 
-**Son Güncelleme:** 22 Kasım 2025 | **Sürüm:** v0.17.0 | **Test Durumu:** ✅ %100 Başarı
+**Son Güncelleme:** 9 Ocak 2026 | **Sürüm:** v0.18.0 | **Test Durumu:** ✅ %100 Başarı
 
 ---
 
@@ -22,7 +22,7 @@
 10. `proje_listele` - Projeleri görev sayılarıyla listele
 11. `proje_gorevleri` - Bir projenin görevlerini göster
 
-### BİRLEŞİK ARAÇLAR (8)
+### BİRLEŞİK ARAÇLAR (9)
 
 12. `aktif_proje` - Aktif proje yönetimi (set|get|clear)
 13. `gorev_hierarchy` - Görev hiyerarşi işlemleri
@@ -30,16 +30,18 @@
 15. `gorev_filter_profile` - Filtre profili yönetimi (create|list|get|update|delete)
 16. `gorev_file_watch` - Dosya izleme işlemleri (add|list|remove|get)
 17. `gorev_ide_manage` - IDE uzantı yönetimi (detect|status|restart)
-18. `gorev_ai_context` - AI context yönetimi (store|retrieve|analyze|clear)
+18. `gorev_ai_context` - AI context yönetimi (set_active|get_active|recent|summary)
 19. `gorev_search` - Gelişmiş arama ve NLP sorguları ⭐ **v0.16.3 DÜZELTİLDİ**
+20. `gorev_ai` - AI işlemleri ⭐ **v0.18.0 YENİ**
 
-### ÖZEL ARAÇLAR (5)
+### ÖZEL ARAÇLAR (6)
 
-20. `ozet_goster` - Çalışma alanı özetini göster
-21. `gorev_export` - Görevleri dışa aktar (json|csv|markdown)
-22. `gorev_import` - Görevleri içe aktar (json|csv)
-23. `gorev_intelligent_create` - AI önerileriyle görev oluştur
-24. `gorev_nlp_query` - Doğal dil sorguları
+21. `ozet_goster` - Çalışma alanı özetini göster
+22. `gorev_export` - Görevleri dışa aktar (json|csv|markdown)
+23. `gorev_import` - Görevleri içe aktar (json|csv)
+24. `gorev_intelligent_create` - AI önerileriyle görev oluştur
+25. `gorev_nlp_query` - Doğal dil sorguları
+26. `gorev_ozet` - Özet dashboard (HTML) ⭐ **v0.18.0 YENİ**
 
 ---
 
@@ -66,11 +68,13 @@
 | `gorev_ide_manage` | Birleşik | Karma | - | ⭐⭐ |
 | `gorev_ai_context` | Birleşik | Karma | - | ⭐⭐⭐ |
 | `gorev_search` | Birleşik | Okuma | ⭐ Düzeltildi | ⭐⭐⭐⭐⭐ |
+| `gorev_ai` | Birleşik | Karma | ⭐ v0.18.0 YENİ | ⭐⭐⭐⭐ |
 | `ozet_goster` | Özel | Okuma | - | ⭐⭐⭐⭐ |
 | `gorev_export` | Özel | Okuma | - | ⭐⭐⭐ |
 | `gorev_import` | Özel | Yazma | - | ⭐⭐ |
 | `gorev_intelligent_create` | Özel | Yazma | - | ⭐⭐⭐⭐ |
 | `gorev_nlp_query` | Özel | Okuma | - | ⭐⭐⭐⭐ |
+| `gorev_ozet` | Özel | Okuma | ⭐ v0.18.0 YENİ | ⭐⭐⭐⭐ |
 
 ---
 
@@ -1175,6 +1179,180 @@ ws.onmessage = (event) => {
 
 ---
 
+### 26. gorev_ai ⭐ v0.18.0 YENİ
+
+AI işlemleri için unified tool - 7 farklı action destekler.
+
+**Actions:**
+
+#### Action: configure
+
+AI yapılandırmasını kaydeder (provider, API key, model).
+
+**Parametreler:**
+- `provider` (string, gerekli): AI sağlayıcısı (openrouter, openai, anthropic, etc.)
+- `api_key` (string, gerekli): API anahtarı
+- `model` (string, opsiyonel): Model adı (varsayılan: `openai/gpt-4o-mini`)
+
+**Örnek:**
+
+```json
+{
+  "action": "configure",
+  "provider": "openrouter",
+  "api_key": "sk-or-v1...",
+  "model": "z-ai/glm-4.5-air:free"
+}
+```
+
+---
+
+#### Action: chat
+
+AI ile sohbet eder.
+
+**Parametreler:**
+- `message` (string, gerekli): Mesaj
+
+**Örnek:**
+
+```json
+{
+  "action": "chat",
+  "message": "React Native performans optimizasyonu için öneriler"
+}
+```
+
+**Çıktı:** AI'dan detaylı yanıt
+
+---
+
+#### Action: decompose
+
+Görevi alt görevlere ayırır.
+
+**Parametreler:**
+- `task_id` (string, gerekli): Görev ID
+- `max_depth` (number, opsiyonel): Maksimum derinlik (varsayılan: 3)
+
+**Örnek:**
+
+```json
+{
+  "action": "decompose",
+  "task_id": "task-123",
+  "max_depth": 2
+}
+```
+
+**Çıktı:** Alt görev listesi (title, description, estimated_hours, dependencies)
+
+---
+
+#### Action: analyze
+
+Proje analizi yapar.
+
+**Parametreler:**
+- `project_name` (string, gerekli): Proje adı
+
+**Örnek:**
+
+```json
+{
+  "action": "analyze",
+  "project_name": "E-Ticaret Mobil Uygulama"
+}
+```
+
+**Çıktı:** Critical path, risk level, risk factors, bottlenecks, recommendations
+
+---
+
+#### Action: estimate
+
+Görev süresi tahmini yapar.
+
+**Parametreler:**
+- `task_id` (string, gerekli): Görev ID
+
+**Örnek:**
+
+```json
+{
+  "action": "estimate",
+  "task_id": "task-456"
+}
+```
+
+**Çıktı:** Tahmini saat, min/max, confidence level, faktörler
+
+---
+
+#### Action: suggest
+
+AI önerileri üretir.
+
+**Parametreler:**
+- `max_results` (number, opsiyonel): Maksimum sonuç (varsayılan: 5)
+- `context` (string, opsiyonel): Bağlam bilgisi
+
+**Örnek:**
+
+```json
+{
+  "action": "suggest",
+  "max_results": 10,
+  "context": "backend API geliştirme aşamasındayız"
+}
+```
+
+---
+
+#### Action: test
+
+AI bağlantısını test eder.
+
+**Parametreler:** Yok
+
+**Örnek:**
+
+```json
+{
+  "action": "test"
+}
+```
+
+**Çıktı:** Bağlantı durumu (success/fail)
+
+---
+
+### 25. gorev_ozet ⭐ v0.18.0 YENİ
+
+Özet dashboard'ı HTML formatında gösterir.
+
+**Actions:**
+
+#### Action: show
+
+Çalışma alanı özetini gösterir.
+
+**Parametreler:** Yok
+
+**Örnek:**
+
+```json
+{
+  "action": "show"
+}
+```
+
+**Çıktı:** HTML dashboard (progress bars, due date summary, high priority tasks, recent tasks, active project)
+
+---
+
+---
+
 ## 🔗 İlgili Kaynaklar
 
 - [İngilizce MCP Araçları Referansı](../../docs/api/MCP_TOOLS_REFERENCE.md)
@@ -1186,4 +1364,4 @@ ws.onmessage = (event) => {
 
 ---
 
-**Son Güncelleme:** 6 Ekim 2025 | **Doğrulayan:** Kilocode AI Test Raporu | **Durum:** Üretim Hazır ✅
+**Son Güncelleme:** 9 Ocak 2026 | **Doğrulayan:** Manuel Test | **Durum:** Üretim Hazır ✅
